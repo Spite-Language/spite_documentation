@@ -852,6 +852,11 @@ A `Buffer` is still a run of bytes, and everything a list of bytes does it does 
 ([collections.md](collections.md#listt)). It keeps the bytes themselves in one block, so a read is one load and there
 is no list hiding inside it. `reserve(count)` makes room before writing, when the size is known.
 
+**There is no list of bytes.** `List<Byte>` is a compile error wherever it is written, and wherever the compiler
+would make one: a run of bytes has one class, so there is one way to hold it, and it is the class that can read
+the numbers in it. Write `Buffer(size)` instead
+([the rule](../specs/standard_library.md#bytes-are-a-buffer)).
+
 **Byte order is said in each name.** A number of two bytes or more is read and written through a function that
 names its order after the number: `_little_endian`, the order of every machine Spite compiles for and of Spite's own
 binary format, or `_big_endian`, which puts the most significant byte first (PNG, network order). So a call says what

@@ -409,6 +409,11 @@ these 3 'if's each compare 'index' with a value and return, which is what a 'swi
 
 The same goes for an `else if` chain. Two such `if`s stay as they are.
 
+A link that asks about several values with `or` is still a link: `if word == "byte" or word == "tiny" { return 1 }`
+is two cases of the switch, `"byte": return 1` and `"tiny": return 1`. Every comparison in the chain tests the same
+value, so the chain is a switch however the values are grouped
+([the rule](../specs/control_flow.md#a-chain-of-ifs-on-one-value-is-a-switch)).
+
 ## `value == Class`
 
 A class name on the right of `==` or `!=` asks what class a value is: `creature == Fish` is true when `creature`
