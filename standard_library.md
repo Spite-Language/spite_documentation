@@ -46,7 +46,7 @@ REPL can look at any of it.
 | `Buffer` | bytes, and the numbers and text laid out in them, in either byte order, read by position or front to back | [below](#bytes-are-a-buffer) |
 | `ForeignBytes` | memory a C library hands out, read and written by position with every access checked | [below](#bytes-are-a-buffer) |
 | `BinaryWriter<T>`, `BinaryReader<T>` | any value to compact bytes (a `Buffer`) and back, for Spite programs talking to each other and for files | [json.md](json.md#write-and-read-bytes) |
-| `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `ColorText`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
+| `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
 | `Concurrent`, `Parallel`, `ThreadPool` | run a function while waiting, or on the thread pool; the handle is the value | [concurrency.md](concurrency.md) |
 | `Socket` | TCP over IPv4 and IPv6: listen, connect, lines and bytes, waiting or not | [below](#socket) |
 | `UdpSocket` | UDP datagrams over IPv4 and IPv6 | [below](#udpsocket) |
@@ -200,7 +200,7 @@ the second record starts at 8 and holds 2222 of 16 bytes
 
 ### Lock a file
 
-`file.lock()` waits until no other process holds a lock on the file, and answers a `File.Lock` you hold until you
+`file.lock()` waits until no other process holds a lock on the file, and answers a `LockedFile` you hold until you
 call `unlock()` or let it go. It is how two programs take turns on one file, such as a cache both write. If the
 program ends or crashes the system releases the lock, so it is never left held. `lock()` answers `null` only when
 the path cannot be opened. There is nothing to write for the operating system: the same call works on Windows,

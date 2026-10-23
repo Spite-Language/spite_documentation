@@ -216,25 +216,24 @@ nothing behind
 
 ## Colours
 
-`Color(red, green, blue, alpha)` holds four `Float`s from 0 to 1. `ColorText()` reads the colours the web writes
-(`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()` and `hsla()` with commas or spaces and an
-alpha after a `/`, and the 148 CSS colour names) and answers `null` for text that is none of them.
+A `Color` holds four `Float`s from 0 to 1, `red`, `green`, `blue` and `alpha`, and it is made from the text the web
+writes for a colour: `Color("#ff6347")`, and the same for `#rgb`, `#rgba`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()`
+and `hsla()` with commas or spaces and an alpha after a `/`, and the 148 CSS colour names. `color.hexadecimal`
+reads a colour as text and takes any of those forms when set. Text that names no colour stops the program and
+names the text; `text.to_color()` answers `null` for it instead, for text a program did not write.
 A colour writes itself back as `to_hex()`, `to_rgb_text()` and `to_hsl_text()`, and
 `to_linear()` and `to_standard_rgb()` convert between the sRGB a picker or a texture holds and the linear light a
 shader adds up.
 
 ```gdscript title=game_colors_basics/game_colors_basics.spite entry
 var console = Console()
-var color_text = ColorText()
 
 func GameColorsBasics() {
-    var tomato = color_text.read("tomato")
-    crash tomato
+    var tomato = Color("tomato")
     console.print("{tomato} {tomato.to_rgb_text()} {tomato.to_hsl_text()}")
-    var faded = color_text.read("hsl(210, 50%, 40%, 0.25)")
-    crash faded
+    var faded = Color("hsl(210, 50%, 40%, 0.25)")
     console.print("{faded} {faded.to_rgb_text()}")
-    var wrong = color_text.read("#12")
+    var wrong = "#12".to_color()
     if wrong {
         console.print("read")
     } else {
