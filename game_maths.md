@@ -225,7 +225,7 @@ A colour writes itself back as `to_hex()`, `to_rgb_text()` and `to_hsl_text()`, 
 `to_linear()` and `to_standard_rgb()` convert between the sRGB a picker or a texture holds and the linear light a
 shader adds up.
 
-```gdscript title=game_colors_basics/game_colors_basics.spite entry
+```gdscript
 var console = Console()
 
 func GameColorsBasics() {
