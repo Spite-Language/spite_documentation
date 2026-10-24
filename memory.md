@@ -13,6 +13,20 @@ reference is kept or let go (plain arithmetic, atomic only in a program that sta
 else: no collector, no runtime to ship. A singleton is not counted at all, and a number, a `Boolean` or an enum
 value is never an object.
 
+## No lifetimes, and no value classes
+
+Some languages keep memory safe by making you describe who owns what and for how long, and the compiler checks the
+description: a great deal of annotation that has nothing to do with what the program is for. Spite gets the same
+safety from a smaller set of tools: reference counting, a value that may be missing is a `Monster?` that must be
+narrowed with `assert` or `crash` before it is used, and a check at compile time on the few places an item is lent.
+Where the safe form needs a rule, the compiler has it. You do not write lifetimes.
+
+Some languages also ask you to decide, for each type, whether it is a value or a reference. In Spite that is the
+compiler's question, never yours. There are only classes, and every object behaves as a shared object. The compiler
+chooses registers, the stack, inline storage or the heap for each use, whichever keeps that behaviour cheapest, and
+work it could have shown to be unnecessary and did anyway is a bug in the compiler, not something you tune by
+splitting a type in two.
+
 ## Do: know that sharing is visible
 
 Two names can hold the same object. A mutation through either one shows up through the other, because there is

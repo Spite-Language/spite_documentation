@@ -772,6 +772,15 @@ Inside a walk of attributes, `attribute.class.is_fixed_size` asks the same of ea
 sparse set per component and fill a row of borrowed items from it
 ([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)).
 
+## Markup is metaprogramming too
+
+A language can give markup, a tree of tags with children, a grammar of its own, and then give that grammar settings
+for what it turns into. Spite does neither. The tags are ordinary calls that a library answers with the same
+function and template features this page teaches: a tag becomes a function of the library, its children are variadic
+arguments, a component is picked by the shape of what it is given, and an event handler is a function bound to its
+instance. There is no second syntax to learn and nothing to configure below the source, so the markup in one project
+means what it means in every other.
+
 ## Tree shaking
 
 Spite removes what a program does not use, and it can do so exactly, because everything it generates is decided

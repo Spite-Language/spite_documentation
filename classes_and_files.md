@@ -473,6 +473,13 @@ rewrites the object from two values of its own class, beside the library's `*`, 
 `target = left * right`: the compiler builds that answer in `target`'s place
 ([rules](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md)).
 
+## There is no `static`
+
+Other languages need `static` for a function that belongs to the class and not to an instance. In Spite a class is
+itself an instance of `Spite.Class` ([reflection.md](reflection.md)), so a function that works on the class is an
+ordinary member of that class object: `Spite.Class` declares it, and the class file overrides it. There is nothing
+for a keyword to say, so there is no keyword.
+
 ## A class name means one class
 
 A class may not hide another class. If `physics/plugin.spite` (`Physics.Plugin`) sat beside a root

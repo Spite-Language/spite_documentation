@@ -1,7 +1,6 @@
 # Spite documentation
 
-**Start here.** [WHY.md](WHY.md) says why to use Spite and why to help build it. [SPITE.md](SPITE.md) is the point
-of the project: what Spite refuses, and what it does instead. For a language model writing Spite,
+**Start here.** [WHY.md](WHY.md) says why to use Spite, what it refuses and what it does instead, and why to help build it. For a language model writing Spite,
 [skills/spite/SKILL.md](skills/spite/SKILL.md) is the skill and [skills/spite/reference.md](skills/spite/reference.md)
 the whole language on one page. The pages below are the tutorial, in reading order.
 
@@ -11,13 +10,13 @@ itself; it writes machine code directly),
 [spite_standard_library](https://github.com/Spite-Language/spite_standard_library),
 [spite_spec](https://github.com/Spite-Language/spite_spec) (the specification, as programs every compiler must pass),
 [spite_benchmarks](https://github.com/Spite-Language/spite_benchmarks) and
-[mortaros_spite](https://github.com/Spite-Language/mortaros_spite) (every decision and why). These pages were written
+[mortaros_spite](https://github.com/Spite-Language/mortaros_spite) (every decision and why). Some pages were written
 for the first compiler, which compiled through C; where they describe how the compiler works rather than the
 language, the new compiler's own pages win.
 
 Spite is a small, opinionated language meant to be written mostly by AI and skimmed by humans. There is one way
-to do each thing, no macros, and metaprogramming instead of loops wherever it reads better. It compiles to C, and
-its compiler is written in Spite.
+to do each thing, no macros, and metaprogramming instead of loops wherever it reads better. Its compiler is written
+in Spite and writes machine code itself.
 
 **These pages are the tutorial.** Each page teaches its part of the language, with programs that run, and ends with
 a link to the next page. The formal definition of the language is [the specification](https://github.com/Mortaro/spite-language/blob/next/specs/README.md): one page
@@ -46,8 +45,20 @@ reads it best (`func`, `var`, `name: Type`, `#` comments). The code is Spite thr
 - Readability comes from metaprogramming and the standard library: prefer `repositories.filter_active().count_stars()` over loops and ifs.
 - No abbreviations, anywhere, except the language keywords themselves (`var`, `func`, `enum`).
 - Compilation speed and live reload matter more than anything else in the toolchain.
-- Spite compiles to C. The compiler is written in Spite and compiles itself, and so is the standard library:
+- The compiler is written in Spite, compiles itself and writes machine code directly, and so is the standard library:
   [Pure Spite](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#pure-spite-dissolving-the-runtime).
+
+## Writing these pages
+
+For whoever writes or changes the documentation:
+
+- **The pages talk to people learning Spite.** No notes to agents, no implementation status ("not built", "planned"),
+  no decision numbers or open-question bookkeeping in the middle of a page. Agent guidance, decisions, proposals and
+  status live outside these pages. Each page ends with a link to the next thing to learn.
+- **Never name a third-party package.** Packages built on Spite are third-party, even the ones the author maintains.
+  Write examples in Spite's own terms, and record a need found through a package as the language need it is.
+- **No em dashes**, and no two hyphens between spaces standing in for one. A table has one set of columns, so write
+  one row per item rather than two tables side by side.
 
 ## Reading order
 

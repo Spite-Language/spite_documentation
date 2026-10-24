@@ -498,6 +498,16 @@ and handle it like any other value.
 
 Absence is fine: `assert`. Absence is a bug: `crash`. Absence is a case: `if value { } else { }`.
 
+### Why there are no exceptions
+
+An error that bubbles up tells the code above it a message it has no action to take about. The handler can log it,
+wrap it and pass it on, and each layer of that is code written only to be defensive: it does not make the program
+more correct, it makes it longer. So Spite does not offer a way to carry a reason upward at all. Either the
+compiler can know (a compile error), or something is simply not there and the program carries on (`assert`), or it
+is a bug and the program stops where it happened (`crash`). When the caller really can do something different for
+each cause, the cause is a value the function returns, an enum or a union that names exactly those cases, and the
+caller handles it like any other value.
+
 ## `assert` is a guard
 
 `assert condition` is a production feature, not a debug one: when the condition is false, the function stops
@@ -1014,6 +1024,14 @@ failing on several threads at once are all counted, and one site failing on ever
 plain add. Only the first thread to crash
 reports; one that crashes while that report is being written waits for the program to end, so two reports never
 interleave.
+
+### Why a crash carries no message
+
+A crash has no message because a message is prose someone wrote about the problem, and it goes out of date the day the
+code changes. What the reader needs is the place and the memory there: the line of code that failed and the values
+it was looking at. A person opens the line, and an AI reads the values directly, which is more than any sentence
+written beforehand could say. If a warning against a future change is worth giving, write a test or let the
+compiler refuse the change: both stop the change, where a message only describes it.
 
 ### What a native fault reports
 

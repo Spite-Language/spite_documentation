@@ -25,6 +25,14 @@ Speed is not a skill the moron is expected to have. A program written by someone
 line should run as fast as one written by an expert who has, and the aim of the language is to find out how far
 past the expert it can go.
 
+## Why the compiler does what a rule would ask of you
+
+A rule that only works if someone remembers to follow it is a rule that fails, because people forget, and a cheaper
+model forgets more. So Spite does not ask: if something has to happen at a particular moment, the compiler arranges
+it. A debugging session is answered wherever the program already waits, without anyone calling a function to allow
+it. Breaking a value into its parts is forced by the type system and not left to advice. The same goes for
+optimisation, which is why this whole page asks you for so little.
+
 ## What the compiler does with a plain program
 
 Each of these is decided while compiling, from proofs about your code. [Optimisations](optimizations.md) lists every

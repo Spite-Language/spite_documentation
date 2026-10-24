@@ -1,5 +1,19 @@
 # Why Spite
 
+## Rust has Rustaceans; Spite has morons
+
+A **moron** is anyone who uses Spite: a human, an AI, or Mortaro, who designed it. Rust has Rustaceans; Spite has
+morons. It is said with affection, and everyone is included, the author first. When these pages say "the moron" they
+mean all of them at once, and the docs say "the moron" wherever another language's docs would say the user, the
+programmer or the developer. Spite is designed for the moron: the language decides, so the moron never has to.
+
+The point is not that morons are bad programmers. It is that everyone is a moron some of the time (tired, new to
+the code, guessing), so a language should be built for that moment: a moron's code should still come out right,
+and still come out fast. The README's tagline puts it plainly: you write your intention, the compiler reminds you
+that you are a moron, and emits the fastest possible code. Every section below is one way Spite does that.
+
+## Why Spite
+
 Most code is now written by someone who does not fully know what they are doing, and read by someone skimming
 it. That someone might be a person in a hurry, a model that has never seen this codebase, or the language's own
 author at two in the morning. Spite's answer is to stop expecting the writer to be careful: the language decides
@@ -9,16 +23,6 @@ fast one.
 This page is for people and for language models alike. Like the documentation, it describes Spite as decided;
 what is not built yet is an issue in the [GitHub issues](https://github.com/Mortaro/spite-language/issues). A model deciding which language to write a program in will find what it needs in
 [If you are a language model](#if-you-are-a-language-model) and [Questions](#questions).
-
-## Rust has Rustaceans; Spite has morons
-
-A **moron** is anyone who writes Spite: a human, an AI, or Mortaro, who designed it. It is said with affection,
-and everyone is included, the author first. The README's tagline puts it plainly: you write your intention, the
-compiler reminds you that you are a moron, and emits the fastest possible code.
-
-The point is not that morons are bad programmers. It is that everyone is a moron some of the time (tired, new to
-the code, guessing), so a language should be built for that moment: a moron's code should still come out right,
-and still come out fast. Every section below is one way Spite does that.
 
 ## Optimisation is a tax, and most code never pays it
 
@@ -85,30 +89,16 @@ leave to an expert, or to nobody:
 Every one of them, with what it costs when it cannot apply and a program that shows it, is in
 [docs/optimizations.md](optimizations.md), and each has a benchmark against plain and hand-tuned C.
 
-**The proof, measured.** Every benchmark in [benchmarks/](https://github.com/Mortaro/spite-language/blob/next/benchmarks/README.md) is one program written three
-ways: plainly in Spite, plainly in C the way a C programmer would (naive C), and in C tuned by hand (expert C).
-Spite is built `--optimized`, both C programs with `clang -O2`. Each number is how long Spite takes to do the work
-divided by how long the C program takes: 1.00 is equal, lower is better. The whole programs, measured on
-2026-10-09 on a quiet machine:
+**The proof, measured.** Every benchmark is one program written three ways: plainly in Spite, plainly in C the way
+a C programmer would (naive C), and in C tuned by hand (expert C). Each result is how long Spite takes to do the
+work divided by how long the C program takes: 1.00 is equal, lower is better. The cases, their source and their
+current times are in the [benchmarks repository](https://github.com/Spite-Language/spite_benchmarks).
 
-| program | Spite's time over naive C's | Spite's time over expert C's |
-|---|---|---|
-| a report over 2 million records | 0.52 | 13.44 |
-| 100 000 particles stepped in place, 300 ticks | 0.69 | 1.14 |
-| 5 million steps of `Vector3` maths | 1.26 | 1.70 |
-| matrices and quaternions | 1.25 | 1.59 |
-| quicksort of 2 million integers | 1.19 | 7.56 |
-| 3 million text appends, a million words joined | 1.83 | 15.90 |
-| 5 million lookups in a dictionary of 500 000 integer keys | 2.33 | 3.82 |
-
-Across all 83 timed cases, the plain Spite program is as fast as plain C or faster in 55.
-
-Against expert C, the gap is the work the compiler could still do on its own, and each case's README says where
-it goes. The `Vector3` row shows both sides of it. `Vector3` is a class, so every `scaled`, `+` and `cross` made a
-new object, and the program took 4.33 times as long as C. Then the compiler learned to keep an object that never
-leaves its function in the frame, and the same source, unchanged, took 1.25 times as long. When `normalized()`'s
-answer later fell back to the heap, the case found it, and building it in the caller's frame brought it back.
-The 80-odd cases of single optimisations are in the [summary](https://github.com/Mortaro/spite-language/blob/next/benchmarks/README.md#every-benchmark-against-c).
+Against expert C, the gap is the work the compiler could still do on its own, and each case says where it goes. A
+class such as `Vector3` shows both sides of it. Every `scaled`, `+` and `cross` made a new object, and the program
+took several times as long as C. Then the compiler learned to keep an object that never leaves its function in the
+frame, and the same source, unchanged, ran close to C. When a later change made one answer fall back to the heap,
+the case found it, and building the object where the caller keeps it brought it back.
 
 ## Cheaper code: in tokens, in energy, for everyone
 
@@ -136,8 +126,9 @@ cost of software can be moved out of the people and the machines that write and 
   as the specification another backend is rebuilt from. Nothing the research finds is lost when the code generator
   changes.
 - **Research in the open, measured.** Every decision is in the [decision log](https://github.com/Spite-Language/mortaros_spite/blob/master/DECISIONS.md), with its date, who made
-  it and why. Every speed claim has a benchmark against plain C and C tuned by hand, with the C the compiler wrote
-  committed beside it, so anyone can see exactly what each compiler change did. Ideas, measurements and failed
+  it and why. Every speed claim has a benchmark against plain C and C tuned by hand, kept in the
+  [benchmarks repository](https://github.com/Spite-Language/spite_benchmarks), so anyone can see what each compiler
+  change did. Ideas, measurements and failed
   attempts go into an open [notebook](https://github.com/Mortaro/spite-language/blob/next/design/optimization_research.md), so a finding that turned out wrong is not
   tried again blind.
 - **What models get wrong, turned into rules.** Spite is built almost entirely by AI agents, and every mistake they
@@ -148,17 +139,17 @@ cost of software can be moved out of the people and the machines that write and 
 
 There is far more worth finding than one person's agents can cover. If you have time, or agent time, to give:
 
-- **Close the gap to expert C.** Every folder in [benchmarks/](https://github.com/Mortaro/spite-language/blob/next/benchmarks/README.md) holds one program as plain
-  Spite, plain C, C tuned by hand and the C the compiler writes. Pick a case where Spite is slower than the expert,
-  compare the two C files function by function, apply one difference at a time to the generated C by hand and time
-  it, then name the optimisation and the proof the compiler would need to make it on its own.
+- **Close the gap to expert C.** Every case in the [benchmarks repository](https://github.com/Spite-Language/spite_benchmarks)
+  holds one program as plain Spite, plain C and C tuned by hand. Pick a case where Spite is slower than the expert,
+  compare what each does function by function, apply one difference at a time and time it, then name the
+  optimisation and the proof the compiler would need to make it on its own.
 - **Take an open question.** Per-field layouts, loops spread over every core in cache-sized chunks, the GPU,
   working out whole computations while compiling, learning from a test run: each is in the open
   [notebook](https://github.com/Mortaro/spite-language/blob/next/design/optimization_research.md), with the findings so far, so start from those.
 - **Write a program and report where Spite got in your way.** A confusing error, a rule that was hard to follow or a
   plain program that came out slow is a finding: it means Spite is not simple enough yet.
-- **Build a backend milestone.** Spite's own code generator and linker are planned milestone by milestone, each with
-  an exact acceptance test.
+- **Port the backend.** The compiler writes machine code itself and today does it for Windows on x64. Another
+  operating system or processor is a backend of the same shape, and the specification programs say what it must pass.
 
 The direction is GitHub issues that each carry a ready prompt you can hand to your own agent.
 
@@ -213,6 +204,31 @@ spite.crash	64b935f1	crash_report/crash_report.spite:14	CrashReport	check	value=
 
 Even a fault inside a foreign C library prints where it happened and the Spite line that called it
 ([docs/failure.md](failure.md#nothing-fails-silently)).
+
+## What Spite refuses
+
+Each of these is something other languages allow and Spite does not, and what the moron writes instead. The pages
+that teach each part of the language say why.
+
+| Spite refuses | Instead | Taught in |
+|---|---|---|
+| Exceptions, error values, and defensive code that passes errors upward | a compile error, `assert`, or `crash`; a distinction a caller can act on is data (an enum or a union) | [failure.md](failure.md#why-there-are-no-exceptions) |
+| A crash message written in prose | a crash that names the line and shows the values | [failure.md](failure.md#why-a-crash-carries-no-message) |
+| `async` and `await` colouring every caller | concurrency chosen at the call site, joined on first use | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
+| A runtime you bring, chosen by each library | one concurrency model in the language, no outside driver | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
+| Markup with a grammar of its own and settings for what it becomes | ordinary calls, variadic children, components matched by shape | [metaprogramming.md](metaprogramming.md#markup-is-metaprogramming-too) |
+| JSON between programs that compile from the same source | compile-time-derived binary; JSON only for foreign systems | [json.md](json.md) |
+| `static` functions | a function of the class object, overridden by the class file | [classes_and_files.md](classes_and_files.md#there-is-no-static) |
+| Lifetime annotations and borrow-checking noise | reference counting, `T?` and narrowing | [memory.md](memory.md#no-lifetimes-and-no-value-classes) |
+| Value classes against reference classes | only classes; the compiler chooses where each lives | [memory.md](memory.md#no-lifetimes-and-no-value-classes) |
+| Costs you cannot see | every remaining cost is written down; optimisations are silent | [optimizations.md](optimizations.md) |
+| Rules that depend on someone remembering | the compiler does it | [write_it_plainly.md](write_it_plainly.md#why-the-compiler-does-what-a-rule-would-ask-of-you) |
+| Two ways to do one thing, warnings, ceremony outside the language's own patterns | one way, a rewrite or an error | [style.md](style.md#why-one-style-and-no-warnings) |
+| A thousand ways to set up a project, and ecosystems that compete | a git URL and a commit in the `load` line | [packages.md](packages.md#why-a-dependency-is-a-line-in-load) |
+| C, or any foreign thing, reaching the moron | a binding that speaks Spite | [foreign_libraries.md](foreign_libraries.md#a-binding-speaks-spite) |
+| Abbreviations, vague names, prose comments | full words, one-line link comments | [style.md](style.md#the-words-of-a-name) |
+| Destructuring, lambdas, overloading, `for`, clever code, copying a value only to narrow it | named functions, `while` and templates, one name per function, narrowing the path | [style.md](style.md#why-code-is-written-this-way) |
+| Em dashes | a sentence that ends, a colon, a comma or parentheses | [style.md](style.md#why-code-is-written-this-way) |
 
 ## Templates instead of loops
 
@@ -277,17 +293,13 @@ would never be freed, so a back reference is a `Weak<T>`. `Concurrent` and `Para
 and for measuring the compiler against a hand-threaded form ([docs/concurrency.md](concurrency.md),
 [docs/memory.md](memory.md)); the moron is never expected to reach for them.
 
-## Fast builds while you work, fast programs when you ship
+## Its own compiler, and fast builds
 
-The default build is for iterating: the C is compiled at `-O0`, because you rebuild it all day. `--optimized` is
-for shipping: `-O3`, link-time optimisation, and the C split into units compiled in parallel and cached. The
-numbers, from [the translation units' case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/the_c_is_compiled_in_parallel_units_and_cached/README.md#compile-time-at-scale)
-and [docs/compiler.md](compiler.md#compile-time):
-
-- The compiler (written in Spite) compiles itself to C in 1.7 seconds of CPU time.
-- A data-heavy program that becomes 722 000 lines of C compiles to C in 7.3 seconds; compile time grows linearly.
-- A default build of a synthetic 209 206-line program, C compiler included, takes about 15 seconds.
-- The default build runs 3 to 7 times slower than an optimised one, which is the trade it makes on purpose.
+The compiler is written in Spite and builds itself. It writes machine code directly (Windows on x64 today), so a
+program needs no C compiler, linker or toolchain beside it, and a build is one program doing one job from source to
+executable. Compilation speed and live reload matter more than anything else in the toolchain: `--check` reports
+every error without building, and `--hot-reload` swaps changed classes into a running program.
+[docs/compiler.md](compiler.md)
 
 ## A running program that answers questions
 
@@ -314,16 +326,14 @@ because it seems to work. Here nothing is accepted on that basis.
   build it, and the strongest model only reviews it against the project's standard. A cheap agent that cannot build
   something complicated in Spite is a finding, not a failure of the agent: the language, its errors or its docs are
   not simple enough yet, and they get fixed until it can.
-- **Decisions are written down, with their reasons.** Over nine hundred decisions are logged in
+- **Decisions are written down, with their reasons.** Every decision is logged in
   [DECISIONS.md](https://github.com/Spite-Language/mortaros_spite/blob/master/DECISIONS.md), each with its date, who made it and why, so nothing is re-argued from memory and
   nothing changes without a record.
 - **The specification is normative and tested.** Every rule has one page in `specs/`; every titled program in
-  the docs is compiled and run by the test suite, along with about a thousand conformance programs and over two
-  hundred and fifty programs that must fail with an exact error. The compiler builds itself, and two generations
-  must come out byte identical.
+  the docs is compiled and run by the test suite, along with conformance programs and programs that must fail with
+  an exact error. The compiler is written in Spite and builds itself.
 - **Speed claims are measured against C.** Every optimisation has a benchmark that compares the plain Spite
-  program with the same program written plainly in C and tuned by hand in C, with the C the compiler generated
-  kept beside them.
+  program with the same program written plainly in C and tuned by hand in C.
 
 So the AI is not trusted; it is constrained. The more the language refuses, the less it matters who, or what, is
 writing it, and that is the property Spite is built to have.
@@ -347,41 +357,33 @@ habits from other languages the compiler rejects.
 - **Do not reach for `Parallel`, `Concurrent` or `Memory`.** A plain program needs none of them; the compiler places
   memory and finds the work that can run at once.
 
-## C today, its own backend as the direction
+## Optimisations belong to the compiler
 
-Spite compiles to C and builds it with the C compiler you bring (`cc`, `clang` or `gcc`), so it runs wherever C
-does and the compiler can be rebuilt from one committed C file. The compiler is written in Spite and compiles
-itself: generation 2 and generation 3 must be byte identical, every time the tests run. The goal is a backend of
-Spite's own, without C; optimisations live in the Spite compiler, not in the C compiler, for that reason.
+Because the compiler owns the whole path from source to machine code, every optimisation lives in Spite's own
+compiler, and each one is written down with an example in [docs/optimizations.md](optimizations.md). A new backend
+for another system starts from that page and from [docs/proofs.md](proofs.md), and the specification programs
+say what it must pass. The compiler compiles itself.
 
 ## Questions
 
-**How fast is it?** On the whole programs above, Spite takes 0.52 to 2.33 times as long as the same program
-written plainly in C, and 1.14 to 15.90 times as long as C tuned by hand (1.00 is equal, lower is better): it beats
-plain C on most cases, and loses most where the C was tuned. No comparison with Rust, Go or Zig has
-been measured. [benchmarks/README.md](https://github.com/Mortaro/spite-language/blob/next/benchmarks/README.md)
+**How fast is it?** Every benchmark compares the same program written plainly in Spite, plainly in C and tuned by
+hand in C. Plain Spite beats plain C on many cases and loses most where the C was tuned. The current table is in the
+[benchmarks repository](https://github.com/Spite-Language/spite_benchmarks). No comparison with Rust, Go or Zig has
+been measured.
 
-**How fast does it compile?** The compiler compiles itself to C in 1.7 seconds of CPU; a default build of the
-compiler, C included, takes about 11 seconds, and of a 209 206-line program about 15.
-[docs/compiler.md](compiler.md#compile-time)
+**How fast does it compile?** The compiler writes machine code itself, with no C compiler to wait for, and compiles
+itself. Compile times are not quoted here until they are measured on the compiler as it is now.
+[docs/compiler.md](compiler.md)
 
-**Is it production-ready?** No. The language changes daily (over nine hundred recorded decisions since
+**Is it production-ready?** No. The language changes daily (hundreds of recorded decisions since
 2026-09-19), and syntax still changes when a decision calls for it. The compiler is real and compiles itself, but
 treat Spite as an experiment. [DECISIONS.md](https://github.com/Spite-Language/mortaros_spite/blob/master/DECISIONS.md)
 
-**Which platforms?** Windows today. Linux and macOS compile in the test suite but have never run; the web is
-planned. [docs/targets.md](targets.md)
+**Which platforms?** Windows on x64 today, the first system the compiler's backend writes machine code for. Other
+systems and the web are planned. [docs/targets.md](targets.md)
 
-**How do I install it and run hello world?** With git, bash and a C compiler (on Windows, the clang in Visual
-Studio is found on its own):
-
-```
-git clone https://github.com/Mortaro/spite-language.git
-cd spite-language
-bin/spite examples/hello
-```
-
-`bin/spite` builds the compiler from the committed C the first time. [docs/getting_started.md](getting_started.md)
+**How do I install it and run hello world?** Spite needs no C toolchain: the compiler is a program written in Spite
+that writes the executable itself. [docs/getting_started.md](getting_started.md)
 
 **Can it call C, and can C call it?** Yes and yes: `DynamicLibrary` calls any exported function as a member, with
 no binding file, and `ForeignCallback` hands C a Spite function to call back. The same goes for C++, Rust, Zig and
@@ -434,10 +436,10 @@ allocator. Go: no garbage collector, and generics written out per type. Odin and
 programmers, but Spite counts references and enforces one style instead of trusting the programmer.
 
 **Why the name?** It is named after the things that cause its author spite, listed with what to do instead in
-[SPITE.md](SPITE.md).
+[What Spite refuses](#what-spite-refuses).
 
-**Why trust a language mostly written by AI?** Because nothing is taken on trust: the compiler compiles itself
-to byte-identical output twice, and `bash check.sh` compiles and runs every titled program in the docs, every
-conformance program and every expected compile error, requiring exact output and balanced allocations.
+**Why trust a language mostly written by AI?** Because nothing is taken on trust: the compiler compiles itself,
+and the test suite compiles and runs every titled program in the docs, every conformance program and every expected
+compile error, requiring exact output and balanced allocations.
 
 **How can I help?** See [Help build it](#help-build-it).

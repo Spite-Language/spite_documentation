@@ -297,6 +297,15 @@ one that reads `Arguments()`, is an error rather than a folder that is quietly l
 Each loaded root can become a separate dynamic library, tree shaking is computed per bundle, and a `load` inside an
 `if` is loaded lazily when that line runs ([the specification](https://github.com/Mortaro/spite-language/blob/next/specs/packages.md#packages-namespaces-and-loading)).
 
+## Why a dependency is a line in `load`
+
+Setting up a project is where many languages become a thousand ways to do one thing: build files, lock files,
+manifests, registries and the tools that manage them, each with its own habits. That variety is a cost paid by
+everyone who has to read, build or copy the project, and it is why some people pick a language for its tooling
+instead of for the language. Spite has one way: a dependency is a git URL with a commit hash in the `load` call,
+and the ordinary compile fetches it. Git is the registry, so there is no central index for a competing ecosystem to
+copy from or split away from, and no second convention to learn.
+
 ## Loading a repository pinned to a commit
 
 A dependency is a repository and a commit, written in the `load` line itself. There is no package

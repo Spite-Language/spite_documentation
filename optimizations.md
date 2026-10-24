@@ -26,6 +26,11 @@ the only real surprise, so every cost that remains is written down on this page,
 belongs to, and `--optimization-report` lists every place in your program where one of them fell back
 ([compiler.md](compiler.md#read-what-was-not-optimised)).
 
+The rule is deliberately not symmetric. A reader who expects a slow line and gets a fast one has lost nothing, so a
+faster result needs no announcement. A reader who expects a fast line and gets a slow one is surprised, and cannot
+find out why without being told. So the compiler optimises freely and silently, and reports only what it could not
+optimise, and why.
+
 **Internals stay ordinary objects where you inspect them.** A `--repl`, `--repl-port`, `--hot-reload` or
 `--development` build is an *inspectable* build: nothing is tree-shaken, and the standard library's internals
 (`Memory`, `Build`, `TypedMemory<T>`) are ordinary objects that reflection (`.instances`, `.attributes`) sees. Every

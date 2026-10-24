@@ -5,6 +5,20 @@ declares itself `async`, which changes its return type and forces every caller t
 caller, all the way up: the waiting leaks into every signature above it. Spite keeps waiting a property of the
 *call site*: any function can be run concurrently by whoever calls it, and a function never says whether it waits.
 
+## Why one model, and no runtime to bring
+
+Two things went wrong in other languages, and Spite avoids both by where it puts the decision.
+
+The first is the colour of a function. When the callee declares itself `async`, every caller has to change with it,
+transitively, and every return type changes too. So the choice belongs to the caller, never the callee: an ordinary
+function is made concurrent by whoever calls it with `Concurrent(...)`, and the handle it gives back joins on first
+use, with no `await`, no wrapper type and no `.wait()` to remember.
+
+The second is the runtime you bring. When the language only describes a future and leaves the thing that drives it
+to the community, several runtimes appear, and every library has to say which one it was written for. Spite has one
+concurrency model, in the language, and no protocol for an outside driver to implement. A library cannot ask for
+something else to run its work, because nothing else exists to ask.
+
 ## `Concurrent`: work that waits
 
 `Concurrent(file.read)` takes a function value (a function bound to its instance, as in

@@ -4,6 +4,19 @@ Style in Spite is not a matter of taste, and there is no style guide to follow: 
 code into the one style or refuses it with an error that names the fix. It has no warnings and no switch to turn
 a rule off. What cannot be rewritten safely, such as a name or a structure, is an error; everything else is rewritten.
 
+## Why one style, and no warnings
+
+A formatter that offers choices, and a linter that warns, hand every choice back to whoever is writing. Two ways of
+doing one thing is a decision somebody makes again at every place it appears, so Spite keeps one: before adding a
+way to do something, look for the one that already exists, and when two exist, remove one. Conversions are the
+example: `Float.from_integer(count)` and `count.to_float()` both look reasonable, nobody could say which class owns a
+conversion, and so only `to_<type>()` on the value being converted exists.
+
+For the same reason there are no warnings. A warning is a decision left to the reader, and a reader who skims will
+skip it. The compiler either rewrites your code into the one style or refuses it. Syntax follows the same rule:
+before a new form is added, check whether something that exists already says it. The old `generics` header line
+went because it sat outside the patterns the rest of the language uses.
+
 ## What the formatter rewrites
 
 Every compile formats the program's own files, printing `formatted <path>` for each one it changed, and then reads
@@ -26,6 +39,28 @@ the compile, so a program is never compiled from text that is not in the one sty
 
 Everything on this page happens while compiling. None of it reaches the built program, which carries no trace
 of the formatter or of any of these checks.
+
+## Why code is written this way
+
+Every rule on this page comes from one fact: Spite is written mostly by AI and read by people who skim. A long way
+round that the compiler accepts is a pattern that spreads, and a model copies the messy code it has seen, so the
+short form is made the only form the compiler accepts. In the same spirit:
+
+- **No clever code.** A program is not improved by being surprising, and almost all of it is written by a model that
+  needs no trick to be fast.
+- **No `for`.** There is `while`, and there are the member templates that write the loop for you
+  ([collections.md](collections.md#member-templates-loops-you-do-not-write)).
+- **No destructuring and no lambdas.** They are pleasant to type, but a person is not the one typing, so they cost
+  readability for nothing. Read members by name, and pass a named function, which is bound to its instance
+  ([functions_and_operators.md](functions_and_operators.md)).
+- **No overloading.** One name means one function, and an argument is cast to the parameter's type, so a reader
+  never works out which of several meanings was chosen.
+- **No copying a value into a local only to narrow it.** `var watcher = tracker` then `assert watcher` is a habit
+  from languages that cannot narrow a path. Narrow the name or the path itself: `assert tracker`,
+  `assert tracker.target` ([failure.md](failure.md#narrowing-a-path)).
+- **No em dashes, anywhere**: not the character, and not two hyphens between spaces standing in for one, in code,
+  comments, documentation, diagnostics or commit messages. End the sentence, or use a colon, a comma or
+  parentheses. Command-line flags such as `--optimized` are not dashes.
 
 ## A file is ordered
 
@@ -98,6 +133,16 @@ func SingleLetter() {
 ```diagnostic
 is a single letter: give it a name that says what it holds
 ```
+
+### The words of a name
+
+An abbreviation is a name you have to translate, so there are none: `DLL` became `DynamicLibrary`. The exceptions are
+small and exact. A well-known acronym followed by a full word that carries the meaning, as in `HttpClient`, because
+most people know HTTP and few know what it stands for; the acronym is written as a word, `Http`, not `HTTP`. And the
+axis names `x`, `y`, `z` and `w`, which are the names of what they hold.
+
+A name should say where and what without a comment to disambiguate it. `add` does not say where, so lists have
+`append` and `prepend`.
 
 ## Nothing unused
 
@@ -183,7 +228,8 @@ class's or `String`'s storage, and `Build` and `Environment` settings.
 ## Comments are links
 
 A comment is one line, outside functions and declaration bodies, and it holds nothing but a link to a heading in
-a markdown file:
+a markdown file. Prose above a two-line function that explains the compiler instead of the code is the habit this
+rule ends, and a note that is needed becomes a section somewhere a reader can open:
 
 ```gdscript
 # notes.md#why-this-program-exists

@@ -9,7 +9,9 @@ A JSON serializer is made once, with no arguments, and used as often as needed: 
 `write(order)` for each order to write, and `JsonReader<Order>()`, then `read(text)` for each text to read, which
 answers `Order?`, `null` when the input is not an `Order`.
 
-Which one to use: **binary between Spite programs, JSON for everything else.** Two Spite programs compile from
+Which one to use: **binary between Spite programs, JSON for everything else.** JSON is a web convention that pays in
+size and speed so that a person can read it, and nobody reads the messages two programs send each other. Its cost is
+that every message describes itself, and that is only needed when the reader is unknown. Here it is not. Two Spite programs compile from
 the same source, so both ends already know every type and nothing has to describe itself; the bytes are about a
 quarter the size of the JSON, more than ten times faster to write and twenty-five times faster to read
 ([measured below](#how-fast-and-how-small)). JSON is for talking to systems that are not Spite

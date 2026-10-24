@@ -382,6 +382,11 @@ and it is the shape the binding below turns back into an object.
 You should not have to think about C, or any other language, to use a library. So a binding wraps the library in a
 class of its own, and nothing but that class touches the `DynamicLibrary`: only Spite shapes come out of it.
 
+The reason is that whatever can be written in Spite is written in Spite, and a foreign library is the exception that
+should cost the rest of the program nothing. A C enum becomes a Spite enum with Spite names, and no C type, name or
+convention is allowed to pass the binding. It also keeps the program free of any one outside language: if the
+library is later written in Spite, the binding is the only thing that changes.
+
 - **Spite names.** The functions the rest of the program calls are full words in snake_case (`open_database`, not
   `db_open_v2`), whatever the library calls them.
 - **A status is a Spite enum.** A C function that answers a C enum (or a status code) answers, through the binding,
