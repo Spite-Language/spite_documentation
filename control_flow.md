@@ -139,7 +139,7 @@ func stamp_of(path: String): String {
 ```
 
 Write `if modified and size`, not `if modified { if size { ... } }`. The rules are in
-[the specification](../specs/control_flow.md#an-if-that-only-holds-an-if).
+[the specification](https://github.com/Mortaro/spite-language/blob/next/specs/control_flow.md#an-if-that-only-holds-an-if).
 
 ## `while` is the only loop
 
@@ -163,7 +163,7 @@ Spite only has 'while' loops
 A loop over a list of objects that only does what a
 [member template](collections.md#member-templates-loops-you-do-not-write) does (calling, collecting, keeping,
 counting, adding up or finding a member of each element) is an error naming the template
-([the exact shape](../specs/control_flow.md#a-while-that-a-member-template-already-says)). To call one of your own
+([the exact shape](https://github.com/Mortaro/spite-language/blob/next/specs/control_flow.md#a-while-that-a-member-template-already-says)). To call one of your own
 functions with each element, pass it: `items.each(restock)`
 ([Passing a function for each element](collections.md#passing-a-function-for-each-element)).
 
@@ -226,7 +226,7 @@ work given to a `Parallel`, where a loop that never ends and never waits is an e
 
 None of this costs anything at run time beyond the branches and loops it compiles to: every rule on this page
 is checked while compiling. Only a REPL build adds a check point to each loop
-([the rules](../specs/control_flow.md#control-flow-in-full) say which builds).
+([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/control_flow.md#control-flow-in-full) say which builds).
 
 ## `switch` over a union
 
@@ -298,7 +298,7 @@ once for each remaining member": the value is narrowed to each of them in turn, 
 `show_sound` only for the members `_` answers for (here `Cat`), not for the whole union. A switch stays exhaustive:
 `_` is how it covers the rest, not a way to skip it. Two cases that do the same thing are an error naming `_:`,
 and so is a case that does what `_:` already does, or a `_:` that answers for nothing (the exact rules are with
-[unions](../specs/values_and_types.md#unions-in-full)).
+[unions](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#unions-in-full)).
 
 ## `switch` over values
 
@@ -412,7 +412,7 @@ The same goes for an `else if` chain. Two such `if`s stay as they are.
 A link that asks about several values with `or` is still a link: `if word == "byte" or word == "tiny" { return 1 }`
 is two cases of the switch, `"byte": return 1` and `"tiny": return 1`. Every comparison in the chain tests the same
 value, so the chain is a switch however the values are grouped
-([the rule](../specs/control_flow.md#a-chain-of-ifs-on-one-value-is-a-switch)).
+([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/control_flow.md#a-chain-of-ifs-on-one-value-is-a-switch)).
 
 ## `value == Class`
 
@@ -516,7 +516,7 @@ while compiling, and it is never the "never true" error, since another binding m
 for any class test inside a generic class: one that can never be true for one instantiation (`held == Health` in
 a `Box<Label>`) folds to `false` and its branch is removed from that copy, while outside a generic it stays the
 error. The full rules for class tests are with
-[unions](../specs/values_and_types.md#unions-in-full).
+[unions](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#unions-in-full).
 
 ```gdscript title=codegen_class_test_doc/find.spite
 generic $wanted_type

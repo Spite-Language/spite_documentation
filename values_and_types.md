@@ -162,7 +162,7 @@ total 6
 ```
 
 `String` converts both ways. Text is read as a number by `String`'s `to_<name>()` for that type:
-`to_integer()`, `to_long()`, `to_double()`, ... (the full list is in [the rules](../specs/values_and_types.md#numeric-types)). Each answers a
+`to_integer()`, `to_long()`, `to_double()`, ... (the full list is in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#numeric-types)). Each answers a
 `T?`, `null` when the text is not a number that fits, since a `0` there would read as a real zero; assigning text
 to a `T?` of a number calls it too. A number becomes text with its own
 `to_string()` ([below](#numbers-are-classes)).
@@ -203,7 +203,7 @@ class gives it functions, not a header, and a function the program never calls i
 number type to another is written by assignment, `var half: Float = count`, or by passing the value where the
 other type is expected; it compiles to the one machine conversion. A conversion belongs to the value converted:
 its function is the source's `to_<type>()`, so `count.to_float()` is the call form, and a function named
-`from_...` is an error ([rules](../specs/values_and_types.md#numbers-are-classes-and-this)).
+`from_...` is an error ([rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#numbers-are-classes-and-this)).
 
 `this` works in every class, not only numbers, to hand the object itself to something:
 `registry.append(this)`. Reading your own members through it is an error, because a class already reads them by
@@ -231,7 +231,7 @@ or `Boolean`) answers them as functions, each compiled to the one C operation an
 
 Each answers the receiver's type, with `other` cast to it like any argument: a `Byte` and a `Long` mask give a
 `Byte`. No shift is undefined: a count of the width or more moves every bit out, and a negative count halts the
-program ([the rules](../specs/values_and_types.md#numbers-are-classes-and-this)).
+program ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#numbers-are-classes-and-this)).
 
 ```gdscript title=bitwise_basics/bitwise_basics.spite entry
 var console = Console()
@@ -299,7 +299,7 @@ nan true 2147483647
 
 As with `/` on a float, nothing here halts: the square root of `-1` is not-a-number and the logarithm of
 `0` is minus infinity, the IEEE answers. What each function answers at its edges is
-[standard_library.md](../specs/standard_library.md#maths)'s.
+[standard_library.md](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#maths)'s.
 
 ### Every number fits `Number`
 
@@ -448,11 +448,11 @@ joining written text with `+` is an error naming the form above. `==`/`!=`/`<`/`
 A backslash writes a character a text cannot hold as itself: `\n` (line break), `\t` (tab), `\r` (carriage
 return), `\\` (backslash), `\"` (double quote) and `\{` (brace). Escapes follow each other freely, so `"\\\{"` is a
 backslash and a brace, and a text written inside a hole keeps its own escapes and holes
-([the rule](../specs/values_and_types.md#text-escapes)).
+([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#text-escapes)).
 
 A text that is one hole and nothing else, `"{clicks}"`, is an error: it is the value
 itself, so the value is written directly, and where text is wanted it becomes text on its own
-([the rules](../specs/values_and_types.md#casting)). The error gives the line to write:
+([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#casting)). The error gives the line to write:
 
 ```gdscript title=lone_hole/lone_hole.spite entry error
 var console = Console()
@@ -561,7 +561,7 @@ reading with `[]` answers one. A `Boolean?` is the one `T?` that is no condition
 missing; `assert flag` alone takes one, and asks that it is there and `true`. All of it is in
 [failure.md](failure.md), with the three outcomes a failure can have. Since `null` belongs to `T?` alone, `var target: Monster = null` is an error that asks for `Monster?` (none
 yet) or `Monster()` (a default), and a generic class makes the default of what it is bound to with `$name()`
-([the rules](../specs/values_and_types.md#variables-and-values)).
+([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#variables-and-values)).
 
 ## Enums
 
@@ -601,13 +601,13 @@ An enum declaration takes no `=` and lists one value per line, with no commas (a
 [below](#numbering-an-enums-values)). A value is written in single
 quotes (single quotes mean an enum value and nothing else), and `'mage'` alone resolves without writing
 `Player.Job`, because the parameter, the annotation, the assignment or the comparison it is used in says which
-enum it belongs to ([how it resolves](../specs/values_and_types.md#enums-in-full)).
+enum it belongs to ([how it resolves](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#enums-in-full)).
 
 An enum is a closed list of **symbols**: a value the enum does not list is a compile error naming the ones it
 does, and `var choice = 'orange'`, with nothing to check it against, is an error too. A `Symbol` on its own is
 text from the program's table of names (reflection answers class and function names as symbols) and reads as
 text anywhere text is expected. At run time an enum value is a small integer and a `Symbol` a pointer into a table
-holding only the symbols the program uses ([the rules](../specs/values_and_types.md#enums-in-full)).
+holding only the symbols the program uses ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#enums-in-full)).
 
 Text is read as an enum value the way it is read as a number: `"soup".to_course()` answers a `Course?`, the value
 spelled that way, or `null` when the enum has none, since any value of the enum there would read as a real one.
@@ -675,7 +675,7 @@ dessert false
 ```
 
 It is all decided while compiling: the walk becomes three calls, and no list of an enum's values exists at run
-time ([rules](../specs/values_and_types.md#enums-in-full)). An enum is also open to the program that loads it: reopening its
+time ([rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#enums-in-full)). An enum is also open to the program that loads it: reopening its
 class declares the enum again with the whole new list of values
 ([packages.md](packages.md#reopening-an-enum-replaces-it)), and a walk then walks that list.
 
@@ -781,7 +781,7 @@ members at once with `_:`, and `enemy == Monster` asks which member a value is
 `Null`, the class whose only value is `null`.
 
 A union costs nothing to hold: the value is the object itself, and a `switch` or a call on it compares the class
-its header already names against the members ([what it costs](../specs/values_and_types.md#unions-in-full)).
+its header already names against the members ([what it costs](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#unions-in-full)).
 
 ## Inline types and duck typing
 

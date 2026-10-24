@@ -123,7 +123,7 @@ ordinary `if`, with both branches compiled in.
 
 That reading is the whole run-time cost: one pass over the command line and one environment lookup per declared
 field, once, when `Environment()` is first made. A program that never makes `Environment()` carries none of it
-([rules](../specs/programs.md#program-settings-environment)).
+([rules](https://github.com/Mortaro/spite-language/blob/next/specs/programs.md#program-settings-environment)).
 
 ```gdscript title=setting_type_error/environment.spite
 var workers: Integer = 1
@@ -199,7 +199,7 @@ func UnknownFlagError() {
   anything, so what it produces is a default like the rest: `var build = true` only builds it, and
   `var final_classes = "..."` writes its final classes on every build ([compiler.md](compiler.md#choose-the-outputs)).
   Formatting is not an option: every compile formats first, and `format` is not a field a program may declare.
-  `target_operating_system` is the one field only a flag sets ([the rules](../specs/programs.md#build-settings-build)).
+  `target_operating_system` is the one field only a flag sets ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/programs.md#build-settings-build)).
 - A loaded package may declare `Build` fields too, and the program decides: a field the program's own
   `build.spite` declares keeps the program's default even when a package loaded after it declares the same field.
   An engine's `var plugins_folder = "../../plugins"` is only its default for programs that say nothing. The order
@@ -305,7 +305,7 @@ for this machine true
 
 `--final-classes` writes `Launcher` out with the rest of the program, so the printed program shows how it is
 loaded too. What the executable's `main` still does below it (handing over the command line, and the teardown
-after `Launcher` returns) is listed in [the rules](../specs/programs.md#constructors-and-the-entrypoint).
+after `Launcher` returns) is listed in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/programs.md#constructors-and-the-entrypoint).
 
 ## Configuration is a class
 

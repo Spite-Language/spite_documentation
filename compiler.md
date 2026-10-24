@@ -21,7 +21,7 @@ spite game --name=production        run it with a setting its Environment declar
 spite connect 4000                  talk to a program running with --repl-port=4000
 ```
 
-Every command and flag, with exactly what it does, is listed under [Command line](../specs/compiler.md#command-line). Flags mix
+Every command and flag, with exactly what it does, is listed under [Command line](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#command-line). Flags mix
 freely (a production build may keep the REPL), and the outputs combine: one compile can build the executable and
 write its final classes.
 
@@ -33,14 +33,14 @@ or `gcc` on the `PATH`.
 In a checkout of Spite itself, the compiler is a program like any other: `spite compiler --verify` builds it from
 `compiler/` and runs it, and the new compiler runs every test and keeps itself as the compiler you run once they all
 pass; `--verify --release` also does everything a release needs
-([the compiler proves itself](../specs/compiler.md#the-compiler-proves-itself)).
+([the compiler proves itself](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#the-compiler-proves-itself)).
 
 `bin/spite` (and `bin/spite.cmd`, which runs it from a Windows prompt) is the command itself: it builds the
 compiler from the seed for the system it runs on (`compiler/seed/linux/spite_compiler.c`, or `windows/`) into
 `.spite/spite.exe` the first time, and again whenever the seed is newer, finds a C compiler, makes the folder and path arguments absolute, and passes everything else
 through. A program's own settings and arguments reach it exactly as they were typed, from bash or from PowerShell
 or `cmd` through `spite.cmd`: `spite tool --prefixes=/Game/Legacy/` gives the program `--prefixes=/Game/Legacy/`,
-not the path Git for Windows' bash would make of it ([the rule](../specs/compiler.md#the-launcher-passes-the-programs-arguments-untouched)).
+not the path Git for Windows' bash would make of it ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#the-launcher-passes-the-programs-arguments-untouched)).
 
 ## Name the program
 
@@ -53,7 +53,7 @@ The folder supplies the program's other classes, and the entry class's construct
 program reads its command line through `Environment()`, what its build decided through `Build()`, and the raw
 arguments through `Arguments()`. A program is named only by its folder: `spite game/game.spite` is an
 error that answers with the folder form, `spite game`, and a folder with no entry file named after it is an error
-naming the file it looked for ([the texts](../specs/compiler.md#naming-a-program)). The compiler compiles itself the same way,
+naming the file it looked for ([the texts](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#naming-a-program)). The compiler compiles itself the same way,
 `spite compiler`, whose entry is `compiler/compiler.spite`.
 
 ## How a program is loaded
@@ -132,7 +132,7 @@ also holds the compiler `bin/spite` builds and the intermediate C and objects be
 be deleted.
 
 A folder the path names is created. `--executable-path` given with `--check`, which builds no executable, is an
-error ([the texts](../specs/compiler.md#outputs)), so a path never passes silently. Every `Build`
+error ([the texts](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#outputs)), so a path never passes silently. Every `Build`
 field is a constant in the built program, the paths included.
 
 What a build writes **beside its executable**, wherever that is (`.spite/build/game/` unless `--executable-path`
@@ -183,7 +183,7 @@ spite game --build --executable-path=build/game.exe --debug-memory
 A program may give an option a different default by reopening `Build` in its own `build.spite`
 (`var optimized = true`, or `var debug_memory = true` to always count its memory), and add options of its own the same
 way. No option is read before the program is, so every one of them, the outputs included, can be given a default
-there, except `target_operating_system`, which comes from the flag alone ([why](../specs/compiler.md#outputs)). Every `Build` field is
+there, except `target_operating_system`, which comes from the flag alone ([why](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#outputs)). Every `Build` field is
 a constant in the built program, so with `var build = Build()` beside the attributes, `if build.debug_memory { }`
 keeps one branch.
 
@@ -204,7 +204,7 @@ inside Visual Studio on Windows:
 SPITE_CC=clang spite game --optimized
 ```
 
-What the C compiler says is shown only when it fails ([the rule](../specs/compiler.md#what-the-c-compiler-says)): the C is the
+What the C compiler says is shown only when it fails ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#what-the-c-compiler-says)): the C is the
 compiler's, so a warning about it is nothing you could act on, and it never reaches the output of a program that
 built.
 
@@ -230,8 +230,8 @@ spite game --optimized  # release: -O3 and link-time optimisation, for any proce
 ```
 
 How fast a release build is, against the same program written in C plainly and tuned by hand, is
-`bash benchmarks/run.sh` ([benchmarks/README.md](../benchmarks/README.md)); what each optimisation level costs is in
-[its case](../benchmarks/a_release_build_is_o3_with_link_time_optimisation/#each-optimisation-level).
+`bash benchmarks/run.sh` ([benchmarks/README.md](https://github.com/Mortaro/spite-language/blob/next/benchmarks/README.md)); what each optimisation level costs is in
+[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_release_build_is_o3_with_link_time_optimisation#each-optimisation-level).
 
 ### Measure only a production build
 
@@ -287,7 +287,7 @@ game's edit was in a generic class, which changes every instantiation of it. A d
 rule and compiles each unit at `-O0`, linked without link-time optimisation: on a busier day than the table's, the
 compiler took 19.0 s from one file and 22.5 cold, 12.8 warm and 13.3 after one edit from units, so the build you
 repeat all day, after an edit, is the faster one. How they were measured, and the unit counts tried, are in
-[the case of translation units](../benchmarks/the_c_is_compiled_in_parallel_units_and_cached/#compile-time-at-scale);
+[the case of translation units](https://github.com/Mortaro/spite-language/blob/next/benchmarks/the_c_is_compiled_in_parallel_units_and_cached#compile-time-at-scale);
 `bash scripts/build_times.sh` measures them again.
 
 ## Compile for another system
@@ -328,7 +328,7 @@ type is an error naming the forms it takes, so typos never pass silently.
 each of the program's own files whose formatted text differs from what is on disk is rewritten, printing
 `formatted <path>`, and the program is read again, so what is compiled, and every line an error names, is the
 formatted file. Nothing turns this off, and a file the formatter refuses stops the compile: a program is never
-compiled from text that is not in the one style ([the rules](../specs/compiler.md#formatting-before-compiling)).
+compiled from text that is not in the one style ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#formatting-before-compiling)).
 
 **A file edited during the compile is never overwritten.** Just before writing a formatted file, the compiler reads it
 again; if it no longer holds the text the compile read (another editor or agent changed it meanwhile), it is left
@@ -348,7 +348,7 @@ branch, a template exists only for the names called, and reflection only where i
 An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every generated
 function instead, so live reload has all of them to swap and the REPL can reach every internal, and the
 singletons that hold nothing, such as `Build`, are ordinary objects that `.instances` lists. Every other build,
-ordinary or `--optimized`, is a production build ([the rule](../specs/compiler.md#inspectable-and-production-builds)). Conditions on
+ordinary or `--optimized`, is a production build ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#inspectable-and-production-builds)). Conditions on
 codegen values and `Build` fields fold in both: they are facts of the build, not values the running program could
 change. Which optimisation applies in which build is in [optimizations.md](optimizations.md).
 
@@ -490,7 +490,7 @@ The report has one section per optimisation, with how many places it lists:
 A line looks like this, its link relative to the report's folder so it opens from wherever the file is read:
 
 ```markdown
-- [game/game.spite:23](../game/game.spite#L23): `badge` (`Badge`) is made on the heap: line 24 lets it go: `badges.append(badge)`
+- [game/game.spite:23](https://github.com/Mortaro/spite-language/blob/next/game/game.spite#L23): `badge` (`Badge`) is made on the heap: line 24 lets it go: `badges.append(badge)`
 ```
 
 Like `--final-classes`, the report describes what the program ends up with: a function that tree shaking removes
@@ -504,11 +504,11 @@ checks kept.
 With no program, the compiler prints its usage text and exits unsuccessfully. A `.spite` file named instead of
 its folder, a folder with no entry file, an entry constructor that takes arguments, `--check` given with `--build` or
 `--executable-path`, a flag the compiler no longer has (`--run`, `--executable`), a flag with an underscore, a `--name=value` that names no field of `Build` or `Environment`, and a bare `--` are errors
-too, each naming the fix; their texts are [in the specification](../specs/compiler.md#naming-a-program).
+too, each naming the fix; their texts are [in the specification](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#naming-a-program).
 
 A program's own errors come first. When a package it loads is broken too (a game engine package halfway through a
 migration, say), its errors are listed after the program's, so they never hide the program's own; how many of each
-are listed is [in the specification](../specs/compiler.md#how-many-errors-are-listed).
+are listed is [in the specification](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#how-many-errors-are-listed).
 
 ---
 

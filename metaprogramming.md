@@ -198,7 +198,7 @@ var only_read = update.accesses.count_read()
 ```
 
 **A question that means a program is wrong is a `crash`**, and a `crash` whose condition is decided while compiling
-and is false is a compile error where the program reaches it ([the rules](../specs/metaprogramming.md#codegen-values-)). A library writes the
+and is false is a compile error where the program reaches it ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-)). A library writes the
 rule it keeps, and a class that breaks it fails the build at the line that breaks it, not the run:
 
 ```gdscript
@@ -369,7 +369,7 @@ back. Every other template keeps the member singular, because its name asks a qu
 | `find_by_<member>`, `sort_by_<member>` | singular | "find by name", "sort by health" |
 
 The plural comes from `String.pluralize()`, the rules every English plural follows plus a table of irregular and
-uncountable words a program can add to ([standard_library.md](../specs/standard_library.md#the-string-class)): `map_names` is
+uncountable words a program can add to ([standard_library.md](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#the-string-class)): `map_names` is
 `name`, `map_people` is `person`, and `map_health` is `health`, its own plural. A question is never collected:
 `monsters.map_is_alive()` is an error pointing at `filter_is_alive()`, `count_is_alive()`, `any_is_alive()` and
 `all_is_alive()`, which are what a question is asked for. A value worth collecting that is not already a member
@@ -451,7 +451,7 @@ the default of whatever `$left_type` is bound to.
 Only a class has codegen values. A function never lists its own (`func pick<$value_type>(...)` is an error), and
 there are no generic functions to write instead: a function that takes any class takes a
 `type`, such as the built-in empty `Anything` ([reflection.md](reflection.md#known-only-at-run-time)), or it belongs to a
-generic class. The exact forms and error texts are in [Codegen values](../specs/metaprogramming.md#codegen-values-).
+generic class. The exact forms and error texts are in [Codegen values](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-).
 
 A codegen value may be a value rather than a type. A condition on it is decided while compiling, so each set of
 values is its own class with only its own branch in it:
@@ -581,7 +581,7 @@ and a `type` of the generic's own file works too). What fits is what the `type` 
 `Shelf<Integer>` above is fine, while a `T?` or a function value is not. It is checked wherever a class is given,
 written out or read from the constructor's arguments, and it costs nothing at run time: the check is the
 compiler's, and the class made is the one an unconstrained line would make
-([the rules](../specs/metaprogramming.md#codegen-values-)).
+([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-)).
 
 ### Asking what a generic was given
 
@@ -589,7 +589,7 @@ When a codegen value is a type, `if $value_type == String { }` asks which type i
 the class is made, so only the branch taken is compiled, and each branch may use what only that type has. Besides
 naming a type exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Symbol` (an enum),
 and a `type` name asks whether the type fits it (`$value_type == Number` for any number class).
-The table is in [the rules](../specs/metaprogramming.md#codegen-values-).
+The table is in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-).
 
 What the branch ruled out is not compiled at all, and neither is what only it reaches. Below, `Field<Integer>`
 compiles `write` without the `List` branch, never compiles `write_list`, and so never checks its `.count()`
@@ -726,7 +726,7 @@ a column of String
 ### Asking whether a class fits a Vector
 
 A `Vector` keeps its items inline, so only a class of known size can be one
-([collections.md](../specs/collections.md#vectort)). `$component_type.is_fixed_size` asks that while
+([collections.md](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#vectort)). `$component_type.is_fixed_size` asks that while
 compiling, so a generic keeps a class that fits in a `Vector` and any other as references in
 a `List`, and never makes the `Vector` it could not:
 
@@ -808,7 +808,7 @@ An inspectable build (`--development`, `--hot-reload`, `--repl` or `--repl-port`
 program generated instead of only the ones reachable from `main`, so live reload has all of them to swap and the REPL
 can reach them, along with the run-time tables of every class
 ([compiler.md](compiler.md#development-builds-and-tree-shaking)). What is decided while compiling is decided there
-too: templates are still generated only for the names called, and [conditions on codegen values](../specs/metaprogramming.md#codegen-values-)
+too: templates are still generated only for the names called, and [conditions on codegen values](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-)
 still fold. Every optimisation the compiler makes on its own, and the builds it applies in, is listed in
 [optimizations.md](optimizations.md).
 

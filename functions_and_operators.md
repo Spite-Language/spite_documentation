@@ -7,7 +7,7 @@ func function_name(first: Reference, second: Value): Tiny {
 ```
 
 The return type follows a colon, `return` is always written out, and a function with no return type returns
-nothing ([the rules](../specs/functions_and_operators.md#functions)). Forgetting the colon is a parse error that shows the form:
+nothing ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/functions_and_operators.md#functions)). Forgetting the colon is a parse error that shows the form:
 
 ```gdscript title=missing_colon_error/missing_colon_error.spite entry error
 func add_one(value: Integer) Integer {
@@ -60,7 +60,7 @@ shout AGAIN!
 
 An ordinary call, `shouter.shout("hi")`, is a direct call and builds no function value; only a function
 used *as a value* costs anything, and little
-([what it costs](../specs/functions_and_operators.md#functions-are-values-always-bound-to-an-instance)). A value that holds
+([what it costs](https://github.com/Mortaro/spite-language/blob/next/specs/functions_and_operators.md#functions-are-values-always-bound-to-an-instance)). A value that holds
 a function bound to the instance holding it is a cycle, and leaks like any other: clear one side (see
 [memory.md](memory.md)). A function that returns nothing returns `Nothing`, which is what its type and its
 `.returns` say.
@@ -312,7 +312,7 @@ interception only applies to `receiver.field` written from outside. A getter may
 `String` or `List` as safely as it returns a field. It costs nothing hidden: an intercepted access is a direct
 call, and every other access a plain field read or write.
 
-**A getter with no setter makes a read-only attribute** ([the rule](../specs/functions_and_operators.md#operators)). That is how
+**A getter with no setter makes a read-only attribute** ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/functions_and_operators.md#operators)). That is how
 reflection keeps `Spite.Class.name` from being overwritten
 ([reflection.md](reflection.md#reflection-is-read-only)):
 

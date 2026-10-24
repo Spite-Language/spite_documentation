@@ -1,11 +1,26 @@
 # Spite documentation
 
+**Start here.** [WHY.md](WHY.md) says why to use Spite and why to help build it. [SPITE.md](SPITE.md) is the point
+of the project: what Spite refuses, and what it does instead. For a language model writing Spite,
+[skills/spite/SKILL.md](skills/spite/SKILL.md) is the skill and [skills/spite/reference.md](skills/spite/reference.md)
+the whole language on one page. The pages below are the tutorial, in reading order.
+
+The code lives in the [Spite-Language](https://github.com/Spite-Language) organisation:
+[spite_compiler](https://github.com/Spite-Language/spite_compiler) (the compiler, written in Spite and built by
+itself; it writes machine code directly),
+[spite_standard_library](https://github.com/Spite-Language/spite_standard_library),
+[spite_spec](https://github.com/Spite-Language/spite_spec) (the specification, as programs every compiler must pass),
+[spite_benchmarks](https://github.com/Spite-Language/spite_benchmarks) and
+[mortaros_spite](https://github.com/Spite-Language/mortaros_spite) (every decision and why). These pages were written
+for the first compiler, which compiled through C; where they describe how the compiler works rather than the
+language, the new compiler's own pages win.
+
 Spite is a small, opinionated language meant to be written mostly by AI and skimmed by humans. There is one way
 to do each thing, no macros, and metaprogramming instead of loops wherever it reads better. It compiles to C, and
 its compiler is written in Spite.
 
 **These pages are the tutorial.** Each page teaches its part of the language, with programs that run, and ends with
-a link to the next page. The formal definition of the language is [the specification](../specs/README.md): one page
+a link to the next page. The formal definition of the language is [the specification](https://github.com/Mortaro/spite-language/blob/next/specs/README.md): one page
 for each page here, holding every rule, edge case and exact error text. The specification is normative: where a
 page here and the specification disagree, the specification decides and the page is the bug.
 
@@ -32,7 +47,7 @@ reads it best (`func`, `var`, `name: Type`, `#` comments). The code is Spite thr
 - No abbreviations, anywhere, except the language keywords themselves (`var`, `func`, `enum`).
 - Compilation speed and live reload matter more than anything else in the toolchain.
 - Spite compiles to C. The compiler is written in Spite and compiles itself, and so is the standard library:
-  [Pure Spite](../specs/standard_library.md#pure-spite-dissolving-the-runtime).
+  [Pure Spite](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#pure-spite-dissolving-the-runtime).
 
 ## Reading order
 

@@ -50,7 +50,7 @@ var empty = List<String>()
 list has no buffer; the first element gets one of four slots, and a full buffer is resized to twice its size.
 
 Names say where: `append` and `prepend`, never `add`; `remove_last`, never `pop`
-([the rule](../specs/collections.md#listt-additions)).
+([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#listt-additions)).
 
 A list has the same members whatever it holds. Bytes from a file or a socket, and the numbers and text laid out in
 them, are a `Buffer`, which still reads like a list of bytes and adds what bytes need
@@ -200,7 +200,7 @@ ada plays for red team and the other ada is found: false
 A class that declares its own `equals` says two of its objects can be equal without being one object, and a
 dictionary keyed by it would miss the equal one, so it is a compile error: key the dictionary by what `equals`
 compares instead, an id or a name. A key given where its type is not wanted is the same mismatch as any argument,
-and the [specification](../specs/collections.md#dictionarykey-value) lists every rule and error.
+and the [specification](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#dictionarykey-value) lists every rule and error.
 
 The key and value types are what the program means, not how it is stored: the compiler keeps a dictionary however
 is fastest, as long as every lookup answers the same ([write it plainly](write_it_plainly.md#a-class-is-what-you-mean-not-how-it-is-stored)).
@@ -274,7 +274,7 @@ templates run on the items in place the same way, and a chain of them is one loo
 
 An item is a class of known size: its attributes are only numbers, `Boolean`, enums and `String`s. A class with a
 `List`, a `Dictionary` or another object in an attribute is an error naming the attribute, and it belongs in a
-`List` ([the rules](../specs/collections.md#vectort)). A `String` may be an item too, held as a counted reference.
+`List` ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#vectort)). A `String` may be an item too, held as a counted reference.
 
 A borrowed item is read and written through its members. It is never kept: not in an attribute, a list, a
 returned value or a function value, and not past anything that may change the vector's size or move its block,
@@ -305,7 +305,7 @@ may move the items of 'velocities', so 'first' is not read after it
 ```
 
 The rules for what a borrowed item may do, and what they cost, are in
-[memory.md](../specs/memory.md#borrowed-items-of-a-vectort). Items of several vectors can travel together as
+[memory.md](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort). Items of several vectors can travel together as
 a **row**, an object literal a system takes as a `type` for one call, which is how an engine joins its component
 columns ([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)).
 
@@ -408,7 +408,7 @@ func ItemsBorrowMistake() {
 ```
 
 An engine's column holds its values in an `Items`, and the walked row reads them the same way for both kinds
-([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)). The rules are [in the specification](../specs/collections.md#itemst).
+([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)). The rules are [in the specification](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#itemst).
 
 ## Removing many at once
 
@@ -480,14 +480,14 @@ func is_despawned(entity: Integer): Boolean {
 ```
 
 Each costs one walk over the collection, however many go: every element that stays is moved down at most once,
-and the ones removed are released at the end ([its benchmark](../benchmarks/removing_many_at_once/) measures it
+and the ones removed are released at the end ([its benchmark](https://github.com/Mortaro/spite-language/blob/next/benchmarks/removing_many_at_once) measures it
 against the same removal written in C). What stays keeps its order, which one `remove_swapping` per item does
 not. A test that is not a function of the element alone (a mask read by row) is written as the loop above:
 `swap` each row that stays down to the next free place, then `truncate`.
 
 `remove_where` changes the collection it is called on, so it ends no chain: `names.filter(is_short).remove_where(is_long)`
 is an error naming the fix, one test that says everything to remove. Like `remove_at`, all three may move items,
-so an item borrowed from a `Vector` or `Items` is not read after one ([the rules](../specs/collections.md#removing-many-at-once)).
+so an item borrowed from a `Vector` or `Items` is not read after one ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#removing-many-at-once)).
 
 ## Member templates: loops you do not write
 
@@ -673,7 +673,7 @@ counter walking a list, a `Vector` or an `Items` from `0` to its `count()`, doin
 with one of its members, or what `each`, `filter`, `count`, `sum`, `find`, `any` or `all` does with a
 function passed the element, on a list of anything, numbers and text included. Loops that need the index, pass
 more than the element, stop early for another reason, or walk state keep their `while`. The exact shape the
-compiler looks for is in [control_flow.md's rules](../specs/control_flow.md#a-while-that-a-member-template-already-says).
+compiler looks for is in [control_flow.md's rules](https://github.com/Mortaro/spite-language/blob/next/specs/control_flow.md#a-while-that-a-member-template-already-says).
 
 ```gdscript title=template_loop_error/item.spite
 var price = 0
@@ -976,7 +976,7 @@ is a class) and `filter_`; the last call can be any template, and a chain the co
 is run step by step, which means the same. The one visible difference is order: a member function in a fused
 chain runs element by element, where the steps written out would run it on every element before the next step
 starts. Written as three steps, the chain above would make two lists every time it ran; fused, it makes none
-([the rules](../specs/collections.md#standard-library-metaprogramming) name the test that pins the count).
+([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#standard-library-metaprogramming) name the test that pins the count).
 
 ## How the member templates are written
 

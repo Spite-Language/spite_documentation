@@ -19,7 +19,7 @@ A file contains only declarations, in this order:
 
 Anything out of that order is an error naming what came before it ([style.md](style.md#a-file-is-ordered)).
 There are **no file-level statements**: no loop, `if` or call outside a function
-([rules](../specs/classes_and_files.md#files-are-classes)):
+([rules](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md#files-are-classes)):
 
 ```gdscript title=file_scope_error/file_scope_error.spite entry error
 var console = Console()
@@ -161,7 +161,7 @@ argument is cast to the parameter's type instead ([functions_and_operators.md](f
 
 A constructed object is kept and used. A constructor call written as a statement of its own, `Report(text)`,
 makes an object and throws it away. The construction was the whole point, so it is an error saying to write a
-function instead ([rules](../specs/classes_and_files.md#a-constructed-object-must-be-kept-and-used)):
+function instead ([rules](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md#a-constructed-object-must-be-kept-and-used)):
 
 ```gdscript title=dropped_report/report.spite
 var console = Console()
@@ -223,7 +223,7 @@ singleton it does not reach ([optimizations.md](optimizations.md#singletons-made
 A singleton that a `Parallel` can reach is made safe for threads by the compiler, with nothing written in the
 source, and only in programs that use `Parallel`
 ([optimizations.md](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)). The details are in
-[the rules](../specs/classes_and_files.md#singleton-rules).
+[the rules](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md#singleton-rules).
 
 ### One instance per argument values
 
@@ -379,7 +379,7 @@ independent level 9
 
 A class reads and calls its own members by name: `level`, `score(2)`. There is no `self.` to write, and writing
 `this.level` is an error that says `level`. What `this` is for, in every class, is handing the instance itself
-to something else or returning it ([rules](../specs/values_and_types.md#numbers-are-classes-and-this)):
+to something else or returning it ([rules](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#numbers-are-classes-and-this)):
 
 ```gdscript title=this_basics/registry.spite
 var names = List<String>()
@@ -456,7 +456,7 @@ Lamp { room: "hall", lit: false }
 
 A name starting with `_` is private: it is read, written or called only inside its own class (a reopening of
 the class counts as inside), and using it from anywhere else is an error that names the getter when there is
-one ([rules](../specs/classes_and_files.md#lexical-structure)). On a parameter, and only there, the prefix says
+one ([rules](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md#lexical-structure)). On a parameter, and only there, the prefix says
 instead that the body ignores it on purpose; a private attribute nothing reads is an error like any other, and
 no spelling silences it ([style.md](style.md#nothing-unused)).
 
@@ -471,7 +471,7 @@ reopen.
 Reopening a class of the standard library adds what it lacks; it does not copy what it has. A function that
 rewrites the object from two values of its own class, beside the library's `*`, is an error that tells you to write
 `target = left * right`: the compiler builds that answer in `target`'s place
-([rules](../specs/classes_and_files.md)).
+([rules](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md)).
 
 ## A class name means one class
 
@@ -489,7 +489,7 @@ Names that all start with the same word say the same thing: `HighBlock`, `HighFu
 namespace written into each name. Make it a folder instead, `high/block.spite` and the rest, and the classes are
 `High.Block`, `High.Function` and `High.Value` outside it and `Block`, `Function` and `Value` inside it, where a
 reader already knows which namespace they are in. Three or more such names in one folder are an error naming the
-folder to move them into ([the rule](../specs/classes_and_files.md#files-are-classes)). And name the namespace
+folder to move them into ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md#files-are-classes)). And name the namespace
 for what it holds: `High` alone does not say high what.
 
 ```gdscript title=own_vector/geometry/vector3.spite

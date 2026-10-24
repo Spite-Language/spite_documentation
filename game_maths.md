@@ -317,7 +317,7 @@ the function that made it writes it straight there
 `var offset = first - second` read only by `offset.length()`. An answer that is stored (in an attribute, a list, a `Vector<T>` column) or printed
 is an object on the heap, one allocation, as any object is.
 
-[Its benchmark](../benchmarks/game_maths/) measures it against the same passes written in C with plain structs: a
+[Its benchmark](https://github.com/Mortaro/spite-language/blob/next/benchmarks/game_maths) measures it against the same passes written in C with plain structs: a
 million `position + velocity.scaled(delta)` steps, 200 000 `Matrix4` products and a million `transform_point`s take
 7.2 ms in all, against 2.3 ms in plain C and 1.8 ms in C tuned by hand. The vector steps and the transforms live in
 the frame; a product assigned back over its own operand, `accumulated = accumulated * step_matrix`, is made on the

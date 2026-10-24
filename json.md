@@ -458,7 +458,7 @@ func JsonValues() {
 
 A small object (an `Integer` id, a short name, two `Float`s, a `Short`, a `Boolean` and an enum) is about 94 bytes
 of JSON and 24 bytes of binary. What testing a binary schema costs against C is in
-[its case](../benchmarks/a_binary_schema_is_a_constant/).
+[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_binary_schema_is_a_constant).
 
 JSON's cost is making and parsing text: every number is formatted and parsed, every key written and matched, and
 every member is a `String` of its own. The binary writer stores each number with one instruction and reads it

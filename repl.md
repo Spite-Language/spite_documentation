@@ -712,7 +712,7 @@ worked out while compiling, so the check folds away with the branch it guards.
   re-point: the program's own, the standard library's, and the helpers the compiler writes. The function the rest
   of the code calls is a one-line forwarder to its slot. A normal build is untouched: direct calls, and tree
   shaking. The slot costs about a nanosecond per call, one indirect call the C compiler cannot inline
-  ([measured](../specs/repl.md#live-reload-in-detail)),
+  ([measured](https://github.com/Mortaro/spite-language/blob/next/specs/repl.md#live-reload-in-detail)),
   and only in a `--hot-reload` build.
 - **Only what changed is compiled again.** The build writes two files beside the executable: `game.reload_host`,
   what the running program holds (every function with its C prototype, its classes and their layouts, and the
