@@ -93,12 +93,11 @@ searching for the old name. These are errors, each with the fix:
   hold and abbreviate nothing: `position.x`, `var x = 0.0`.
 - **Never an abbreviation.** Every word of a name is checked against a list (`msg`, `idx`, `val`, `cfg`, `tmp`,
   `str`, `len`, `max`, `min`, `init`, `env`, `dir`, `doc`, ...; the full table is in
-  [Naming and abbreviations](https://github.com/Mortaro/spite-language/blob/next/specs/style.md#naming-and-abbreviations-compile-errors-not-auto-fixed)),
+  [Naming and abbreviations](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations-compile-errors-not-auto-fixed)),
   and the error spells the name out. `id` is allowed.
-- **Any word C uses is yours too**: `unsigned`, `static`, `stdout` or `near` are ordinary names, because the C a
-  program compiles to writes every local, parameter and attribute with a `_` after it.
+- **Any word another language reserves is yours too**: `unsigned`, `static`, `stdout` or `near` are ordinary names.
 - **One underscore between words**, and at most one in front to make a name private: `hit__count`, `__strike`
-  and `strike_` are errors. That is what keeps the C the compiler makes for a class (how it allocates, counts
+  and `strike_` are errors. That is what keeps the names the compiler makes for a class (how it allocates, counts
   and releases one, under names with `___` in them) out of the way of yours, so `allocate`, `make`, `release`
   or `class_of` are ordinary function names.
 - **Never a function's name.** A local, parameter or attribute named like a function of its class is an error,
@@ -151,7 +150,7 @@ assigned and never read is unused too, and there is no spelling that silences it
 is work the program did for nothing. A parameter is the one exception, because a signature can need a parameter
 its body ignores: name it `_name` to say so. A `_name` that *is* read is an error, since the prefix says it is
 not, and a parameter whose signature is dictated from outside (an operator function's, for one) needs no `_` at
-all ([the exemptions](https://github.com/Mortaro/spite-language/blob/next/specs/style.md#unused-is-an-error)). Everywhere else a leading `_` means private to its
+all ([the exemptions](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#unused-is-an-error)). Everywhere else a leading `_` means private to its
 class ([reflection.md](reflection.md#reflection-is-read-only)).
 
 ```gdscript title=unused_error/unused_error.spite entry error
@@ -183,7 +182,7 @@ An attribute nothing reads is an error the same way: remove it. A private `_name
 exception, since only its own class can read it. Writing an attribute is not reading it, so one that is only
 assigned is still unused. A read is anything that takes the attribute's value: its name in the class's own
 functions, `thing.world` from another class, `x.attributes[attribute]` in a template or a walk (which is how the JSON
-and binary writers and `to_debug()` read), and the rest [in the rules](https://github.com/Mortaro/spite-language/blob/next/specs/style.md#unused-is-an-error). A walk that only looks
+and binary writers and `to_debug()` read), and the rest [in the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#unused-is-an-error). A walk that only looks
 at `attribute.name` or `attribute.class` reads the attribute's description, not the attribute, so an attribute
 kept only as a marker for such a walk is an error:
 
@@ -273,7 +272,7 @@ var days = cycles * days_per_cycle + remaining
 
 `146097` in the middle of the arithmetic is an error that gives this form. The name costs nothing: the compiler folds
 it as it folded the number. `0`, `1` and `-1` need no name, and neither does the number on the right of the `var`
-that names it. The rule is in [the specification](https://github.com/Mortaro/spite-language/blob/next/specs/style.md#a-number-is-named-before-it-is-used).
+that names it. The rule is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#a-number-is-named-before-it-is-used).
 
 ## A function body holds no empty lines
 
@@ -330,7 +329,7 @@ spite
 
 A method called on a call's result (`source.split(" ").count()`) and the holes of a text
 (`"{names.count()} names"`) are not arguments. Every case is
-[in the rules](https://github.com/Mortaro/spite-language/blob/next/specs/style.md#one-call-per-line-and-nothing-said-twice).
+[in the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#one-call-per-line-and-nothing-said-twice).
 
 **A constructor call is not an argument either.** An object is made on a line of its own and passed by
 name, however short the line:

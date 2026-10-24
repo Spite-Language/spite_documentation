@@ -5,7 +5,7 @@ never warns: it errors or it is fine. A file that does not parse is reported as
 `path:line:column: message`; once everything parses, every error of the program comes in one run as
 `path:line: error: message (in Class.function)`. Every compile first rewrites your files into the one style
 (`formatted path` is printed), so what you read back may differ from what you wrote.
-The specification is the reference, a page of rules in full for each page of the documentation ([specs/README.md](https://github.com/Mortaro/spite-language/blob/master/specs/README.md)); this page is the
+The specification is the reference, a page of rules in full for each page of the documentation ([specs/README.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md)); this page is the
 working set.
 
 Code blocks are fenced as `gdscript` only so GitHub colours them: GitHub has no Spite highlighter yet. Every
@@ -14,15 +14,13 @@ one of them is Spite, not GDScript: write `.spite` files.
 ## Run it
 
 ```
-spite program                           build .spite/build/program/program.exe and run it
-spite program --optimized               optimized build (a Build field)
+spite program                           build program/.spite/build/program.exe and run it
 spite program --debug-memory            print the allocation balance at the end
 spite program --repl-port=4000          serve the REPL; spite connect 4000 --command="..." asks it
 spite program --check                   format and compile: the errors, if any (builds nothing, keeps an old executable)
-spite program --build                   build .spite/build/program/program.exe without running it
+spite program --build                   build program/.spite/build/program.exe without running it
 spite program --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies), each with its line and why
 spite program --player-name=ada         a setting the program's Environment declares (kebab-case, no '--')
-bash check.sh                           the compiler still compiles itself, and every corpus passes
 ```
 
 **Iterate on the running program, not by rebuilding** (D242). Start it once with
@@ -37,7 +35,7 @@ answer there, `continue` goes on, `breaks` lists and `clear` removes. A reload t
 renamed) is held and names the map to send: `reload {Hero.attributes['level']: "rank"}`, or `reload {}` to let the
 value go. Use `--check` only to see every error at once or for a program that cannot stay running, run the
 tests before calling the work done, and build `--optimized` only to measure. Every answer is one JSON line. The
-commands are in [repl.md](https://github.com/Mortaro/spite-language/blob/master/docs/repl.md).
+commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
 A program lives in its own folder, and `spite game` runs it: `launcher/launcher.spite` loads `library/`, then the
 target system's folder of it, then `game/`, whose every sub folder is a
@@ -150,7 +148,7 @@ func is_alive(): Boolean {
   `get_`/`set_` one): reflection gives every object those members, and `JsonReader` and every attribute walk read
   through `value.attributes`. The error suggests the class's name in front (`table_attributes`). A local may use
   them.
-- No name is taken by the C that Spite compiles to (D168): `short`, `default`, `register`, `static`, `unsigned`,
+- No name is taken by a language beneath Spite: `short`, `default`, `register`, `static`, `unsigned`,
   `stdout`, `near`, `far` and `pascal` are ordinary names for a variable, attribute, parameter or function, and
   so are `allocate`, `make`, `retain` and `release`. Do not rename around C. (`int`, `char`, `bool`, `min` and
   `max` are still errors, as abbreviations.)
@@ -326,7 +324,7 @@ func is_alive(): Boolean {
   `crash $component_type.is_fixed_size` halts every call in an instance whose type does not fit.
 - Do not hand-optimise: the compiler folds `Build` fields and codegen tests, fuses chains, appends to text in
   place, puts short-lived buffers in the frame and shakes out what is unused, on its own. Every such optimisation,
-  built or planned, and what it could ever change that you see, is in [optimizations.md](https://github.com/Mortaro/spite-language/blob/master/docs/optimizations.md).
+  built or planned, and what it could ever change that you see, is in [optimizations.md](https://github.com/Spite-Language/spite_documentation/blob/master/optimizations.md).
 - On a list or dictionary of a class or of text: `filter_<member>()`, `count_<member>()`, `any_`, `all_` (a `Boolean` member),
   `sum_<member>()` (a number), `sort_by_<member>()`, `find_by_<member>(value)` (a `T?`),
   `find_index_by_<member>(value)` (an `Integer?`, on a list, vector or items, never a dictionary), `map_<members>()`,
@@ -399,7 +397,7 @@ func is_alive(): Boolean {
   compiler can know, a `crash` naming its cause where only the run can. Never let a caller get a default it cannot
   tell from a real answer, lose a write, skip a step, leak or hang. When a function cannot answer, its result says
   so (`T?`, or an empty list), or it returns a value you chose on purpose, or it crashes because a caller broke the
-  rule ([failure.md](https://github.com/Mortaro/spite-language/blob/master/docs/failure.md#nothing-fails-silently)).
+  rule ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#nothing-fails-silently)).
 - `crash` and `assert` take a condition and never a message (D297): the report names the file and line and shows
   the values there. Never add a clause only to get text printed (`crash found or name == ""`).
 - `Monster?` is a value that may be `null`. It must be narrowed before use: `if target { }` (with `else`),
@@ -413,7 +411,7 @@ func is_alive(): Boolean {
   before it. A call that cannot change it keeps the proof. Calling a function value keeps no proof about
   attributes or lists.
 - Every proof the compiler makes (narrowing, proven `[]` reads, a proven divisor, frame objects, borrowed items,
-  singleton locks) is listed in [proofs.md](https://github.com/Mortaro/spite-language/blob/master/docs/proofs.md), with when it does **not** apply. Read its "Which proofs
+  singleton locks) is listed in [proofs.md](https://github.com/Spite-Language/spite_documentation/blob/master/proofs.md), with when it does **not** apply. Read its "Which proofs
   apply to my code" first: where a proof does not hold, you write the check yourself.
 - A `switch` is over a union or a `T?` and covers every member; `_:` as the last case answers for the rest, and
   two cases doing the same thing are an error: write it once as `_:`. A `switch` over an enum, a whole number or
@@ -476,9 +474,9 @@ func is_alive(): Boolean {
   Spite: `at=` names the library and offset, `foreign=` the last C function this thread called, and `from=` the
   Spite line that called it (start there). `stack-overflow` with `repeated=` on a frame is a recursion that never
   stops. The line in `path:line` is where the function starts, not the faulting line
-  ([failure.md](https://github.com/Mortaro/spite-language/blob/master/docs/failure.md#what-a-native-fault-reports)).
+  ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#what-a-native-fault-reports)).
 - A test is a function named `test_...` that takes nothing and crashes when wrong, in a class of its own (the entry
-  class's functions are not found). `tests/tests.spite` finds them all by itself ([testing.md](https://github.com/Mortaro/spite-language/blob/master/docs/testing.md)).
+  class's functions are not found). `tests/tests.spite` finds them all by itself ([testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)).
 
 ## Metaprogramming
 
@@ -505,7 +503,7 @@ func is_alive(): Boolean {
 - Questions are get-only attributes, folded on a constant: `Loader.functions['load_each']` (narrow it), then
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.accesses` (a `Dictionary<String, Spite.Access>` of what it reads and writes); `Loader.is_stateful`,
-  `Vector3.is_fixed_size`, `Monster.is_singleton`. [reflection.md](https://github.com/Mortaro/spite-language/blob/master/docs/reflection.md)
+  `Vector3.is_fixed_size`, `Monster.is_singleton`. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
 - In a generic class, `if $value_type == List { }` (also `Dictionary`, `Null` for any `T?`, `Symbol` for any enum or `Symbol`, `Enum` for an enum only,
   or an exact type) is decided while compiling, and `$value_type.element_type` names what the type holds. It is
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
@@ -624,7 +622,7 @@ in for what the function returns and reading it is the wait (there is no `.wait(
 handle.finished_value()`, then `if found { }`), and dropping the handle waits for it. When the entry function returns, every `Concurrent` still running runs to its end before any singleton is destroyed, and two that wait for each other halt (`joins_a_concurrent_that_waits_for_this_one=true`). A `parallel_each_<member>()`
 member may read only its own element's plain values, and a `Parallel(f)` only its own instance's plain values, its locals, singletons, or a counter or flag shared by threads (a singleton attribute each function touches once, which the compiler makes one atomic instruction; `Atomic<T>`, `Lock` and `ThreadLocal` are internal and a program cannot name them: keep per-thread data in locals and shared data in singletons); anything else is an error naming the attribute. One exception: `var crafter = Crafter(first)` then `var run = Parallel(crafter.craft)` hands the object over, so its task may keep lists of values (`List<Integer>`, `List<String>`) and objects of its own that it made itself; touching `crafter` after that line is `'crafter' was handed to 'Parallel(crafter.craft)', which keeps its 'recipe_ids' on another thread, so it is not used after that line`. Keep a list of ids as a `List<Integer>`, never as comma-joined text. A `Parallel`'s work writes a number, `Boolean`, enum or text attribute only of an object handed over that way: writing one of `this` (`Parallel(own_function)`), a parameter or an attribute is `... is not handed over to it, so another thread may write it at the same time and one write would be lost`; answer the value from the work and read the task's result, or count it in a singleton or under a `Lock` attribute's `while_locked(...)`. A singleton a `Parallel` reaches locks each of its functions that touch its state, so never make and wait for a `Parallel` inside such a function when the work calls back into the same singleton: `'Columns.despawn_all' waits for 'Parallel(remover.run)' while it holds Columns's lock, ...`. Start and read the `Parallel` from a class that is not that singleton. Many calls to one singleton from a counted loop (`while index < count { columns.remove_row(index); index = index + 1 }`, nothing else locked or waited on in it) take its lock once for the whole loop, so such a loop is the cheap way to call a singleton many times; keep other singletons and waits out of it. A singleton's function that only reads (a lookup such as `at(row)`: locals, reads of lists, text and numbers, no calls out) runs beside other readers on other threads and waits only for writers, so keep lookups in small functions of their own, apart from the ones that change the singleton. There is no `async`/`await`: a function
 that reads, sleeps or waits is an ordinary function, and the compiler suspends it there when something else can
-run ([concurrency.md](https://github.com/Mortaro/spite-language/blob/master/docs/concurrency.md)), wherever the
+run ([concurrency.md](https://github.com/Spite-Language/spite_documentation/blob/master/concurrency.md)), wherever the
 wait is written (an `and`, a function value, a constructor), keeping the written order: in `count + bump()`,
 `count` is read before `bump()` waits, even if another `Concurrent` changes it meanwhile.
 `$system_type.functions['update_each'].is_resumable` is decided while compiling (and `phase.is_resumable` for each
@@ -642,7 +640,7 @@ to keep a frame loop going.
 is decided while compiling the same way: `true` when the function, or anything it calls, changes what its argument
 number 1 (from 0) is given or anything reached through it; an engine writes `crash not update.arguments[1].is_mutated`
 to make a system that breaks its rule a compile error
-([metaprogramming.md](https://github.com/Mortaro/spite-language/blob/master/docs/metaprogramming.md#asking-a-question-while-compiling)).
+([metaprogramming.md](https://github.com/Spite-Language/spite_documentation/blob/master/metaprogramming.md#asking-a-question-while-compiling)).
 `JsonWriter<T>()` made once, then `write(value): String`, writes JSON, and `JsonReader<T>()`, then
 `read(text): T?`, reads it (`read_or_crash(text): T` halts instead), for any class, list, dictionary, enum, number, `Boolean`, `String` or `T?`;
 `read` skips unknown keys, keeps defaults for missing ones, reads a camelCase or PascalCase key (`buyPrice`,
@@ -662,7 +660,7 @@ and attributes holding a singleton are left out of both. A JSON key that is not 
 given to the serializer, keyed by the attribute (`{MeshRecord.attributes['minimum_level_of_detail']: "min_lod"}`);
 a class never declares `json_key_<attribute>()`, which is an error. A union, a `type` (`Anything` included) or a function value anywhere in what they see is a compile error at
 the line that makes the writer or reader (`JsonWriter cannot write 'Owner': 'Owner.pet' is the union Pet, ...`):
-keep what they see to the kinds above ([json.md](https://github.com/Mortaro/spite-language/blob/master/docs/json.md)). `Json` no longer exists: it is the two classes above.
+keep what they see to the kinds above ([json.md](https://github.com/Spite-Language/spite_documentation/blob/master/json.md)). `Json` no longer exists: it is the two classes above.
 Measure with `clock.elapsed_nanoseconds()`, the monotonic clock: a `Long`, no allocation, subtract two readings.
 To time one function, `var benchmark = Benchmark(work)` calls `work` (no arguments, passed by name) once between two
 readings: `benchmark.answer` is what it answered (a `Benchmark<Nothing>` for one that answers nothing) and
@@ -676,7 +674,7 @@ reads a local reading: `var zones = TimeZones()`, `zones.find("America/New_York"
 `zones.fixed_offset(duration)`, then `zone.to_local(instant)`, `zone.to_text(instant)` and
 `zone.to_instant(local, 'compatible')` (or `'earlier'`/`'later'`, always written). `TimeText()` reads ISO 8601
 (`read_instant(text): Instant?`, `read_date`, `read_duration`, ...) and `to_string()` writes it. `Date(2023, 2,
-29)` halts, so read outside text with `TimeText`, which answers `null` ([time.md](https://github.com/Mortaro/spite-language/blob/master/docs/time.md)).
+29)` halts, so read outside text with `TimeText`, which answers `null` ([time.md](https://github.com/Spite-Language/spite_documentation/blob/master/time.md)).
 `DynamicLibrary("ucrtbase.dll", 'identity', "")` calls a native library's functions as members
 (`c_runtime.strlen(text)`, `_as_long`/`_as_double`/`_as_text` for wider results); the standard library's
 `library/windows/`, `linux/` and `mac/` folders reopen the classes each system changes (docs/foreign_libraries.md).
@@ -753,7 +751,7 @@ in a `cdylib`, Zig `export fn` in a dynamic library, Go `//export` with `-buildm
   the library's side and answer a status), generics (export one function per type), a struct returned by value, a
   union past its first member, varargs, function-like macros, and memory another runtime owns (give it back through
   the library's own function, in `drop()`).
-  [foreign_libraries.md](https://github.com/Mortaro/spite-language/blob/master/docs/foreign_libraries.md#libraries-written-in-other-languages)
+  [foreign_libraries.md](https://github.com/Spite-Language/spite_documentation/blob/master/foreign_libraries.md#libraries-written-in-other-languages)
 
 ## Habits from other languages that Spite rejects
 
@@ -810,7 +808,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `text[0]` | `text is not indexed with [ ]` | `text.character_at(0)`, or `text.slice(start, end)` |
 | `// comment`, `/* comment */` | `Spite has no '//' or '/* */' comments` | nothing, or `# docs/page.md#section` on its own line outside a function |
 | `;` at the end of a line | `';' is not something Spite reads` | nothing |
-| `var memory = Memory()` | `this class has no function 'Memory'` | `var heap = Memory.Heap()` (inside a container of your own; see [memory.md](https://github.com/Mortaro/spite-language/blob/master/docs/memory.md)) |
+| `var memory = Memory()` | `this class has no function 'Memory'` | `var heap = Memory.Heap()` (inside a container of your own; see [memory.md](https://github.com/Spite-Language/spite_documentation/blob/master/memory.md)) |
 | `--repl_port=4000` | `'--repl_port' is written '--repl-port'` | kebab-case flags; the `Build` field behind it stays `repl_port` |
 | `spite game -- --player-name=ada` | `'--' is not a separator` | `spite game --player-name=ada`: settings sit beside the compiler's flags |
 | `spite game --player_name=ada` | `'--player_name' is written '--player-name'` | settings are kebab-case on the command line, like flags |

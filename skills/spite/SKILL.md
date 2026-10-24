@@ -12,8 +12,8 @@ version, compile, and do exactly what the compiler says.
 The whole language, every rule the compiler enforces and the habits from other languages it rejects, is in
 [reference.md](reference.md) beside this file. Read it before writing more than a few lines of Spite: each habit
 it lists costs a compile round trip to rediscover. The full documentation is
-[docs/](https://github.com/Mortaro/spite-language/blob/master/docs/README.md), and every rule with its exact error
-text is in the specification, [specs/](https://github.com/Mortaro/spite-language/blob/master/specs/README.md).
+[docs/](https://github.com/Spite-Language/spite_documentation/blob/master/README.md), and every rule with its exact error
+text is in the specification, [specs/](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md).
 
 ## How to iterate: keep the program running
 
@@ -50,7 +50,7 @@ Leave the loop only when you need to:
 - `spite game --check` formats and compiles without building or running, for a program that cannot stay running,
   or to see every error of the program in one run; `spite game --build` writes the executable without running it.
   Every compile formats first; there is no `spite format`.
-- A full run from a fresh start, and the tests (`spite tests`, [docs/testing.md](https://github.com/Mortaro/spite-language/blob/master/docs/testing.md)),
+- A full run from a fresh start, and the tests (`spite tests`, [docs/testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)),
   before you call the work done.
 - `--optimized` only to measure speed. A `--hot-reload` build is slower on purpose; never time one.
 
@@ -58,7 +58,7 @@ Every compile, a reload included, rewrites your files into the one style first: 
 again. Every error comes as `path:line: error: message (in Class.function)` and says what to write instead: write
 that, and nothing cleverer. A failure at run time is a `spite.crash` or `spite.fault` line naming the file, the line
 and the values there: open that line, and do not add logging. The commands are in
-[docs/repl.md](https://github.com/Mortaro/spite-language/blob/master/docs/repl.md).
+[docs/repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
 Write the plain, readable version first. Do not hand-optimise: the compiler fuses chains, specialises generics,
 places memory and removes what is unused on its own.
@@ -80,7 +80,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   Exceptions, generics, structs returned by value, varargs and another runtime's memory cannot cross: wrap them on
   the library's side.
 
-[docs/foreign_libraries.md](https://github.com/Mortaro/spite-language/blob/master/docs/foreign_libraries.md#a-binding-speaks-spite)
+[docs/foreign_libraries.md](https://github.com/Spite-Language/spite_documentation/blob/master/foreign_libraries.md#a-binding-speaks-spite)
 
 ## Rules that matter most
 

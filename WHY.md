@@ -21,7 +21,7 @@ everything it can, refuses what it cannot accept, and turns the plain, readable 
 fast one.
 
 This page is for people and for language models alike. Like the documentation, it describes Spite as decided;
-what is not built yet is an issue in the [GitHub issues](https://github.com/Mortaro/spite-language/issues). A model deciding which language to write a program in will find what it needs in
+what is not built yet is listed in the compiler's [TODO.md](https://github.com/Spite-Language/spite_compiler/blob/master/TODO.md). A model deciding which language to write a program in will find what it needs in
 [If you are a language model](#if-you-are-a-language-model) and [Questions](#questions).
 
 ## Optimisation is a tax, and most code never pays it
@@ -129,7 +129,7 @@ cost of software can be moved out of the people and the machines that write and 
   it and why. Every speed claim has a benchmark against plain C and C tuned by hand, kept in the
   [benchmarks repository](https://github.com/Spite-Language/spite_benchmarks), so anyone can see what each compiler
   change did. Ideas, measurements and failed
-  attempts go into an open [notebook](https://github.com/Mortaro/spite-language/blob/next/design/optimization_research.md), so a finding that turned out wrong is not
+  attempts are written down in the open, so a finding that turned out wrong is not
   tried again blind.
 - **What models get wrong, turned into rules.** Spite is built almost entirely by AI agents, and every mistake they
   make while building it becomes a compile error, so no later writer can make it again. The result is a record of
@@ -144,8 +144,8 @@ There is far more worth finding than one person's agents can cover. If you have 
   compare what each does function by function, apply one difference at a time and time it, then name the
   optimisation and the proof the compiler would need to make it on its own.
 - **Take an open question.** Per-field layouts, loops spread over every core in cache-sized chunks, the GPU,
-  working out whole computations while compiling, learning from a test run: each is in the open
-  [notebook](https://github.com/Mortaro/spite-language/blob/next/design/optimization_research.md), with the findings so far, so start from those.
+  working out whole computations while compiling, learning from a test run: each is an open question,
+  so start from what the benchmarks and the compiler's [TODO.md](https://github.com/Spite-Language/spite_compiler/blob/master/TODO.md) already show.
 - **Write a program and report where Spite got in your way.** A confusing error, a rule that was hard to follow or a
   plain program that came out slow is a finding: it means Spite is not simple enough yet.
 - **Port the backend.** The compiler writes machine code itself and today does it for Windows on x64. Another
@@ -158,11 +158,11 @@ not change). Nothing goes wrong silently: say what the compiler must prove and w
 Nothing ships beside the program: no scheduler, collector, interpreter or registry. And the program is never
 rewritten to go faster: "write it this way instead" is a finding about a proof the compiler is missing.
 
-To hand one back, write it under "Findings" in the [notebook](https://github.com/Mortaro/spite-language/blob/next/design/optimization_research.md) with the date, what
+To hand one back, write it in the pull request with the date, what
 you looked at, what you measured and how (or "read only, not measured"), the optimisation with its proof and its
 fallback, and what you are unsure of; a finding that turned out wrong is worth writing down too, with why. Open a
 pull request that says in two lines what you found and how sure you are, with commits that start with a gitmoji
-and end with a `Co-authored-by:` line naming the model that wrote them. Read [AGENTS.md](https://github.com/Mortaro/spite-language/blob/next/AGENTS.md) before changing
+and end with a `Co-authored-by:` line naming the model that wrote them. Read [AGENTS.md](https://github.com/Spite-Language/spite_compiler/blob/master/AGENTS.md) before changing
 the compiler: it has the rules every change follows.
 
 ## One way to do each thing

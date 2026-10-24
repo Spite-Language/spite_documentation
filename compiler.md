@@ -1,46 +1,38 @@
 # Compiler command line
 
-`spite` compiles one program. A program is a folder, and its entry file is the one named after the folder:
-`spite game` compiles `game/game.spite`, whose class `Game` is constructed to start the program. The compiler
-first reads the **whole** program (the launcher, the standard library, the program's folder, its `build.spite`
+The compiler compiles one program. A program is a folder, and its entry file is the one named after the folder:
+compiling `game` compiles `game/game.spite`, whose class `Game` is constructed to start the program. The compiler
+is written in Spite, builds itself, and writes machine code directly (Windows x64): there is no C compiler, linker
+or other toolchain behind it, and nothing to install beside the compiler and its `library/` folder. The command
+below is written `spite`, for the compiler's executable, `spite.exe`.
+
+The compiler first reads the **whole** program (the standard library, the program's folder, its `build.spite`
 and every folder it `load`s) and only then decides what to produce, from the program's
 [`Build`](programs.md#compile-time-settings-build). Every option is a field of `Build`, given as `--name=value`
-(a `Boolean` option may be given bare, `--optimized`). A flag is written in kebab-case and sets the `snake_case` field
-of the same name: `--repl-port=4000` sets `Build.repl_port`, and a field a program declares in its own
-`build.spite`, `worker_stack_size`, is given as `--worker-stack-size=256`. By default
-the compiler builds the executable into `.spite/` in the folder you run it from, and runs it: nothing is written
-beside the program's source unless a path says so ([where the outputs go](#where-the-outputs-go)).
+(a `Boolean` option may be given bare, `--check`). A flag is written in kebab-case and sets the `snake_case` field
+of the same name: `--executable-path=build/game.exe` sets `Build.executable_path`, and a field a program declares in
+its own `build.spite`, `worker_stack_size`, is given as `--worker-stack-size=256`. Nothing is written beside the
+program's source unless a path says so ([where the outputs go](#where-the-outputs-go)).
 
 ```
-spite game                          build .spite/build/game/game.exe, and run it
-spite game --debug-memory           the same, counting allocations and frees
+spite game                          build the executable of game, and run it
 spite game --check                  format it and check that it compiles, building nothing
 spite game --build                  build it without running it
-spite game --repl-port=4000         serve a REPL on 127.0.0.1:4000 while it runs
-spite game --name=production        run it with a setting its Environment declares
-spite connect 4000                  talk to a program running with --repl-port=4000
+spite game --executable-path=out/game.exe    build it there
+spite game --high-ir=ir/high        also write the high representation of each class
+spite game --low-ir=ir/low          also write the low representation of each class
 ```
 
-Every command and flag, with exactly what it does, is listed under [Command line](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#command-line). Flags mix
-freely (a production build may keep the REPL), and the outputs combine: one compile can build the executable and
-write its final classes.
+Every command and flag, with exactly what it does, is listed under [Command line](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#command-line). Flags mix
+freely, and the outputs combine: one compile can build the executable and write its final classes.
 
-The command is `spite.exe` from a [release](getting_started.md#install-the-compiler), the one a passing
-`bash check.sh` keeps in `.spite/shared/latest/` ([working on Spite itself](getting_started.md#working-on-spite-itself)),
-or `bin/spite` in a checkout of the repository. Either `spite.exe` needs a C compiler named in `CC`, or `cc`, `clang`
-or `gcc` on the `PATH`.
-
-In a checkout of Spite itself, the compiler is a program like any other: `spite compiler --verify` builds it from
-`compiler/` and runs it, and the new compiler runs every test and keeps itself as the compiler you run once they all
-pass; `--verify --release` also does everything a release needs
-([the compiler proves itself](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#the-compiler-proves-itself)).
-
-`bin/spite` (and `bin/spite.cmd`, which runs it from a Windows prompt) is the command itself: it builds the
-compiler from the seed for the system it runs on (`compiler/seed/linux/spite_compiler.c`, or `windows/`) into
-`.spite/spite.exe` the first time, and again whenever the seed is newer, finds a C compiler, makes the folder and path arguments absolute, and passes everything else
-through. A program's own settings and arguments reach it exactly as they were typed, from bash or from PowerShell
-or `cmd` through `spite.cmd`: `spite tool --prefixes=/Game/Legacy/` gives the program `--prefixes=/Game/Legacy/`,
-not the path Git for Windows' bash would make of it ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#the-launcher-passes-the-programs-arguments-untouched)).
+How the compiler is built from source, and how it is put together, is in
+[spite_compiler](https://github.com/Spite-Language/spite_compiler)'s
+[README.md](https://github.com/Spite-Language/spite_compiler/blob/master/README.md) and
+[ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md); the programs that
+define what it must accept and refuse are in
+[spite_spec](https://github.com/Spite-Language/spite_spec). [Getting started](getting_started.md) installs it and
+runs a first program.
 
 ## Name the program
 
@@ -53,22 +45,20 @@ The folder supplies the program's other classes, and the entry class's construct
 program reads its command line through `Environment()`, what its build decided through `Build()`, and the raw
 arguments through `Arguments()`. A program is named only by its folder: `spite game/game.spite` is an
 error that answers with the folder form, `spite game`, and a folder with no entry file named after it is an error
-naming the file it looked for ([the texts](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#naming-a-program)). The compiler compiles itself the same way,
+naming the file it looked for ([the texts](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program)). The compiler compiles itself the same way,
 `spite compiler`, whose entry is `compiler/compiler.spite`.
 
 ## How a program is loaded
 
-The compiler reads `launcher/launcher.spite` first. It is a Spite class whose constructor loads `library/`, then the
-target operating system's folder of it, then the program's folder, and the compiler follows its `load` lines in order.
+The compiler follows the `load` lines of the program's entry file in order, then of each file it reaches.
 [programs.md](programs.md#how-a-program-is-loaded) walks through it.
 
 ## Where it runs
 
-The compiler finds `launcher/` and `library/` from its own executable, looking in each folder above it, and
-never from the working directory. So `spite` runs, and the program it builds runs, in the folder you ran it from:
-a relative path the program opens (`File("save.txt")`, `Directory("levels")`, a cache folder) is relative to
-that folder, not to the language's repository. A foreign library's header named by a relative path
-(`DynamicLibrary`'s third argument) is looked for in the working directory as well.
+The program the compiler builds runs in the folder you ran it from: a relative path the program opens
+(`File("save.txt")`, `Directory("levels")`, a cache folder) is relative to that folder, not to the compiler's
+repository. A foreign library's header named by a relative path (`DynamicLibrary`'s third argument) is looked for
+in the working directory as well.
 
 ## Choose the outputs
 
@@ -95,61 +85,37 @@ an earlier build left at their path, so when the build fails, nothing is left th
 the executable at that path is always the one the last build made, or none.
 
 Whole-program steps (tree shaking, the constants `Build` folds, which templates are made) run on the complete
-program before any output is written, so the C written with an executable is the C that executable was built
-from.
-
-In that C, every local, parameter and attribute has a `_` after its Spite name (`var near = 3` is
-`int32_t near_ = 3;`, an attribute `pascal` is `self->pascal_`), and a function is its class's name joined to its
-own (`Map_far`). No snake_case name ends in `_`, so no Spite name can meet a C keyword or a macro from a system
-header (Windows defines `near`, `far` and `pascal`): C reserves nothing in Spite. Reflection,
-`--final-classes`, crash reports and error messages keep the Spite names.
+program before any output is written, so every output describes the program that was built.
 
 ## Where the outputs go
 
 **Nothing is written beside the program's source unless a path says so**. Each output has its own path
-option, and without one it goes into `.spite/`, a folder inside the folder you ran `spite` from. That is the folder a
-relative path the program opens is read from ([above](#where-it-runs)). `.spite/` holds only what the compiler
-writes, and can be deleted whenever you like:
+option, and without one it goes into `.spite/`, a folder inside the program's own folder. `.spite/` holds only what
+the compiler writes, and can be deleted whenever you like; no `.spite/` folder is ever read as part of a program.
 
 | Output | Path option | Default |
 |---|---|---|
-| the executable | `executable_path` | `.spite/build/game/game.exe` (no `.exe` on Linux and macOS) |
+| the executable | `executable_path` | `<program>/.spite/build/<name>.exe` |
+| the high representation | `high_ir` | not written; the flag names a folder, one `.ir` file per class |
+| the low representation | `low_ir` | not written; the flag names a folder, one `.ir` file per class |
 
-The folder under `.spite/build/` is the program folder's own path from the folder you ran `spite` in, so
-`spite examples/hello` builds `.spite/build/examples/hello/hello.exe`, and two programs named alike never share an
-executable. A program outside that folder (`spite ../other/game`, or an absolute path somewhere else) is built into
-`.spite/elsewhere/game_<number>/game.exe`, the number worked out from the program folder's whole path the way the
-C's is below. `spite game` builds and runs it from there, so where it lands matters only when you want to keep it:
+The executable's exit code is what the entry constructor answers. A path moves the executable:
 
 ```bash
 spite game --build --executable-path=build/game.exe
 ```
 
 `.spite/git/` holds the checkouts of the repositories a program's `load`s pin to a commit
-([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)). In the language's own repository, `.spite/`
-also holds the compiler `bin/spite` builds and the intermediate C and objects below. No
-`.spite/` folder is ever read as part of a program, and neither is an old `.spite-cache/` folder, which can
-be deleted.
+([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)).
 
 A folder the path names is created. `--executable-path` given with `--check`, which builds no executable, is an
-error ([the texts](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#outputs)), so a path never passes silently. Every `Build`
+error ([the texts](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#outputs)), so a path never passes silently. Every `Build`
 field is a constant in the built program, the paths included.
 
-What a build writes **beside its executable**, wherever that is (`.spite/build/game/` unless `--executable-path`
-moves it): `game.crashes`, the map from a crash report's
-site ids to their lines ([failure.md](failure.md)), and, for a `--hot-reload` build, `game.reload_host`,
-`game.reload_files` and each reload's `game_reload_1.dll` with its C ([repl.md](repl.md#live-reload---hot-reload)).
-The one intermediate is the C the C compiler reads: it goes to the language repository's `.spite/game_<number>.c`, the number worked out from the executable's whole path, so
-two builds of programs named alike in different folders at once never compile each other's C; it is overwritten
-by the next build of the same executable. A C compiler that reports success without writing the
-executable is an error, `the C compiler reported success but '<path>' is not there: nothing was built, so nothing
-runs`, never a build that ends with nothing to run. A program built from [translation units](#translation-units-the-c-compiled-in-parallel-and-cached) writes its units,
-their header and their objects to `.spite/objects` instead, each named by the hash of its content.
-
-`spite reload <folder> ... --executable-path=<running executable>` is what a `--hot-reload` program runs to
-rebuild itself: given the options it was built with, it compiles only the classes whose files changed into a
-library beside the executable and prints what it rebuilt, or its errors, on standard output, where the running
-program reads them ([repl.md](repl.md#live-reload---hot-reload)). You never type it.
+Beside every executable the compiler writes `<name>.functions`: one line per function of the code, with its start
+and end as offsets from the start of the code section and its key. Nothing of it is in the executable. When a native
+fault halts the program, the crash report reads that file to name the function that faulted and the functions that
+called it ([failure.md](failure.md)); without the file it prints only the fault line.
 
 ## Build options
 
@@ -159,146 +125,47 @@ Every option is a `Build` field with a literal default, declared in `library/bui
 |---|---|---|
 | `check` | `false` | only checks that the program compiles: no executable, nothing run ([above](#choose-the-outputs)) |
 | `build` | `false` | builds the executable without running it |
-| `executable_path` | `""` | where the executable goes; `""` is `.spite/build/<program>/` in the working folder ([above](#where-the-outputs-go)) |
+| `executable_path` | `""` | where the executable goes; `""` is `<program>/.spite/build/<name>.exe` ([above](#where-the-outputs-go)) |
 | `final_classes` | `""` | writes the merged classes to this folder |
 | `optimization_report` | `""` | writes what could not be optimised, and why, to this file ([below](#read-what-was-not-optimised)) |
 | `high_ir` | `""` | writes the program's high IR, one `.ir` file per class, to this folder |
-| `optimized` | `false` | a release build: `-O3` instead of `-O0`, and link-time optimisation across the [translation units](#translation-units-the-c-compiled-in-parallel-and-cached) ([below](#release-builds)) |
+| `low_ir` | `""` | writes the program's low IR, one `.ir` file per class, to this folder |
 | `development` | `false` | an [inspectable build](#development-builds-and-tree-shaking): nothing tree-shaken, internals as ordinary objects |
 | `repl` | `false` | runs the program, then opens a REPL on it at the terminal ([repl.md](repl.md)) |
 | `repl_port` | `0` (off) | serves the remote REPL on `127.0.0.1` at this port while the program runs ([repl.md](repl.md)) |
 | `hot_reload` | `false` | swaps changed classes into the running program; implies `development` ([repl.md](repl.md#live-reload---hot-reload)) |
 | `debug_memory` | `false` | counts allocations and frees and prints them when the program ends ([below](#counting-memory---debug-memory)) |
 | `trace_asserts` | `false` | writes each failed `assert` of the program to the error stream as it fails, not only in a crash's report ([failure.md](failure.md#what-a-crash-reports)) |
-| `operating_system` | the compiling machine | cannot be given: it is the system doing the compiling |
-| `target_operating_system` | `operating_system` | the system the program is compiled for ([below](#compile-for-another-system)) |
-| `program` | the folder named | cannot be given: it is the folder on the command line, which the launcher loads |
+| `program` | the folder named | cannot be given: it is the folder on the command line |
 
 ```bash
-spite game --optimized
 spite game --debug-memory
 spite game --build --executable-path=build/game.exe --debug-memory
 ```
 
 A program may give an option a different default by reopening `Build` in its own `build.spite`
-(`var optimized = true`, or `var debug_memory = true` to always count its memory), and add options of its own the same
+(`var debug_memory = true` to always count its memory), and add options of its own the same
 way. No option is read before the program is, so every one of them, the outputs included, can be given a default
-there, except `target_operating_system`, which comes from the flag alone ([why](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#outputs)). Every `Build` field is
+there. Every `Build` field is
 a constant in the built program, so with `var build = Build()` beside the attributes, `if build.debug_memory { }`
 keeps one branch.
 
 None of this is in the program that is built: choosing, building and writing outputs is the compiler's own
-work, and `Build` is a folded singleton that holds nothing at run time. Only five options add code to the program,
+work, and `Build` is a folded singleton that holds nothing at run time. Only four options add code to the program,
 and only to a build that asks for them: `--debug-memory` its allocation table, `--repl` and `--repl-port` the REPL
 and the reflection it walks, `--hot-reload` a slot per function and a file watcher, and `--trace-asserts` a write
 in each failed `assert`. Each one's cost is on its
 page.
 
-The compiler hands the C it writes to the command in the `CC` environment variable when it is set; otherwise to the
-first of `cc`, `clang` and `gcc` that runs. `bin/spite` keeps a `CC` that is already set, and uses it to build
-the compiler from the seed too; otherwise it sets `CC` to `SPITE_CC` when that is set (one executable, spaces in
-its path allowed, which wins over `CC`), else to the first of `cc`, `clang` and `gcc` on the `PATH`, or the clang
-inside Visual Studio on Windows:
-
-```bash
-SPITE_CC=clang spite game --optimized
-```
-
-What the C compiler says is shown only when it fails ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#what-the-c-compiler-says)): the C is the
-compiler's, so a warning about it is nothing you could act on, and it never reaches the output of a program that
-built.
-
-## Release builds
-
-`--optimized` is the release build: the C compiler is asked for `-O3` instead of the default build's `-O0`, and
-when the executable is built from several [translation units](#translation-units-the-c-compiled-in-parallel-and-cached),
-for link-time optimisation too (`-flto=thin` with clang, linked by `lld` except on macOS; `-flto=auto` with gcc), so
-a function in one unit is still inlined into another.
-
-The compiler is fastest by default: the default build is the one that compiles fastest, since it is the one you
-rebuild all day, and each flag trades something on purpose. `--optimized` trades compile time for run speed;
-`--hot-reload` trades run speed for live information about the running program, and compiles like the default
-build. So the default build and `--hot-reload` compile the C at `-O0`, and only `--optimized` asks for more.
-
-A default or `--hot-reload` build is never shipped, so the C compiler may use every instruction the machine
-building it has (`-march=native`, or `-mcpu=native` on ARM): it runs where it was built. An `--optimized` build is
-the one shipped, so it stays portable and runs on any processor of its system. Neither is a setting:
-
-```bash
-spite game              # -O0, for this machine's processor
-spite game --optimized  # release: -O3 and link-time optimisation, for any processor
-```
-
-How fast a release build is, against the same program written in C plainly and tuned by hand, is
-`bash benchmarks/run.sh` ([benchmarks/README.md](https://github.com/Mortaro/spite-language/blob/next/benchmarks/README.md)); what each optimisation level costs is in
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_release_build_is_o3_with_link_time_optimisation#each-optimisation-level).
-
 ### Measure only a production build
 
 REPL and live-reload builds are slower on purpose. They exist to tell you more while the program runs: every
 function sits in a slot so it can be swapped, the program can stop at a breakpoint, and the REPL can inspect any
-object. None of that is free, and none of it is meant to be fast. A default build is compiled at `-O0` for its own
-reason: it is the build you rebuild all day, so it is the one that compiles fastest, not the one that runs fastest.
+object. None of that is free, and none of it is meant to be fast.
 
-So any benchmark or performance comparison of Spite uses a production build: `--optimized`, with no `--repl`, no
-`--repl-port`, no `--hot-reload` and no `--debug-memory` (which counts every allocation). A number measured on any other build describes the tooling, not the program.
-
-```bash
-spite game --optimized    # the only build to measure
-```
-
-## Translation units: the C compiled in parallel and cached
-
-A big program is built from several C files, in a default build and in an `--optimized` one, compiled at the same time and
-remembered. The generated C is split into one header (every type, macro and prototype, and an `extern` line for
-each variable at file level) and a number of units that include it. Each function goes into the unit a hash of
-its name picks, so editing a function leaves every other function where it was; the variables are defined in the
-first unit; the small `static inline` helpers stay in the header, a copy for each unit. The C compiler compiles as
-many units at once as the machine has processors, and the objects are linked.
-
-Each unit's object is kept in the language repository's `.spite/objects`, named by a hash of everything it
-was compiled from: the C compiler's command and flags, the header and the unit. A build finds the objects it
-already has and compiles only the rest, so building a program again after changing nothing only links it, and
-after changing one function's body compiles one unit. What the cache cannot save: an edit that adds or removes a
-function, changes a type, or adds or removes a piece of constant text changes the header (the texts are
-file-level variables numbered in order), and every unit is compiled again.
-
-The cache cleans itself: once `.spite/objects` passes 1 GiB, a build removes what was used least recently until
-it is back under, so it never needs deleting. The cap is the compiler's choice, not a setting.
-
-How many units is the compiler's choice, not a setting: the largest power of two that is no more than one unit per
-768 KiB of C, no more than the number of processors, and at most 64, which the measurements below settled on:
-eight units for the compiler's 7 MB of C on a machine with eight processors or more. A program under 1.5 MB of C
-stays one file, compiled as before and not cached. A `--hot-reload` build, and a program whose C includes a
-foreign library's header (a `DynamicLibrary` given one), are always one file.
-
-An `--optimized` build, in seconds of the whole `spite` command on a machine with 32 logical processors
-and clang 19.1.5: from one file as before, and from units with the cache empty (cold), full (warm) and after one
-function's body changed:
-
-| program | C | one file | cold | warm | one edit |
-|---|---|---|---|---|---|
-| the compiler | 7.2 MB | 37.7 | 14.5 | 11.4 | 13.3 |
-| a large game's `kal_character` | 14.1 MB | 80.1 | 45.7 | 30.7 | 67.2 |
-| a generated 209 206-line program | 20.5 MB | 181.2 | 50.0 | 34.3 | 37.3 |
-
-A warm build is the Spite compile plus a ThinLTO link, which optimises the whole program again each time; the
-game's edit was in a generic class, which changes every instantiation of it. A default build is split by the same
-rule and compiles each unit at `-O0`, linked without link-time optimisation: on a busier day than the table's, the
-compiler took 19.0 s from one file and 22.5 cold, 12.8 warm and 13.3 after one edit from units, so the build you
-repeat all day, after an edit, is the faster one. How they were measured, and the unit counts tried, are in
-[the case of translation units](https://github.com/Mortaro/spite-language/blob/next/benchmarks/the_c_is_compiled_in_parallel_units_and_cached#compile-time-at-scale);
-`bash scripts/build_times.sh` measures them again.
-
-## Compile for another system
-
-`--target-operating-system=linux` (or `windows`, or `mac`) compiles for that system from any machine: it loads
-`library/linux/` instead of this machine's folder, and `build.target_operating_system` is `"linux"` in the
-program. Use it to check that the folders of another system still compile:
-
-```bash
-spite game --check --target-operating-system=linux
-```
+So any benchmark or performance comparison of Spite uses a build with no `--repl`, no `--repl-port`, no
+`--hot-reload` and no `--debug-memory` (which counts every allocation). A number measured on any other build
+describes the tooling, not the program.
 
 ## Pass settings to the program
 
@@ -308,10 +175,10 @@ declares by reopening `Environment` in its own `environment.spite` (see
 [programs.md](programs.md#run-time-settings-environment)):
 
 ```bash
-spite game --optimized --player-name=Bob --volume=7
+spite game --debug-memory --player-name=Bob --volume=7
 ```
 
-`--optimized` sets a `Build` field (the compiler's own options, or one the program declares in its
+`--debug-memory` sets a `Build` field (the compiler's own options, or one the program declares in its
 `build.spite`) and is written into the build as a constant; `--player-name=Bob` and `--volume=7` set
 `Environment.player_name` and `Environment.volume`, so the compiler passes them to the program when it runs it.
 Every other argument after the folder that is not a flag (`spite game ada`) is passed to the program too, for
@@ -328,7 +195,7 @@ type is an error naming the forms it takes, so typos never pass silently.
 each of the program's own files whose formatted text differs from what is on disk is rewritten, printing
 `formatted <path>`, and the program is read again, so what is compiled, and every line an error names, is the
 formatted file. Nothing turns this off, and a file the formatter refuses stops the compile: a program is never
-compiled from text that is not in the one style ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#formatting-before-compiling)).
+compiled from text that is not in the one style ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#formatting-before-compiling)).
 
 **A file edited during the compile is never overwritten.** Just before writing a formatted file, the compiler reads it
 again; if it no longer holds the text the compile read (another editor or agent changed it meanwhile), it is left
@@ -347,8 +214,8 @@ branch, a template exists only for the names called, and reflection only where i
 
 An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every generated
 function instead, so live reload has all of them to swap and the REPL can reach every internal, and the
-singletons that hold nothing, such as `Build`, are ordinary objects that `.instances` lists. Every other build,
-ordinary or `--optimized`, is a production build ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#inspectable-and-production-builds)). Conditions on
+singletons that hold nothing, such as `Build`, are ordinary objects that `.instances` lists. Every other build
+is a production build ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#inspectable-and-production-builds)). Conditions on
 codegen values and `Build` fields fold in both: they are facts of the build, not values the running program could
 change. Which optimisation applies in which build is in [optimizations.md](optimizations.md).
 
@@ -359,46 +226,6 @@ The two numbers differ only when something leaked, and then the report names the
 still alive, which is how a leaked cycle shows up ([memory.md](memory.md#cycles-leak)). The table costs a
 lookup under a lock on every allocation and free, and exists only in a `--debug-memory` build: any other build
 calls the allocator directly.
-
-## Compile time
-
-Compiling grows linearly with the program: every whole-program step (reading, formatting, analysis, template
-instances, call effects, tree shaking) works on each class a fixed number of times, and anything looked up by
-name is found through a table, never by walking every class again. The measure is a data-heavy program: a
-walk over a folder of small record classes, each one `fill(item)` of 10 to 30 assignments, with
-`Filler<record.class>` made for each, and the items kept in a `Dictionary` keyed by number. CPU seconds of the
-compiler alone (`--check`, so no C compiler), on Windows with clang:
-
-| records | before | now | C written |
-| ---: | ---: | ---: | ---: |
-| 525 | 2.8 s | 0.75 s | 57k lines |
-| 1,049 | 9.1 s | 1.2 s | 111k lines |
-| 2,097 | 33.6 s | 2.2 s | 218k lines |
-| 6,991 | 514 s | 7.3 s | 722k lines |
-
-About 1 ms and 104 lines of C per record. Before, each `Filler<record.class>` looked for its record by listing
-every class of the namespace, sorting them and working out each one's member name, so the walk was quadratic;
-the namespace's classes, their names and where each name is are now worked out once and kept, grown only when a
-class is added (`namespace_walk` in the generator). A program whose dictionary keys are learned while compiling
-is generated twice; the first pass stops once it has learned them, before the C is assembled and tree
-shaken, since the second pass writes it again. Every file is read once: the formatter formats the text the
-compile read. The compiler compiling itself, which has neither, takes 1.7 s of CPU, as before.
-
-Two more steps that were quadratic, found building a large game with `--hot-reload` (about 460 files; 880,000 lines
-of C for its server, 1.3 million for its client): which functions can reach a wait was worked out by
-sweeping every call the program makes until nothing changed, again for every question asked, and whether a
-function not yet written is called through a shape looked through every union for every such function on every
-sweep of the pending functions. A wait now spreads from the functions that wait to their callers once, through a
-table of who calls whom that only grows, and the shape question first asks a table of the names any shape calls.
-The server's whole compile went from 159 to 72 seconds (one generation pass from 48 to 17), the client's from
-268 to 110 (the C compiler's share included). A reload ([repl.md](repl.md#live-reload---hot-reload))
-skips the C of the whole program, which it never uses, and cuts the program's C into functions once rather than
-three times.
-
-Where a record's 104 lines go: 13 are its `fill` body; about 47 are the allocate, default, release and init
-functions of the record class and of its `Filler<...>` instance, 18 of them `#ifdef` blocks for instance tracking
-and weak references that the C preprocessor removes; 11 are prototypes, 7 the walk's step for that record, and
-the rest structs and typedefs.
 
 ## Inspect merged classes
 
@@ -411,20 +238,19 @@ printed program takes its flags again. A repository loaded at two commits is pri
 a folder named by the repository and the commit (`engine_6c7dca9/`), since the versions are two libraries
 ([packages.md](packages.md#two-versions-of-one-repository)).
 
-Each attribute and function is marked with one comment line linking the `.spite` file that supplied it, the
-program's own file, a file it loads, the reopening that replaced it, or the compiler's own reopening
-(`compiler/source/generation/prelude.spite`) for a body the compiler supplies, as a path relative to the printed
+Each attribute and function is marked with one comment line linking the `.spite` file that supplied it: the
+program's own file, a file it loads, or the reopening that replaced it, as a path relative to the printed
 file. The folder holds a `.final-classes` file, which is what lets a comment there link a `.spite` file
 ([style.md](style.md#comments-are-links)), so the printed program compiles with its links checked like any other.
 
 What is written is what the program **ends up with**, not what was written down: the classes come from the
 generator after it has run, so a class the generator never made is not there, a generic template is not there,
-and each of its instantiations is. The tree shaking of a production build's C runs after that, so a library class
-the program never uses (`FileSystemWatcher`, `Socket`) may still be printed although its C was dropped.
+and each of its instantiations is. Tree shaking of a production build runs after that, so a library class
+the program never uses (`FileSystemWatcher`, `Socket`) may still be printed although it was dropped from the executable.
 
 Every class the program names comes from a file in `library/`, including `Memory.Heap`, `DynamicLibrary`,
 `String` and the numbers (`Integer`, `Long`, `Double`, `Memory.Address`, ...), so every one of them is printed like a
-class of your own. A function whose body the compiler supplies (the floor that stays C, such as
+class of your own. A function whose body the compiler supplies (such as
 `Memory.Heap.allocate`) is added to its class as the compiler's own reopening, and is printed as a declaration
 without a body. The printed `memory/heap.spite` is:
 
@@ -490,7 +316,7 @@ The report has one section per optimisation, with how many places it lists:
 A line looks like this, its link relative to the report's folder so it opens from wherever the file is read:
 
 ```markdown
-- [game/game.spite:23](https://github.com/Mortaro/spite-language/blob/next/game/game.spite#L23): `badge` (`Badge`) is made on the heap: line 24 lets it go: `badges.append(badge)`
+- [game/game.spite:23](game/game.spite#L23): `badge` (`Badge`) is made on the heap: line 24 lets it go: `badges.append(badge)`
 ```
 
 Like `--final-classes`, the report describes what the program ends up with: a function that tree shaking removes
@@ -504,11 +330,11 @@ checks kept.
 With no program, the compiler prints its usage text and exits unsuccessfully. A `.spite` file named instead of
 its folder, a folder with no entry file, an entry constructor that takes arguments, `--check` given with `--build` or
 `--executable-path`, a flag the compiler no longer has (`--run`, `--executable`), a flag with an underscore, a `--name=value` that names no field of `Build` or `Environment`, and a bare `--` are errors
-too, each naming the fix; their texts are [in the specification](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#naming-a-program).
+too, each naming the fix; their texts are [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program).
 
 A program's own errors come first. When a package it loads is broken too (a game engine package halfway through a
 migration, say), its errors are listed after the program's, so they never hide the program's own; how many of each
-are listed is [in the specification](https://github.com/Mortaro/spite-language/blob/next/specs/compiler.md#how-many-errors-are-listed).
+are listed is [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#how-many-errors-are-listed).
 
 ---
 

@@ -787,7 +787,7 @@ is a constant that names one instance of `Spite.Class`; a class file's functions
 its class object's, so no class answers a class question its own way. Reopening `Spite.Class` is the one way to
 change what a class object answers, and it changes it for every class in the program. It is a foot you are allowed
 to shoot, and one that shows in `--final-classes`
-([the specification](https://github.com/Mortaro/spite-language/blob/next/specs/reflection.md#functions-of-spiteclass-and-why-there-are-no-static-functions)).
+([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/reflection.md#functions-of-spiteclass-and-why-there-are-no-static-functions)).
 
 ---
 

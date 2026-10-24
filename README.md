@@ -10,22 +10,24 @@ itself; it writes machine code directly),
 [spite_standard_library](https://github.com/Spite-Language/spite_standard_library),
 [spite_spec](https://github.com/Spite-Language/spite_spec) (the specification, as programs every compiler must pass),
 [spite_benchmarks](https://github.com/Spite-Language/spite_benchmarks) and
-[mortaros_spite](https://github.com/Spite-Language/mortaros_spite) (every decision and why). Some pages were written
-for the first compiler, which compiled through C; where they describe how the compiler works rather than the
-language, the new compiler's own pages win.
+[mortaros_spite](https://github.com/Spite-Language/mortaros_spite) (every decision and why).
+Some pages still show the C that the first compiler wrote when they explain an optimisation: read it as the shape of the
+code, since the compiler now writes machine code directly. What the compiler does today is in its own
+[OPTIMIZATIONS.md](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md) and
+[ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md).
 
 Spite is a small, opinionated language meant to be written mostly by AI and skimmed by humans. There is one way
 to do each thing, no macros, and metaprogramming instead of loops wherever it reads better. Its compiler is written
 in Spite and writes machine code itself.
 
 **These pages are the tutorial.** Each page teaches its part of the language, with programs that run, and ends with
-a link to the next page. The formal definition of the language is [the specification](https://github.com/Mortaro/spite-language/blob/next/specs/README.md): one page
+a link to the next page. The formal definition of the language is [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md): one page
 for each page here, holding every rule, edge case and exact error text. The specification is normative: where a
 page here and the specification disagree, the specification decides and the page is the bug.
 
-Every titled Spite program on these pages is real: `bash check.sh` extracts each one, compiles it, runs it and
-compares what it prints with the output written under it (or checks that it fails with the error written under
-it), and requires its memory to balance. If it is on these pages, it works.
+Every titled Spite program on these pages is real: each one is compiled and run, and what it prints is compared with
+the output written under it (or it must fail with the error written under it), and its memory must balance. If it is on
+these pages, it works.
 
 The code blocks are fenced as `gdscript` because GitHub cannot highlight Spite yet and GDScript's highlighter
 reads it best (`func`, `var`, `name: Type`, `#` comments). The code is Spite throughout.
@@ -46,7 +48,7 @@ reads it best (`func`, `var`, `name: Type`, `#` comments). The code is Spite thr
 - No abbreviations, anywhere, except the language keywords themselves (`var`, `func`, `enum`).
 - Compilation speed and live reload matter more than anything else in the toolchain.
 - The compiler is written in Spite, compiles itself and writes machine code directly, and so is the standard library:
-  [Pure Spite](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#pure-spite-dissolving-the-runtime).
+  [Pure Spite](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#pure-spite-dissolving-the-runtime).
 
 ## Writing these pages
 

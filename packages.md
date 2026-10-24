@@ -17,14 +17,14 @@ func Game() {
   folder is an ordinary class inside it, so `package/engine/physics/physics.spite` is `Engine.Physics.Physics()`,
   reopened by another root's `engine/physics/physics.spite` like any class. A file and a folder of one name side
   by side, `engine/renderer.spite` beside `engine/renderer/`, would make `Engine.Renderer` both a class and a
-  namespace, so that is an error ([the specification](https://github.com/Mortaro/spite-language/blob/next/specs/packages.md#packages-namespaces-and-loading)).
+  namespace, so that is an error ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 - `load` only ever takes a literal string: a variable or expression there is an error, so the compiler
   always knows every bundle statically. The one exception is the launcher, the Spite program that loads the
   standard library and then yours ([programs.md](programs.md#how-a-program-is-loaded)): its `load` may also use
   the `Build` fields the compiler already knows, like `build.target_operating_system` after `var build = Build()`.
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
   `window-plugin`, and a folder that is not is an error before anything compiles
-  ([the specification](https://github.com/Mortaro/spite-language/blob/next/specs/packages.md#packages-namespaces-and-loading)).
+  ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 - Resolving a bare `Name` from inside a class tries, in order: that class's own namespace, its folder, each
   parent folder, then the whole program. A dotted `Component.Requested` is looked up the same way, and so is
   every name wherever it is written: a constructor call, a parameter, a return type, an attribute or local
@@ -263,7 +263,7 @@ webpack. A `load` line compiles to nothing at run time, except the launcher's `l
 program by constructing its entry class. So a `load` costs nothing when the program runs; what it loads is
 tree-shaken like the rest of the program.
 `load` is a keyword written without parentheses, on a line of its own, and nothing else may be named `load`: a
-function that loads something says what, `load_texture` ([the specification](https://github.com/Mortaro/spite-language/blob/next/specs/packages.md#packages-namespaces-and-loading)).
+function that loads something says what, `load_texture` ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 
 ```gdscript title=load_parentheses_error/load_parentheses_error.spite entry error
 func LoadParenthesesError() {
@@ -295,7 +295,7 @@ already says. A condition the compiler cannot decide, such as
 one that reads `Arguments()`, is an error rather than a folder that is quietly left out.
 
 Each loaded root can become a separate dynamic library, tree shaking is computed per bundle, and a `load` inside an
-`if` is loaded lazily when that line runs ([the specification](https://github.com/Mortaro/spite-language/blob/next/specs/packages.md#packages-namespaces-and-loading)).
+`if` is loaded lazily when that line runs ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 
 ## Why a dependency is a line in `load`
 

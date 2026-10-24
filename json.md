@@ -256,7 +256,7 @@ misreading bytes. It belongs to the handshake or the file header, not to every v
 that thousands of them can share one buffer. `writer.schema(): Long` and `reader.schema(): Long` answer a hash of
 the attribute walk the bytes follow: the class's name, then each
 attribute's name and type in order, nested classes the same way, and each enum's values in order. The compiler
-works it out and the C holds the constant, so asking costs nothing; a program writes it once at the start of a
+works it out and the program holds the constant, so asking costs nothing; a program writes it once at the start of a
 file or a connection and compares it before reading.
 
 ```gdscript title=schema_header/point.spite
@@ -460,7 +460,7 @@ func JsonValues() {
 
 A small object (an `Integer` id, a short name, two `Float`s, a `Short`, a `Boolean` and an enum) is about 94 bytes
 of JSON and 24 bytes of binary. What testing a binary schema costs against C is in
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_binary_schema_is_a_constant).
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_binary_schema_is_a_constant).
 
 JSON's cost is making and parsing text: every number is formatted and parsed, every key written and matched, and
 every member is a `String` of its own. The binary writer stores each number with one instruction and reads it
@@ -499,8 +499,8 @@ the object it is filling the same way, `created.attributes.each(read_attribute)`
 walks again, comparing the camelCase and PascalCase spellings. A class of the `Spite` namespace, a reflection
 object, is not walked (`if $value_type.namespace != Spite`): its attributes are all private, and its own
 `.attributes` would be the members it describes. `--final-classes` does not print these copies (a
-generic class's file is shared by all of its instances), but they are ordinary typed functions in the C the program
-compiles to.
+generic class's file is shared by all of its instances), but they are ordinary typed functions in the program
+the compiler builds.
 
 The binary pair keeps the walk in `BinaryFormat<T>` (`library/binary_format.spite`), a singleton that holds
 nothing, so it is a static object and the walk makes no object at all; its `write_attribute` is the one above

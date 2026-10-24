@@ -89,7 +89,7 @@ narrowed on the handle itself, `if reading { ... }`, as any `T?` is.
 
 A `var` written without a type keeps the handle, so `var reading = Concurrent(notes.read)` is still the running
 work and can be asked whether it has `finished`, the one member the handle has of its own. Every place a handle
-becomes its value is listed in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting).
+becomes its value is listed in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting).
 
 ### Reads in a row overlap
 
@@ -123,7 +123,7 @@ volume=7 ada=12
 The two reads above ran at once. The rule is deliberately narrow: only reads, only side by side, and only when
 the name read into is not assigned again later, so starting them early cannot change what the program sees. A
 read followed by other work waits where it is written. The exact conditions are in
-[the rules](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Reads in a row overlap");
+[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Reads in a row overlap");
 a program that has two such reads pays for the scheduler, as one that writes `Concurrent` does
 ([what it costs](#what-it-costs)).
 
@@ -132,7 +132,7 @@ a program that has two such reads pays for the scheduler, as one that writes `Co
 A `Concurrent` is a **state machine** the compiler writes while compiling.
 Every function that can reach a wait (`nap` above, and whatever `nap` calls that waits) is compiled a second time
 as a resumable version: its locals and parameters live in a small frame on
-the heap instead of on the C stack, and every wait inside it is a numbered point the function can return from and
+the heap instead of on the stack, and every wait inside it is a numbered point the function can return from and
 later jump back to. Starting a `Concurrent` makes that frame and runs it to its first wait; when the wait is over,
 the program's event loop (`library/scheduler.spite`) runs it again from where it stopped. There is no stack per
 `Concurrent`, no stack switching and nothing to ship that a WebAssembly build could not carry:
@@ -234,7 +234,7 @@ The program itself is the last scope. When the entry function returns, every `Co
 its end before anything is torn down, so a handle kept in a singleton is never cut short and its work never sees a
 half-destroyed singleton. Two `Concurrent`s that each wait for the other could never end, so the wait that closes
 the circle halts and says so, however each of them waits
-([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting)).
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting)).
 
 ### `finished` never waits
 
@@ -410,7 +410,7 @@ seen the text on its first test. Here it returns at its sleep, and the loop draw
   `--optimization-report` lists it under "Waits that hold the frame". Read the value again after the wait and the
   call is started.
 
-The exact conditions are in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame).
+The exact conditions are in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame).
 
 ## `Parallel`: work that computes
 
@@ -477,7 +477,7 @@ thread, since starting it there would cost more than running it. Two objects of 
 each belongs to its owner: two `Counter`s passed around and counted through any name share the attribute `total`
 as far as this rule sees, so they stay in order, while a `Physics` and an `Audio` that each keep their own
 `var meter = Meter()`, never assigned anything else, overlap, meters and all. The exact conditions are in
-[the rules](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Calls in a row run at once"), and
+[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Calls in a row run at once"), and
 [optimizations.md](optimizations.md#calls-in-a-row-run-at-once) shows one.
 
 A loop over a list of different objects is the same row, built while the program runs: `systems.each_update()`
@@ -674,7 +674,7 @@ Taken by several threads at once it costs more, because each call hands the line
 finds the lock taken does not hammer it: it waits a few pauses of the processor, twice as many each time it looks
 again, and past a thousand it gives its turn to the system between looks, so the thread holding the lock runs on
 and the line stays where it is. Four threads making 250 000 calls each to one shared singleton take 7.7 ms
-([`benchmarks/singletons_a_parallel_reaches_take_a_lock`](https://github.com/Mortaro/spite-language/blob/next/benchmarks/singletons_a_parallel_reaches_take_a_lock)),
+([`benchmarks/singletons_a_parallel_reaches_take_a_lock`](https://github.com/Spite-Language/spite_benchmarks/tree/master/singletons_a_parallel_reaches_take_a_lock)),
 a third of the time of the same program in C behind a system mutex, and still fifteen times the time of the same
 work split between the threads with no lock at all. So:
 
@@ -684,16 +684,16 @@ work split between the threads with no lock at all. So:
   of plain values), with nothing else locked or waited on in it, takes the lock once around the whole loop and
   calls the unlocked bodies inside it ([optimizations.md](optimizations.md#a-counted-loop-of-calls-to-one-singleton-takes-its-lock-once)):
   four workers making 5 million calls each to one shared singleton take 77 ms that way, where C taking a mutex on
-  every call takes 501 ms ([the case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once)).
+  every call takes 501 ms ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once)).
 - **Keep its reads apart from its writes.** A function that only reads the singleton's state (`at(row)`, a lookup)
   takes the readers' side of the lock: a count on its own thread's cache line, so readers on different threads
   never slow each other down, and only a function that writes waits for them
   ([optimizations.md](optimizations.md#a-singletons-reading-functions-do-not-exclude-each-other)). Eight systems
   reading 15 000 rows each of one singleton through `at(row)`, 20 ticks, take 17 ms, where C taking a mutex for
-  every read takes 103 ms ([the case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_singletons_reading_functions_do_not_exclude_each_other)). Anything a function calls or assigns beyond reading makes it a writing function,
+  every read takes 103 ms ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_reading_functions_do_not_exclude_each_other)). Anything a function calls or assigns beyond reading makes it a writing function,
   so keep lookups small and separate from the functions that change the singleton.
 - **Nothing to do between stages.** While no task is on the thread pool, a locked function runs without its lock
-  ([the case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/while_no_task_runs_a_singletons_lock_is_skipped): ten million calls in 53 ms, where C
+  ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/while_no_task_runs_a_singletons_lock_is_skipped): ten million calls in 53 ms, where C
   taking a mutex on every call takes 76 ms), so code that fills or flushes a singleton on the
   program's own thread between `Parallel`s pays almost nothing for it.
 - **Or let it take no lock.** A singleton whose changing state is one counter or flag per function becomes atomics,
@@ -701,7 +701,7 @@ work split between the threads with no lock at all. So:
   ([the forms](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)).
 
 The classes behind these, `Lock`, `ThreadLocal` and `ThreadSlot`, are internal to the standard library: a program
-cannot name them ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/packages.md#packages-namespaces-and-loading)). They are the operating
+cannot name them ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)). They are the operating
 system's own (`TlsAlloc` and `SRWLOCK` on Windows, `pthread_key_t` and `pthread_mutex_t` elsewhere), and a program
 that reaches none carries none.
 
@@ -752,7 +752,7 @@ func finish_jobs(): Integer {
 
 The class behind it, `Atomic<T>`, is internal to the standard library like `Lock` and `ThreadLocal`: naming it, or
 `Spite.Internal`, in a program is a compile error
-([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/packages.md#packages-namespaces-and-loading)).
+([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 
 A program that makes a `Parallel` (or a `Concurrent`, or a `ForeignCallback` C may call from a thread of its own
 ([foreign_libraries.md](foreign_libraries.md#calling-back-into-spite)), or is built with `--repl-port` or
@@ -814,7 +814,7 @@ crafted 2
 
 Reading `crafter` after the `Parallel` line would be `'crafter' was handed to 'Parallel(crafter.craft)', which
 keeps its 'recipe_ids', 'names' on another thread, so it is not used after that line: make another 'Crafter' for
-what follows, or read the task's result` (`diagnostics/parallel_handover`; [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting)).
+what follows, or read the task's result` (`diagnostics/parallel_handover`; [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting)).
 
 ## `parallel_each_`: a member on every element
 

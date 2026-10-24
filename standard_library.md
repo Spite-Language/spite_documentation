@@ -16,9 +16,9 @@ reopen the classes each system does differently, and the launcher loads the one 
 is added by reopening it ([A class name means one class](classes_and_files.md#a-class-name-means-one-class)).
 
 **A program carries only the classes it uses.** The library is part of every program's
-source, but a production build keeps only the C that `main` can reach: a program that never makes a `FileSystemWatcher`,
+source, but a production build keeps only what `main` can reach: a program that never makes a `FileSystemWatcher`,
 a `Socket`, a `Process` or a `ThreadPool` has none of their code, and none of the operating-system functions only
-they call is looked up when the program starts ([optimizations.md](optimizations.md#tree-shaking-the-generated-c)).
+they call is looked up when the program starts ([optimizations.md](optimizations.md#tree-shaking)).
 What a class costs when it is used is what its Spite does, and each section below says where that is more than a
 call. An inspectable build (`--repl`, `--repl-port`, `--hot-reload`, `--development`) keeps everything, so the
 REPL can look at any of it.
@@ -29,7 +29,7 @@ REPL can look at any of it.
 |---|---|---|
 | `String` | immutable text | [below](#string) |
 | `Integer`, `Long`, `Float`, `Double`, `Boolean`, ... | numbers, as classes, with their maths (`square_root()`, `sine()`, `Float.pi`, ...) | [values_and_types.md](values_and_types.md#numbers-are-classes), [maths](values_and_types.md#maths-functions) |
-| `Nothing`, `Anything` | what a function returns when it returns nothing; the empty `type` every class fits | [functions_and_operators.md](https://github.com/Mortaro/spite-language/blob/next/specs/functions_and_operators.md#calling-one) |
+| `Nothing`, `Anything` | what a function returns when it returns nothing; the empty `type` every class fits | [functions_and_operators.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#calling-one) |
 | `Number` | the `type` every number class fits: its operators and `to_long()`, `to_double()` | [values_and_types.md](values_and_types.md#every-number-fits-number) |
 | `List<T>`, `Dictionary<Key, Value>` | containers, and the member templates | [collections.md](collections.md) |
 | `Console` | the terminal: print, read a line | [below](#console) |
@@ -90,7 +90,7 @@ search that finds nothing answers `-1`. Reading a number is the one that can fin
 `to_integer()` and the other `to_<type>()` readings answer a `T?`: `null` when the text is not a number that fits
 the type. Assigning text to a number calls the matching one, so it is allowed only into a `T?`:
 `var age: Integer? = "42"` is `42`, and `var age: Integer = "42"` is an error naming `to_integer()`. Every member,
-with what it answers at the edges, is in [the specification](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#the-string-class).
+with what it answers at the edges, is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#the-string-class).
 
 ```gdscript title=string_members/string_members.spite entry
 var console = Console()
@@ -204,7 +204,7 @@ the second record starts at 8 and holds 2222 of 16 bytes
 call `unlock()` or let it go. It is how two programs take turns on one file, such as a cache both write. If the
 program ends or crashes the system releases the lock, so it is never left held. `lock()` answers `null` only when
 the path cannot be opened. There is nothing to write for the operating system: the same call works on Windows,
-Linux and macOS. The rules are in [the specification](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#system-classes).
+Linux and macOS. The rules are in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes).
 
 ### Rename or move a file or folder
 
@@ -432,7 +432,7 @@ Each system's folder asks its own kernel: `ReadDirectoryChangesW` on the folder,
 an `inotify` watch on each folder on Linux, adding one for each new folder; and a `kqueue` entry on each file and
 folder on macOS, adding new files when their folder changes. A file is watched through its folder on Windows and
 Linux, so a save that replaces the file is still seen. Nothing of it is in a program that never calls `FileSystemWatcher()`:
-not the code, and not the lookups of the system's functions ([optimizations.md](optimizations.md#tree-shaking-the-generated-c)).
+not the code, and not the lookups of the system's functions ([optimizations.md](optimizations.md#tree-shaking)).
 
 ## Run a process
 
@@ -500,14 +500,14 @@ input, a prompt, is visible before the read. `print`, `error` and `debug` end a 
 system at once, whether the output is a terminal, a file or a pipe, so a server's log redirected to a file shows
 each line when it happens rather than when the program ends. `write` leaves its text for the next line end, the
 next read of input or the end of the program
-([the rule and its measurement](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#system-classes)). There is no `flush()` to call.
+([the rule and its measurement](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes)). There is no `flush()` to call.
 
 `print`, `write` and `error` are ordinary functions in `library/console.spite`, taking
 `...values: List<Printable>`, where `Printable` is a `type` that requires `to_string(): String`. Every number,
 `Boolean`, `String`, `Symbol`, enum value, `Spite.Class` and `Spite.Namespace` answers it, and a class of yours
 prints once it declares `to_string()`. Passing one that does not is a compile error naming `to_string`; a `List`
 or `Dictionary` has none either, so show it with `debug` or `join` it first
-([the exact errors](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#system-classes)).
+([the exact errors](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes)).
 
 ```gdscript title=printable_doc/ticket.spite
 var code = ""
@@ -639,7 +639,7 @@ slept
 Each system reads its own clock, in `library/windows/clock.spite` (`QueryPerformanceCounter`,
 `GetSystemTimeAsFileTime`) and the `linux` and `mac` folders (`clock_gettime` with `CLOCK_MONOTONIC` and
 `CLOCK_REALTIME`), through `DynamicLibrary`. A reading allocates nothing: the operating system writes it into a slot
-in the calling function's frame ([placement](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#placement-the-compiler-decides-where-memory-lives)),
+in the calling function's frame ([placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)),
 and Windows' counter frequency, fixed at boot, is read once when `Clock()` is first made. The unit is the
 nanosecond on every system; the resolution is the hardware's (100 ns for Windows' usual 10 MHz counter, 1 ns on
 Linux and macOS). A profiler can read it twice per system per frame and measure nothing but the reads
@@ -855,7 +855,7 @@ is no list hiding inside it. `reserve(count)` makes room before writing, when th
 **There is no list of bytes.** `List<Byte>` is a compile error wherever it is written, and wherever the compiler
 would make one: a run of bytes has one class, so there is one way to hold it, and it is the class that can read
 the numbers in it. Write `Buffer(size)` instead
-([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#bytes-are-a-buffer)).
+([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#bytes-are-a-buffer)).
 
 **Byte order is said in each name.** A number of two bytes or more is read and written through a function that
 names its order after the number: `_little_endian`, the order of every machine Spite compiles for and of Spite's own
@@ -930,7 +930,7 @@ A whole value (a class, a `type`, a list of them) is not read number by number: 
 buffer and `BinaryWriter<T>` writes it into one, the way `JsonReader<T>` and `JsonWriter<T>` do with text
 ([json.md](json.md#write-and-read-bytes)). Their format is Spite's own; a format someone else defined is read with
 the buffer's numbers, as above. The rules, the edge cases and the error texts are in
-[the specification](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#bytes-are-a-buffer).
+[the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#bytes-are-a-buffer).
 
 **Memory C hands out.** A foreign library sometimes answers an address and a size, such as a GPU buffer mapped for the
 program to fill. `ForeignBytes(address, count)` wraps it: `count()`, `foreign[position]` and `foreign[position] =

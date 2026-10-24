@@ -30,7 +30,7 @@ What that already means in practice:
 - An operand that would be cut to fit is a compile error, in arithmetic and in comparisons
   ([values_and_types.md](values_and_types.md#wider-arithmetic-goes-wider-operand-first)).
 
-The whole list is in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#nothing-fails-silently-the-rule).
+The whole list is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule).
 
 ## `T?`: a value that may be null
 
@@ -48,7 +48,7 @@ func find_target(): Monster? {
 ```
 
 A `T?` must be **narrowed** before a member is read, a function is called on it, it is printed, or it is passed
-where a plain value is wanted, a `type` such as `Anything` included ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#nothing-fails-silently-the-rule)). There is no
+where a plain value is wanted, a `type` such as `Anything` included ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule)). There is no
 `value == null`: comparing against `null` is an error naming the forms below:
 
 ```gdscript title=null_comparison_error/null_comparison_error.spite entry error
@@ -328,7 +328,7 @@ error.
 An index or a key may not be there, so `names[index]` and `table["key"]` are `T?` and are narrowed like any other
 path. Every `[]` answers this way: a `List`, a `Dictionary`, a `Vector`, an `Items`, and any
 class of your own, since `a[x]` is only a shortcut for `a.get_at(x)` and every `get_at` answers a `T?`
-([functions_and_operators.md](https://github.com/Mortaro/spite-language/blob/next/specs/functions_and_operators.md#operators)). The
+([functions_and_operators.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#operators)). The
 compiler also understands the usual proofs for the library's collections, so most reads need nothing extra:
 
 - **A proven count proves the indices below it**: after `crash names.count() == 3`, or `>= 3`, or `> 2`,
@@ -371,7 +371,7 @@ compiler also understands the usual proofs for the library's collections, so mos
   library's collections only, so `while index < shelf.count()` proves nothing about `shelf[index]` when `Shelf`
   is yours: narrow the read with `crash`, `assert` or `if` (`conformance/stage6/indexable_class`).
 
-Every case, with its exact messages, is in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#nothing-fails-silently-the-rule). A proven
+Every case, with its exact messages, is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule). A proven
 read still checks its bounds at run time and halts naming the read when its index was outside the list, so a
 proof removes a line of source, not a safety check.
 
@@ -468,7 +468,7 @@ func is_made(made: Operation?): Boolean {
 ```
 
 Outside a comparison, reading a member through a `T?` still needs it narrowed, and so does assigning through one
-([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#nothing-fails-silently-the-rule)).
+([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule)).
 
 ```gdscript title=nullable_comparison/nullable_comparison.spite entry
 var console = Console()
@@ -917,7 +917,7 @@ values in scope without it.
 A `crash` the compiler can decide is not left for the run: one whose condition asks only what is known while
 compiling (a codegen value, `functions['run_each']`, `is_fixed_size`, ...) and is false, in a function the program reaches,
 is a compile error at the `crash`, since the program would halt there every time
-([metaprogramming.md](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-)).
+([metaprogramming.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)).
 
 ### What a crash reports
 

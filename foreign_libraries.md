@@ -3,7 +3,7 @@
 A native library is a class, not a keyword. `DynamicLibrary(file, naming, header)` opens a `.dll`, `.so` or
 `.dylib`, and every function it exports is called as if it were a member: there is no `extern` declaration, no
 binding file and no generated shim. The standard library reaches the operating system this way: `File`,
-`Directory`, `Process`, `Console` and the rest are Spite over the C runtime, reached through `DynamicLibrary`, so
+`Directory`, `Process`, `Console` and the rest are Spite over the operating system's own libraries, reached through `DynamicLibrary`, so
 what a program can do with it, the library already does.
 
 ## Calling a function
@@ -35,7 +35,7 @@ system's file in a class that each system's folder reopens, as the standard libr
   asked for with a header, or another file, is a second instance with its own table. It is not a special case.
 - **Only what is called is bound.** The symbols a program calls are looked up once, when the library opens, so
   every later call is one indirect call. A symbol named only by code the program never reaches is not looked up
-  at all ([optimizations.md](optimizations.md#tree-shaking-the-generated-c)), except in an inspectable build
+  at all ([optimizations.md](optimizations.md#tree-shaking)), except in an inspectable build
   (`--development`, `--repl`, `--repl-port`, `--hot-reload`), which keeps everything. A missing library or a
   missing symbol stops the program at that point, naming the file, or the symbol and the Spite function that
   wanted it.
@@ -60,7 +60,7 @@ Spite name becomes the C one:
 With `'identity'` a name may be written exactly as C spells it, as in `kernel.GetFileAttributesA(path)`, which is
 what the standard library does where Win32's own abbreviations follow no rule. The words of the linter's table
 that Win32 spells out in full (`count`, `buffer`, `window`, `size`, the second table in
-[Style](https://github.com/Mortaro/spite-language/blob/next/specs/style.md#naming-and-abbreviations-compile-errors-not-auto-fixed)) are not read backwards, so
+[Style](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations-compile-errors-not-auto-fixed)) are not read backwards, so
 `set_cursor_position` is still `SetCursorPos` but `get_tick_count` stays `GetTickCount`.
 
 ## What crosses
@@ -91,7 +91,7 @@ padding field fails the build at the Spite line. A function that wants the struc
 given `PointPair.size`: the bytes of the struct the call passes, a `Long` the compiler knows while it compiles. The
 reflection members every value has (`.class`,
 `.attributes`, `.functions`, `.memory`) and `DynamicLibrary`'s own members (`file_name`, `handle`) are never read
-as foreign symbols ([what a member of a library means](https://github.com/Mortaro/spite-language/blob/next/specs/foreign_libraries.md#what-a-member-of-a-library-means)).
+as foreign symbols ([what a member of a library means](https://github.com/Spite-Language/spite_spec/blob/master/specs/foreign_libraries.md#what-a-member-of-a-library-means)).
 
 ### Argument widths
 

@@ -22,7 +22,7 @@ func test_append_and_prepend_keep_order() {
 A runner finds every test itself, through reflection: `Spite.Class.instances` is every class in the program, and
 each class's `.functions` its functions ([reflection.md](reflection.md)). Nothing registers a test, and there is no
 manifest to keep in step. A test package is a folder like any program: its tests in classes of their own (the entry
-class lists no functions, [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/testing.md)), and an entry class that runs them:
+class lists no functions, [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/testing.md)), and an entry class that runs them:
 
 ```gdscript title=test_package/text_tests.spite
 func test_trim_removes_the_spaces_around_text() {

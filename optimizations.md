@@ -49,7 +49,7 @@ emit nothing.
 
 | Optimisation | Builds | What you might notice |
 |---|---|---|
-| [Tree shaking the generated C](#tree-shaking-the-generated-c) | production | smaller C; fewer symbols looked up; an inspectable build keeps everything |
+| [Tree shaking](#tree-shaking) | production | smaller executable; fewer symbols looked up; an inspectable build keeps everything |
 | [Deciding conditions at compile time](#deciding-conditions-at-compile-time) | every | nothing: the branch not taken is not in the program |
 | [Reflection, symbols and registries only where read](#reflection-symbols-and-registries-only-where-read) | every | nothing |
 | [Template chains run as one loop](#template-chains-run-as-one-loop) | every | fewer allocations; member functions run element by element |
@@ -98,49 +98,25 @@ emit nothing.
 | [A proven read tests only its bounds](#a-proven-read-tests-only-its-bounds) | every | nothing but speed; a read outside its list halts |
 | [A walked `crash` line's read is the row's read](#a-walked-crash-lines-read-is-the-rows-read) | every | nothing but speed |
 | [Objects that never leave their function live in the frame](#objects-that-never-leave-their-function-live-in-the-frame) | every but the inspectable ones | fewer allocations; `.memory.section` answers `'stack'` |
-| [The C is compiled in parallel units, and cached](#the-c-is-compiled-in-parallel-units-and-cached) | every but `--hot-reload` | nothing but build time; `.spite/objects` grows to 1 GiB |
-| [A release build is `-O3` with link-time optimisation](#a-release-build-is--o3-with-link-time-optimisation) | `--optimized` | nothing but speed, and a slower link |
-| [A release is inlined in every unit](#a-release-is-inlined-in-every-unit) | every but `--hot-reload`, `--repl`, `--repl-port` | nothing but speed |
 | [Thread safety for singletons, the rest of the plan](#thread-safety-for-singletons-the-rest-of-the-plan) | every but `--hot-reload`, decided per program | no lock where one is not needed |
 | [Copies that cost nothing](#copies-that-cost-nothing) | every | fewer allocations |
 | [Other optimisations](#other-optimisations) | every | fewer allocations |
 
 ## The optimisations
 
-### Tree shaking the generated C
+### Tree shaking
 
-**The case:** [benchmarks/tree_shaking_the_generated_c](https://github.com/Mortaro/spite-language/blob/next/benchmarks/tree_shaking_the_generated_c).
-
-**What it does.** After the program is generated, the compiler keeps only the C that `main` can reach: every
-function nothing calls, from your classes, `library/` or the compiler's own prelude, is dropped along with its
-prototype (`compiler/source/generation/tree_shaker.spite`). So is every class nothing reachable uses: its
-`struct` and the `typedef` that names it, its `___allocate`, `___init`, `___default`, `___retain`, `___release`
-and `_copy`, its singleton slot and that slot's lock, its reflection class object and the lines in `main` that
-would free that object at exit, every text literal, static table and prototype only dropped code named, and the
-`T?` of a number (`Nullable_Short`) that only dropped code answered. A
-program that never makes a `FileSystemWatcher`, `Socket`, `Process`, `HotReload`, `ThreadPool` or `Scheduler` has none of
-their C. The compiler does this itself rather than leaving dead code for the C compiler to find, so it holds
-whichever C compiler you bring, and a C compiler cannot find most of it anyway, since a function it is not told
-is private has to stay in the executable.
-
-Measured on the generated C, before and after classes were shaken too (the executable is `clang -O2` on Windows):
-
-| Program | C lines | C bytes | `struct`s | Executable |
-|---|---|---|---|---|
-| `examples/hello` | 5 130 → 1 332 | 233 588 → 62 732 | 75 → 10 | 192 000 → 158 208 |
-| `examples/dungeon` | 5 958 → 2 348 | 268 925 → 101 165 | 80 → 21 | 207 360 → 173 568 |
-| `conformance/stage3/interpolation` | 5 222 → 1 497 | 241 343 → 72 403 | 76 → 13 | 195 072 → 162 304 |
-| `conformance/stage6/parallel_each` | 5 990 → 2 972 | 277 303 → 133 127 | 78 → 34 | 211 968 → 184 320 |
-| `conformance/stage6/singleton_guard` | 6 392 → 3 407 | 294 742 → 150 397 | 82 → 40 | 219 136 → 190 464 |
-
-`examples/hello --development` is 14 885 lines both before and after: an inspectable build keeps everything.
+**What it does.** After the program is built, the compiler keeps only what `main` can reach: every function
+nothing calls, from your classes, the standard library or the compiler's own, is dropped. So is every class nothing
+reachable uses: its allocation, release and copy functions, its singleton slot and that slot's lock, its reflection
+class object and the lines in `main` that would free that object at exit, every text literal and static table only
+dropped code named, and the `T?` of a number that only dropped code answered. A program that never makes a
+`FileSystemWatcher`, `Socket`, `Process`, `HotReload`, `ThreadPool` or `Scheduler` has none of their code. The
+compiler does this itself, and it is the compiler that decides what is private, so it finds all of it.
 
 **When.** Production builds only. An inspectable build (`--repl`, `--repl-port`, `--hot-reload` or
 `--development`) keeps everything, so live reload has every function to swap and the REPL can reach every
 internal ([compiler.md](compiler.md#development-builds-and-tree-shaking)).
-It stays in the default build because it makes the whole build faster, not only the program: the C compiler
-reads far less. The compiler built at `-O0` took 16.0 s shaken against 19.7 s unshaken, `examples/battle` 3.0 s
-against 5.5 (Windows, clang 19.1.5, a busy machine).
 
 **What you notice.** Nothing, except a smaller executable. A function nobody calls, outside a generic
 class, is still compiled and checked, so a mistake in it is still reported; it just is not in the binary.
@@ -154,7 +130,7 @@ the program when the library opens. An inspectable build is not shaken, so it lo
 
 ### Deciding conditions at compile time
 
-**The case:** [benchmarks/deciding_conditions_at_compile_time](https://github.com/Mortaro/spite-language/blob/next/benchmarks/deciding_conditions_at_compile_time).
+**The case:** [benchmarks/deciding_conditions_at_compile_time](https://github.com/Spite-Language/spite_benchmarks/tree/master/deciding_conditions_at_compile_time).
 
 **What it does.** A condition the compiler can answer while compiling is answered then, and only the branch taken
 is generated. The branch not taken is not in the program at all, not skipped at run time but *absent*, so it may
@@ -192,7 +168,7 @@ test of a codegen type, `attribute.class`, `functions[...]`, `.is_resumable`, `.
 `any_attribute_fits_vector`, `.arguments.count()` or `.is_mutated`, a `Build` field, or a class test the value's
 type already answers (`item == $wanted_type`), and `not`, `and` and `or` over them. A check that holds writes
 nothing, and one that fails writes its failure (the default returned, or the crash report) with no test, the rest
-of its block not compiled ([metaprogramming.md](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-)). So a `crash` on a `Build`
+of its block not compiled ([metaprogramming.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)). So a `crash` on a `Build`
 field that is false, or on a class test that is false for one instantiation, in a function the program reaches, is
 the compile error a folded `crash` is (`diagnostics/folded_build_crash`), rather than a halt when it runs.
 
@@ -261,8 +237,6 @@ instantiation.
 
 ### Reflection, symbols and registries only where read
 
-**The case:** [benchmarks/reflection_symbols_and_registries_only_where_read](https://github.com/Mortaro/spite-language/blob/next/benchmarks/reflection_symbols_and_registries_only_where_read).
-
 **What it does.** Reflection is decided at compile time, so the compiler knows exactly what a program reads and
 emits only that: a class object's `.attributes`, `.functions` and
 `.namespace`, `value.attributes`, `value.memory`, `attribute.value`, the per-class `Person.instances` registry (a
@@ -285,7 +259,7 @@ exit, so `--debug-memory` does not count it.
 
 ### Reflection on constants folds and unrolls
 
-**The case:** [benchmarks/reflection_on_constants_folds_and_unrolls](https://github.com/Mortaro/spite-language/blob/next/benchmarks/reflection_on_constants_folds_and_unrolls).
+**The case:** [benchmarks/reflection_on_constants_folds_and_unrolls](https://github.com/Spite-Language/spite_benchmarks/tree/master/reflection_on_constants_folds_and_unrolls).
 
 **What it does.** A reflection object the compiler can identify (a class named in the code, `$T`, `value.class`
 of a class-typed value, and everything read from them) is a constant
@@ -299,7 +273,7 @@ run-time list, and one copy per element in `--final-classes`.
 
 ### Template chains run as one loop
 
-**The case:** [benchmarks/template_chains_run_as_one_loop](https://github.com/Mortaro/spite-language/blob/next/benchmarks/template_chains_run_as_one_loop).
+**The case:** [benchmarks/template_chains_run_as_one_loop](https://github.com/Spite-Language/spite_benchmarks/tree/master/template_chains_run_as_one_loop).
 
 **What it does.** `teams.filter_is_active().map_leads().sum_age()` reads as three steps, and that is what it means,
 but the compiler writes it as one loop over `teams` with no list in between: each element is tested, mapped and
@@ -377,7 +351,7 @@ above. Member functions a template reads should not depend on that order; ones t
 
 ### Appending to text in place
 
-**The case:** [benchmarks/appending_to_text_in_place](https://github.com/Mortaro/spite-language/blob/next/benchmarks/appending_to_text_in_place).
+**The case:** [benchmarks/appending_to_text_in_place](https://github.com/Spite-Language/spite_benchmarks/tree/master/appending_to_text_in_place).
 
 **What it does.** `text = text + piece`, or `text = "{text}{piece}"`, would copy the whole text on every
 append, which makes the most common loop there is quietly quadratic. When nothing but that variable holds the
@@ -416,11 +390,11 @@ abc a
 
 ### The compiler places memory
 
-**The case:** [benchmarks/the_compiler_places_memory](https://github.com/Mortaro/spite-language/blob/next/benchmarks/the_compiler_places_memory).
+**The case:** [benchmarks/the_compiler_places_memory](https://github.com/Spite-Language/spite_benchmarks/tree/master/the_compiler_places_memory).
 
 **What it does.** A program has one way to ask for raw memory, `heap.allocate(bytes)` on `Memory.Heap()`, and one way
 to give it back, `heap.free(address)`. Where the bytes live is the compiler's choice
-([Placement](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#placement-the-compiler-decides-where-memory-lives)):
+([Placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)):
 
 - **Register:** a number's own memory (`var _memory = Buffer(4)` in `library/integer.spite`) is its C
   scalar. A number is never an object.
@@ -483,7 +457,7 @@ yourself: there is no second way to allocate, so there is no address to keep pas
 
 ### Reading an address is one machine operation
 
-**The case:** [benchmarks/reading_an_address_is_one_machine_operation](https://github.com/Mortaro/spite-language/blob/next/benchmarks/reading_an_address_is_one_machine_operation).
+**The case:** [benchmarks/reading_an_address_is_one_machine_operation](https://github.com/Spite-Language/spite_benchmarks/tree/master/reading_an_address_is_one_machine_operation).
 
 **What it does.** `address.read_long(16)`, `address.write_float(8, value)` and the other reads, writes and atomics of
 `Memory.Address` are primitives of the language, like `+`: the compiler writes each one where it is called, as the
@@ -497,7 +471,7 @@ reads its memory this way.
 
 ### Singletons: made on first use, never counted
 
-**The case:** [benchmarks/singletons_made_on_first_use_never_counted](https://github.com/Mortaro/spite-language/blob/next/benchmarks/singletons_made_on_first_use_never_counted).
+**The case:** [benchmarks/singletons_made_on_first_use_never_counted](https://github.com/Spite-Language/spite_benchmarks/tree/master/singletons_made_on_first_use_never_counted).
 
 **What it does.** A singleton is made the first time something asks for it, not when the program starts, so a
 program pays only for the singletons it reaches. It is never reference counted:
@@ -569,8 +543,6 @@ names an object a program leaked, even one that points at a singleton.
 
 ### Singletons that hold nothing are static objects
 
-**The case:** [benchmarks/singletons_that_hold_nothing_are_static_objects](https://github.com/Mortaro/spite-language/blob/next/benchmarks/singletons_that_hold_nothing_are_static_objects).
-
 **What it does.** A singleton with no attributes and no `drop()` (`Memory.Heap`, `TypedMemory<T>`, one per element
 type, and `Build`, whose attributes are all settings folded into the program) is one static object: never
 allocated, never counted, never freed. `Memory.Heap()` costs nothing, and every program allocates once
@@ -618,7 +590,7 @@ answers the folded settings in both.
 
 ### Atomic reference counts only with threads
 
-**The case:** [benchmarks/atomic_reference_counts_only_with_threads](https://github.com/Mortaro/spite-language/blob/next/benchmarks/atomic_reference_counts_only_with_threads).
+**The case:** [benchmarks/atomic_reference_counts_only_with_threads](https://github.com/Spite-Language/spite_benchmarks/tree/master/atomic_reference_counts_only_with_threads).
 
 **What it does.** Retaining and releasing a reference is plain arithmetic, except in a program that can share an
 object between threads: one that makes a `Concurrent` or a `Parallel` (reads in a row included), runs a
@@ -631,7 +603,7 @@ thread never pays for atomics. In a program that does, only the classes another 
 
 ### Plain reference counts where no thread reaches a class
 
-**The case:** [benchmarks/plain_reference_counts_where_no_thread_reaches_a_class](https://github.com/Mortaro/spite-language/blob/next/benchmarks/plain_reference_counts_where_no_thread_reaches_a_class).
+**The case:** [benchmarks/plain_reference_counts_where_no_thread_reaches_a_class](https://github.com/Spite-Language/spite_benchmarks/tree/master/plain_reference_counts_where_no_thread_reaches_a_class).
 
 **What it does.** An atomic count costs a locked instruction at every retain and release, and most classes of a
 program with threads never need one: an engine's components are moved by the program's own thread while a worker
@@ -716,11 +688,11 @@ reading a file makes every `List<Integer>` of the program atomic. In a game engi
 moved by two systems, while one `Parallel` loads assets) a tick went from 105 ms to 73 ms, and a physics
 step of 5 000 characters from 13.3 to 11.5 ms.
 [Proofs](proofs.md#no-other-thread-counts-a-class) states the proof; `conformance/stage6/plain_counts` is the program
-above, whose C `check.sh` reads.
+above.
 
 ### A function taking a `type` is compiled per class
 
-**The case:** [benchmarks/a_function_taking_a_type_is_compiled_per_class](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_function_taking_a_type_is_compiled_per_class).
+**The case:** [benchmarks/a_function_taking_a_type_is_compiled_per_class](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_function_taking_a_type_is_compiled_per_class).
 
 **What it does.** A function whose parameter is a `type` (`Anything`, `Printable`, a shape of your own) is compiled
 once for each class that reaches it, following calls through the whole program. A call whose argument's class is
@@ -731,7 +703,7 @@ A value whose class is known only at run time, read from a `List<Anything>` for 
 function's own name, which is a `switch` over the value's class among the closed set of classes the program admits
 to the `type`, calling the matching copy and unboxing a plain value on the way. The function as written is still
 compiled, under another name, so every mistake in it is reported, and
-[tree shaking](#tree-shaking-the-generated-c) drops it.
+[tree shaking](#tree-shaking) drops it.
 
 **When.** Every build but `--repl`, `--repl-port` and `--hot-reload`, where a class the compiler has not seen may
 arrive later and the function is compiled as written. Not for a parameter the function assigns to, a `T?` of a
@@ -748,7 +720,7 @@ program only tests for is not in the C at all.
 
 ### Boxing only where a value travels as a shape
 
-**The case:** [benchmarks/boxing_only_where_a_value_travels_as_a_shape](https://github.com/Mortaro/spite-language/blob/next/benchmarks/boxing_only_where_a_value_travels_as_a_shape).
+**The case:** [benchmarks/boxing_only_where_a_value_travels_as_a_shape](https://github.com/Spite-Language/spite_benchmarks/tree/master/boxing_only_where_a_value_travels_as_a_shape).
 
 **What it does.** A number, `Boolean`, enum value, `Symbol` or `String` is a plain value everywhere the compiler can
 see its type, including where it is passed to a function that takes a `type`
@@ -771,7 +743,7 @@ pointer.
 
 ### A variadic list the callee only reads lives in the caller's frame
 
-**The case:** [benchmarks/a_variadic_list_the_callee_only_reads_lives_in_the_callers_frame](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_variadic_list_the_callee_only_reads_lives_in_the_callers_frame).
+**The case:** [benchmarks/a_variadic_list_the_callee_only_reads_lives_in_the_callers_frame](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_variadic_list_the_callee_only_reads_lives_in_the_callers_frame).
 
 **What it does.** The `...values` of a variadic call arrive in a `List`. When the call is a statement of its own
 (`console.print(name, count)`), the value of a `var` or of an assignment (`var biggest = largest(a, b, c)`) or what a
@@ -791,7 +763,7 @@ caller's frame it takes as long as plain C (1.01).
 
 ### Concurrency machinery only where it is used
 
-**The case:** [benchmarks/concurrency_machinery_only_where_it_is_used](https://github.com/Mortaro/spite-language/blob/next/benchmarks/concurrency_machinery_only_where_it_is_used).
+**The case:** [benchmarks/concurrency_machinery_only_where_it_is_used](https://github.com/Spite-Language/spite_benchmarks/tree/master/concurrency_machinery_only_where_it_is_used).
 
 **What it does.** The scheduler, the state machines, the helper threads and the wrappers around every call that can
 wait (`Program.sleep`, `Console.read_line`, `File.read`/`write`/`append`,
@@ -805,8 +777,6 @@ and you never see which one ran.
 machines ([below](#hidden-asyncawait-as-compile-time-state-machines)). [concurrency.md](concurrency.md).
 
 ### Hidden async/await as compile-time state machines
-
-**The case:** [benchmarks/hidden_async_await_as_compile_time_state_machines](https://github.com/Mortaro/spite-language/blob/next/benchmarks/hidden_async_await_as_compile_time_state_machines).
 
 **What it does.** Waiting on IO is written as an ordinary call and the compiler turns it into a point where other
 work runs. It is done at compile time, with no stacks to switch: every function that can reach a wait from inside
@@ -852,7 +822,7 @@ functions, no event loop and no helper threads; its waits are the plain system c
   through a function value in a state machine costs a comparison of its function against each function made into a
   value of that signature that waits; a union's or a `type`'s call, one class test per class. The few waits that
   still run the event loop where they are, as waits outside a `Concurrent` do
-  ([concurrency.md](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) lists them), hold their place
+  ([concurrency.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) lists them), hold their place
   until the wait is over while the other `Concurrent`s keep going. Two such waits that each wait for the other could
   never end, since the one further down the stack resumes only once the one above it returns, so a join that waits
   in place for a `Concurrent` whose state machine is running further down the same stack halts at the join
@@ -870,7 +840,7 @@ functions, no event loop and no helper threads; its waits are the plain system c
 
 ### Reads in a row overlap
 
-**The case:** [benchmarks/reads_in_a_row_overlap](https://github.com/Mortaro/spite-language/blob/next/benchmarks/reads_in_a_row_overlap).
+**The case:** [benchmarks/reads_in_a_row_overlap](https://github.com/Spite-Language/spite_benchmarks/tree/master/reads_in_a_row_overlap).
 
 **What it does.** Two or more `var name = file.read()` (or `socket.read_line()`) written one after another, none
 naming a variable an earlier one declared, are started together: every read but the last becomes a `Concurrent`,
@@ -890,7 +860,7 @@ allocate 19 times in 1 511 lines.
 
 ### A wait in a frame does not hold the frame
 
-**The case:** [benchmarks/a_wait_in_a_frame_does_not_hold_the_frame](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_wait_in_a_frame_does_not_hold_the_frame).
+**The case:** [benchmarks/a_wait_in_a_frame_does_not_hold_the_frame](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_wait_in_a_frame_does_not_hold_the_frame).
 
 **What it does.** Inside a frame loop (a `while` whose passes sleep, in the loop or in a function of its own object
 it calls), a statement that calls a function answering nothing on another object of the program, with no
@@ -954,8 +924,6 @@ carries what a `Concurrent` carries ([concurrency machinery](#concurrency-machin
 
 ### REPL, live reload and debug machinery only in those builds
 
-**The case:** [benchmarks/repl_live_reload_and_debug_machinery_only_in_those_builds](https://github.com/Mortaro/spite-language/blob/next/benchmarks/repl_live_reload_and_debug_machinery_only_in_those_builds).
-
 **What it does.** Everything that exists to look inside a running program is compiled only into the builds that
 ask for it:
 
@@ -986,8 +954,6 @@ points.
 
 ### A reload compiles only the classes that changed
 
-**The case:** [benchmarks/a_reload_compiles_only_the_classes_that_changed](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_reload_compiles_only_the_classes_that_changed).
-
 **What it does.** `spite reload` (the running program's `reload`, and its file watcher) compiles the functions of
 the classes the changed files declare and nothing else of the program: every class is still read and checked,
 but every function the running program already has with the same prototype is left out, and the library reaches
@@ -1008,8 +974,6 @@ each class's `functions` list is written once more at the end of compiling when 
 ([reflection.md](reflection.md)).
 
 ### What a `--hot-reload` build carries so its objects can move
-
-**The case:** [benchmarks/what_a_hot_reload_build_carries_so_its_objects_can_move](https://github.com/Mortaro/spite-language/blob/next/benchmarks/what_a_hot_reload_build_carries_so_its_objects_can_move).
 
 **What it does.** Nothing faster: this is the price of [moving live objects to new
 attributes](repl.md#changing-a-classs-attributes), paid only in a `--hot-reload` build. Each object
@@ -1035,7 +999,7 @@ own.
 
 ### The thread pool only where a `Parallel` is made
 
-**The case:** [benchmarks/the_thread_pool_only_where_a_parallel_is_made](https://github.com/Mortaro/spite-language/blob/next/benchmarks/the_thread_pool_only_where_a_parallel_is_made).
+**The case:** [benchmarks/the_thread_pool_only_where_a_parallel_is_made](https://github.com/Spite-Language/spite_benchmarks/tree/master/the_thread_pool_only_where_a_parallel_is_made).
 
 **What it does.** `ThreadPool` is a singleton made the first time a `Parallel` (or a `parallel_each_` pass) needs
 it, and it starts its worker threads then, once.
@@ -1048,7 +1012,7 @@ the rest. The library's `ThreadLocal` asks the system for its per-thread slot on
 
 ### Singletons a `Parallel` reaches take a lock
 
-**The case:** [benchmarks/singletons_a_parallel_reaches_take_a_lock](https://github.com/Mortaro/spite-language/blob/next/benchmarks/singletons_a_parallel_reaches_take_a_lock).
+**The case:** [benchmarks/singletons_a_parallel_reaches_take_a_lock](https://github.com/Spite-Language/spite_benchmarks/tree/master/singletons_a_parallel_reaches_take_a_lock).
 
 **What it does.** In a program that makes a `Parallel`, every singleton of the program's own that can change after it
 is made gets a lock of its own, taken around every one of its functions that touches what can change (which functions,
@@ -1113,7 +1077,7 @@ class, and `Rules` takes no lock.
 
 ### Thread safety for singletons, the cheapest safe form
 
-**The case:** [benchmarks/thread_safety_for_singletons_the_cheapest_safe_form](https://github.com/Mortaro/spite-language/blob/next/benchmarks/thread_safety_for_singletons_the_cheapest_safe_form).
+**The case:** [benchmarks/thread_safety_for_singletons_the_cheapest_safe_form](https://github.com/Spite-Language/spite_benchmarks/tree/master/thread_safety_for_singletons_the_cheapest_safe_form).
 
 **What it does.** For each singleton of the program's own that can change after it is made, the compiler picks
 the cheapest form that is as safe as the lock, from what that singleton's functions actually do. You write
@@ -1188,7 +1152,7 @@ a write, two steps.
 
 ### While no task runs, a singleton's lock is skipped
 
-**The case:** [benchmarks/while_no_task_runs_a_singletons_lock_is_skipped](https://github.com/Mortaro/spite-language/blob/next/benchmarks/while_no_task_runs_a_singletons_lock_is_skipped).
+**The case:** [benchmarks/while_no_task_runs_a_singletons_lock_is_skipped](https://github.com/Spite-Language/spite_benchmarks/tree/master/while_no_task_runs_a_singletons_lock_is_skipped).
 
 **What it does.** Every function a singleton's lock wraps first asks whether any work is on the thread pool: the pool
 counts every task from the moment it is handed out until it has run (`spite_tasks_in_flight`, one add and one
@@ -1205,7 +1169,7 @@ before. Writes and reads of attributes from other classes and counted loops keep
 for not being counted [tests once for the whole loop](#a-loop-of-calls-to-one-singleton-tests-for-tasks-once).
 
 **What you notice.** Speed where the program's own thread calls a locked singleton while nothing runs on the pool, an
-engine applying queued inserts between stages for example: [its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/while_no_task_runs_a_singletons_lock_is_skipped),
+engine applying queued inserts between stages for example: [its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/while_no_task_runs_a_singletons_lock_is_skipped),
 ten million calls on the program's thread with no task in flight, takes 52.6 ms, against 76.4 ms for naive C, which
 takes a mutex on every call, and 2.8 ms for expert C, which keeps the tally in registers. In a spawn-shaped program doing real work per call (`Column<T>` inserts: growing a list,
 appending to an `Items`, reading a row) the lock was about 1 ns of 14 ns a call, so there it measures 13 ns. Each call
@@ -1221,7 +1185,7 @@ a `memcpy` in the machine code, and what is left is its allocation (about 39 ns 
 
 ### A singleton no other thread reaches takes no lock
 
-**The case:** [benchmarks/a_singleton_no_other_thread_reaches_takes_no_lock](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_singleton_no_other_thread_reaches_takes_no_lock).
+**The case:** [benchmarks/a_singleton_no_other_thread_reaches_takes_no_lock](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singleton_no_other_thread_reaches_takes_no_lock).
 
 **What it does.** Once the whole program is written out, the compiler looks again at which code can run on another
 thread, this time in the generated program itself, with every generic class made and everything unused shaken out,
@@ -1315,7 +1279,7 @@ ms instead of 13.4.
 
 ### A singleton's reading functions do not exclude each other
 
-**The case:** [benchmarks/a_singletons_reading_functions_do_not_exclude_each_other](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_singletons_reading_functions_do_not_exclude_each_other).
+**The case:** [benchmarks/a_singletons_reading_functions_do_not_exclude_each_other](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_reading_functions_do_not_exclude_each_other).
 
 **What it does.** A locked singleton's function that only reads its state (an engine column's `at(row)`, a lookup)
 does not take the lock itself. It takes the readers' side: it adds one to a count of its own thread's (one of 32
@@ -1344,7 +1308,7 @@ holds the writers' side reads without counting, so a writing function calling ou
 held up by itself.
 
 **What you notice.** Speed where several threads read one singleton:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_singletons_reading_functions_do_not_exclude_each_other), eight `Parallel` systems each
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_reading_functions_do_not_exclude_each_other), eight `Parallel` systems each
 reading 15 000 rows of one singleton through `at(row)` for 20 ticks, takes 17.4 ms, against 103.0 ms for naive C,
 whose eight threads queue on one mutex for every read, and 5.8 ms for expert C, which reads a column with no lock. A reading call on one thread costs about the same as a plain lock (a locked add on a line only that thread
 writes, instead of a compare-and-swap on a shared one). A write also looks at the 32 counts once per outermost call:
@@ -1354,7 +1318,7 @@ whole, never half-way through a write.
 
 ### A counted loop of calls to one singleton takes its lock once
 
-**The case:** [benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once).
+**The case:** [benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once).
 
 **What it does.** A `while` that calls functions of one locked singleton many times (a worker removing rows through
 `columns.remove_row(entity)`, a system adding to a tally) takes that singleton's lock once around the whole loop
@@ -1382,7 +1346,7 @@ holds, so that the lock held longer can neither deadlock nor wait on anything:
 
 Not in a `--hot-reload`, `--repl` or `--repl-port` build, nor in the resumable copy of a function a `Concurrent`
 runs. **What you notice.** Speed:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once), four workers each making 5
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once), four workers each making 5
 million calls on one shared singleton, takes 77.2 ms, against 500.5 ms for naive C, which takes the mutex on every
 call and hands it between cores, and 3.4 ms for expert C, where each thread keeps a tally of its own. Nothing a program prints changes: the loop's calls run
 exactly as before, and other threads' calls on the singleton wait until the loop is over instead of slipping in
@@ -1392,7 +1356,7 @@ threads that want the singleton waiting for all of it. In the C, the loop is bet
 
 ### An attribute read only under its singleton's lock is a plain number
 
-**The case:** [benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once).
+**The case:** [benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once).
 
 **What it does.** A locked singleton's attribute that is [atomic on its
 own](#thread-safety-for-singletons-the-cheapest-safe-form) is made atomic so that another class can read it without
@@ -1460,14 +1424,14 @@ plainly. Reading `tally.total` from `LockedTally` instead would read it past the
 locked singleton none of whose attributes is read from another class by a read that takes no lock. A singleton in
 the atomics form keeps its atomics, since nothing locks it.
 
-**What you notice.** Speed: in [the counted loop's case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once),
+**What you notice.** Speed: in [the counted loop's case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once),
 four workers making 5 million calls each under the lock they take once, the 20 million calls took 76.6 ms with two
 locked additions each and 24.4 ms with plain ones. Nothing a program prints changes: every read and write was already
 made under the lock, or while no other thread ran.
 
 ### A loop of calls to one singleton tests for tasks once
 
-**The case:** [benchmarks/while_no_task_runs_a_singletons_lock_is_skipped](https://github.com/Mortaro/spite-language/blob/next/benchmarks/while_no_task_runs_a_singletons_lock_is_skipped).
+**The case:** [benchmarks/while_no_task_runs_a_singletons_lock_is_skipped](https://github.com/Spite-Language/spite_benchmarks/tree/master/while_no_task_runs_a_singletons_lock_is_skipped).
 
 **What it does.** A `while` that calls a locked singleton's functions, and that would take [its lock
 once](#a-counted-loop-of-calls-to-one-singleton-takes-its-lock-once) but for not being counted (its index is what a
@@ -1532,7 +1496,7 @@ one call taking the lock; and a singleton that the walk while compiling finds a 
 `--hot-reload`, `--repl` or `--repl-port` builds, nor in the resumable copy of a function a `Concurrent` runs.
 
 **What you notice.** Speed:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/while_no_task_runs_a_singletons_lock_is_skipped), ten million calls on the program's
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/while_no_task_runs_a_singletons_lock_is_skipped), ten million calls on the program's
 thread with no task in flight, took 41.5 ms testing for tasks on every call and 9.5 ms testing once. Nothing a
 program prints changes. Nothing in the loop can start a task, and while none runs only the program's own thread runs
 the program, so no other thread can call the singleton until the loop ends; if a task were started anyway, the pool
@@ -1541,7 +1505,7 @@ that started with a task in flight takes the lock on every call, as before, even
 
 ### An argument its caller holds is passed without counting
 
-**The case:** [benchmarks/an_argument_its_caller_holds_is_passed_without_counting](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_argument_its_caller_holds_is_passed_without_counting).
+**The case:** [benchmarks/an_argument_its_caller_holds_is_passed_without_counting](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_argument_its_caller_holds_is_passed_without_counting).
 
 **What it does.** Passing an object to a function counts it once more for the callee's own name and lets that
 count go when the callee returns: two atomic operations on the object's header in a program with threads. When
@@ -1560,7 +1524,7 @@ frame-made result keeps the ordinary function). Keeping the parameter needs noth
 passing it to a function that keeps it counts it there, as storing any name does.
 
 **What you notice.** Speed:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_argument_its_caller_holds_is_passed_without_counting), a list passed on through two calls
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_argument_its_caller_holds_is_passed_without_counting), a list passed on through two calls
 for each of 3 million entities in a `Parallel`, takes 13.5 ms, against 38.2 ms for naive C, which counts the list up
 and down atomically in every function it is handed to, and 0.7 ms for expert C, which keeps it on the stack. A `___held_` function appears in the C
 beside the ordinary one for each set of positions a program passes this way (about 3% more C in the compiler
@@ -1569,7 +1533,7 @@ same (`conformance/stage6/held_arguments`: a bag passed on, kept, returned and a
 
 ### An attribute a call cannot assign is passed without counting
 
-**The case:** [benchmarks/an_attribute_a_call_cannot_assign_is_passed_without_counting](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_attribute_a_call_cannot_assign_is_passed_without_counting).
+**The case:** [benchmarks/an_attribute_a_call_cannot_assign_is_passed_without_counting](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_attribute_a_call_cannot_assign_is_passed_without_counting).
 
 **What it does.** [The held argument](#an-argument-its-caller-holds-is-passed-without-counting) is not only a
 name: an attribute of the object a function runs on (`amounts`), or a path of attributes from it or from a name the
@@ -1653,7 +1617,7 @@ stores them, ticks in 30.5 ms instead of 36.0 as one C file (36.7 instead of 42.
 
 ### Storing an object into a list counts it only when it changes the slot
 
-**The case:** [benchmarks/storing_an_object_into_a_list_counts_it_only_when_it_changes_the_slot](https://github.com/Mortaro/spite-language/blob/next/benchmarks/storing_an_object_into_a_list_counts_it_only_when_it_changes_the_slot).
+**The case:** [benchmarks/storing_an_object_into_a_list_counts_it_only_when_it_changes_the_slot](https://github.com/Spite-Language/spite_benchmarks/tree/master/storing_an_object_into_a_list_counts_it_only_when_it_changes_the_slot).
 
 **What it does.** `list[index] = crate`, where the function holds `crate` for the whole call (its own parameter, or
 a local it owns), is written in place instead of calling the list's `set_at`: the index is checked, the slot's
@@ -1743,7 +1707,7 @@ of nine on a busy machine).
 
 ### An item passed to a call that cannot change its list is not counted
 
-**The case:** [benchmarks/an_item_passed_to_a_call_that_cannot_change_its_list_is_not_counted](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_item_passed_to_a_call_that_cannot_change_its_list_is_not_counted).
+**The case:** [benchmarks/an_item_passed_to_a_call_that_cannot_change_its_list_is_not_counted](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_item_passed_to_a_call_that_cannot_change_its_list_is_not_counted).
 
 **What it does.** A list item used at once, without a name, is read from its slot without counting it: passed to
 a call that cannot change the list (`length_of(tracks[first])`), read for one of its attributes
@@ -1830,7 +1794,7 @@ nine).
 
 ### A singleton's attribute that never changes is read in place
 
-**The case:** [benchmarks/a_singletons_attribute_that_never_changes_is_read_in_place](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_singletons_attribute_that_never_changes_is_read_in_place).
+**The case:** [benchmarks/a_singletons_attribute_that_never_changes_is_read_in_place](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_attribute_that_never_changes_is_read_in_place).
 
 **What it does.** Reading an attribute of a singleton from another class (`Column<Heat>().values[place]`,
 `column.values.count()`) would count the attribute's object for the expression and, in a program where a `Parallel`
@@ -1846,7 +1810,7 @@ attribute has no getter. Whether anything assigns the attribute is read from the
 (`generation/call_effects.spite`), the same facts the singleton locks are decided from.
 
 **What you notice.** Speed:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_singletons_attribute_that_never_changes_is_read_in_place), a million boxes read four times
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_attribute_that_never_changes_is_read_in_place), a million boxes read four times
 through a singleton's list from a `Parallel`, takes 147.8 ms, against 244.5 ms for naive C, which takes a mutex and
 counts the box for every read, and 3.1 ms for expert C, which reads a column of weights; in a game engine's `stream_bench` each inline component of a row cost a
 count, a lock and a release per row. Nothing a program prints or allocates changes
@@ -1862,8 +1826,6 @@ that holds a plain value in every class of the program (`moving.position.left = 
 system writing its components' numbers does not count as letting go of objects.
 
 ### The fault handler is in every program
-
-**The case:** [benchmarks/the_fault_handler_is_in_every_program](https://github.com/Mortaro/spite-language/blob/next/benchmarks/the_fault_handler_is_in_every_program).
 
 **What it is.** The one piece of C nothing tree-shakes: a program can meet a native fault (a null read inside a
 foreign library, a stack overflow) whatever it uses, and a silent end is a bug, so every
@@ -1901,8 +1863,6 @@ kilobytes larger.
 
 ### Short symbols are inline text
 
-**The case:** [benchmarks/short_symbols_are_inline_text](https://github.com/Mortaro/spite-language/blob/next/benchmarks/short_symbols_are_inline_text).
-
 **What it is.** A symbol whose text is 15 bytes or fewer is written into the symbol table as an inline `String`
 (its bytes inside the 16-byte value, the form any short text built at run time takes) rather than as a pointer
 to constant text. Reading its bytes follows no pointer, and the executable holds no separate
@@ -1915,8 +1875,6 @@ ones stay constant text; both forms release and retain as nothing.
 shows it: `static SpiteString spite_symbol_4 = { (int64_t)0x00000065756c6176ULL, ... }` for `'value'`.
 
 ### A foreign name is never copied
-
-**The case:** [benchmarks/a_foreign_name_is_never_copied](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_foreign_name_is_never_copied).
 
 **What it does.** The first call into a foreign library opens it and looks up every function the program calls in
 it, all at once. The library's file name and each function's name, and the name of the Spite function that calls it
@@ -1950,8 +1908,6 @@ allocation table itself opens before it counts, so there the counts are as they 
 
 ### Crash text out of the binary
 
-**The case:** [benchmarks/crash_text_out_of_the_binary](https://github.com/Mortaro/spite-language/blob/next/benchmarks/crash_text_out_of_the_binary).
-
 **What it is.** A `crash` or `assert` site's condition text lives only in the `<output>.crashes` map written
 beside the executable: no build writes it into the program. An
 `--optimized` build also leaves out each site's place, class and function, so a site is its 8-digit id and the
@@ -1965,7 +1921,7 @@ and `spite.assert<TAB>id<TAB>answered=...` in an optimised build, and `grep <id>
 
 ### Smaller ones
 
-**The case:** [benchmarks/smaller_ones](https://github.com/Mortaro/spite-language/blob/next/benchmarks/smaller_ones).
+**The case:** [benchmarks/smaller_ones](https://github.com/Spite-Language/spite_benchmarks/tree/master/smaller_ones).
 
 None of these needs anything from you:
 
@@ -1995,8 +1951,6 @@ None of these needs anything from you:
 
 ### Proofs that survive a call
 
-**The case:** [benchmarks/proofs_that_survive_a_call](https://github.com/Mortaro/spite-language/blob/next/benchmarks/proofs_that_survive_a_call).
-
 A proof (`assert target`, `crash list[index]`, a bound in a `while`) lets the reads after it skip the null test and
 the narrowing. A call between the proof and the read keeps it unless the compiler, following the called function and
 what it calls, finds that the call may assign an attribute the proof reads through or shrink a list it reads; so no
@@ -2016,7 +1970,7 @@ again, and a call through a function value keeps no proof about attributes or li
 
 ### Text joined in one piece
 
-**The case:** [benchmarks/text_joined_in_one_piece](https://github.com/Mortaro/spite-language/blob/next/benchmarks/text_joined_in_one_piece).
+**The case:** [benchmarks/text_joined_in_one_piece](https://github.com/Spite-Language/spite_benchmarks/tree/master/text_joined_in_one_piece).
 
 **What it does.** `"line {index} of {round};"` and `prefix + name + suffix` are one join, not a chain of pairs:
 every piece is computed in order, left to right as written, and the text is made once, at its final length. Before,
@@ -2034,7 +1988,7 @@ instead of `'heap'`, as a written text does.
 
 ### Defaults the constructor replaces are never made
 
-**The case:** [benchmarks/defaults_the_constructor_replaces_are_never_made](https://github.com/Mortaro/spite-language/blob/next/benchmarks/defaults_the_constructor_replaces_are_never_made).
+**The case:** [benchmarks/defaults_the_constructor_replaces_are_never_made](https://github.com/Spite-Language/spite_benchmarks/tree/master/defaults_the_constructor_replaces_are_never_made).
 
 **What it does.** A class with `var owner = Owner(0)` and a constructor whose first lines are `owner = new_owner`
 would make an `Owner`, then throw it away. The object is made with that attribute empty instead, and the constructor's
@@ -2050,13 +2004,13 @@ prints is not.
 for objects made by their constructor.
 
 **What you notice.** Fewer allocations under `--debug-memory`, one per discarded object and those it holds:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/defaults_the_constructor_replaces_are_never_made), which makes 500 000 items that each
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/defaults_the_constructor_replaces_are_never_made), which makes 500 000 items that each
 replace their default `Owner`, makes 1 000 026 allocations, one per item and one per owner it is given, and none for
 the defaults. Nothing else: the discarded default was never reachable.
 
 ### A function value describes its arguments when asked
 
-**The case:** [benchmarks/a_function_value_describes_its_arguments_when_asked](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_function_value_describes_its_arguments_when_asked).
+**The case:** [benchmarks/a_function_value_describes_its_arguments_when_asked](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_function_value_describes_its_arguments_when_asked).
 
 **What it does.** A function value is its own reflection object, with `.arguments`, a list of
 `Spite.Argument`s. Filling that list when the value is made would cost two objects per argument, and each
@@ -2086,7 +2040,7 @@ allocations and 66.8 times plain C's time before, 14 allocations and 0.65 of pla
 
 ### A list's templates read its elements without counting them
 
-**The case:** [benchmarks/a_lists_templates_read_its_elements_without_counting_them](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_lists_templates_read_its_elements_without_counting_them).
+**The case:** [benchmarks/a_lists_templates_read_its_elements_without_counting_them](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_lists_templates_read_its_elements_without_counting_them).
 
 **What it does.** Every member template of `List` (`sum_price()`, `filter_is_active()`, `each(step)`, `copy()`)
 and every fused chain would read each element with `values.read_value(items, index)`, which raises the element's
@@ -2108,7 +2062,7 @@ templates reopening `List`, and fused chains), when the proof above holds; other
 before. `parallel_each_` passes borrow too, which saves an atomic increment and decrement per element in a
 program with threads.
 
-**What you notice.** Speed: [its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_lists_templates_read_its_elements_without_counting_them),
+**What you notice.** Speed: [its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_lists_templates_read_its_elements_without_counting_them),
 100 rounds of two template passes over 200 000 bodies spread through memory, takes 29.3 ms, against 39.9 ms for
 naive C, which walks the same pointers and counts nothing, and 2.6 ms for expert C, which walks columns of numbers.
 Allocations and everything a program prints are the same.
@@ -2119,7 +2073,7 @@ A function called on the element is looked up on the element's own class, not by
 
 ### An item written back to its own slot is not written
 
-**The case:** [benchmarks/an_item_written_back_to_its_own_slot_is_not_written](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_item_written_back_to_its_own_slot_is_not_written).
+**The case:** [benchmarks/an_item_written_back_to_its_own_slot_is_not_written](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_item_written_back_to_its_own_slot_is_not_written).
 
 **What it does.** A plain loop over a list often reads an item into a name, changes it, and puts it back:
 
@@ -2195,7 +2149,7 @@ classes, for a `List` item read with `[]` into a `var` in the same block as the 
 
 ### A list item read only to test it is not counted
 
-**The case:** [benchmarks/a_list_item_read_only_to_test_it_is_not_counted](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_list_item_read_only_to_test_it_is_not_counted).
+**The case:** [benchmarks/a_list_item_read_only_to_test_it_is_not_counted](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_list_item_read_only_to_test_it_is_not_counted).
 
 **What it does.** `crash list[index]`, `assert list[index]`, `if list[index]` and `if not list[index]` read an item
 only to ask whether it is there:
@@ -2255,7 +2209,7 @@ crash report says, allocations and everything a program prints are the same.
 
 ### A write-back of what the slot already holds is not written
 
-**The case:** [benchmarks/a_write_back_of_what_the_slot_already_holds_is_not_written](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_write_back_of_what_the_slot_already_holds_is_not_written).
+**The case:** [benchmarks/a_write_back_of_what_the_slot_already_holds_is_not_written](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_write_back_of_what_the_slot_already_holds_is_not_written).
 
 **What it does.** A common shape splits the read and the write-back between functions: one copies an item of a list
 into an attribute, the caller changes the item through that attribute, and another function stores the attribute
@@ -2387,7 +2341,7 @@ inlined helper.
 
 ### An item a name holds from its list is not counted
 
-**The case:** [benchmarks/an_item_a_name_holds_from_its_list_is_not_counted](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_item_a_name_holds_from_its_list_is_not_counted).
+**The case:** [benchmarks/an_item_a_name_holds_from_its_list_is_not_counted](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_item_a_name_holds_from_its_list_is_not_counted).
 
 **What it does.** A name read from a list and used for a while is the commonest way a plain program looks at an
 item:
@@ -2470,7 +2424,7 @@ Allocations, the order of everything a program can see and what it prints are th
 
 ### A test against a value a list never holds is decided while compiling
 
-**The case:** [benchmarks/a_test_against_a_value_a_list_never_holds_is_decided_while_compiling](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_test_against_a_value_a_list_never_holds_is_decided_while_compiling).
+**The case:** [benchmarks/a_test_against_a_value_a_list_never_holds_is_decided_while_compiling](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_test_against_a_value_a_list_never_holds_is_decided_while_compiling).
 
 **What it does.** A list a program fills with a few known values, and from then on only reads, is a table: a
 pipeline's steps, a tokenizer's character classes, the kinds a matcher checks. Every test of one of its items
@@ -2551,7 +2505,7 @@ is removed by the C compiler and not before tree shaking.
 
 ### A table filled once is read as constants
 
-**The case:** [benchmarks/a_table_filled_once_is_read_as_constants](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_table_filled_once_is_read_as_constants).
+**The case:** [benchmarks/a_table_filled_once_is_read_as_constants](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_table_filled_once_is_read_as_constants).
 
 **What it does.** When the values of a table are known while compiling and so are their number and their order
 (written out in the function that sets the object up), the functions that read the table get a copy in which the
@@ -2647,12 +2601,11 @@ loop over them.
 The naive engine's stress test, whose matchers' kinds and keys are filled once by `prepare()`, ticks in about 7%
 less time (also measured while the machine was in other use); its C grows by 20% and its executable by 13%, for 440
 copies of the functions of its six matchers and their runners, four combinations each, of which this program runs
-one. In a build of several [translation units](#the-c-is-compiled-in-parallel-units-and-cached) each unit has its
-own copy of the constant lists, so the C compiler folds them in every unit.
+one.
 
 ### A number joined into text is written in place
 
-**The case:** [benchmarks/a_number_joined_into_text_is_written_in_place](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_number_joined_into_text_is_written_in_place).
+**The case:** [benchmarks/a_number_joined_into_text_is_written_in_place](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_number_joined_into_text_is_written_in_place).
 
 **What it does.** `"line {index} of {round};"` would turn `index` and `round` into texts of their own (two
 allocations each) only to copy them into the result and free them. An `Integer` or `Long` piece of a text join,
@@ -2664,13 +2617,13 @@ reopens `Integer` or `Long` with a `to_string()` of its own keeps calling it.
 index`) still makes one text, since that text is the result.
 
 **What you notice.** Fewer allocations, and speed: `conformance/stage6/text_building` went from 39 to 35, and
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_number_joined_into_text_is_written_in_place), two million lines
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_number_joined_into_text_is_written_in_place), two million lines
 `"line {index} of {round};"`, takes 84.3 ms, against 350.7 ms for naive C, which makes each number a text of its
 own with `snprintf`, and 16.8 ms for expert C, which writes each line into one buffer on the stack.
 
 ### Allocation is the C library's, counted only where read
 
-**The case:** [benchmarks/allocation_is_the_c_librarys_counted_only_where_read](https://github.com/Mortaro/spite-language/blob/next/benchmarks/allocation_is_the_c_librarys_counted_only_where_read).
+**The case:** [benchmarks/allocation_is_the_c_librarys_counted_only_where_read](https://github.com/Spite-Language/spite_benchmarks/tree/master/allocation_is_the_c_librarys_counted_only_where_read).
 
 **What it does.** Every Spite object is made with `SPITE_MALLOC` and let go with `SPITE_FREE`, and what those are is
 decided per program. In an ordinary build they are the C library's `malloc`, `realloc` and `free`, with nothing beside
@@ -2701,7 +2654,7 @@ the cost of up to 2 MB kept per thread.
 
 ### Objects of one class sit together
 
-**The case:** [benchmarks/objects_of_one_class_sit_together](https://github.com/Mortaro/spite-language/blob/next/benchmarks/objects_of_one_class_sit_together).
+**The case:** [benchmarks/objects_of_one_class_sit_together](https://github.com/Spite-Language/spite_benchmarks/tree/master/objects_of_one_class_sit_together).
 
 **What it does.** Every object of a class made and let go on the program's own thread is made from that class's own
 pool: blocks the size of one object, side by side, handed out in order, and taken back by the class when an object is let go, for its next
@@ -2821,18 +2774,18 @@ frees one of its objects ([Proofs](proofs.md#objects-of-a-class-made-on-one-thre
 engine's stress test (200 000 entities moved by two systems) a tick went from 64.0 to 47.6 ms (60.5 to 43.2 built
 as one C file), sixty ticks after despawning every entity from 113 to 21 ms, spawning them from 163 to 98 ms, and
 the program's peak memory from 96 to 67 MB; a physics step of 5 000 characters from 9.5 to 8.5 ms.
-[allocation_is_the_c_librarys_counted_only_where_read](https://github.com/Mortaro/spite-language/blob/next/benchmarks/allocation_is_the_c_librarys_counted_only_where_read),
+[allocation_is_the_c_librarys_counted_only_where_read](https://github.com/Spite-Language/spite_benchmarks/tree/master/allocation_is_the_c_librarys_counted_only_where_read),
 which makes and drops a chain of 1 000 links 2 000 times, went from 81 to 17 ms, and
-[defaults_the_constructor_replaces_are_never_made](https://github.com/Mortaro/spite-language/blob/next/benchmarks/defaults_the_constructor_replaces_are_never_made)
+[defaults_the_constructor_replaces_are_never_made](https://github.com/Spite-Language/spite_benchmarks/tree/master/defaults_the_constructor_replaces_are_never_made)
 from 30 to 7 ms. The cost is
 that memory a class used stays that class's: an object given back is kept for the next object of its class, never
 for another class and never returned to the system while the program runs. A program that makes a million objects
 of one class, lets them all go and then makes a million of another holds room for both.
-`conformance/stage6/class_pools` is a program whose C `check.sh` reads, built `--optimized` and run.
+`conformance/stage6/class_pools` is a program that pins it.
 
 ### A list held only by another list lives in its slot
 
-**The case:** [benchmarks/a_list_held_only_by_another_list_lives_in_its_slot](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_list_held_only_by_another_list_lives_in_its_slot).
+**The case:** [benchmarks/a_list_held_only_by_another_list_lives_in_its_slot](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_list_held_only_by_another_list_lives_in_its_slot).
 
 **What it does.** A `List<List<T>>` holds a reference to each list in it, so every inner list is an object of its
 own somewhere on the heap, and reading `groups[length]` reads a pointer from the outer list's block and then the
@@ -2892,7 +2845,7 @@ as the receiver of one of its own functions (`groups[length].append(word)`), or 
 that way, until no line can grow or shrink the list of lists ([the proof](proofs.md#a-list-held-only-in-a-slot-of-another-list)).
 The list of lists itself is only named by the path it was made in: never given a second name, passed or returned.
 
-**What you notice.** Speed: in [its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_list_held_only_by_another_list_lives_in_its_slot), 400 000
+**What you notice.** Speed: in [its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_list_held_only_by_another_list_lives_in_its_slot), 400 000
 orders grouped by customer into 65 536 lists ten times and asked 400 000 questions each time, and in a game engine's
 physics step, whose broad phase keeps its colliders in a grid of lists. What a program prints and every crash report
 are the same, and so are `--debug-memory`'s allocations and frees, but for a list of lists filled again
@@ -2908,7 +2861,7 @@ that reads such lists (a deep copy, reflection, serialisers).
 
 ### A list of lists filled again keeps each list's room
 
-**The case:** [benchmarks/a_list_of_lists_filled_again_keeps_each_lists_room](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_list_of_lists_filled_again_keeps_each_lists_room).
+**The case:** [benchmarks/a_list_of_lists_filled_again_keeps_each_lists_room](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_list_of_lists_filled_again_keeps_each_lists_room).
 
 **What it does.** A list of lists whose lists live in its slots ([above](#a-list-held-only-by-another-list-lives-in-its-slot))
 is often cleared and filled again with empty lists, every pass of a program: a grid of buckets, an index by key, the
@@ -2967,14 +2920,14 @@ library's own growth, never `reserve`): every build but the inspectable ones.
 
 **What you notice.** Speed, and fewer allocations: `--debug-memory` counts one allocation fewer for each slot whose
 block is taken again (`conformance/stage6/nested_lists` makes 84 instead of 94), and every one is still freed. In
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_list_of_lists_filled_again_keeps_each_lists_room), 200 000 orders grouped into 32 768
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_list_of_lists_filled_again_keeps_each_lists_room), 200 000 orders grouped into 32 768
 lists forty times, the work takes 0.34 of the time it took with the lists in their slots alone; the naive engine's
 physics grid sorts its colliders in 448 µs instead of 691. The cost is memory: a list of lists cleared and filled
 with fewer lists than before keeps the other slots' blocks until it is filled that far again or let go.
 
 ### A dictionary hashes a key once, cheaply
 
-**The case:** [benchmarks/a_dictionary_hashes_a_key_once_cheaply](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_dictionary_hashes_a_key_once_cheaply).
+**The case:** [benchmarks/a_dictionary_hashes_a_key_once_cheaply](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_dictionary_hashes_a_key_once_cheaply).
 
 **What it does.** A dictionary hashes a key with a multiply and an exclusive or per character on an
 `UnsignedLong` (FNV-1a), keeps 31 bits of that hash in the slot beside the key's position, and
@@ -2988,19 +2941,19 @@ anything, uses an operator on an object, assigns anything but a plain name, give
 the dictionary is written with, or starts a loop; from there on each read looks the key up again, as it reads.
 
 **When.** Every `Dictionary`, in every build. **What you notice.** Speed:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_dictionary_hashes_a_key_once_cheaply), two million lookups by name in a dictionary of
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_dictionary_hashes_a_key_once_cheaply), two million lookups by name in a dictionary of
 5 000 names, takes 102.6 ms, against 99.6 ms for naive C, a chained table with `hash * 31 + character` and `strcmp`,
 and 30.8 ms for expert C. Keys, values and their order are the same, and so is every allocation: the slot
 table is one block, twice as large.
 
 ### A deep copy is written per class, with a table only where a graph needs one
 
-**The case:** [benchmarks/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one).
+**The case:** [benchmarks/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one).
 
 **What it does.** The compiler writes one deep copy function per class it is used on. A class whose attributes can
 lead back to itself, lead to a `Weak`, or that some `Weak` holds, gets a copy that looks each object up in a table
 of the objects copied during that `deep_copy()` call, so an object reached twice is copied once and the copy keeps
-the original's cycles and weak references ([memory.md](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#the-memory-model)). Every other class gets a plain
+the original's cycles and weak references ([memory.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)). Every other class gets a plain
 copy: allocate, copy each attribute, return, with no table and no lookup.
 
 **When.** Every build, for each class `deep_copy()` reaches. **What you notice.** A tree or a list of plain records
@@ -3010,7 +2963,7 @@ copies a class that needs the table carries none of it.
 
 ### A deep copy nothing changes is the original
 
-**The case:** [benchmarks/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one).
+**The case:** [benchmarks/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one).
 
 **What it does.** A copy is only worth making if something tells it from the original: a write to one that the
 other must not see, or a question about which object it is. When the compiler proves that nothing writes the copy
@@ -3063,11 +3016,11 @@ prints, and every value it reads through the copy, is the same.
 
 ### A word inflected while compiling
 
-**The case:** [benchmarks/a_word_inflected_while_compiling](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_word_inflected_while_compiling).
+**The case:** [benchmarks/a_word_inflected_while_compiling](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_word_inflected_while_compiling).
 
 **What it does.** `pluralize()` or `singularize()` called on a text literal of lower-case letters and underscores
 (`"cactus".pluralize()`) is worked out while compiling, through the same rules and the same
-[`String.Inflection`](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#the-string-class) table the call would read at run time, and the program
+[`String.Inflection`](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#the-string-class) table the call would read at run time, and the program
 holds the answer as a constant (`"cacti"`): no call, no table read, no allocation.
 
 **When.** Every build, for a literal receiver of lower-case letters and underscores, while the program's
@@ -3079,7 +3032,7 @@ makes 5 allocations, against 19 when the calls run).
 
 ### A dictionary written out and only read by literal keys is folded
 
-**The case:** [benchmarks/a_dictionary_written_out_and_only_read_by_literal_keys_is_folded](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_dictionary_written_out_and_only_read_by_literal_keys_is_folded).
+**The case:** [benchmarks/a_dictionary_written_out_and_only_read_by_literal_keys_is_folded](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_dictionary_written_out_and_only_read_by_literal_keys_is_folded).
 
 **What it does.** A local made from a dictionary literal whose keys and values are all literals of one kind, and that
 the rest of its block only ever reads with a literal key (`plurals["cactus"]`), is never made: each read is replaced
@@ -3096,7 +3049,7 @@ the dictionary would.
 
 ### A dictionary keyed by numbers hashes the numbers
 
-**The case:** [benchmarks/a_dictionary_keyed_by_numbers_hashes_the_numbers](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_dictionary_keyed_by_numbers_hashes_the_numbers).
+**The case:** [benchmarks/a_dictionary_keyed_by_numbers_hashes_the_numbers](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_dictionary_keyed_by_numbers_hashes_the_numbers).
 
 **What it does.** A `Dictionary` keyed by a whole-number type (`Dictionary<Integer, Monster>`,
 [collections.md](collections.md#any-type-is-a-key)) is compiled as its own form of `library/dictionary.spite`, whose
@@ -3113,16 +3066,16 @@ the slot match. A text-keyed dictionary compiles to the code it always did.
 chosen where the dictionary type is, and the program is compiled once.
 
 **What you notice.** Speed and allocations:
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_dictionary_keyed_by_numbers_hashes_the_numbers), four million lookups in a dictionary of
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_dictionary_keyed_by_numbers_hashes_the_numbers), four million lookups in a dictionary of
 100 000 number keys, takes 39.0 ms, against 18.2 ms for naive C, a chained table with the key modulo the bucket
 count, and 17.2 ms for expert C, an open-addressed table made once at its size; the whole program
-[number_dictionary](https://github.com/Mortaro/spite-language/blob/next/benchmarks/number_dictionary) measures the same against a C programmer's open-addressed
+[number_dictionary](https://github.com/Spite-Language/spite_benchmarks/tree/master/number_dictionary) measures the same against a C programmer's open-addressed
 table. `conformance/stage6/number_keys` pins its 137 allocations, with a thousand number keys making none.
 `keys()` answers the numbers.
 
 ### Reading through a `type` without counting
 
-**The case:** [benchmarks/reading_through_a_type_without_counting](https://github.com/Mortaro/spite-language/blob/next/benchmarks/reading_through_a_type_without_counting).
+**The case:** [benchmarks/reading_through_a_type_without_counting](https://github.com/Spite-Language/spite_benchmarks/tree/master/reading_through_a_type_without_counting).
 
 **What it does.** A system's `moving.position.left = moving.position.left + moving.velocity.across` reads `position`
 through the `type` `Moving`, which answers the component retained (or, when the value's class has no such attribute, a
@@ -3141,13 +3094,13 @@ component, since the C compiler cannot tell a component's numbers from the value
 `moving.position.left`, not `moving.position` passed on or kept.
 
 **What you notice.** Speed, in systems that walk components through a `type`: their functions no longer count
-anything. [Its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/reading_through_a_type_without_counting), 200 ticks over 100 000 entities, takes
+anything. [Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/reading_through_a_type_without_counting), 200 ticks over 100 000 entities, takes
 26.6 ms, against 9.6 ms for naive C and 5.5 ms for expert C (38.3 ms with the class tested at every read, measured
 on the same loaded machine). Allocations and results are the same.
 
 ### A row of borrowed items lives in the frame
 
-**The case:** [benchmarks/a_row_of_borrowed_items_lives_in_the_frame](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_row_of_borrowed_items_lives_in_the_frame).
+**The case:** [benchmarks/a_row_of_borrowed_items_lives_in_the_frame](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_row_of_borrowed_items_lives_in_the_frame).
 
 **What it does.** An object literal of borrowed `Vector` items (a row,
 [memory.md](memory.md#a-row-of-borrowed-items-for-one-call)) is not allocated: it is a struct in the frame of the
@@ -3161,7 +3114,7 @@ by the callee.
 optimisation.
 
 **What you notice.** No allocation per row (`conformance/stage6/vector_rows` pins its count).
-[Its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_row_of_borrowed_items_lives_in_the_frame), 100 000 entities in four `Vector` columns
+[Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_row_of_borrowed_items_lives_in_the_frame), 100 000 entities in four `Vector` columns
 and two systems, takes 46.6 ms (20 000 000 rows, none allocated), against 8.4 ms for naive C, whose `malloc` per
 row clang removes once it inlines the system, and 3.3 ms for expert C; the cost Spite still pays is around the row,
 not in it, as the case's README lists. A `__lent_` function appears in the C beside the ordinary
@@ -3184,7 +3137,7 @@ allocations). Any other counted
 attribute, such as a reference read from a reference column, is counted once when the row is made and let go at
 the end of the row's block. **What you notice.** No allocation per row for a frame-made attribute
 (`conformance/stage6/sparse_rows` pins its count); the walked rows over sparse columns of
-[a walked crash line's case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_walked_crash_lines_read_is_the_rows_read), 100 000 entities and 50
+[a walked crash line's case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_walked_crash_lines_read_is_the_rows_read), 100 000 entities and 50
 ticks, take 81.0 ms, against 21.7 ms for naive C and 4.8 ms for expert C, the gap being finding the places, not the
 row. A frame-made object is not
 registered with `--debug-memory`'s table, like the row itself, and is not in `.instances`.
@@ -3234,7 +3187,7 @@ when no caller passes it a counted object.
 
 ### An `Items`' storage is chosen while compiling
 
-**The case:** [benchmarks/an_items_storage_is_chosen_while_compiling](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_items_storage_is_chosen_while_compiling).
+**The case:** [benchmarks/an_items_storage_is_chosen_while_compiling](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_items_storage_is_chosen_while_compiling).
 
 **What it does.** `Items<T>` ([collections.md](collections.md#itemst-the-storage-chosen-for-you)) is one
 class in `library/items.spite` whose every body that touches an item folds on `$element_type.is_fixed_size`.
@@ -3250,7 +3203,7 @@ the C compiler to inline where it is called.
 runs, and a program that makes no `Items` carries none of it.
 
 **What you notice.** Speed the same as the storage chosen: the C of an `Items<Velocity>` is a `Vector`'s and that
-of an `Items<Trail>` a `List`'s, with `[]` inlined where it is called. [Its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_items_storage_is_chosen_while_compiling),
+of an `Items<Trail>` a `List`'s, with `[]` inlined where it is called. [Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_items_storage_is_chosen_while_compiling),
 a generic column holding an `Items` made for an inline and a reference component, 100 000 of each and 100 ticks,
 takes 33.5 ms, against 42.9 ms for naive C, a generic array of `malloc`ed components, and 2.4 ms for expert C. An
 `Items` object holds one pointer more than a `Vector` or `List` (both helper singletons are
@@ -3258,7 +3211,7 @@ attributes); nothing is added per item. A crash out of range is reported from `I
 
 ### A proven divisor is not checked
 
-**The case:** [benchmarks/a_proven_divisor_is_not_checked](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_proven_divisor_is_not_checked).
+**The case:** [benchmarks/a_proven_divisor_is_not_checked](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_proven_divisor_is_not_checked).
 
 A whole-number `/` or `%` checks its divisor for zero ([values_and_types.md](values_and_types.md)),
 unless the divisor is a constant other than zero, or a proof in scope says it is not zero: `assert parts != 0`,
@@ -3269,10 +3222,10 @@ proven `whole / pieces` carries no check in its C.
 
 ### Arithmetic is checked in every build
 
-**The case:** [benchmarks/arithmetic_is_checked_in_every_build](https://github.com/Mortaro/spite-language/blob/next/benchmarks/arithmetic_is_checked_in_every_build).
+**The case:** [benchmarks/arithmetic_is_checked_in_every_build](https://github.com/Spite-Language/spite_benchmarks/tree/master/arithmetic_is_checked_in_every_build).
 
 Every `+`, `-` and `*` done in a whole number, signed or unsigned, is the C compiler's overflow builtin in that type,
-and an answer that does not fit halts ([values_and_types.md](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#numeric-types)); so is a `-` in
+and an answer that does not fit halts ([values_and_types.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numeric-types)); so is a `-` in
 front of a whole number, the smallest signed value divided by `-1`, and a value put into a narrower name (a compare
 against the narrower type's range and a branch). The ordinary build and `--optimized` check exactly as
 `--debug-memory` does: there is no unchecked mode, so a benchmark measures the program as it ships. The
@@ -3286,16 +3239,16 @@ before `index = index + 1`, a call through a function value, leaves the step pla
 ([below](#arithmetic-a-range-proves-is-not-checked)), which in the compiler's own C removes 250 of the 1 513 checks
 the counter's proof leaves. What you can observe: a halt instead of a wrapped answer, and a loop whose sum the C compiler
 vectorised before may no longer be vectorised, since each addition can now stop the program. **Cost, measured** in
-[its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/arithmetic_is_checked_in_every_build): 400 rounds of adding up `value * 3 + round` over
+[its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/arithmetic_is_checked_in_every_build): 400 rounds of adding up `value * 3 + round` over
 100 000 numbers take 19.9 ms, against 3.1 ms for naive C and 2.8 ms for expert C, whose unchecked sums the C compiler
 vectorises: no range bounds `values[index]`, a number the list was given somewhere else, so every round's checks stay. Where a loop does more than add, the checks cost a few percent; the whole programs
-[number_dictionary](https://github.com/Mortaro/spite-language/blob/next/benchmarks/number_dictionary), [text_building](https://github.com/Mortaro/spite-language/blob/next/benchmarks/text_building),
-[sorting](https://github.com/Mortaro/spite-language/blob/next/benchmarks/sorting), [vector_maths](https://github.com/Mortaro/spite-language/blob/next/benchmarks/vector_maths) and
-[particles](https://github.com/Mortaro/spite-language/blob/next/benchmarks/particles) are built with them and timed against C.
+[number_dictionary](https://github.com/Spite-Language/spite_benchmarks/tree/master/number_dictionary), [text_building](https://github.com/Spite-Language/spite_benchmarks/tree/master/text_building),
+[sorting](https://github.com/Spite-Language/spite_benchmarks/tree/master/sorting), [vector_maths](https://github.com/Spite-Language/spite_benchmarks/tree/master/vector_maths) and
+[particles](https://github.com/Spite-Language/spite_benchmarks/tree/master/particles) are built with them and timed against C.
 
 ### Arithmetic a range proves is not checked
 
-**The case:** [benchmarks/report_over_records](https://github.com/Mortaro/spite-language/blob/next/benchmarks/report_over_records), whose profit sum and
+**The case:** [benchmarks/report_over_records](https://github.com/Spite-Language/spite_benchmarks/tree/master/report_over_records), whose profit sum and
 fingerprints are `Long` totals of `Integer` terms.
 
 **What it does.** The compiler works out, while compiling, the range of values every whole-number local and
@@ -3315,7 +3268,7 @@ of passes, and a total added to once a pass, `total = total + term`, then holds 
 total of `Integer` terms over a list, whose count is an `Integer`, can never overflow, so its addition is plain.
 An attribute, an item of a list and the answer of a call have their type's range and nothing narrower, since
 another function or another pass could change them. The rules in full, with what narrows and what does not, are in
-[values_and_types.md](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#a-range-proves-a-check-unneeded).
+[values_and_types.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#a-range-proves-a-check-unneeded).
 
 **When.** Every build but `--repl`, `--repl-port` and `--hot-reload`, which can run code between two steps of a
 loop. Where a range does not prove it, the check stays, and `--optimization-report` lists it with the ranges it
@@ -3356,14 +3309,14 @@ func ProvenSum() {
 ```
 
 **What you notice.** Nothing but speed: the halt where an answer does not fit is unchanged, since the check is left
-out only where it could never fire. In [its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/report_over_records), the profit of each region in
+out only where it could never fire. In [its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/report_over_records), the profit of each region in
 each quarter is a `Long` sum of `Integer` terms and its additions are plain, as are the seed's multiplication and
 remainders and the fingerprint's `Long` sums; the `Integer` products of the attributes stay checked, so the time
 is what it was (an attribute's range is its type's). The compiler's own C loses 250 of its 1 513 checks.
 
 ### Short text lives inside the `String`
 
-**The case:** [benchmarks/short_text_lives_inside_the_string](https://github.com/Mortaro/spite-language/blob/next/benchmarks/short_text_lives_inside_the_string).
+**The case:** [benchmarks/short_text_lives_inside_the_string](https://github.com/Spite-Language/spite_benchmarks/tree/master/short_text_lives_inside_the_string).
 
 **What it does.** A `String` is sixteen bytes wherever it is kept (a local, an attribute, a list's element, a
 parameter), and text of up to 15 bytes of UTF-8 is kept in those sixteen bytes themselves: no allocation, no
@@ -3387,7 +3340,7 @@ text made while the program runs answers `'stack'` when the text is short and he
 read from an attribute, where the value lives in its object) and `'heap'` when it is long; written text is
 `'constant'`, as before. Text passed where a `type` shape is wanted (a `Printable` given to `console.print`,
 `attribute.value`) is put in a box, one allocation (written text has a box in the program and allocates nothing) ([below](#boxing-only-where-a-value-travels-as-a-shape)). A `List<String>` holds sixteen bytes
-per element instead of an eight-byte pointer. Speed: [its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/short_text_lives_inside_the_string),
+per element instead of an eight-byte pointer. Speed: [its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/short_text_lives_inside_the_string),
 20 rounds of 100 000 short labels, takes 56.2 ms, against 351.7 ms for naive C, which `malloc`s each label, and
 19.7 ms for expert C, which writes them into one array of 16-byte slots; a game engine's `stress` allocates 5.6
 million times instead of 7.2. The cost that remains: a `Dictionary` looked up by a key longer than 15 bytes is about
@@ -3398,9 +3351,9 @@ long text needs anyway (where its characters are, and how many).
 
 ### Maths on constants is worked out while compiling
 
-**The case:** [benchmarks/maths_on_constants_is_worked_out_while_compiling](https://github.com/Mortaro/spite-language/blob/next/benchmarks/maths_on_constants_is_worked_out_while_compiling).
+**The case:** [benchmarks/maths_on_constants_is_worked_out_while_compiling](https://github.com/Spite-Language/spite_benchmarks/tree/master/maths_on_constants_is_worked_out_while_compiling).
 
-**What it does.** A maths function of a number class ([standard_library.md](https://github.com/Mortaro/spite-language/blob/next/specs/standard_library.md#maths))
+**What it does.** A maths function of a number class ([standard_library.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#maths))
 whose operands are all constants is worked out by the compiler, and the C gets the answer: `(0.5).sine()` is
 `(0x1.eaee880000000p-2f)` in the C, not a call. A constant here is a decimal or whole literal, a negated one, a
 number class's constant (`Float.pi`), or another folded call, so `Float.pi.sine()` and
@@ -3429,7 +3382,7 @@ only the transcendental functions can differ, by at most that last bit.
 
 ### A binary schema is a constant
 
-**The case:** [benchmarks/a_binary_schema_is_a_constant](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_binary_schema_is_a_constant).
+**The case:** [benchmarks/a_binary_schema_is_a_constant](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_binary_schema_is_a_constant).
 
 **What it does.** `BinaryWriter<T>.schema()` and `BinaryReader<T>.schema()` ([json.md](json.md#the-schema-hash)) are
 worked out while compiling: the compiler writes the attribute walk of `T` as text, hashes it with FNV-1a, and the C
@@ -3439,24 +3392,24 @@ runs and nothing is allocated when a program asks.
 
 ### A number's bits are read in place
 
-**The case:** [benchmarks/a_numbers_bits_are_read_in_place](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_numbers_bits_are_read_in_place).
+**The case:** [benchmarks/a_numbers_bits_are_read_in_place](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_numbers_bits_are_read_in_place).
 
 **What it does.** `Float.bits()`, `Double.bits()`, `UnsignedInteger.bits_as_float()`, `Long.bits_as_double()`,
 `UnsignedLong.bits_as_double()`, and every whole number's `bits_as_unsigned()` or `bits_as_signed()`, are C macros over a union of the two types
-([values_and_types.md](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md)): the call is written where it is made
+([values_and_types.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md)): the call is written where it is made
 and the value's bits are read as the other type, with no memory written and read back and nothing allocated. Going
 through a 4- or 8-byte block instead would also allocate nothing (the frame holds it), but the C would hold a block,
 a write and a read for the C compiler to see through.
 
 **When.** Every build, for every call; a program that calls none carries none of them. **What you notice.** Nothing
 but speed in an unoptimised build, since from `-O1` clang already sees through either form; it allocates nothing
-per conversion either way. [Its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_numbers_bits_are_read_in_place), thirty million round trips
+per conversion either way. [Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_numbers_bits_are_read_in_place), thirty million round trips
 through a half, takes 73.2 ms, against 96.0 ms for naive C, which reads the bits with `memcpy`, and 24.7 ms for
 expert C, which uses the processor's half-precision instructions.
 
 ### A local list of known size lives in the frame
 
-**The case:** [benchmarks/a_local_list_of_known_size_lives_in_the_frame](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_local_list_of_known_size_lives_in_the_frame).
+**The case:** [benchmarks/a_local_list_of_known_size_lives_in_the_frame](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_local_list_of_known_size_lives_in_the_frame).
 
 **What it does.** A local list made by a literal (`var sizes = [3, 5, 8]`) or by `List<T>()` whose size is known
 while compiling and which never leaves its function is not allocated: its header and its items are in the
@@ -3505,7 +3458,7 @@ four items, which would grow its buffer while it was filled): `conformance/stage
 
 ### A loop over plain values reads its count once and its items unchecked
 
-**The case:** [benchmarks/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked).
+**The case:** [benchmarks/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked).
 
 **What it does.** A `while index < values.count()` over a `List` of numbers or `Boolean` (the only list that holds
 them), with `values` a local or a parameter named bare, not an attribute or any other expression, is written as
@@ -3551,14 +3504,14 @@ compiler adds no `restrict`, since
 two names may hold the same list and the C compiler checks for overlap once, before the loop, itself; and no
 alignment claim, which nothing proves.
 
-**What you notice.** Speed only. [Its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked),
+**What you notice.** Speed only. [Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked),
 2 000 rounds of scaling one list of 100 000 `Float`s into another and adding it up, takes 39.5 ms, against 159.9 ms
 for naive C, which reads each item through the list's pointer and count, and 17.7 ms for expert C, which fuses the
 scaling and the sum into one pass over `restrict` arrays.
 
 ### A decimal literal beside a `Float` is a `Float`
 
-**The case:** [benchmarks/a_decimal_literal_beside_a_float_is_a_float](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_decimal_literal_beside_a_float_is_a_float).
+**The case:** [benchmarks/a_decimal_literal_beside_a_float_is_a_float](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_decimal_literal_beside_a_float_is_a_float).
 
 **What it does.** `value * 1.5 + 0.25` with a `Float` `value` is written `value * 1.5f + 0.25f` in the C, so the
 arithmetic stays in `Float` precision instead of being widened to `Double` and back, which would halve how many
@@ -3573,7 +3526,7 @@ comparison means what it reads as: after `var tenth: Float = 0.1`, `tenth == 0.1
 
 ### A proven read tests only its bounds
 
-**The case:** [benchmarks/a_proven_read_tests_only_its_bounds](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_proven_read_tests_only_its_bounds).
+**The case:** [benchmarks/a_proven_read_tests_only_its_bounds](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_proven_read_tests_only_its_bounds).
 
 **What it does.** Every `[]` answers a `T?`, and a read the compiler proves (a loop bound `index < list.count()`, a
 proven count, a list literal's indices, the effects of calls, a bound past the index such as `at + 2 < list.count()`,
@@ -3585,7 +3538,7 @@ index is also known not to be negative (a local only ever set to a literal of 0 
 read of a `List` of numbers is the item itself, `items[index_]`, behind the one compare of its top. A read inside
 a counted loop ([above](#a-loop-over-plain-values-reads-its-count-once-and-its-items-unchecked)) proves both ends and
 is a plain indexed load, `spite_temp[index_]`, with no call and no test at all (`counted_loops`), and the two loops
-of [that section's case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked)
+of [that section's case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked)
 compile to the same plain loads.
 
 **When.** Every build, for a read of a `List`, `Vector` or `Items` that a range proof narrows. A read narrowed by
@@ -3597,7 +3550,7 @@ the same halt, named by the read (`conformance/stage6/proven_read_outside`).
 
 ### A number read from bytes is one load
 
-**The case:** [benchmarks/a_number_read_from_bytes_is_one_load](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_number_read_from_bytes_is_one_load).
+**The case:** [benchmarks/a_number_read_from_bytes_is_one_load](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_number_read_from_bytes_is_one_load).
 
 **What it does.** `bytes.read_integer_little_endian_at(position)` and the other reads of a `Buffer` (each also with a `_big_endian_at` twin)
 ([standard_library.md](standard_library.md#bytes-are-a-buffer)) are library functions that compare the position with the
@@ -3634,14 +3587,14 @@ could have been shrunk through another name since the bound; a position not know
 compare of its low end. `bytes[index]` on a list of numbers gets the same single compare when its index is known not
 to be negative.
 
-**What you notice.** Speed only. [Its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_number_read_from_bytes_is_one_load) decodes 100 000
+**What you notice.** Speed only. [Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_number_read_from_bytes_is_one_load) decodes 100 000
 big-endian records 300 times in 41.1 ms, against 54.5 ms for naive C, which puts each number together byte by byte,
 and 33.0 ms for expert C, which loads and swaps over a `restrict` block; what is left is the checked arithmetic of the
 sum.
 
 ### A walked `crash` line's read is the row's read
 
-**The case:** [benchmarks/a_walked_crash_lines_read_is_the_rows_read](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_walked_crash_lines_read_is_the_rows_read).
+**The case:** [benchmarks/a_walked_crash_lines_read_is_the_rows_read](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_walked_crash_lines_read_is_the_rows_read).
 
 **What it does.** Every `[]` answers a `T?`, so a walked row's template states each read with
 a `crash` line before the fill ([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)): `var stored_row =
@@ -3661,7 +3614,7 @@ more for itself as it always did (`conformance/stage6/sparse_rows` reads its ref
 
 ### Objects that never leave their function live in the frame
 
-**The case:** [benchmarks/objects_that_never_leave_their_function_live_in_the_frame](https://github.com/Mortaro/spite-language/blob/next/benchmarks/objects_that_never_leave_their_function_live_in_the_frame).
+**The case:** [benchmarks/objects_that_never_leave_their_function_live_in_the_frame](https://github.com/Spite-Language/spite_benchmarks/tree/master/objects_that_never_leave_their_function_live_in_the_frame).
 
 **What it does.** Every class is passed by reference, so `var moved = position +
 velocity.scaled(delta)` reads as two new objects. When the compiler can prove an object never outlives the call
@@ -3746,13 +3699,13 @@ and a held object, allocates 3 029 times in all (4 032 without).
 
 **What you notice.** Fewer allocations under `--debug-memory`, and `value.memory.section` answering `'stack'` for a
 local that lives in the frame ([memory.md](memory.md#where-a-value-lives-memory)).
-[Its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/objects_that_never_leave_their_function_live_in_the_frame), 20 000 000 steps of a falling
+[Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/objects_that_never_leave_their_function_live_in_the_frame), 20 000 000 steps of a falling
 point, makes 6 allocations in all and takes 15.3 ms, against 1 132.8 ms for naive C, which `malloc`s every answer,
 and 15.2 ms for expert C, which holds the numbers by value. The whole program
-[game_maths](https://github.com/Mortaro/spite-language/blob/next/benchmarks/game_maths) (a million `position + velocity.scaled(delta)` steps, 200 000 `Matrix4`
+[game_maths](https://github.com/Spite-Language/spite_benchmarks/tree/master/game_maths) (a million `position + velocity.scaled(delta)` steps, 200 000 `Matrix4`
 products, a million `transform_point`s) measures the library's `Vector3` and `Matrix4` against the same passes in C
 with plain structs: 1.40 times naive C's time, where it took 3.19 while each `accumulated * step_matrix` made its
-product on the heap; [vector_maths](https://github.com/Mortaro/spite-language/blob/next/benchmarks/vector_maths) takes 1.30 times naive C's time, 2.40 while each
+product on the heap; [vector_maths](https://github.com/Spite-Language/spite_benchmarks/tree/master/vector_maths) takes 1.30 times naive C's time, 2.40 while each
 `nudged.normalized()` did. On a game engine whose `Math.Matrix4` holds its two singletons as attributes:
 `flex_layout` makes 99 789 allocations (100 514 without), `scene_probe` 32 413 (32 518), `render_parity` 14 142 (14
 171), with the same output; `stress` keeps its components in columns and makes the same 5 606 191. In `conformance/`,
@@ -3765,102 +3718,9 @@ that parameter is not counted at all: the call goes to the function's `___held_`
 that assigns the parameter, an inspectable or resumable build) it is counted up and down as any object is (atomically
 in a program that starts threads), and the count is never read.
 
-### The C is compiled in parallel units, and cached
-
-**The case:** [benchmarks/the_c_is_compiled_in_parallel_units_and_cached](https://github.com/Mortaro/spite-language/blob/next/benchmarks/the_c_is_compiled_in_parallel_units_and_cached).
-
-In a default build and an `--optimized` one alike, the C of a program bigger than 1.5 MB is split into a header and up to 64 translation
-units, compiled as many at once as the machine has processors and linked, and each unit's object is kept under the
-hash of what it was compiled from, so a build that changed nothing only links and a build that changed one function's
-body compiles one unit ([compiler.md](compiler.md#translation-units-the-c-compiled-in-parallel-and-cached), where the
-rules are). It changes nothing a program does: the same functions and variables, with `static` dropped so another unit
-can call them. What you could notice: in a build without link-time optimisation a call from one unit into another is
-not inlined by the C compiler (which the default `-O0` build never does anyway, and which `--optimized` recovers,
-[below](#a-release-build-is--o3-with-link-time-optimisation)); and the object cache in `.spite/objects` grows to
-1 GiB, past which each build removes what was used least recently.
-
-### A release build is `-O3` with link-time optimisation
-
-**The case:** [benchmarks/a_release_build_is_o3_with_link_time_optimisation](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_release_build_is_o3_with_link_time_optimisation).
-
-`--optimized` asks the C compiler for `-O3`, and a build from several units adds
-ThinLTO (`-flto=thin`, clang) or `-flto=auto` (gcc) so functions are still inlined across units. What you could
-notice: the link takes longer, since it is where the optimisation across units happens. The default build is `-O0`,
-and it and a `--hot-reload` build add `-march=native`, so they use every instruction of the machine that built them,
-where they run; an `--optimized` build, the one shipped, adds nothing of the kind and runs on any processor
-([compiler.md](compiler.md#release-builds)). The measurements of each optimisation level are in
-[its case's README](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_release_build_is_o3_with_link_time_optimisation#each-optimisation-level).
-
-### A release is inlined in every unit
-
-**The case:** [benchmarks/a_release_is_inlined_in_every_unit](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_release_is_inlined_in_every_unit).
-
-**What it does.** Letting go of a reference is a count-down and, rarely, the freeing of the object and everything it
-holds. The compiler writes each class's retain and release as a small `static inline` function in the header that
-every [translation unit](#the-c-is-compiled-in-parallel-units-and-cached) includes, and the freeing as a function
-of its own beside them. So the C compiler copies the count-down into every call, in every unit, and calls out only
-when the count reaches zero. Before, a release was one function holding both paths, too big for link-time
-optimisation to copy into another unit, so a loop that let go of an object in another unit paid a call for every
-count-down.
-
-```gdscript title=inlined_release/mover.spite
-var speed = 0
-
-func Mover(starting_speed: Integer) {
-    speed = starting_speed
-}
-```
-```gdscript title=inlined_release/inlined_release.spite entry
-var console = Console()
-
-func InlinedRelease() {
-    var movers = List<Mover>()
-    var index = 0
-    while index < 1000 {
-        var mover = Mover(index)
-        movers.append(mover)
-        index = index + 1
-    }
-    var every_other = List<Mover>()
-    var total = 0
-    var position = 0
-    while position < movers.count() {
-        var mover = movers[position]
-        total = total + mover.speed
-        every_other.append(mover)
-        position = position + 2
-    }
-    movers.clear()
-    var kept = every_other.count()
-    console.print(kept, total)
-}
-```
-```output
-500 249500
-```
-
-Each `Mover` kept in the second list is counted up, and `movers.clear()` counts every `Mover` down, freeing the ones
-not kept. The release is written as:
-
-```c
-static inline void Mover___release(Mover* self) {
-if (self == 0) return;
-if (SPITE_COUNT_DOWN(self->header.ref_count) > 0) return;
-Mover___free(self);
-}
-```
-
-and `Mover___free` releases its attributes and frees it, out of line.
-
-**When.** Every build but `--hot-reload`, `--repl` and `--repl-port`, whose releases stay ordinary functions a reload
-can replace. A singleton keeps its release, which does nothing. [Identical functions are folded into
-one](#identical-functions-are-folded-into-one) leaves the inline functions alone, so a call to one is never made
-through a pointer. **What you notice.** Speed, and only in a build of several units: the game engine's stress test
-went from 73 ms a tick to 66 ms, and its physics step from 11.5 to 10.1 ms.
-
 ### Thread safety for singletons, the rest of the plan
 
-**The case:** [benchmarks/thread_safety_for_singletons_the_rest_of_the_plan](https://github.com/Mortaro/spite-language/blob/next/benchmarks/thread_safety_for_singletons_the_rest_of_the_plan).
+**The case:** [benchmarks/thread_safety_for_singletons_the_rest_of_the_plan](https://github.com/Spite-Language/spite_benchmarks/tree/master/thread_safety_for_singletons_the_rest_of_the_plan).
 
 A singleton reached from a `Parallel` is made thread-safe by the compiler, with no keyword, and the compiler picks
 the cheapest form that is safe for what that singleton's functions actually do. The forms above are nothing for
@@ -3873,7 +3733,7 @@ nothing.
 
 ### Copies that cost nothing
 
-**The case:** [benchmarks/copies_that_cost_nothing](https://github.com/Mortaro/spite-language/blob/next/benchmarks/copies_that_cost_nothing).
+**The case:** [benchmarks/copies_that_cost_nothing](https://github.com/Spite-Language/spite_benchmarks/tree/master/copies_that_cost_nothing).
 
 Every class is passed by reference and `copy()` gives an independent one; that is the whole API, and the compiler
 optimises behind it: a copy used only once is passed by value instead of allocated; a copy that is never changed
@@ -3887,8 +3747,6 @@ the end of the frame), and an attribute object is laid inline in a frame-held ob
 shared.
 
 ### Identical functions are folded into one
-
-**The case:** [benchmarks/identical_functions_are_folded_into_one](https://github.com/Mortaro/spite-language/blob/next/benchmarks/identical_functions_are_folded_into_one).
 
 Two versions of one dependency are two different libraries
 ([packages.md](packages.md#two-versions-of-one-repository)), and what that duplicates must cost nothing. So the
@@ -3923,7 +3781,7 @@ every build, rather than leaving it to the C compiler or the linker.
 
 ### Calls in a row run at once
 
-**The case:** [benchmarks/calls_in_a_row_run_at_once](https://github.com/Mortaro/spite-language/blob/next/benchmarks/calls_in_a_row_run_at_once).
+**The case:** [benchmarks/calls_in_a_row_run_at_once](https://github.com/Spite-Language/spite_benchmarks/tree/master/calls_in_a_row_run_at_once).
 
 **What it does.** Statements in a row that each call a function on an object of the program, and share nothing
 one of them writes, run on the thread pool at once ([concurrency.md](concurrency.md#calls-in-a-row-run-at-once)).
@@ -3981,7 +3839,7 @@ overlapped calls count, as every program with threads does
 
 ### A loop over a list of different classes runs them at once
 
-**The case:** [benchmarks/a_loop_over_a_list_of_different_classes_runs_them_at_once](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_loop_over_a_list_of_different_classes_runs_them_at_once).
+**The case:** [benchmarks/a_loop_over_a_list_of_different_classes_runs_them_at_once](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_loop_over_a_list_of_different_classes_runs_them_at_once).
 
 **What it does.** A loop that calls one function on every element of a list of a `type`, `voices.each_render()`,
 runs the elements on the thread pool at once when their classes share nothing one of them writes
@@ -4059,7 +3917,7 @@ one class that each belong to their owner are told apart ([objects made for thei
 
 ### A loop whose passes write only their own item runs in bands
 
-**The case:** [benchmarks/a_loop_whose_passes_write_only_their_own_item_runs_in_bands](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_loop_whose_passes_write_only_their_own_item_runs_in_bands).
+**The case:** [benchmarks/a_loop_whose_passes_write_only_their_own_item_runs_in_bands](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_loop_whose_passes_write_only_their_own_item_runs_in_bands).
 
 **What it does.** A loop that calls one function on every element of a list of a class, `orbits.each_advance()`,
 runs on the thread pool in bands, one band for each thread, when every pass writes only its own element: the
@@ -4138,7 +3996,7 @@ make the class's counts atomic everywhere ([plain counts](#plain-reference-count
 
 ### Objects made for their owner are told apart
 
-**The case:** [benchmarks/objects_made_for_their_owner_are_told_apart](https://github.com/Mortaro/spite-language/blob/next/benchmarks/objects_made_for_their_owner_are_told_apart).
+**The case:** [benchmarks/objects_made_for_their_owner_are_told_apart](https://github.com/Spite-Language/spite_benchmarks/tree/master/objects_made_for_their_owner_are_told_apart).
 
 **What it does.** [Calls in a row](#calls-in-a-row-run-at-once) and [a loop over different classes](#a-loop-over-a-list-of-different-classes-runs-them-at-once)
 run at once only when neither call writes what the other touches, and the compiler used to tell objects apart only
@@ -4233,7 +4091,7 @@ states the proof; `conformance/stage6/owned_objects` runs both forms and the ite
 
 ### Counts stay plain for what one of the calls run at once counts
 
-**The case:** [benchmarks/counts_stay_plain_for_what_one_of_the_calls_run_at_once_counts](https://github.com/Mortaro/spite-language/blob/next/benchmarks/counts_stay_plain_for_what_one_of_the_calls_run_at_once_counts).
+**The case:** [benchmarks/counts_stay_plain_for_what_one_of_the_calls_run_at_once_counts](https://github.com/Spite-Language/spite_benchmarks/tree/master/counts_stay_plain_for_what_one_of_the_calls_run_at_once_counts).
 
 **What it does.** A loop over different classes that runs them at once used to make every class its calls count
 atomic for the whole program ([plain counts](#plain-reference-counts-where-no-thread-reaches-a-class)), since its
@@ -4357,7 +4215,7 @@ states the proof.
 
 ### A crash's report is kept out of the way
 
-**The case:** [benchmarks/a_crashs_report_is_kept_out_of_the_way](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_crashs_report_is_kept_out_of_the_way).
+**The case:** [benchmarks/a_crashs_report_is_kept_out_of_the_way](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_crashs_report_is_kept_out_of_the_way).
 
 **What it does.** Every `crash`, failed `assert`, read outside a list and overflow has code that writes its report:
 the place, the values that failed, the attributes of the object it ran on. That code runs at most once, so the
@@ -4399,13 +4257,11 @@ naive entity system took 14% fewer instructions per tick. A report reads exactly
 
 ### Other optimisations
 
-**The case:** [benchmarks/other_optimisations](https://github.com/Mortaro/spite-language/blob/next/benchmarks/other_optimisations).
-
 - **An appended item made in the frame**: `var slow = Velocity(1.0, 0.5)` and then `velocities.append(slow)` makes
   `slow` in the frame, when the object is used for nothing else, and `append` copies its attributes into the
   vector's block, as it copies any item: a `Vector`'s or an inline `Items`' `append` keeps nothing of the object it
   is given, so filling one allocates only when the block grows
-  ([collections.md](https://github.com/Mortaro/spite-language/blob/next/specs/collections.md#vectort)). `removing_many_at_once`, which fills an `Items` of 200 000
+  ([collections.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#vectort)). `removing_many_at_once`, which fills an `Items` of 200 000
   velocities forty times, went from 3.57 times naive C's time to 2.90.
 - **A build report of what could not be optimised**, written only when asked with
   `--optimization-report=file` ([compiler.md](compiler.md#read-what-was-not-optimised)): not "400 copies elided"

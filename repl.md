@@ -474,8 +474,8 @@ Monster`); with `--repl` or `--repl-port`, `reload` swaps in what changed right 
 swapped in (or refused), with what `last_reload` would then say, so a tool that saves a file never polls. A program
 built without `--hot-reload` has none of this: no watcher, no swapping, and `reload` answers that it was not
 built for it. `--hot-reload` keeps every function (it implies `--development`), since a new version of a class
-may call one nothing called before, and it compiles like the default build, at `-O0`, so a reload is quick. It is
-slower than a release build, since its C is not optimised and every call goes through a slot a reload can
+may call one nothing called before, and it compiles like the default build, so a reload is quick. It is
+slower than a release build, since its code is not optimised and every call goes through a slot a reload can
 re-point: a `--hot-reload` build trades run speed for live information, and speed is measured on release builds.
 
 ```gdscript title=hot_counter/monster.spite
@@ -712,7 +712,7 @@ worked out while compiling, so the check folds away with the branch it guards.
   re-point: the program's own, the standard library's, and the helpers the compiler writes. The function the rest
   of the code calls is a one-line forwarder to its slot. A normal build is untouched: direct calls, and tree
   shaking. The slot costs about a nanosecond per call, one indirect call the C compiler cannot inline
-  ([measured](https://github.com/Mortaro/spite-language/blob/next/specs/repl.md#live-reload-in-detail)),
+  ([measured](https://github.com/Spite-Language/spite_spec/blob/master/specs/repl.md#live-reload-in-detail)),
   and only in a `--hot-reload` build.
 - **Only what changed is compiled again.** The build writes two files beside the executable: `game.reload_host`,
   what the running program holds (every function with its C prototype, its classes and their layouts, and the

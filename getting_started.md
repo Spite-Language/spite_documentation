@@ -2,57 +2,45 @@
 
 ## Install the compiler
 
-Download the newest `spite-0.0.<n>-windows.zip` from the repository's
-[releases](https://github.com/Mortaro/spite-language/releases), unzip it anywhere, and put the folder on your `PATH`. The
-folder holds `spite.exe` with the `launcher/` and `library/` it reads, so keep them together. Spite writes C and
-builds it, so you also need a C compiler, named in the `CC` environment variable (for example the clang that ships
-with Visual Studio), or `cc`, `clang` or `gcc` on your `PATH`.
-Then `spite hello_world` compiles and runs the program of the [next section](#hello-world).
+The compiler is [spite_compiler](https://github.com/Spite-Language/spite_compiler), a program written in Spite that
+builds itself and writes Windows x64 machine code directly. It needs no C compiler, linker or other toolchain. Its
+standard library is [spite_standard_library](https://github.com/Spite-Language/spite_standard_library), which sits beside the
+compiler's executable as the `library/` folder: a release is `spite.exe` and `library/`. Put both in one folder and
+that folder on your `PATH`.
 
-Each release also carries `spite_compiler.c`, the C that `spite.exe` was built from, and `SHA256SUMS` for both:
-any C compiler turns that file back into the same compiler. Releases are Windows only for now; on another system,
-build from source.
+The compiler's [README.md](https://github.com/Spite-Language/spite_compiler/blob/master/README.md) says how to get
+`spite.exe`, and [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md) how it
+is built from nothing. Only Windows x64 is written for now.
+
+Then `spite hello_world` compiles the program of the [next section](#hello-world).
 
 ## Build the compiler from source
 
-Spite compiles itself, so the only thing you need is a C compiler (`cc`, `clang` or `gcc`; on Windows, the
-clang that ships with Visual Studio is found on its own). From the repository root:
+The compiler builds itself: given a `spite.exe`, it compiles its own folder into the next one.
 
 ```bash
-bin/spite examples/hello
+.spite/spite.exe .spite/spite_compiler --build --executable-path=.spite/spite_next.exe
 ```
 
-`bin/spite` builds the compiler from the seed for your system, `compiler/seed/linux/spite_compiler.c` or
-`compiler/seed/windows/spite_compiler.c`, into `.spite/` the first time it runs (and again whenever that file is
-newer), then compiles and runs the program. The seed is the C the Spite compiler emits for its own sources, so
-building it by hand is one command too:
+Inside the compiler's repository, `.spite/spite_compiler` is a junction to the repository itself and `.spite/library` is a
+junction to the standard library's repository. The next compiler is kept when it rebuilds itself to the same bytes. A build
+from nothing, when no `spite.exe` exists yet, is the chain
+[ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md#how-the-compiler-is-built)
+describes.
+
+## Run a program
 
 ```bash
-cc -O2 -Wno-parentheses-equality compiler/seed/linux/spite_compiler.c -o spite -lm
+spite hello_world                 # build it and run it
+spite hello_world --check         # check that it compiles, build nothing
+spite hello_world --build         # build it without running it
+spite hello_world --high-ir=ir    # also write the high representation of each class into ir/
+spite hello_world --low-ir=ir     # the same for the low representation
 ```
 
-The compiler writes C and builds it with the command in the `CC` environment variable, or the first of `cc`,
-`clang` and `gcc` it finds. `bin/spite` picks that command itself: `SPITE_CC` if it is set, else the first C
-compiler it finds (Visual Studio's clang included), and hands it to the compiler as `CC`.
-
-### Working on Spite itself
-
-`bash check.sh`, run from the repository root, proves the compiler and keeps the compiler of every run that passes in
-`.spite/shared/latest/spite.exe`. Put that folder first on your `PATH` and set `CC`, and `spite` is always the newest
-compiler that passed, reading `launcher/` and `library/` from your checkout:
-
-```bash
-spite examples/hello
-```
-
-The first check builds the compiler. A later one builds it again only when `compiler/`, `launcher/` or `library/`
-changed, and then starts from the kept compiler instead of the seed. When none of them changed, it runs every check
-with the compiler that passed for exactly those files. The compiler is always built with `-O3`, so the one you run is
-the one a release ships.
-
-`bash check.sh --update-seed` is the full check: it also proves the compiler frees everything it takes while compiling
-itself, compiles it for every other system, and rewrites the committed seeds. A push to `master` that changes those
-folders releases the next `0.0.x` on its own, and is refused unless a full check passed with exactly them.
+The executable is `hello_world/.spite/build/hello_world.exe`, and its exit code is what the entry constructor
+answers. [compiler.md](compiler.md) lists every option. The programs that every compiler of Spite must pass, one
+for each rule, are in [spite_spec](https://github.com/Spite-Language/spite_spec).
 
 ## Hello world
 
@@ -78,10 +66,10 @@ spite hello_world
 A file is a class, named by its file name: `hello_world.spite` is the class `HelloWorld`. There is no `main`: the
 program runs by constructing the entry class, so its constructor, the function named like the class, is the
 whole program. Building and running are the same command; there is no separate compile step to remember. The
-executable is built into `.spite/` in the folder you ran `spite` from, `.spite/build/hello_world/hello_world.exe` (no
-`.exe` on Linux and macOS), never beside the source, so it can be run again without the compiler ([compiler.md](compiler.md#choose-the-outputs) has the other outputs). It carries
+executable is built into the program's own `.spite/` folder, `hello_world/.spite/build/hello_world.exe`, never beside the source,
+so it can be run again without the compiler ([compiler.md](compiler.md#choose-the-outputs) has the other outputs). It carries
 only what the program uses: the standard library classes hello world never reaches are not in it, and there is
-no runtime beneath it ([optimizations.md](optimizations.md#tree-shaking-the-generated-c)).
+no runtime beneath it ([optimizations.md](optimizations.md#tree-shaking)).
 
 ## A second class
 

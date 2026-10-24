@@ -82,7 +82,7 @@ func relabel(replacement: Box) {
 
 The same holds for a name answered by a function that returns an item of a list, such as a lookup that answers
 `values[row]`: the error names the class holding the list and its function that writes it
-([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#assigning-a-name-read-from-a-list-changes-only-the-name)).
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#assigning-a-name-read-from-a-list-changes-only-the-name)).
 
 ## Do: call `copy()`/`deep_copy()` for an independent object
 
@@ -115,7 +115,7 @@ independent label b
 
 `deep_copy()` copies the shape of what it reaches: an object reached twice in one copy, through a cycle or a
 `Weak`, is copied once, so a child's `parent` in the copy is the copied parent, and a `Weak` in the copy holds the
-copy of its object when the same `deep_copy()` copied it ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#the-memory-model)).
+copy of its object when the same `deep_copy()` copied it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
 
 ## A `Vector` lends its items
 
@@ -124,7 +124,7 @@ attributes with no header ([collections.md](collections.md#vectort-items-inline)
 item inside that block, **borrowed**. Writing its attributes writes the vector's item; taking it and letting it go
 costs nothing. In exchange the compiler never lets it be kept (in an attribute, a list, a returned value, a
 function value, or past a line that may grow or shrink the vector), and each of those errors names `copy()`,
-which makes an independent object ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort)).
+which makes an independent object ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)).
 
 Only a class is lent: numbers, `Boolean`s and enums are kept in a `List`, never a `Vector`, and reading one gives
 a number of its own. `velocities[index]`, like every `[]`, answers a `T?`, so an item is lent once the read is
@@ -184,7 +184,7 @@ The row is made in the function's frame, not on the heap, and nothing in it is c
 vectors' own items. In exchange the row lives for exactly the call it is passed to. It is never kept, returned,
 put in a list or given a second name, by the function that makes it or the one it is passed to, and the call may
 not append to or remove from a vector the row borrows from, directly or through anything it calls
-([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort)).
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)).
 
 A generic runner does not know the attributes of the `type` it is given, so it cannot write the literal. It fills
 the row with a `Symbol` walk instead, and a local of the `type` declared `= null` and filled by the walk on the
@@ -448,7 +448,7 @@ For `Runner<Moving>` the walk is written out as `{entity: <an Entity in the fram
 Column<Position>().values[found[1]], velocity: Column<Velocity>().values[found[2]], trail:
 ReferenceColumn<Trail>().at(found[3])}`: the `Entity` is made in the frame, since `Entity` could be a `Vector`
 item, and the `Trail` is counted once for the row and let go after the call, unless nothing the call runs can
-let go of it, when `at` lends it to the row uncounted ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort)). Only `Position`
+let go of it, when `at` lends it to the row uncounted ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)). Only `Position`
 and `Velocity` are borrowed, so only their vectors are checked for a resize during the call.
 
 Two column classes, and a choice in every line that reaches them, are only there because a `Vector<Trail>` cannot
@@ -562,7 +562,7 @@ it, it may lend it on to a call of its own ([below](#an-item-lent-to-a-call)), a
 to or remove from a column it borrows from. `made_position`
 called anywhere else is an ordinary function, and returning a borrowed item from it is the error for returning one.
 The template may also fill a whole walked row for an argument that is a `type`
-([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort)).
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)).
 
 ### An item lent to the caller
 
@@ -803,7 +803,7 @@ grace belongs to ada
 
 Everything above is freed when `WeakFamily` returns, which is what `--debug-memory`, below, checks: a cycle left
 in shows up there as leaked objects by class. Without `Weak`, clear the `T?` field that closes the loop when you
-are done with it ([the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#the-memory-model)).
+are done with it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
 
 ## `--debug-memory`
 
@@ -813,7 +813,7 @@ the program exits. A mismatch means something leaked; when the two do not balanc
 leaked cycle visible instead of an unexplained count. Every program on these pages is run this way, and must
 balance. It also fills every byte it hands out that nobody has written yet with the same pattern, so a program that
 reads memory it never wrote fails the same way on every run and from every launcher, instead of reading whatever
-the heap held. The table exists only in a `--debug-memory` build ([what it records](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#--debug-memory)).
+the heap held. The table exists only in a `--debug-memory` build ([what it records](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#--debug-memory)).
 
 ## `Memory` is the floor, and you can build on it
 
@@ -831,7 +831,7 @@ Every type in the standard library is Spite over these two: `String`, `List<T>` 
 bytes in memory the heap hands out, and each number says in its own file how much memory it is. A container of
 your own is written over the heap and `TypedMemory<T>` (below), with nothing the compiler does for `List<T>`
 that it would not do for yours: read `library/list.spite` for a complete one. The rules of this floor are in
-[the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#the-floor-memoryaddress-memoryheap-and-typedmemoryt).
+[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-floor-memoryaddress-memoryheap-and-typedmemoryt).
 
 Bytes that come from outside are not this floor: a file's or a socket's bytes are a `Buffer`, a class of the library
 that keeps its bytes in one block of this floor and reads the numbers in them, and memory a C library hands out is a
@@ -868,18 +868,18 @@ var _memory = Buffer(4)
 ```
 
 Four bytes, and nothing is allocated: `Buffer(4)` says only how big the value is (a number is a buffer of its bytes), which is true wherever it
-lives. The compiler places it (a number's memory is a register, or wherever the C compiler keeps an `int32_t`, a
+lives. The compiler places it (a number's memory is a register, a
 local on the stack, an attribute inside an object, or the value of a `type` beside its class's tag), so there is no
 address behind `this` and nothing to free. The line is not run: it is how a value
 class states its size, and it is read only there. Every number file says the same with its own width (`Long` 8, `Short` 2,
-`Byte` 1, `Boolean` 1, `Double` 8, `Memory.Address` 8, ...), the compiler checks it against the C type it emits,
+`Byte` 1, `Boolean` 1, `Double` 8, `Memory.Address` 8, ...), the compiler checks it against the number's type,
 and `count.memory.bytes` reads it. Inside a number, `this` is the value itself, not `_memory`.
 
 What a container of your own works with:
 
 - **Allocating:** `heap.allocate(bytes)` returns a `Memory.Address`, `heap.resize(address, bytes)` grows it and
   `heap.free(address)` gives it back, from your `drop()`. The bytes are not cleared, so write before you read.
-- **Where it lives is the compiler's choice** ([placement](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#placement-the-compiler-decides-where-memory-lives)):
+- **Where it lives is the compiler's choice** ([placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)):
   a buffer a function allocates, uses and frees itself lands in the function's own frame, with no allocation at
   all; anything else is on the heap. You write the same `allocate` and `free` either way.
 - **Reading and writing an address:** `address.read_long(offset)`, `address.write_float(offset, value)` and the
@@ -986,7 +986,7 @@ Every named value can see its own memory through reflection: `value.memory` is a
 (`library/spite/memory.spite`) with a read-only `address`, `bytes` and `section`: `'heap'`, `'stack'` or
 `'constant'` (the text of a literal, which is part of the program). A class instance or a list answers with
 its object; a `String` with its characters; a number held in a local with the local itself. It is built only
-where a program reads it, so it costs nothing anywhere else ([the rule](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#where-a-value-lives-memory)).
+where a program reads it, so it costs nothing anywhere else ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#where-a-value-lives-memory)).
 
 ```gdscript title=memory_sections/memory_sections.spite entry
 var console = Console()
@@ -1019,7 +1019,7 @@ from blocks of that size, one after another, never gives any of it back one piec
 at once when the arena itself goes. An object made in an arena holds the arena, so the arena cannot go while
 anything made in it is alive.
 
-The exact rules and the errors are in [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#allocators-memoryallocator).
+The exact rules and the errors are in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#allocators-memoryallocator).
 
 ### An object reads its own allocator
 

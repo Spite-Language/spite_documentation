@@ -9,7 +9,7 @@ it does not hold.
 
 This page is the catalogue of every such proof. It is a catalogue, not a second home for the rules: each entry
 says in a few lines what the proof is, and links the page that teaches it and the
-[specification](https://github.com/Mortaro/spite-language/blob/next/specs/README.md) that states it in full. Where an entry and the specification differ, the
+[specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md) that states it in full. Where an entry and the specification differ, the
 specification decides.
 
 **Why the fallback matters most.** A proof that does not apply never fails silently: either
@@ -196,7 +196,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   reads and divisors its opposite bounds (`if index >= names.count() { return "" }` proves `names[index]`). The
   block itself sees none of it.
 - **Buys.** `if not found { return -1 }` followed by `found.length()` compiles, so explicit answers read as
-  guards do. The C is the condition as written.
+  guards do. The code is the condition as written.
 - **Falls back.** Nothing is proven after an `if` with an `else`, a block ending in `crash condition`, in an
   `if`/`else` whose branches both return, or in `while true`; a class test (`if creature != Fish { return }`)
   narrows nothing; a `not` side that is not a path (`not x.ready()`) proves nothing. Use `assert` or `crash`.
@@ -423,7 +423,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   ([below](#a-proven-read-halts-outside-its-list)). Nothing proves a read whose position comes from another read
   (an offset stored in the file): narrow it.
 - **See.** [standard_library.md: Bytes are a Buffer](standard_library.md#bytes-are-a-buffer), [the
-  rules](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#reading-with--answers-t); `conformance/stage6/list_byte_numbers`,
+  rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#reading-with--answers-t); `conformance/stage6/list_byte_numbers`,
   `diagnostics/byte_reads`.
 
 ### An index built from loop counters is proven by one guard
@@ -438,7 +438,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
 - **Falls back.** Any other shape of index (`column + row * stride`, an index kept in a `var` first) is not traced:
   narrow the read, or write the index inline. Assigning `rows`, `stride` or the list after the guard, or shrinking the
   list, undoes the guard; assigning `row` or `column` inside the inner loop is the error for a proof the loop read.
-- **See.** [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#reading-with--answers-t); `conformance/stage6/list_byte_numbers`.
+- **See.** [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#reading-with--answers-t); `conformance/stage6/list_byte_numbers`.
 
 ### An index offset by a base is proven by one guard
 
@@ -452,7 +452,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
 - **Falls back.** An index kept in a `var` first, a `base` that may be negative, or a guard written about another list
   is not traced: narrow the read, or write the index inline. Assigning `base`, `bound` or the list after the guard, or
   shrinking the list, undoes the guard.
-- **See.** [the rules](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#reading-with--answers-t); `conformance/stage6/list_base_counter`.
+- **See.** [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#reading-with--answers-t); `conformance/stage6/list_base_counter`.
 
 ### A counted loop reads its items unchecked
 
@@ -466,7 +466,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   only declares and assigns plain locals, reads and writes items of plain-value lists, and calls those lists' reading
   functions and maths. A second list indexed by the counter is checked once, before the loop.
 - **Buys.** The count is read once and items are read and written as a C array, which the C compiler vectorises;
-  [its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked) runs in 39.5 ms
+  [its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_loop_over_plain_values_reads_its_count_once_and_its_items_unchecked) runs in 39.5 ms
   against naive C's 159.9 ms.
 - **Falls back.** The ordinary loop, every read checked. Any other call (an `append`), a counter starting from a
   parameter, a `Long` counter, a list held in an attribute, a `--repl`, `--repl-port` or `--hot-reload` build, or a
@@ -487,7 +487,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   constant outside the `Integer` range are not proofs. The smallest signed value divided by `-1` halts as
   [arithmetic that does not fit](#arithmetic-that-does-not-fit-halts) does, even where the divisor is proven.
 - **See.** [optimizations.md: A proven divisor is not checked](optimizations.md#a-proven-divisor-is-not-checked),
-  [values_and_types.md: Numeric types](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#numeric-types);
+  [values_and_types.md: Numeric types](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numeric-types);
   `conformance/stage6/division_by_zero`.
 
 ### A divisor written as zero is an error
@@ -497,7 +497,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   to `0`.
 - **Buys.** `'total / 0' divides by zero, which always halts the program ...` at compile time.
 - **Falls back.** None.
-- **See.** [values_and_types.md](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#numeric-types);
+- **See.** [values_and_types.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numeric-types);
   `diagnostics/division_by_constant_zero`.
 
 ### Arithmetic that does not fit halts
@@ -540,7 +540,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   once a pass as one of the body's own statements bounds the passes, and a total assigned once a pass,
   `total = total + term`, holds at most that many terms. An attribute, a list's item and a call's answer have
   their type's range. The rules in full are in
-  [values_and_types.md](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#a-range-proves-a-check-unneeded).
+  [values_and_types.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#a-range-proves-a-check-unneeded).
 - **Buys.** No compare-and-branch for the operation, so a loop of plain sums can be vectorised: a `Long` total of
   `Integer` terms over a list (`total = total + values[index]`), `seed * 48271 % 2147483647` for a `Long` seed,
   `index * 37` under `index < 100000`, `weight = round % 3 + 1`. In the compiler's own C, 250 of the 1 513 checks
@@ -551,7 +551,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   local the code bounds (`var level = step.clamp(0, 50)`), or step the counter as one of the loop body's own
   statements so its passes are known. A `--repl`, `--repl-port` or `--hot-reload` build proves no ranges.
 - **See.** [optimizations.md](optimizations.md#arithmetic-a-range-proves-is-not-checked),
-  [values_and_types.md](https://github.com/Mortaro/spite-language/blob/next/specs/values_and_types.md#a-range-proves-a-check-unneeded);
+  [values_and_types.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#a-range-proves-a-check-unneeded);
   `conformance/stage6/proven_ranges`, `conformance/stage6/optimization_report`.
 
 ### A wider operand is written first
@@ -703,12 +703,12 @@ A short guide by task. Find what you are writing; the entries below say the rest
 - **Buys.** A certain halt becomes a build error; a check that holds costs nothing.
 - **Falls back.** A folded `crash` in an instance nothing calls is left alone; a condition that also reads a run-time
   value through `or` is a run-time check.
-- **See.** [metaprogramming.md: Codegen values](https://github.com/Mortaro/spite-language/blob/next/specs/metaprogramming.md#codegen-values-);
+- **See.** [metaprogramming.md: Codegen values](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-);
   `diagnostics/folded_crash`, `conformance/stage6/folded_crash_uncalled`.
 
 ### Tree shaking: what `main` can reach
 
-- **Proves.** A piece of the generated C cannot be reached from `main`.
+- **Proves.** A piece of the generated code cannot be reached from `main`.
 - **Rule.** After generating, the compiler keeps `main`, every piece that is not a named function, type or static,
   and everything any kept piece names, transitively (`tree_shaker.spite`). A dispatcher over a union or `type` names
   every member's function, so all of them stay when it does; a function made into a value is kept.
@@ -718,7 +718,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   A function nobody calls is still compiled and checked. The match is by name, so it keeps too much, never
   too little.
 - **See.** [optimizations.md: Tree shaking the generated
-  C](optimizations.md#tree-shaking-the-generated-c), [metaprogramming.md: Tree
+  C](optimizations.md#tree-shaking), [metaprogramming.md: Tree
   shaking](metaprogramming.md#tree-shaking); `conformance/stage6/development_internals`.
 
 ### A reload compiles only the changed classes
@@ -768,7 +768,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
 - **Buys.** No allocation: a slot of the frame, and `free` does nothing.
 - **Falls back.** The heap, for a size over 256 bytes known only at run time, any other use, a recursive call, or a
   `--hot-reload` build.
-- **See.** [memory.md: Placement](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#placement-the-compiler-decides-where-memory-lives);
+- **See.** [memory.md: Placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives);
   `conformance/stage6/lent_buffers`, `conformance/stage6/kept_buffer_address`.
 
 ### Objects that never leave their function live in the frame
@@ -788,7 +788,7 @@ A short guide by task. Find what you are writing; the entries below say the rest
   (`BinaryWriter<Order>()`) is fresh as a local wherever they name classes, not other codegen values, except that
   a generic class's own function may write its own one codegen value (`Vector3<$number_type>(0, 0, 0)` in
   `Vector3<Float>`), which makes that very instance.
-- **Buys.** No allocation; `.memory.section` answers `'stack'`. [its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/objects_that_never_leave_their_function_live_in_the_frame)
+- **Buys.** No allocation; `.memory.section` answers `'stack'`. [its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/objects_that_never_leave_their_function_live_in_the_frame)
   makes 6 allocations for 20 000 000 steps, where naive C makes 80 000 003; `Vector3<Float>`, generic over its number class, stays in the frame as before
   (`conformance/stage6/generic_vectors`).
 - **Falls back.** An ordinary heap object when it is stored, returned as another type, given a second name, passed to
@@ -851,7 +851,7 @@ have moved.
 - **Buys.** No count and no copy: `layout.order = 3` writes the stored item.
 - **Falls back.** Each way of keeping one is an error naming `copy()`, an independent object.
 - **See.** [memory.md: Borrowed items of a
-  `Vector<T>`](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort); `diagnostics/vector_borrows`,
+  `Vector<T>`](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort); `diagnostics/vector_borrows`,
   `conformance/stage6/vector_items`.
 
 ### No borrowed read past a resize
@@ -867,7 +867,7 @@ have moved.
   compiler cannot place (a nullable, a union, a call's result, a reassigned parameter) is followed into every
   function of that name, and a function value may do anything.
 - **See.** [memory.md: Borrowed items of a
-  `Vector<T>`](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort); `diagnostics/dispatched_resizes`,
+  `Vector<T>`](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort); `diagnostics/dispatched_resizes`,
   `diagnostics/vector_reserve_borrows`, `conformance/stage6/queued_borrows`.
 
 ### Rows of borrowed items
@@ -881,7 +881,7 @@ have moved.
   the one call it fills. The template's branch may name a value with `var` (`var stored_row =
   rows[attribute.index]`); the name is walked as the value it names.
 - **Buys.** The row is a struct in the frame and its reads are uncounted: [its
-  case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_row_of_borrowed_items_lives_in_the_frame) makes 20 000 000 rows and allocates none of them.
+  case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_row_of_borrowed_items_lives_in_the_frame) makes 20 000 000 rows and allocates none of them.
 - **Falls back.** Refused as above; a walk of any other shape leaves an ordinary `type` value, and a counted value
   in a walked row is counted once for the row's block.
 - **See.** [memory.md: A row of borrowed items, for one
@@ -932,7 +932,7 @@ have moved.
 - **Buys.** One retain and one release per row, and the lock per call.
 - **Falls back.** The ordinary counted call; nothing is an error.
 - **See.** [memory.md: Borrowed items of a
-  `Vector<T>`](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#borrowed-items-of-a-vectort) (a reference column's element);
+  `Vector<T>`](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort) (a reference column's element);
   `conformance/stage6/lent_list_elements`, `conformance/stage6/lent_list_elements_parallel`.
 
 ### An argument its caller holds is passed uncounted
@@ -945,7 +945,7 @@ have moved.
 - **Buys.** One retain and one release per argument, atomic with threads, and a store of such a name into a list
   item written in place, counted only when the slot held another object
   ([optimizations.md](optimizations.md#storing-an-object-into-a-list-counts-it-only-when-it-changes-the-slot)): [its
-  case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_argument_its_caller_holds_is_passed_without_counting) runs in 13.5 ms against naive C's
+  case](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_argument_its_caller_holds_is_passed_without_counting) runs in 13.5 ms against naive C's
   38.2 ms, which counts the list in every function it is handed to.
 - **Falls back.** The counted call: in `--hot-reload`, `--repl`, `--repl-port` and `--development` builds, the
   resumable copy of a function a `Concurrent` runs, a library function, and a call whose result is made in the
@@ -968,7 +968,7 @@ have moved.
   callee would not have been compiled once per class. A held parameter is itself held for the calls the callee
   makes.
 - **Buys.** One retain and one release per argument: [its
-  case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/an_attribute_a_call_cannot_assign_is_passed_without_counting), and a stress tick of the
+  case](https://github.com/Spite-Language/spite_benchmarks/tree/master/an_attribute_a_call_cannot_assign_is_passed_without_counting), and a stress tick of the
   naive engine 36.0 to 30.5 ms.
 - **Falls back.** The counted call, when the callee may assign an attribute along the path anywhere it reaches,
   when its effects are not known, for text, unions of values and variadic lists, and in the builds and copies the
@@ -997,7 +997,7 @@ have moved.
   the rest of its pass only assigns locals and makes calls the compiler can name, none of which may let go of an
   object or assign an attribute through an unknown class, and, when a `drop()` of the program's own classes may let
   go of an object, makes no object of the program's own classes and copies none.
-- **Buys.** One retain and one release per element ([its case](https://github.com/Mortaro/spite-language/blob/next/benchmarks/a_lists_templates_read_its_elements_without_counting_them):
+- **Buys.** One retain and one release per element ([its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_lists_templates_read_its_elements_without_counting_them):
   29.3 ms against naive C's 39.9 ms).
 - **Falls back.** The counted read, in `--hot-reload` builds, for a nullable element, and for a pass that makes or
   copies an object of the program's own classes in a program one of whose classes has a `drop()` that may let go
@@ -1241,7 +1241,7 @@ These apply only in a program that uses threads: one that makes a `Parallel`, ru
   told apart; when, besides, the attribute's object is never kept anywhere else, no other name reaches it at all.
   An object passed to a function is followed into it, and an item read out of a singleton's list is told apart from
   an item of another singleton's list when no object is in both.
-- **Rule.** [concurrency.md](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Calls in a
+- **Rule.** [concurrency.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Calls in a
   row run at once"): read from the C of every function the program keeps. An attribute is made for its owner when
   every assignment to it, in every one of those functions, is a construction written right there (or nothing), and
   no copy of its owner copies it; it is kept nowhere else when it is only ever read through, passed to a list's own
@@ -1280,7 +1280,7 @@ These apply only in a program that uses threads: one that makes a `Parallel`, ru
 - **Proves.** In a loop over different classes that may run them at once, which classes the call of each class
   retains, releases, makes or frees, through every function it calls, and which two of those calls can ever run
   together.
-- **Rule.** [memory.md](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#the-memory-model): read with [no other thread counts a
+- **Rule.** [memory.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model): read with [no other thread counts a
   class](#no-other-thread-counts-a-class), with the loop's piece followed apart from the rest: the piece itself
   counts only its elements, and each class's call is followed on its own (a singleton's teardown, run at exit, left
   out). A class is a meeting point when two calls the loop's table lets run together both count it, or both make or
@@ -1460,7 +1460,7 @@ counter, one load per call, not a proof: [optimizations.md](optimizations.md#whi
 - **Falls back.** Not seen: a handle that escapes (stored, switched on, put in a literal), work reached through a
   function value, a union or an unknown receiver, a `parallel_each_` pass, and generic singletons. Do not wait inside
   a locked function for work that calls back into it.
-- **See.** [concurrency.md: the specification](https://github.com/Mortaro/spite-language/blob/next/specs/concurrency.md); `diagnostics/locked_wait`,
+- **See.** [concurrency.md: the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md); `diagnostics/locked_wait`,
   `diagnostics/endless_locked_loop`.
 
 ### A loop that can never end is an error
@@ -1499,7 +1499,7 @@ counter, one load per call, not a proof: [optimizations.md](optimizations.md#whi
   `Concurrent`, a class with `drop()`).
 - **Buys.** A write that is lost when the function lets the object go becomes a build error at the write.
 - **Falls back.** An object that has escaped, or one the compiler cannot prove is only held here, is not refused.
-- **See.** [failure.md: Nothing fails silently](https://github.com/Mortaro/spite-language/blob/next/specs/failure.md#nothing-fails-silently-the-rule);
+- **See.** [failure.md: Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule);
   `diagnostics/lost_writes`.
 
 ### A name read from a list, assigned and never read, is an error
@@ -1514,7 +1514,7 @@ counter, one load per call, not a proof: [optimizations.md](optimizations.md#whi
 - **Falls back.** Not refused where the compiler cannot see the item's source (a list held in a local, a function
   that may answer something else).
 - **See.** [memory.md: Assigning a name read from a list changes only the
-  name](https://github.com/Mortaro/spite-language/blob/next/specs/memory.md#assigning-a-name-read-from-a-list-changes-only-the-name);
+  name](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#assigning-a-name-read-from-a-list-changes-only-the-name);
   `diagnostics/replaced_items`.
 
 ### What a `Parallel` may reach
@@ -1587,7 +1587,7 @@ and stated in full in its specification, and none has a fallback beyond the erro
 - **Unused is an error**: a name, parameter or attribute that is only written and never read. It judges the source,
   so reads inside a folded-away branch still count; a function nobody calls is not reported, and a loaded
   package's attributes are shaken rather than reported ([style.md: Nothing unused](style.md#nothing-unused); `diagnostics/unused_names`, `diagnostics/written_not_read`).
-- **A constructed object must be kept and used** ([classes_and_files.md](https://github.com/Mortaro/spite-language/blob/next/specs/classes_and_files.md#a-constructed-object-must-be-kept-and-used);
+- **A constructed object must be kept and used** ([classes_and_files.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#a-constructed-object-must-be-kept-and-used);
   `diagnostics/dropped_construction`).
 - **Singletons that make each other in a circle** are an error; a circle only a constructor's body closes is not
   followed, and halts naming it at run time ([classes_and_files.md: Singletons](classes_and_files.md#singletons);
@@ -1603,7 +1603,7 @@ and stated in full in its specification, and none has a fallback beyond the erro
   name is called directly ([collections.md: Member templates](collections.md#member-templates-loops-you-do-not-write);
   `diagnostics/member_template_mistakes`, `diagnostics/passed_functions`).
 - **A value can be written**: the `T` of a `JsonWriter`, `JsonReader`, `BinaryWriter` or `BinaryReader` holds no union,
-  `type` or function value anywhere, so writing never fails at run time, and a binary schema is a constant ([json.md](https://github.com/Mortaro/spite-language/blob/next/specs/json.md#json-is-reflection-not-a-library); `diagnostics/json_unwritable`).
+  `type` or function value anywhere, so writing never fails at run time, and a binary schema is a constant ([json.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/json.md#json-is-reflection-not-a-library); `diagnostics/json_unwritable`).
 - **What crosses into C**: numbers, `Boolean`, enums, text, lists of numbers, number-only `type`s and function values;
   a callback's parameters and context are checked ([foreign_libraries.md: What crosses](foreign_libraries.md#what-crosses); `diagnostics/foreign_call_mistakes`,
   `diagnostics/foreign_callback_mistakes`).
