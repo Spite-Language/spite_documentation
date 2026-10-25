@@ -23,7 +23,8 @@ func Game() {
   standard library and then yours ([programs.md](programs.md#how-a-program-is-loaded)): its `load` may also use
   the `Build` fields the compiler already knows, like `build.target_operating_system` after `var build = Build()`.
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
-  `window-plugin`, and a folder that is not is an error before anything compiles
+  `window-plugin`, and a folder that is not is an error before anything compiles. That holds for every folder a
+  `load` names on its way, too: `load "../../Plugins/render_vulkan"` is refused for `Plugins`
   ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 - Resolving a bare `Name` from inside a class tries, in order: that class's own namespace, its folder, each
   parent folder, then the whole program. A dotted `Component.Requested` is looked up the same way, and so is
@@ -289,7 +290,7 @@ func Engine() {
 
 This works in every file of the program's folder and of a loaded package, so a package can pick its own plugins.
 Each path is relative to the folder of the file it is written in, unless it is absolute: `load
-"D:/Projects/engine/core"` or `load "/home/example/engine/core"` loads a package that lives in another
+"D:/projects/engine/core"` or `load "/home/example/engine/core"` loads a package that lives in another
 repository. The program then builds only on a machine that has that folder, which the path in its source
 already says. A condition the compiler cannot decide, such as
 one that reads `Arguments()`, is an error rather than a folder that is quietly left out.
@@ -316,7 +317,7 @@ lives in the source, which is already versioned.
 func Game() {
     load "github.com/example/engine@6c7dca9/core"
     load "../audio@b41e0d2/plugins/ogg_plugin"
-    load "D:/Projects/spite_truetype@41c09e2/truetype"
+    load "D:/projects/spite_truetype@41c09e2/truetype"
 }
 ```
 

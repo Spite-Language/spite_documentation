@@ -4,13 +4,22 @@
 
 The compiler is [spite_compiler](https://github.com/Spite-Language/spite_compiler), a program written in Spite that
 builds itself and writes Windows x64 machine code directly. It needs no C compiler, linker or other toolchain. Its
-standard library is [spite_standard_library](https://github.com/Spite-Language/spite_standard_library), which sits beside the
-compiler's executable as the `library/` folder: a release is `spite.exe` and `library/`. Put both in one folder and
-that folder on your `PATH`.
+standard library is [spite_standard_library](https://github.com/Spite-Language/spite_standard_library). Clone both
+side by side in one folder, under their own names, and build the compiler:
 
-The compiler's [README.md](https://github.com/Spite-Language/spite_compiler/blob/master/README.md) says how to get
-`spite.exe`, and [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md) how it
-is built from nothing. Only Windows x64 is written for now.
+```bash
+gh repo clone Spite-Language/spite_compiler
+gh repo clone Spite-Language/spite_standard_library
+bash spite_compiler/scripts/bootstrap.sh --install
+```
+
+The script downloads the last compiler the source built itself, builds the source with it until two builds write
+the same bytes, and leaves that compiler in `spite_compiler/.spite/spite.exe`; put that folder on your `PATH`.
+[ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md) says how it is built.
+Only Windows x64 is written for now.
+
+A program loads the standard library by its path, in the first lines of its entry function, so a program in a
+folder beside the two clones starts with `load "../spite_standard_library/windows"`.
 
 Then `spite hello_world` compiles the program of the [next section](#hello-world).
 
@@ -19,11 +28,11 @@ Then `spite hello_world` compiles the program of the [next section](#hello-world
 The compiler builds itself: given a `spite.exe`, it compiles its own folder into the next one.
 
 ```bash
-.spite/spite.exe .spite/spite_compiler --build --executable-path=.spite/spite_next.exe
+spite_compiler/.spite/spite.exe spite_compiler --build --executable-path=spite_compiler/.spite/spite_next.exe
 ```
 
-Inside the compiler's repository, `.spite/spite_compiler` is a junction to the repository itself and `.spite/library` is a
-junction to the standard library's repository. The next compiler is kept when it rebuilds itself to the same bytes. A build
+It runs from the folder that holds the clones, since the compiler's own entry file loads
+`../spite_standard_library/windows`. The next compiler is kept when it rebuilds itself to the same bytes. A build
 from nothing, when no `spite.exe` exists yet, is the chain
 [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md#how-the-compiler-is-built)
 describes.
