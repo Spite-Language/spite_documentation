@@ -23,8 +23,9 @@ func Game() {
   standard library and then yours ([programs.md](programs.md#how-a-program-is-loaded)): its `load` may also use
   the `Build` fields the compiler already knows, like `build.target_operating_system` after `var build = Build()`.
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
-  `window-plugin`, and a folder that is not is an error before anything compiles. That holds for every folder a
-  `load` names on its way, too: `load "../../Plugins/render_vulkan"` is refused for `Plugins`
+  `window-plugin`, and a folder that is not is an error before anything compiles. Of the folders a `load` names,
+  only the last one becomes a namespace, so only it is held to the rule: `load "../../Old Tools/render_vulkan"`
+  is fine, and `load "../../plugins/RenderVulkan"` is refused for `RenderVulkan`
   ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 - Resolving a bare `Name` from inside a class tries, in order: that class's own namespace, its folder, each
   parent folder, then the whole program. A dotted `Component.Requested` is looked up the same way, and so is
@@ -289,10 +290,10 @@ func Engine() {
 ```
 
 This works in every file of the program's folder and of a loaded package, so a package can pick its own plugins.
-Each path is relative to the folder of the file it is written in, unless it is absolute: `load
-"D:/projects/engine/core"` or `load "/home/example/engine/core"` loads a package that lives in another
-repository. The program then builds only on a machine that has that folder, which the path in its source
-already says. A condition the compiler cannot decide, such as
+Each path is relative to the folder of the file it is written in, and only relative: an absolute path such as
+`load "D:/projects/engine/core"` would build only on a machine that has that folder, so it is an error that names
+the relative path to write instead, like `load "../../engine/core"`. A package from another repository is loaded
+by where it sits beside yours, or pinned to a commit (below). A condition the compiler cannot decide, such as
 one that reads `Arguments()`, is an error rather than a folder that is quietly left out.
 
 Each loaded root can become a separate dynamic library, tree shaking is computed per bundle, and a `load` inside an
@@ -317,7 +318,6 @@ lives in the source, which is already versioned.
 func Game() {
     load "github.com/example/engine@6c7dca9/core"
     load "../audio@b41e0d2/plugins/ogg_plugin"
-    load "D:/projects/spite_truetype@41c09e2/truetype"
 }
 ```
 
@@ -325,7 +325,7 @@ The text is `<repository>@<commit>`, optionally followed by `/<folder inside it>
 exactly as a folder on disk would be; with no folder, the repository's own top folder is the root. The repository
 is either a URL, `github.com/example/engine` (fetched over `https://`) or one written with its scheme (`https://`,
 `ssh://`, `git://` or `file://`), or a repository on this machine, named by a path that starts with
-`./`, `../`, `/` or a drive letter, relative to the folder of the file the `load` is written in like any `load`.
+`./` or `../`, relative to the folder of the file the `load` is written in like any `load`.
 Nothing else is a repository, so `load "engine@6c7dca9"` is an error that shows both forms, and a folder
 without an `@` is an ordinary folder.
 

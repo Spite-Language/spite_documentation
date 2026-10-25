@@ -856,7 +856,8 @@ heap hands out, with its reference count and capacity in front of the characters
 points at the characters the program already carries, which are never counted or freed. Everything else is Spite
 in the same file: `length()` answers `_length`, `equals` and `less_than` compare `_bytes` with `compare_bytes`, and
 `slice` ends in `_bytes.text(length)`. What stays C is what depends on where the characters are: reading one
-(`code_at`, which answers the 0 after the last one past the end, and is one load in a loop over the text), making
+(`code_at`, which is one load in a loop over the text, and halts naming the index and the length when the index
+is below 0 or past the end, rather than answer a byte nobody wrote), making
 text from bytes (`Memory.Address.text`), joining two texts (`sum`), counting a block's references, and growing text
 in place, which fills the sixteen bytes first and moves the text into a block once it passes 15 bytes, and only
 when nothing else holds that block.

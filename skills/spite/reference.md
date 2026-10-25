@@ -44,8 +44,8 @@ namespace and nothing else (`game/engine/renderer/shader.spite` is `Engine.Rende
 name side by side (`engine/renderer.spite` beside `engine/renderer/`) is an error, since a dotted name means one
 thing. A class that hides another class visible from an enclosing namespace (`Physics.Plugin` beside a root
 `Plugin`) is an error naming both, and so is a class named like a standard-library class (`Geometry.Vector3`,
-`Game.Function` for `Spite.Function`): use the library's class, reopening it to add what it lacks. `load "folder"` inside a function loads another package (the path is relative to the file,
-or absolute: `load "D:/Projects/engine/core"`); a file at the same namespace path
+`Game.Function` for `Spite.Function`): use the library's class, reopening it to add what it lacks. `load "folder"` inside a function loads another package (the path is relative to the file, never
+absolute, and only its last folder, the namespace, must be snake_case); a file at the same namespace path
 reopens the class: same-named functions, attributes and enums replace (an enum declared again is its whole new
 list of values), the rest are added. `Build` is the exception: a field the program's own `build.spite` declares keeps the
 program's value over a loaded package's (a flag, then the program, then the package). A package opens the files
