@@ -415,7 +415,7 @@ $ spite connect 4000 --command="continue"
 swaps in a saved file; a program that never sets one carries nothing for it. The file is one of the program's own,
 named by the end of its path, and the line is one a statement starts on; anything else is refused and the program
 keeps its code. The next time any code reaches the line, the program stops before it and waits for the prompt:
-`where` answers where it stopped, `locals` lists `self` and every local in scope there, every other command answers
+`where` answers where it stopped, `locals` lists `self` and every local in scope there, a line each (`next: Integer = 3`), every other command answers
 as usual, and `continue` lets the program go on. `breaks` lists the breakpoints and `clear` (or
 `clear ticker.spite:16`) removes them, compiling the code again without the stop. A call made at the prompt that
 reaches a breakpoint answers `stopped at ticker.spite:16` at once, and its own answer is the answer to `continue`.
