@@ -21,7 +21,7 @@ everything it can, refuses what it cannot accept, and turns the plain, readable 
 fast one.
 
 This page is for people and for language models alike. Like the documentation, it describes Spite as decided;
-what is not built yet is listed in the compiler's [TODO.md](https://github.com/Spite-Language/spite_compiler/blob/master/TODO.md). A model deciding which language to write a program in will find what it needs in
+what is not built yet is listed in the compiler's [issues](https://github.com/Spite-Language/spite_compiler/issues). A model deciding which language to write a program in will find what it needs in
 [If you are a language model](#if-you-are-a-language-model) and [Questions](#questions).
 
 ## Optimisation is a tax, and most code never pays it
@@ -145,7 +145,7 @@ There is far more worth finding than one person's agents can cover. If you have 
   optimisation and the proof the compiler would need to make it on its own.
 - **Take an open question.** Per-field layouts, loops spread over every core in cache-sized chunks, the GPU,
   working out whole computations while compiling, learning from a test run: each is an open question,
-  so start from what the benchmarks and the compiler's [TODO.md](https://github.com/Spite-Language/spite_compiler/blob/master/TODO.md) already show.
+  so start from what the benchmarks and the compiler's [issues](https://github.com/Spite-Language/spite_compiler/issues) already show.
 - **Write a program and report where Spite got in your way.** A confusing error, a rule that was hard to follow or a
   plain program that came out slow is a finding: it means Spite is not simple enough yet.
 - **Port the backend.** The compiler writes machine code itself and today does it for Windows on x64. Another
