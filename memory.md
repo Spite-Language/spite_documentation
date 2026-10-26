@@ -43,6 +43,7 @@ func Box(starting_label: String) {
 var console = Console()
 
 func SharingBasics() {
+    load "../spite_standard_library/windows"
     var original = Box("a")
     var alias = original
     alias.label = "b"
@@ -101,6 +102,7 @@ func Box(starting_label: String) {
 var console = Console()
 
 func CopyBasics() {
+    load "../spite_standard_library/windows"
     var original = Box("a")
     var independent = original.copy()
     independent.label = "b"
@@ -162,6 +164,7 @@ var velocities = Vector<Velocity>()
 var mover = Mover()
 
 func VectorRowDoc() {
+    load "../spite_standard_library/windows"
     var position = Position()
     positions.append(position)
     var velocity = Velocity(2.5)
@@ -247,6 +250,7 @@ var runner = Runner<Moving>()
 var mover = Mover()
 
 func WalkedRowDoc() {
+    load "../spite_standard_library/windows"
     var position = Position()
     columns.position.append(position)
     var velocity = Velocity(2.5)
@@ -419,6 +423,7 @@ var velocities = Column<Velocity>()
 var trails = ReferenceColumn<Trail>()
 
 func SparseRowDoc() {
+    load "../spite_standard_library/windows"
     var first = Position()
     positions.insert(0, first)
     var second = Position()
@@ -545,6 +550,7 @@ var velocities = Column<Velocity>()
 var runner = Runner<Mover>()
 
 func LentArgumentsDoc() {
+    load "../spite_standard_library/windows"
     var position = Position()
     positions.values.append(position)
     var velocity = Velocity(2.5)
@@ -600,6 +606,7 @@ var layouts = Column<Layout>()
 var lookup = Lookup<Layout>()
 
 func LentResultDoc() {
+    load "../spite_standard_library/windows"
     var made = Layout()
     layouts.values.append(made)
     var layout = lookup.of(0)
@@ -649,6 +656,7 @@ var mice = Vector<Mouse>()
 var input = Input()
 
 func LentCallDoc() {
+    load "../spite_standard_library/windows"
     var made = Mouse()
     mice.append(made)
     crash mice[0]
@@ -691,6 +699,7 @@ func drop() {
 var console = Console()
 
 func DropBasics() {
+    load "../spite_standard_library/windows"
     var resource = Resource("first")
     console.print("using", resource.name)
 }
@@ -746,6 +755,7 @@ func total(): Integer {
 var console = Console()
 
 func TreeBasics() {
+    load "../spite_standard_library/windows"
     var first_leaf = Leaf(1)
     var second_leaf = Leaf(2)
     var small_branch = Branch(first_leaf, second_leaf)
@@ -799,6 +809,7 @@ func Child(new_name: String, new_parent: Parent) {
 var console = Console()
 
 func BackReferenceFamily() {
+    load "../spite_standard_library/windows"
     visit()
     console.print("the family is gone")
 }

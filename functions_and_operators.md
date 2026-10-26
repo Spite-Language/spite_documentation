@@ -36,6 +36,7 @@ func shout(text: String): String {
 var console = Console()
 
 func FunctionValuesDoc() {
+    load "../spite_standard_library/windows"
     var shouter = Shouter()
     var shouted = apply(shouter.shout, "hi")
     var quieted = apply(quiet, "HI")
@@ -67,6 +68,7 @@ var console = Console()
 var steps = List<Spite.Function<Integer, Integer>>()
 
 func FunctionList() {
+    load "../spite_standard_library/windows"
     steps.append(double)
     steps.append(add_one)
     var value = 5
@@ -105,6 +107,7 @@ mean two things. `var file_stem = file_stem(path)` is an error; name the result 
 var console = Console()
 
 func ShadowedFunctionError() {
+    load "../spite_standard_library/windows"
     var file_stem = file_stem("notes/today.txt")
     console.print(file_stem)
 }
@@ -135,6 +138,7 @@ type Named {
 var console = Console()
 
 func VariadicDoc() {
+    load "../spite_standard_library/windows"
     var line = joined("-", "a", "b", "c")
     console.print(line)
     var nobody = joined("-")
@@ -178,6 +182,7 @@ builds the `List` its function receives, exactly as if the caller had built it, 
 var console = Console()
 
 func VariadicNotAList() {
+    load "../spite_standard_library/windows"
     shout("a", "b")
 }
 
@@ -246,6 +251,7 @@ func greater_than(other: Money): Boolean {
 var console = Console()
 
 func OperatorsAsFunctions() {
+    load "../spite_standard_library/windows"
     var wallet = Money(150)
     var found = Money(50)
     var total = wallet + found
@@ -275,6 +281,7 @@ func Money(starting_cents: Integer) {
 var console = Console()
 
 func OperatorMissingError() {
+    load "../spite_standard_library/windows"
     var one = Money(1)
     var two = Money(2)
     console.print(one + two)
@@ -327,6 +334,7 @@ The templates answer `account.balance = 5` and `account.balance`. Calling one wi
 var console = Console()
 
 func Interception() {
+    load "../spite_standard_library/windows"
     var account = Account(100, "ann")
     account.balance = account.balance + 20
     console.print("balance", account.balance)
@@ -363,6 +371,7 @@ func get_fahrenheit(): Float {
 var console = Console()
 
 func ReadOnlyDoc() {
+    load "../spite_standard_library/windows"
     var boiling = Temperature(100.0)
     console.print(boiling.fahrenheit)
 }
@@ -380,6 +389,7 @@ func get_fahrenheit(): Float {
 ```
 ```gdscript title=read_only_error/read_only_error.spite entry error
 func ReadOnlyError() {
+    load "../spite_standard_library/windows"
     var boiling = Temperature()
     boiling.fahrenheit = 50.0
 }
@@ -420,6 +430,7 @@ func sum(other: Money): Money {
 var console = Console()
 
 func OperatorByName() {
+    load "../spite_standard_library/windows"
     var wallet = Money(150)
     var found = Money(50)
     var total = wallet.sum(found)
@@ -446,6 +457,7 @@ function that takes a `Float` takes an `Integer` too:
 var console = Console()
 
 func ArgumentCasting() {
+    load "../spite_standard_library/windows"
     var whole = 7
     var halved = half_of(whole)
     console.print(halved)
@@ -492,6 +504,7 @@ func drop(_reason: Integer) {
 var console = Console()
 
 func DropWithParameter() {
+    load "../spite_standard_library/windows"
     var handle = Handle()
     console.print(handle.open)
 }

@@ -50,6 +50,7 @@ var console = Console()
 var log = List<String>()
 
 func ConcurrentTour() {
+    load "../spite_standard_library/windows"
     var slow_sleeper = Sleeper("slow", 150, log)
     var fast_sleeper = Sleeper("fast", 10, log)
     var slow = Concurrent(slow_sleeper.nap)
@@ -104,6 +105,7 @@ file written by the next statement is written after the reads.
 var console = Console()
 
 func ReadsInARow() {
+    load "../spite_standard_library/windows"
     var settings_file = File(".spite/documentation_settings.txt")
     var scores_file = File(".spite/documentation_scores.txt")
     settings_file.write("volume=7")
@@ -165,6 +167,7 @@ var program = Program()
 var count = 1
 
 func WrittenOrder() {
+    load "../spite_standard_library/windows"
     var adding = Concurrent(add_after_a_bump)
     var total: Integer = adding
     console.print("read before the wait:", total, "read after it:", count)
@@ -210,6 +213,7 @@ var console = Console()
 var program = Program()
 
 func JoinedOnDrop() {
+    load "../spite_standard_library/windows"
     start_and_forget()
     console.print("the scope is left only after ring has finished")
 }
@@ -247,6 +251,7 @@ var console = Console()
 var program = Program()
 
 func PolledLoading() {
+    load "../spite_standard_library/windows"
     var level = LevelFile("forest")
     var loading = Parallel(level.read_tiles)
     var frames = 0
@@ -314,6 +319,7 @@ var program = Program()
 var scheduler = Scheduler()
 
 func FrameIo() {
+    load "../spite_standard_library/windows"
     scheduler.resume_only_when_asked()
     var save_file = File(".spite/documentation_save.txt")
     save_file.write("level 3")
@@ -370,6 +376,7 @@ var report = ReportFile()
 var frames = 0
 
 func FrameWaits() {
+    load "../spite_standard_library/windows"
     var file = File(".spite/documentation_report.txt")
     file.write("sales are up")
     while report.text.is_empty() {
@@ -439,6 +446,7 @@ func total(): Long {
 var console = Console()
 
 func ParallelTour() {
+    load "../spite_standard_library/windows"
     var small = Summer(1000000)
     var large = Summer(3000000)
     var small_sum = Parallel(small.total)
@@ -536,6 +544,7 @@ var console = Console()
 var totals = Totals()
 
 func PerThreadBuffers() {
+    load "../spite_standard_library/windows"
     var runs = List<Parallel<Integer>>()
     var index = 0
     while index < 8 {
@@ -588,6 +597,7 @@ var console = Console()
 var counter = HitCounter()
 
 func SharedCounter() {
+    load "../spite_standard_library/windows"
     var first = Parallel(record_many)
     var second = Parallel(record_many)
     var own: Integer = record_many()
@@ -649,6 +659,7 @@ var console = Console()
 var columns = Columns()
 
 func LockedWaitDoc() {
+    load "../spite_standard_library/windows"
     var removed = columns.despawn_all(10)
     console.print(removed)
 }
@@ -721,6 +732,7 @@ var console = Console()
 var jobs = JobsDone()
 
 func SharedCounter() {
+    load "../spite_standard_library/windows"
     var first = Parallel(finish_jobs)
     var second = Parallel(finish_jobs)
     var finished = first + second
@@ -790,6 +802,7 @@ func craft(): Integer {
 var console = Console()
 
 func HandedOverDoc() {
+    load "../spite_standard_library/windows"
     var crafter = Crafter(100)
     crafter.want(1)
     crafter.want(2)
@@ -830,6 +843,7 @@ func step() {
 var console = Console()
 
 func ParallelPass() {
+    load "../spite_standard_library/windows"
     var particles = List<Particle>()
     var index = 0
     while index < 3000 {
@@ -869,6 +883,7 @@ func follow() {
 var console = Console()
 
 func ParallelReach() {
+    load "../spite_standard_library/windows"
     var boids = List<Boid>()
     var boid = Boid()
     boids.append(boid)
@@ -909,6 +924,7 @@ var frame = 0
 var running = true
 
 func FrameLoop() {
+    load "../spite_standard_library/windows"
     while running and frame < 200 {
         frame = frame + 1
         program.sleep(10)
@@ -946,6 +962,7 @@ var passes: Long = 0
 var running = true
 
 func BusyLoop() {
+    load "../spite_standard_library/windows"
     while running and passes < 300000000 {
         passes = passes + 1
     }

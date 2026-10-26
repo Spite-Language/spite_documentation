@@ -27,6 +27,7 @@ it.
 var console = Console()
 
 func IfChains() {
+    load "../spite_standard_library/windows"
     var grades = [95, 72, 40]
     grades.each(show_grade)
 }
@@ -70,6 +71,7 @@ is, use one `switch`. A flat
 var console = Console()
 
 func NestedDecisionError() {
+    load "../spite_standard_library/windows"
     var label = label_for(3, true)
     console.print(label)
 }
@@ -97,6 +99,7 @@ The inner decision is how loudly to say it, so that is the function:
 var console = Console()
 
 func NestedDecision() {
+    load "../spite_standard_library/windows"
     var label = label_for(3, true)
     console.print(label)
 }
@@ -150,6 +153,7 @@ parse error that names the fix instead of silently doing something else:
 var console = Console()
 
 func ForRejected() {
+    load "../spite_standard_library/windows"
     var numbers = [1, 2, 3]
     for number in numbers {
         console.print(number)
@@ -175,6 +179,7 @@ narrowing:
 var console = Console()
 
 func WhileBasics() {
+    load "../spite_standard_library/windows"
     var names = ["alpha", "beta", "gamma"]
     var index = 0
     while index < names.count() {
@@ -198,6 +203,7 @@ the bound itself:
 var console = Console()
 
 func EarlyExit() {
+    load "../spite_standard_library/windows"
     var words = ["alpha", "beta", "stop", "gamma"]
     var index = 0
     while index < words.count() and words[index] != "stop" {
@@ -261,6 +267,7 @@ union Creature {
 var console = Console()
 
 func SwitchCases() {
+    load "../spite_standard_library/windows"
     var dog = Dog()
     describe(dog)
     var fish = Fish()
@@ -317,6 +324,7 @@ enum Light {
 var console = Console()
 
 func ValueSwitchDoc() {
+    load "../spite_standard_library/windows"
     var wait = seconds_for('amber')
     var next = following('green')
     var word = spoken(2)
@@ -363,6 +371,7 @@ enum Light {
 var console = Console()
 
 func MissingValueError() {
+    load "../spite_standard_library/windows"
     var wait = seconds_for('red')
     console.print(wait)
 }
@@ -386,6 +395,7 @@ chain says in three:
 var console = Console()
 
 func IfChainError() {
+    load "../spite_standard_library/windows"
     var day = day_name(1)
     console.print(day)
 }
@@ -440,6 +450,7 @@ union Creature {
 var console = Console()
 
 func ClassTestDoc() {
+    load "../spite_standard_library/windows"
     var pet: Creature = Fish()
     var swims = can_swim(pet)
     console.print("swims", swims)
@@ -489,6 +500,7 @@ type Counted {
 var console = Console()
 
 func GenericClassTestDoc() {
+    load "../spite_standard_library/windows"
     var words = Storage<String>()
     words.items.append("hello")
     var counted: Counted = words
@@ -538,6 +550,7 @@ func first(items: List<Anything>): $wanted_type? {
 var console = Console()
 
 func CodegenClassTestDoc() {
+    load "../spite_standard_library/windows"
     var items = List<Anything>()
     items.append("hello")
     items.append(42)
@@ -573,6 +586,7 @@ union Creature {
 var console = Console()
 
 func SingleCaseSwitchError() {
+    load "../spite_standard_library/windows"
     var fish = Fish()
     var swims = is_fish(fish)
     console.print(swims)
@@ -601,6 +615,7 @@ skipped without a word:
 var console = Console()
 
 func AfterReturnError() {
+    load "../spite_standard_library/windows"
     var doubled = double(4)
     console.print(doubled)
 }
@@ -623,6 +638,7 @@ assignment does. So a local declared only to be returned on the next line says n
 var console = Console()
 
 func ReturnedLocalError() {
+    load "../spite_standard_library/windows"
     console.print(rounded(2.6))
 }
 

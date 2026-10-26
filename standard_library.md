@@ -96,6 +96,7 @@ with what it answers at the edges, is in [the specification](https://github.com/
 var console = Console()
 
 func StringMembers() {
+    load "../spite_standard_library/windows"
     var line = "  ada, grace, linus  "
     var names = line.trim().split(", ")
     var first = names.first()
@@ -142,6 +143,7 @@ ADA 3 -1 da []
 var console = Console()
 
 func FileTasks() {
+    load "../spite_standard_library/windows"
     var log_file = File(".spite/documentation_demo_log.txt")
     log_file.write("first line")
     log_file.append(", second line")
@@ -177,6 +179,7 @@ one call and walk the buffer rather than record by record.
 var console = Console()
 
 func ByteRecords() {
+    load "../spite_standard_library/windows"
     var store = File(".spite/documentation_byte_records.bin")
     var record = Buffer(8)
     record.append_long_little_endian(1111)
@@ -218,6 +221,7 @@ nothing to move, or when the system cannot move it (a folder to another drive).
 var console = Console()
 
 func MovingFiles() {
+    load "../spite_standard_library/windows"
     var folder = Directory(".spite/documentation_moving")
     folder.create()
     var draft = File(".spite/documentation_moving/draft.txt")
@@ -254,6 +258,7 @@ is undone when the `MappedFile` is dropped, and a file that is mapped cannot be 
 var console = Console()
 
 func MappedRecords() {
+    load "../spite_standard_library/windows"
     var store = File(".spite/documentation_mapped_records.bin")
     var record = Buffer(16)
     record.append_long_little_endian(1111)
@@ -313,6 +318,7 @@ way ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-
 var console = Console()
 
 func DirectoryTasks() {
+    load "../spite_standard_library/windows"
     var target = Directory(".spite/documentation_demo_dir")
     target.create()
     var target_exists = target.exists()
@@ -341,6 +347,7 @@ so a `switch` tells them apart and a folder is walked by calling the same functi
 var console = Console()
 
 func DirectoryWalk() {
+    load "../spite_standard_library/windows"
     var root = Directory(".spite/documentation_walk")
     var inner = Directory("{root.path}/inner")
     root.create()
@@ -399,6 +406,7 @@ var console = Console()
 var program = Program()
 
 func WatchFolder() {
+    load "../spite_standard_library/windows"
     var folder = Directory(".spite/documentation_watch")
     folder.create()
     var watcher = FileSystemWatcher()
@@ -440,6 +448,7 @@ not the code, and not the lookups of the system's functions ([optimizations.md](
 var console = Console()
 
 func ProcessTasks() {
+    load "../spite_standard_library/windows"
     var listing = Process("echo", ["build", "finished"])
     var code = listing.run()
     console.print("exit code", code)
@@ -526,6 +535,7 @@ func to_string(): String {
 var console = Console()
 
 func PrintableDoc() {
+    load "../spite_standard_library/windows"
     var ticket = Ticket("A12", 3)
     var boarding: Symbol = 'boarding'
     console.print("next:", ticket, boarding, true, 2.5, ticket.class)
@@ -561,6 +571,7 @@ func Ship(starting_name: String) {
 var console = Console()
 
 func DebugDoc() {
+    load "../spite_standard_library/windows"
     var crew = Crew()
     crew.captain = "Ana"
     crew.sailors.append("Bo")
@@ -579,6 +590,7 @@ Crew { captain: "Ana", sailors: ["Bo"], ship: Ship { name: "Gull", crew: Crew {.
 var console = Console()
 
 func ConsoleInputDoc() {
+    load "../spite_standard_library/windows"
     console.write("name? ")
     var name = console.read_line()
     if name {
@@ -611,6 +623,7 @@ var console = Console()
 var program = Program()
 
 func ProgramBasics() {
+    load "../spite_standard_library/windows"
     var missing = program.environment("SPITE_DOCUMENTATION_UNSET_VARIABLE")
     if missing {
         console.print("set to", missing)
@@ -651,6 +664,7 @@ var clock = Clock()
 var program = Program()
 
 func ClockBasics() {
+    load "../spite_standard_library/windows"
     var started = clock.elapsed_nanoseconds()
     program.sleep(5)
     var finished = clock.elapsed_nanoseconds()
@@ -899,6 +913,7 @@ checked, so use `_at` in a loop that must not test.
 var console = Console()
 
 func ByteNumbers() {
+    load "../spite_standard_library/windows"
     var message = Buffer(10)
     message.append_unsigned_short_big_endian(2)
     message.append_integer_big_endian(1200)

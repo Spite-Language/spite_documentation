@@ -45,6 +45,7 @@ func Item(starting_name: String, starting_count: Integer) {
 var console = Console()
 
 func JsonBasics() {
+    load "../spite_standard_library/windows"
     var order = Order()
     order.id = 7
     order.customer = "Ada \"the\" first"
@@ -114,6 +115,7 @@ func Item(starting_name: String, starting_count: Integer) {
 var console = Console()
 
 func BinaryBasics() {
+    load "../spite_standard_library/windows"
     var order = Order()
     order.id = 7
     order.customer = "Ada"
@@ -169,6 +171,7 @@ Infinity and not-a-number are ordinary bytes: only JSON cannot hold them, so `Bi
 var console = Console()
 
 func BinaryStream() {
+    load "../spite_standard_library/windows"
     var bytes = Buffer(0)
     var names = ["ada", "bo", "cy"]
     var name_writer = BinaryWriter<List<String>>()
@@ -271,6 +274,7 @@ var down = 0
 var console = Console()
 
 func SchemaHeader() {
+    load "../spite_standard_library/windows"
     var writer = BinaryWriter<Point>()
     var reader = BinaryReader<Point>()
     var other_writer = BinaryWriter<Place>()
@@ -322,6 +326,7 @@ var tags = List<String>()
 var console = Console()
 
 func JsonInput() {
+    load "../spite_standard_library/windows"
     var partial_reader = JsonReader<Reading>()
     var partial = partial_reader.read("\{ \"name\": \"probe\", \"vendor\": \{ \"id\": [1, 2] } }")
     crash partial
@@ -366,6 +371,7 @@ var sell_price_each = 0.0
 var console = Console()
 
 func JsonCamelCase() {
+    load "../spite_standard_library/windows"
     var reader = JsonReader<Price>()
     var price = reader.read("\{\"name\": \"potion\", \"buyPrice\": 30, \"SellPriceEach\": 7.5}")
     crash price
@@ -416,6 +422,7 @@ func json_key_minimum_level_of_detail(): String {
 var console = Console()
 
 func JsonKeyFunction() {
+    load "../spite_standard_library/windows"
     var reader = JsonReader<MeshRecord>()
     var mesh = reader.read("\{\"name\": \"rock\"}")
     crash mesh
@@ -438,6 +445,7 @@ All four take any type, not only classes: `JsonWriter<Dictionary<String, Integer
 var console = Console()
 
 func JsonValues() {
+    load "../spite_standard_library/windows"
     var scores = Dictionary<String, Integer>()
     scores["ada"] = 3
     scores["bo"] = 5

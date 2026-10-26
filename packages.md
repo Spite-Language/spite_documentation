@@ -51,6 +51,7 @@ var name = "mine"
 var console = Console()
 
 func OwnEntryClass() {
+    load "../spite_standard_library/windows"
     var entry = Entry()
     console.print(entry.name)
 }
@@ -150,6 +151,7 @@ func shouted(): String {
 var console = Console()
 
 func ReopenString() {
+    load "../spite_standard_library/windows"
     var greeting = "hello"
     var shouted = greeting.shouted()
     console.print(shouted)
@@ -231,6 +233,7 @@ func name_with_namespaces(): String {
 var console = Console()
 
 func ReopenSpiteClass() {
+    load "../spite_standard_library/windows"
     var console_class_name = console.class.name_with_namespaces()
     console.print(console_class_name)
 }
@@ -268,6 +271,7 @@ function that loads something says what, `load_texture` ([the specification](htt
 
 ```gdscript title=load_parentheses_error/load_parentheses_error.spite entry error
 func LoadParenthesesError() {
+    load "../spite_standard_library/windows"
     load("level")
 }
 ```

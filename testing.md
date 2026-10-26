@@ -41,6 +41,7 @@ var arguments = Arguments()
 var ran = 0
 
 func TestPackage() {
+    load "../spite_standard_library/windows"
     var classes = Spite.Class.instances
     var index = 0
     while index < classes.count() {

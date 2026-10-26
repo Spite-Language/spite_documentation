@@ -43,6 +43,7 @@ The first of them is the type checker's to enforce, so the mistake never runs:
 var console = Console()
 
 func TimeReadingIsNotInstant() {
+    load "../spite_standard_library/windows"
     var meeting_day = Date(2024, 3, 10)
     var meeting_time = Time(9, 30, 0, 0)
     var meeting = DateTime(meeting_day, meeting_time)
@@ -69,6 +70,7 @@ hours, minutes, seconds and a fraction; both round toward zero and keep the sign
 var console = Console()
 
 func TimeInstants() {
+    load "../spite_standard_library/windows"
     var launch_since_1970 = Duration(1710054000, 'seconds')
     var launch = Instant(launch_since_1970)
     var hour = Duration(1, 'hours')
@@ -110,6 +112,7 @@ around it: the setup before the line and the printing after it are not timed.
 var console = Console()
 
 func TimeBenchmark() {
+    load "../spite_standard_library/windows"
     var benchmark = Benchmark(sum_to_a_million)
     console.print("sum", benchmark.answer)
     var took = benchmark.duration
@@ -156,6 +159,7 @@ years, months and days between two dates the same way, so adding it back lands o
 var console = Console()
 
 func TimeCalendar() {
+    load "../spite_standard_library/windows"
     var end_of_january = Date(2024, 1, 31)
     var month = Period(1, 'months')
     var leap = end_of_january + month
@@ -219,6 +223,7 @@ var console = Console()
 var zones = TimeZones()
 
 func TimeZonesNamed() {
+    load "../spite_standard_library/windows"
     var new_york = zones.find("America/New_York")
     crash new_york
     var launch_since_1970 = Duration(1710054000, 'seconds')
@@ -261,6 +266,7 @@ var console = Console()
 var zones = TimeZones()
 
 func TimeTomorrow() {
+    load "../spite_standard_library/windows"
     var new_york = zones.find("America/New_York")
     crash new_york
     var saturday_since_1970 = Duration(1709996400, 'seconds')
@@ -289,6 +295,7 @@ var console = Console()
 var zones = TimeZones()
 
 func TimeOffsets() {
+    load "../spite_standard_library/windows"
     var launch_since_1970 = Duration(1710054000, 'seconds')
     var launch = Instant(launch_since_1970)
     var india_offset = Duration(330, 'minutes')
@@ -353,6 +360,7 @@ var console = Console()
 var time_text = TimeText()
 
 func TimeTextReading() {
+    load "../spite_standard_library/windows"
     var exact = time_text.read_instant("2024-03-10T03:00:00-04:00[America/New_York]")
     crash exact
     var local = time_text.read_date_time("2024-03-10 02:30")

@@ -19,6 +19,7 @@ func alive(): Boolean {
 var console = Console()
 
 func EveryClassAnObject() {
+    load "../spite_standard_library/windows"
     var kind: Spite.Class = Monster
     console.print("a class is a value:", kind)
     Monster.attributes.each(describe)
@@ -93,6 +94,7 @@ func hurt(amount: Integer) {
 var console = Console()
 
 func ClassAndInstance() {
+    load "../spite_standard_library/windows"
     Monster.attributes.each(describe)
     var troll = Monster()
     troll.hurt(3)
@@ -140,6 +142,7 @@ var health = 10
 var console = Console()
 
 func DeclarationValue() {
+    load "../spite_standard_library/windows"
     Monster.attributes.each(peek)
 }
 
@@ -214,6 +217,7 @@ var console = Console()
 var components = List<Anything>()
 
 func PassingAClass() {
+    load "../spite_standard_library/windows"
     var health = Health()
     components.append(health)
     var pressed = Ui.Pressed()
@@ -258,6 +262,7 @@ func weight(): Integer {
 var console = Console()
 
 func NamespaceWalk() {
+    load "../spite_standard_library/windows"
     var hammer = Shop.Tools.Hammer()
     describe(hammer)
 }
@@ -405,6 +410,7 @@ func remember() {
 var console = Console()
 
 func AccessReport() {
+    load "../spite_standard_library/windows"
     var update = Movement.functions['update_each']
     crash update
     update.accesses.each(describe)
@@ -464,6 +470,7 @@ func reset() {
 var console = Console()
 
 func ConstantSelection() {
+    load "../spite_standard_library/windows"
     var update = Runner.functions['update_each']
     if update {
         console.print(update.name, "changes its label:", update.arguments[1].is_mutated)
@@ -553,6 +560,7 @@ enum Phase {
 var console = Console()
 
 func ConstantNamespaces() {
+    load "../spite_standard_library/windows"
     var parts = Spite.Namespace.instances.filter(holds_parts)
     parts.each(make_every_class)
     var count = Phase.values.count()
@@ -604,6 +612,7 @@ var console = Console()
 var components = List<Anything>()
 
 func AttributeObjects() {
+    load "../spite_standard_library/windows"
     var player = Player()
     add_every_attribute(player)
     components.each(show_component)
@@ -643,6 +652,7 @@ var power = 3
 var console = Console()
 
 func RunTimeType() {
+    load "../spite_standard_library/windows"
     var gadget = Gadget()
     var anything: Anything = gadget
     var attributes = anything.attributes
@@ -691,6 +701,7 @@ func Monster(starting_name: String) {
 var console = Console()
 
 func EveryClassOfTheProgram() {
+    load "../spite_standard_library/windows"
     var classes = Spite.Class.instances
     var class_count = classes.count()
     var found = classes['Monster']
@@ -719,6 +730,7 @@ var console = Console()
 var attributes = List<String>()
 
 func ReflectionNames() {
+    load "../spite_standard_library/windows"
     attributes.append("heavy")
     console.print(attributes.count())
 }
@@ -741,6 +753,7 @@ writes is an instance's own value, through a bound attribute's `.value`.
 var console = Console()
 
 func ReflectionReadOnly() {
+    load "../spite_standard_library/windows"
     var described = console.class
     described.name = "Terminal"
 }

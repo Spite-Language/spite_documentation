@@ -30,6 +30,7 @@ func alive(): Boolean {
 var console = Console()
 
 func WalksAndTemplates() {
+    load "../spite_standard_library/windows"
     Monster.attributes.each(describe)
     var troll = Monster("troll", 10)
     show_health(troll)
@@ -110,6 +111,7 @@ func reset() {
 var console = Console()
 
 func WalkedArguments() {
+    load "../spite_standard_library/windows"
     var phases = Runner.functions.filter(walks_each)
     phases.each(describe)
     var count = Runner.functions.count_name_starts_with("re")
@@ -174,6 +176,7 @@ func tick_each(amount: Integer) {
 var console = Console()
 
 func AskingFunctions() {
+    load "../spite_standard_library/windows"
     var loading = Loader.functions['load_each']
     if loading {
         console.print("load_each can wait:", loading.is_resumable)
@@ -251,6 +254,7 @@ var weight = 3
 var console = Console()
 
 func GenericQuestions() {
+    load "../spite_standard_library/windows"
     var walker = Walker()
     var walkers = Caller<Walker>()
     var walked = walkers.call(walker)
@@ -308,6 +312,7 @@ func urgent(): Boolean {
 var console = Console()
 
 func NameTemplates() {
+    load "../spite_standard_library/windows"
     var label = Label()
     show_text(label)
     show_urgent(label)
@@ -353,6 +358,7 @@ func set_name(new_name: String) {
 var console = Console()
 
 func OwnAccessors() {
+    load "../spite_standard_library/windows"
     var person = Person()
     person.name = "ann"
     person.age = 30
@@ -416,6 +422,7 @@ func run_phase_each(phase: Spite.FunctionDeclaration, amount: Integer) {
 var console = Console()
 
 func FunctionTemplates() {
+    load "../spite_standard_library/windows"
     var all = Runner<Mover>()
     all.run_all(2)
     console.print(all.system.steps)
@@ -473,6 +480,7 @@ func made_argument(argument: Spite.Argument, start: Integer): argument.class {
 ```
 ```gdscript title=argument_templates/argument_templates.spite entry
 func ArgumentTemplates() {
+    load "../spite_standard_library/windows"
     var filler = Filler<Mover>()
     filler.run(7)
 }
@@ -591,6 +599,7 @@ func describe(): String {
 var console = Console()
 
 func GenericsBasics() {
+    load "../spite_standard_library/windows"
     var scoreboard = Pair<String, Integer>("Aria", 42)
     var description = scoreboard.describe()
     console.print(description)
@@ -642,6 +651,7 @@ func hit(): $damage_type {
 var console = Console()
 
 func CodegenValuesDoc() {
+    load "../spite_standard_library/windows"
     var staff = Weapon<Integer, true>(10)
     var club = Weapon<Float, false>(2.5)
     var staff_hit = staff.hit()
@@ -657,6 +667,7 @@ func CodegenValuesDoc() {
 var console = Console()
 
 func CodegenCountError() {
+    load "../spite_standard_library/windows"
     var pairs = List<String, Integer>()
     var pairs_count = pairs.count()
     console.print(pairs_count)
@@ -702,6 +713,7 @@ func to_string(): String {
 var console = Console()
 
 func GenericConstraint() {
+    load "../spite_standard_library/windows"
     var books = Shelf<Book>()
     var book = Book("Dune")
     books.add(book)
@@ -720,6 +732,7 @@ func GenericConstraint() {
 var console = Console()
 
 func GenericConstraintError() {
+    load "../spite_standard_library/windows"
     var sounds = Chorus<Rock>()
     var count = sounds.singers.count()
     console.print(count)
@@ -801,6 +814,7 @@ func name(): String {
 var console = Console()
 
 func DescribeKind() {
+    load "../spite_standard_library/windows"
     var nested = Kind<List<List<Integer>>>()
     var nested_name = nested.name()
     console.print(nested_name)
@@ -851,6 +865,7 @@ func shown(): String {
 var console = Console()
 
 func GenericNeverTrue() {
+    load "../spite_standard_library/windows"
     var labels = Detector<Label>()
     var healths = Detector<Health>()
     var label = Label()
@@ -880,6 +895,7 @@ func label(): String {
 var console = Console()
 
 func CodegenClassName() {
+    load "../spite_standard_library/windows"
     var words = Column<String>()
     var label = words.label()
     console.print(label)
@@ -916,6 +932,7 @@ func describe(): String {
 var console = Console()
 
 func FitsVectorDoc() {
+    load "../spite_standard_library/windows"
     var points = Store<Vector3<Float>>()
     var point_answer = points.describe()
     var lists = Store<List<Integer>>()

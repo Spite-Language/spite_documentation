@@ -78,6 +78,7 @@ entry down, as `remove_at` does on a list.
 var console = Console()
 
 func DictionaryTasks() {
+    load "../spite_standard_library/windows"
     var inventory = Dictionary<String, Integer>()
     inventory["sword"] = 1
     inventory["potion"] = 4
@@ -120,6 +121,7 @@ first value's:
 var console = Console()
 
 func DictionaryLiterals() {
+    load "../spite_standard_library/windows"
     var plurals = {"cactus": "cacti", "foot": "feet"}
     var squares = {1: 1, 2: 4, 3: 9}
     var weights: Dictionary<String, Float> = {"feather": 0.01, "anvil": 50}
@@ -154,6 +156,7 @@ var console = Console()
 var names = Dictionary<Integer, String>()
 
 func NumberKeysTasks() {
+    load "../spite_standard_library/windows"
     names[3] = "fern"
     names[11] = "moss"
     names[7] = "reed"
@@ -183,6 +186,7 @@ func Player(new_name: String) {
 var console = Console()
 
 func PartyKeys() {
+    load "../spite_standard_library/windows"
     var ada = Player("ada")
     var other_ada = Player("ada")
     var parties = Dictionary<Player, String>()
@@ -231,6 +235,7 @@ func integrate() {
 var console = Console()
 
 func VectorBasics() {
+    load "../spite_standard_library/windows"
     var velocities = Vector<Velocity>()
     var slow = Velocity(1.0, 0.5)
     velocities.append(slow)
@@ -291,6 +296,7 @@ func Velocity(new_across: Float) {
 var console = Console()
 
 func VectorBorrowMistake() {
+    load "../spite_standard_library/windows"
     var velocities = Vector<Velocity>()
     var slow = Velocity(1.0)
     velocities.append(slow)
@@ -336,6 +342,7 @@ func mark(left: Float) {
 var console = Console()
 
 func ItemsBasics() {
+    load "../spite_standard_library/windows"
     var velocities = Items<Velocity>()
     var slow = Velocity(1.0)
     velocities.append(slow)
@@ -394,6 +401,7 @@ func Velocity(new_across: Float) {
 var console = Console()
 
 func ItemsBorrowMistake() {
+    load "../spite_standard_library/windows"
     var velocities = Items<Velocity>()
     var slow = Velocity(1.0)
     velocities.append(slow)
@@ -431,6 +439,7 @@ var console = Console()
 var despawned = [false, true, false, true, false]
 
 func BulkRemovalDoc() {
+    load "../spite_standard_library/windows"
     var numbers = [4, 7, 10, 13, 16]
     numbers.remove_where(is_odd)
     numbers.truncate(2)
@@ -539,6 +548,7 @@ func get_doubled_health(): Integer {
 var console = Console()
 
 func ComputedMember() {
+    load "../spite_standard_library/windows"
     var monsters = [Monster(3), Monster(5)]
     var doubled = monsters.map_doubled_health()
     var joined = doubled.join(", ")
@@ -571,6 +581,7 @@ func finish() {
 var console = Console()
 
 func ListHelpers() {
+    load "../spite_standard_library/windows"
     var chores = List<Chore>()
     var write_documentation = Chore("write docs", false)
     chores.append(write_documentation)
@@ -615,6 +626,7 @@ func Item(new_name: String, new_price: Integer, new_in_stock: Boolean) {
 var console = Console()
 
 func ListQuery() {
+    load "../spite_standard_library/windows"
     var items = List<Item>()
     var sword = Item("sword", 50, true)
     items.append(sword)
@@ -658,6 +670,7 @@ var stars = 0
 var console = Console()
 
 func TemplateMistake() {
+    load "../spite_standard_library/windows"
     var repositories = List<Repository>()
     var starred = repositories.count_stars()
     console.print(starred)
@@ -685,6 +698,7 @@ func Item(item_price: Integer) {
 var console = Console()
 
 func TemplateLoopError() {
+    load "../spite_standard_library/windows"
     var items = [Item(3), Item(5)]
     var total = 0
     var index = 0
@@ -719,6 +733,7 @@ func Player(starting_name: String, starting_score: Integer) {
 var console = Console()
 
 func ChainedMembers() {
+    load "../spite_standard_library/windows"
     var players = List<Player>()
     var anna = Player("anna", 3)
     players.append(anna)
@@ -766,6 +781,7 @@ var console = Console()
 var posts = List<Post>()
 
 func PostStages() {
+    load "../spite_standard_library/windows"
     var hello = Post("hello", 'published')
     posts.append(hello)
     var plans = Post("plans", 'draft')
@@ -822,6 +838,7 @@ var console = Console()
 var greeter = Greeter()
 
 func PassedFunction() {
+    load "../spite_standard_library/windows"
     var names = ["Ada", "Grace", "Barbara"]
     names.each(say_hello)
     names.filter(is_short).each(greeter.greet)
@@ -870,6 +887,7 @@ does not fit is an error naming what the template needs:
 var console = Console()
 
 func PassedFunctionMistake() {
+    load "../spite_standard_library/windows"
     var names = ["Ada", "Grace"]
     var greetings = names.filter(say_hello)
     console.print(greetings)
@@ -893,6 +911,7 @@ and a chain of passed functions over a list of numbers is one loop over its buff
 var console = Console()
 
 func PlainVector() {
+    load "../spite_standard_library/windows"
     var weights = List<Float>()
     weights.append(1.5)
     weights.append(2.5)
@@ -951,6 +970,7 @@ func Team(new_active: Boolean, new_lead: Person) {
 var console = Console()
 
 func FusedChain() {
+    load "../spite_standard_library/windows"
     var teams = List<Team>()
     var ann = Person(34)
     var ann_team = Team(true, ann)
@@ -1052,6 +1072,7 @@ func Score(new_points: Integer) {
 var console = Console()
 
 func ListAverage() {
+    load "../spite_standard_library/windows"
     var scores = List<Score>()
     var three = Score(3)
     scores.append(three)
@@ -1091,6 +1112,7 @@ func Score(new_points: Integer) {
 var console = Console()
 
 func UnusedMemberTemplate() {
+    load "../spite_standard_library/windows"
     var scores = List<Score>()
     var three = Score(3)
     scores.append(three)

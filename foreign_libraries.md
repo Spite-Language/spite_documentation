@@ -13,6 +13,7 @@ var console = Console()
 var c_runtime = DynamicLibrary("ucrtbase.dll", 'identity', "")
 
 func ForeignCall() {
+    load "../spite_standard_library/windows"
     var text_length = c_runtime.strlen("spite")
     console.print(text_length)
 }

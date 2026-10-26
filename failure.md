@@ -55,6 +55,7 @@ where a plain value is wanted, a `type` such as `Anything` included ([the rule](
 var console = Console()
 
 func NullComparisonError() {
+    load "../spite_standard_library/windows"
     announce(null)
 }
 
@@ -103,6 +104,7 @@ func Monster(starting_health: Integer) {
 var console = Console()
 
 func NullableNarrowing() {
+    load "../spite_standard_library/windows"
     report_health()
     var name = find_name(false)
     if name {
@@ -158,6 +160,7 @@ func Node(new_name: String) {
 var console = Console()
 
 func PathNarrowingDoc() {
+    load "../spite_standard_library/windows"
     var first = Node("a")
     var second = Node("b")
     second.next = Node("c")
@@ -206,6 +209,7 @@ func note_a_drop() {
 var tracker: Tracker? = null
 
 func CopyToNarrowError() {
+    load "../spite_standard_library/windows"
     tracker = Tracker()
     record()
 }
@@ -242,6 +246,7 @@ var console = Console()
 var target: Monster? = null
 
 func CallUndoesProofError() {
+    load "../spite_standard_library/windows"
     target = Monster()
     show()
 }
@@ -271,6 +276,7 @@ var target: Monster? = null
 var shown = 0
 
 func CallKeepsProof() {
+    load "../spite_standard_library/windows"
     target = Monster()
     show()
 }
@@ -303,6 +309,7 @@ narrowed `String?` becomes the `String` it computes, without inventing a second 
 var console = Console()
 
 func ShadowingDoc() {
+    load "../spite_standard_library/windows"
     var first_line = read_first_line("  spite\nsecond  ")
     crash first_line
     console.print("[{first_line}]")
@@ -379,6 +386,7 @@ proof removes a line of source, not a safety check.
 var console = Console()
 
 func IndexReadsDoc() {
+    load "../spite_standard_library/windows"
     var names = ["ada", "bo", "cy"]
     crash names.count() == 3
     var first = names[0].upper_case()
@@ -411,6 +419,7 @@ it, since the local holds what the read answered, not a second name for the path
 var console = Console()
 
 func KeptRead() {
+    load "../spite_standard_library/windows"
     var ages = Dictionary<String, Integer>()
     ages["ada"] = 36
     show_next_year(ages, "ada")
@@ -441,6 +450,7 @@ read the inner value into a named `var` first, narrow it, and index with the nam
 var console = Console()
 
 func ReadInIndexError() {
+    load "../spite_standard_library/windows"
     var draws = ["sky", "ground"]
     var run_draws = [1, 0]
     console.print(draws[run_draws[0]])
@@ -474,6 +484,7 @@ Outside a comparison, reading a member through a `T?` still needs it narrowed, a
 var console = Console()
 
 func NullableComparison() {
+    load "../spite_standard_library/windows"
     var nobody: String? = null
     var someone: String? = "ada"
     var nobody_either: String? = null
@@ -524,6 +535,7 @@ var console = Console()
 var names = ["ada", "bo"]
 
 func AssertGuard() {
+    load "../spite_standard_library/windows"
     report(1)
     report(7)
     var short = short_names(3)
@@ -570,6 +582,7 @@ var console = Console()
 var rows = [10, 20, 30]
 
 func DefaultAnswerError() {
+    load "../spite_standard_library/windows"
     var row = row_of(7)
     console.print(row)
 }
@@ -596,6 +609,7 @@ var console = Console()
 var rows = [10, 20, 30]
 
 func DefaultAnswerFixed() {
+    load "../spite_standard_library/windows"
     var found = row_of(2)
     crash found
     var missing = row_or_minus_one(7)
@@ -640,6 +654,7 @@ var console = Console()
 var prices = Dictionary<String, Integer>()
 
 func LeavingIf() {
+    load "../spite_standard_library/windows"
     prices["apple"] = 3
     var apple = price_or_zero("apple")
     var pear = price_or_zero("pear")
@@ -668,6 +683,7 @@ does a `while true`, which Spite leaves only by returning:
 var console = Console()
 
 func FallingEndError() {
+    load "../spite_standard_library/windows"
     var sign = sign_of(3)
     console.print(sign)
 }
@@ -696,6 +712,7 @@ enum Light {
 var console = Console()
 
 func FallingEndFixed() {
+    load "../spite_standard_library/windows"
     var sign = sign_of(0)
     var wait = wait_for('green')
     console.print(sign, wait)
@@ -734,6 +751,7 @@ var console = Console()
 var names = List<String>()
 
 func DefaultGuardError() {
+    load "../spite_standard_library/windows"
     var first = first_name()
     console.print(first == "ada")
 }
@@ -756,6 +774,7 @@ var console = Console()
 var names = List<String>()
 
 func DefaultGuardFixed() {
+    load "../spite_standard_library/windows"
     var first = first_name()
     console.print(first == "ada")
 }
@@ -781,6 +800,7 @@ var console = Console()
 var text = ""
 
 func DefaultAnswer() {
+    load "../spite_standard_library/windows"
     var bytes = size()
     console.print(bytes)
 }
@@ -805,6 +825,7 @@ to check that something exists) is a compile error too, naming the `assert` that
 var console = Console()
 
 func TerminalIfError() {
+    load "../spite_standard_library/windows"
     announce()
 }
 
@@ -827,6 +848,7 @@ write 'assert maybe_name' and let the rest of the function run unindented
 var console = Console()
 
 func TerminalIfFixed() {
+    load "../spite_standard_library/windows"
     announce()
 }
 
@@ -858,6 +880,7 @@ var console = Console()
 var ready = false
 
 func ConstructorAssertError() {
+    load "../spite_standard_library/windows"
     assert ready
     console.print("ready")
 }
@@ -878,6 +901,7 @@ var console = Console()
 var names = Dictionary<String, String>()
 
 func CrashGuard() {
+    load "../spite_standard_library/windows"
     names["ada"] = "Ada Lovelace"
     var name_length = full_name_length("ada")
     console.print(name_length)
