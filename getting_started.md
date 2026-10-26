@@ -45,10 +45,14 @@ spite hello_world --check         # check that it compiles, build nothing
 spite hello_world --build         # build it without running it
 spite hello_world --high-ir=ir    # also write the high representation of each class into ir/
 spite hello_world --low-ir=ir     # the same for the low representation
+spite hello_world ada --volume=3  # build it and run it with the argument ada and its setting volume
 ```
 
 The executable is `hello_world/.spite/build/hello_world.exe`, and its exit code is what the entry constructor
-answers. [compiler.md](compiler.md) lists every option. The programs that every compiler of Spite must pass, one
+answers. `spite hello_world` runs it attached to your terminal: what it prints appears as it prints it, what you
+type is its standard input, and the compiler exits with the program's exit code. Every word after the folder that
+is not a flag, and every setting the program's `Environment` declares ([programs.md](programs.md)), is passed to
+the program; the compiler's own flags are not. [compiler.md](compiler.md) lists every option. The programs that every compiler of Spite must pass, one
 for each rule, are in [spite_spec](https://github.com/Spite-Language/spite_spec).
 
 ## Hello world

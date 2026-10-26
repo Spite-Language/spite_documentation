@@ -19,6 +19,8 @@ spite game                          build the executable of game, and run it
 spite game --check                  format it and check that it compiles, building nothing
 spite game --build                  build it without running it
 spite game --executable-path=out/game.exe    build it there
+spite game ada --player-name=Bob    build it and run it, passing it ada and its setting player_name
+spite game --final-classes=.spite/final    also write the merged classes as Spite into .spite/final
 spite game --high-ir=ir/high        also write the high representation of each class
 spite game --low-ir=ir/low          also write the low representation of each class
 ```
@@ -54,6 +56,12 @@ The compiler follows the `load` lines of the program's entry file in order, then
 [programs.md](programs.md#how-a-program-is-loaded) walks through it.
 
 ## Where it runs
+
+`spite game` runs the program attached to the terminal: its output appears as it is printed, its standard input
+is yours, and the compiler exits with the program's exit code, so a script can run `spite game` where it would
+run the executable. The program receives every argument after the folder that is not a flag, and every flag that
+names a setting its `Environment` declares, in the order given; the compiler's own flags and the folder are not
+passed ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#flags-and-settings)).
 
 The program the compiler builds runs in the folder you ran it from: a relative path the program opens
 (`File("save.txt")`, `Directory("levels")`, a cache folder) is relative to that folder, not to the compiler's
