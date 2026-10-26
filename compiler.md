@@ -257,6 +257,8 @@ What is written is what the program **ends up with**, not what was written down:
 generator after it has run, so a class the generator never made is not there, a generic template is not there,
 and each of its instantiations is. Tree shaking of a production build runs after that, so a library class
 the program never uses (`FileSystemWatcher`, `Socket`) may still be printed although it was dropped from the executable.
+The classes the compiler writes for itself (the copy table, the REPL's prompt, the fault report) are not printed:
+compiling the printed program writes them again.
 
 Every class the program names comes from a file of the program or of the standard library, including `DynamicLibrary`,
 `String` and the numbers (`Integer`, `Long`, `Double`, ...), so every one of them is printed like a
