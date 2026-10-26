@@ -395,57 +395,54 @@ read, and an address that is not readable answers `unreadable`. At most 4096 byt
 
 ## Breakpoints
 
-A program built with `--hot-reload` and `--repl-port` can be stopped at a line while it runs:
+A program built with `--hot-reload` and a REPL (`--repl` or `--repl-port`) can be stopped at a line while it runs:
 
 ```text
 $ spite connect 4000 --command="break ticker.spite:16"
-{"ok":true,"value":"the program stops before ticker.spite:16: rebuilt Ticker","type":""}
+{"ok":true,"value":"the program stops before the statement on ticker.spite:16","type":""}
 
 $ spite connect 4000 --command="where"
-{"ok":true,"value":"game/ticker.spite:16","type":""}
+{"ok":true,"value":"ticker.spite:16","type":""}
 
-$ spite connect 4000 --command="locals"
-{"ok":true,"value":"self: Ticker = Ticker {...}\namount: Integer = 1\ndoubled: Integer = 2","type":""}
-
-$ spite connect 4000 --command="doubled"
+$ spite connect 4000 --command="ticker.total"
 {"ok":true,"value":"2","type":"Integer"}
 
 $ spite connect 4000 --command="continue"
-{"ok":true,"value":"continued from game/ticker.spite:16","type":""}
+{"ok":true,"value":"continued from ticker.spite:16","type":""}
 ```
 
 `break <file>:<line>` compiles a stop into the function that line belongs to and swaps it in, the way a reload
-swaps in a saved file; a program that never sets one carries nothing for it. The next time any code reaches the
-line, the program stops before it and waits for the prompt: `where` answers where it stopped, `locals` lists
-`self` and every local in scope there, a path may start at a local's name (`doubled`, `self.total`), every other
-command answers as usual, and `continue` lets the program go on. `breaks` lists the breakpoints and `clear` (or
+swaps in a saved file; a program that never sets one carries nothing for it. The file is one of the program's own,
+named by the end of its path, and the line is one a statement starts on; anything else is refused and the program
+keeps its code. The next time any code reaches the line, the program stops before it and waits for the prompt:
+`where` answers where it stopped, `locals` lists `self` and every local in scope there, every other command answers
+as usual, and `continue` lets the program go on. `breaks` lists the breakpoints and `clear` (or
 `clear ticker.spite:16`) removes them, compiling the code again without the stop. A call made at the prompt that
-reaches a breakpoint answers `stopped at ... while answering` at once, and prints what it returned on the error
-output once it goes on. A stopped program is waiting, so a reload the watcher compiled meanwhile is swapped in
-there, as at any wait.
+reaches a breakpoint answers `stopped at ticker.spite:16` at once, and its own answer is the answer to `continue`.
+At the console the program prints `stopped at ticker.spite:16` and reads commands until `continue`.
 
 ## Code typed at the prompt
 
-In a program built with `--hot-reload` and `--repl-port`, `eval` compiles an expression into the running program
-and answers its value as text, and `run` compiles a statement and runs it:
+In a program built with `--hot-reload` and a REPL, `eval` compiles an expression into the running program and
+answers its value as text, and `run` compiles a statement and runs it. The code is ordinary Spite, and `program`
+names the entry instance:
 
 ```text
-$ spite connect 4000 --command="eval stock.count() + 40"
-{"ok":true,"value":"41","type":"String"}
+$ spite connect 4000 --command="eval program.stock.count() + 40"
+{"ok":true,"value":"41","type":""}
 
 $ spite connect 4000 --command="eval Lookup().of(12)"
-{"ok":true,"value":"22","type":"String"}
+{"ok":true,"value":"22","type":""}
 
-$ spite connect 4000 --command="run stock.append(9)"
-{"ok":true,"value":"","type":"Nothing"}
+$ spite connect 4000 --command="run program.stock.append(9)"
+{"ok":true,"value":"","type":""}
 ```
 
-The code is compiled as the body of a new function of the entry class, `prompt_answer_<n>(): String` for
-`eval`, whose value becomes text as it would in `var text: String = value`, and `prompt_run_<n>()` for `run`,
-swapped in by a reload and called once, so it reads and changes what the entry class reaches, makes objects
-(`Lookup().of(12)` makes a `Lookup` the program never held), and calls any function, a generic class's included.
-A value that does not become text, and code that does not compile, answer the compiler's error, and the program
-keeps its code. The function stays until the next reload, which compiles the entry file again without it.
+The code is compiled as the body of a function of a class of its own, swapped in by a reload and called once, so it
+reads and changes what the entry instance reaches, makes objects (`Lookup().of(12)` makes a `Lookup` the program
+never held), and calls any function, a generic class's included. `eval`'s value becomes text as it would in
+`"{value}"`. A value that does not become text, and code that does not compile, answer the compiler's error, and the
+program keeps its code. The code stays loaded until the next `eval` or `run`.
 
 An assignment whose right side makes an object is compiled the same way, so an attribute can be given an object
 the program never made:
