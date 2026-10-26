@@ -222,7 +222,7 @@ ends: nothing inside it returns, asserts or crashes, and it calls nothing, so th
 leave it with a 'return' ('if done { return }'), or loop 'while' a condition` (`diagnostics/spinning_loop`). A
 `while true` that calls something may still be how a program runs until it exits, so it is left alone, except in
 work given to a `Parallel`, where a loop that never ends and never waits is an error
-([concurrency.md](concurrency.md#the-thread-pool)).
+([concurrency.md](concurrency.md#threads-for-parallel)).
 
 None of this costs anything at run time beyond the branches and loops it compiles to: every rule on this page
 is checked while compiling. Only a REPL build adds a check point to each loop

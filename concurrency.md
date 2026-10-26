@@ -134,7 +134,7 @@ Every function that can reach a wait (`nap` above, and whatever `nap` calls that
 as a resumable version: its locals and parameters live in a small frame on
 the heap instead of on the stack, and every wait inside it is a numbered point the function can return from and
 later jump back to. Starting a `Concurrent` makes that frame and runs it to its first wait; when the wait is over,
-the program's event loop (`library/scheduler.spite`) runs it again from where it stopped. There is no stack per
+the program's event loop runs it again from where it stopped. There is no stack per
 `Concurrent`, no stack switching and nothing to ship that a WebAssembly build could not carry:
 
 | The program writes | While it waits |
@@ -142,7 +142,7 @@ the program's event loop (`library/scheduler.spite`) runs it again from where it
 | `program.sleep(milliseconds)` | the state machine returns, and is run again once its time has come |
 | `Console.read_line()`, reading or writing a `File`, a `Socket`'s `accept_client`, `read_line` or `read_bytes` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
 | reading a `Concurrent`'s value, or dropping it | the state machine is run again once that one has finished |
-| reading a `Parallel`'s value, or dropping it | the pool finishes it (the waiting thread runs it itself if no worker has started it), then anything ready runs once |
+| reading a `Parallel`'s value, or dropping it | the thread running it is joined, then anything ready runs once |
 
 Code that is not inside a `Concurrent` (the entry constructor and everything it calls) waits where it is: its
 wait runs the event loop itself, so the state machines keep going around it until it is done, unless the program
@@ -415,7 +415,7 @@ The exact conditions are in [the rules](https://github.com/Spite-Language/spite_
 ## `Parallel`: work that computes
 
 `Concurrent` never makes a program faster at computing: every `Concurrent` runs on the program's one thread. For work that keeps a core
-busy, `Parallel(function)` runs the function on the program's **thread pool**, and the same rules apply: the
+busy, `Parallel(function)` runs the function on a **thread of its own**, and the same rules apply: the
 handle stands in for the result, `finished` never waits, and dropping it waits.
 
 ```gdscript title=parallel_tour/summer.spite
@@ -453,7 +453,7 @@ func ParallelTour() {
 ### Calls in a row run at once
 
 A program never has to write `Parallel` to run independent work side by side. When two or more calls in a row
-share nothing one of them writes, the compiler runs them on the thread pool at once and waits for all of them
+share nothing one of them writes, the compiler runs them on threads at once and waits for all of them
 before the next statement:
 
 ```gdscript
@@ -486,19 +486,17 @@ share nothing written, and in order otherwise. The compiler decides which classe
 the loop only looks at which objects the list holds when it starts. A list holding two objects of one class runs
 in order ([optimizations.md](optimizations.md#a-loop-over-a-list-of-different-classes-runs-them-at-once)).
 
-### The thread pool
+### Threads for `Parallel`
 
-`ThreadPool()` (`library/thread_pool.spite`, a singleton) starts a worker thread for every core but one (the
-program's own thread keeps that one) the first time a `Parallel` is made, and never another: a thousand
-`Parallel`s a second reuse the same threads, and a program that makes none starts none. There is one pool per
-program, and any code (an engine system, an asset loader, a library class) hands work to it the same way, by
-`Parallel(function)`: no submission starts a thread of its own, and there is no second pool
-to make or pass around. The workers take work in the order it was started. Reading a `Parallel` that no worker has
-picked up yet runs it on the reading thread instead of waiting behind the queue, so a `Parallel` started from
-inside another one cannot wait for a worker that is busy waiting for it. At exit the pool finishes what is queued
-and stops its threads.
+The compiler starts a thread at each `Parallel` and nowhere else: a program that makes none starts none and carries
+nothing for threads. Any code (an engine system, an asset loader, a library class) hands work over the same way, by
+`Parallel(function)`, and there is nothing else to make or pass around. Reading a `Parallel` waits until its thread
+has returned, so a `Parallel` started from inside another one cannot wait for anything that is waiting for it. At
+exit every `Parallel` still running is finished first. Starting a thread costs time, so give a `Parallel` work that
+is worth it, and hand a long list to a `parallel_each_` pass or let the compiler run it in bands, which split the
+list across the processors in one go.
 
-**Work that can never finish is a compile error.** A pool thread is lent to a piece of work until it returns, so
+**Work that can never finish is a compile error.** A thread is lent to a piece of work until it returns, so
 work that runs forever takes a thread away for good, and there is no `Thread(function)` for it: a loop tied to
 one thread (a window's messages) runs on the program's own thread as one step per frame, and whatever waits
 (accepting connections, reading a socket) waits through a call that gives its thread back. So a `while true` with
@@ -507,11 +505,6 @@ reaches, whose function never waits, is `'Parallel(counter.count_forever)' runs 
 thread pool, and this loop never ends and never waits, so the work never finishes and keeps its thread for good:
 return from the loop once the work is done, or run the loop on the program's own thread`
 (`diagnostics/endless_parallel_work`). It is reported at the loop, once per function.
-
-| `ThreadPool()` | |
-|---|---|
-| `size(): Integer` | how many worker threads it runs (starting them if it has not) |
-| `worker_index(): Integer` | which worker is running this code, from `0`, or `-1` on a thread that is not one of them, for scratch memory kept per worker |
 
 ### Work of its own, and a short section
 
@@ -577,7 +570,7 @@ func record_commands(): Integer {
 16 commands recorded, 16 counted by the singleton
 ```
 
-A lock of your own is rarely needed for a singleton: one of the program's own that a `Parallel` reaches is made
+You never write a lock: a singleton of the program's own that a `Parallel` reaches is made
 safe by the compiler. `HitCounter` below only counts, so each `record()` becomes one
 atomic add, with no lock and nothing written in the source:
 
@@ -692,7 +685,7 @@ work split between the threads with no lock at all. So:
   reading 15 000 rows each of one singleton through `at(row)`, 20 ticks, take 17 ms, where C taking a mutex for
   every read takes 103 ms ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_reading_functions_do_not_exclude_each_other)). Anything a function calls or assigns beyond reading makes it a writing function,
   so keep lookups small and separate from the functions that change the singleton.
-- **Nothing to do between stages.** While no task is on the thread pool, a locked function runs without its lock
+- **Nothing to do between stages.** While no `Parallel` is running, a locked function runs without its lock
   ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/while_no_task_runs_a_singletons_lock_is_skipped): ten million calls in 53 ms, where C
   taking a mutex on every call takes 76 ms), so code that fills or flushes a singleton on the
   program's own thread between `Parallel`s pays almost nothing for it.
@@ -700,10 +693,8 @@ work split between the threads with no lock at all. So:
   one that never changes takes nothing, and one no `Parallel` reaches takes nothing
   ([the forms](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)).
 
-The classes behind these, `Lock`, `ThreadLocal` and `ThreadSlot`, are internal to the standard library: a program
-cannot name them ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)). They are the operating
-system's own (`TlsAlloc` and `SRWLOCK` on Windows, `pthread_key_t` and `pthread_mutex_t` elsewhere), and a program
-that reaches none carries none.
+There is no lock, thread-local or atomic class for a program to name; naming anything in `Spite.Internal` is a compile error
+([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)). A program that reaches none carries none.
 
 ### A number every thread shares
 
@@ -750,9 +741,7 @@ func finish_jobs(): Integer {
 200 finished, 200 counted
 ```
 
-The class behind it, `Atomic<T>`, is internal to the standard library like `Lock` and `ThreadLocal`: naming it, or
-`Spite.Internal`, in a program is a compile error
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+
 
 A program that makes a `Parallel` (or a `Concurrent`, or a `ForeignCallback` C may call from a thread of its own
 ([foreign_libraries.md](foreign_libraries.md#calling-back-into-spite)), or is built with `--repl-port` or
@@ -818,9 +807,9 @@ what follows, or read the task's result` (`diagnostics/parallel_handover`; [the 
 
 ## `parallel_each_`: a member on every element
 
-`list.parallel_each_update()` calls `update()` on every element of the list, split across the pool: the list is
-cut into a few pieces per thread, the calling thread runs the first piece and whatever piece no worker has taken
-yet, and the call returns when every element is done. `filter_` steps before it run in the same pass, piece by
+`list.parallel_each_update()` calls `update()` on every element of the list, split across threads: the list is
+cut into pieces, the calling thread runs the first and one thread runs each of the others, and the call returns when
+every element is done. `filter_` steps before it run in the same pass, piece by
 piece, with no list in between: `entities.filter_alive().parallel_each_update()`.
 
 ```gdscript title=parallel_pass/particle.spite
@@ -896,7 +885,7 @@ For the same reason only `filter_` steps may come before it: a `map_` reaches an
 see two elements that are the same object: a list holding one instance twice runs it on two threads at once.
 
 A pass costs one allocation per call and none per element, and a list of fewer than two elements runs on the
-calling thread without touching the pool.
+calling thread, with no thread started.
 
 You rarely need to write it. A plain `particles.each_step()` runs in bands on its own when the compiler proves that
 each pass writes only its own element, reads nothing another pass writes and counts no reference, and when the
@@ -988,9 +977,9 @@ carries none of it; the compiler's side of each is on
 
 | The program | Carries at run time |
 |---|---|
-| uses none of it | nothing: no scheduler, no state machine, no helper thread, no pool, no lock, plain reference counts; every wait is the plain blocking call |
-| makes a `Concurrent`, or has two reads in a row | the `Scheduler` singleton and its event loop; a second, resumable copy of each function a `Concurrent` reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside a `Concurrent`; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count; one count the scheduler adds to at each read of `finished` that answers `false` and clears at each step |
-| makes a `Parallel` or runs a `parallel_each_` pass | the `ThreadPool` singleton, whose workers start at the first `Parallel` and never again; about two dozen allocations per `Parallel` and one per pass; atomic reference counts for the classes another thread can count; for each program singleton a `Parallel` can reach and that changes, atomics or a lock per call (about 2 ns when one thread takes it, far more when several contend: [what it costs](#what-a-singletons-lock-costs)), or one per counted loop of calls |
+| uses none of it | nothing: no scheduler, no state machine, no helper thread, no lock, plain reference counts; every wait is the plain blocking call |
+| makes a `Concurrent`, or has two reads in a row | the scheduler and its event loop; a second, resumable copy of each function a `Concurrent` reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside a `Concurrent`; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count; one count the scheduler adds to at each read of `finished` that answers `false` and clears at each step |
+| makes a `Parallel` or runs a `parallel_each_` pass | one thread started per `Parallel` and a small, fixed number of allocations, and one allocation per `parallel_each_` pass; atomic reference counts for the classes another thread can count; for each program singleton a `Parallel` can reach and that changes, atomics or a lock per call (about 2 ns when one thread takes it, far more when several contend: [what it costs](#what-a-singletons-lock-costs)), or one per counted loop of calls |
 | calls `Scheduler().resume_only_when_asked()` or `run_ready()` | one `Boolean` the scheduler reads at each wait, and each function it calls; neither is there otherwise |
 | is built with `--repl-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
 
