@@ -147,7 +147,8 @@ The commands are the ones `--repl` answers:
 - **paths**: `program`, `program.monsters`, `program.monsters[0].health`. A `T?` that holds a value is walked
   through, and a `Dictionary`'s entries are walked by key: `program.settings.volume`.
 - **calls**: `program.monsters.count()`, `program.monsters[0].roar()`, with literal arguments. A call that answers
-  an object is walked on like any path: `World().position_of(1).across`.
+  an object is walked on like any path: `World().position_of(1).across`. The standard library's functions are
+  called the same way, on any of its values a path reaches: `player.name.upper_case()`.
 - **singletons**, by their class's name: `World()`, `Tick().step_milliseconds`, `Ui.Panel().title`,
   `Column<Position>().values[0]`, and one made with arguments by its arguments: `Channel(1).number`. The name binds
   the instance the program already has and never makes one.

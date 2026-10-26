@@ -154,7 +154,9 @@ spite game --build --executable-path=build/game.exe --debug-memory
 A program may give an option a different default by reopening `Build` in its own `build.spite`
 (`var debug_memory = true` to always count its memory), and add options of its own the same
 way. No option is read before the program is, so every one of them, the outputs included, can be given a default
-there. Every `Build` field is
+there, written as a literal (`true`, a number, or a text without `{}` in it), since the compiler reads it before
+anything runs. A program that loads no standard library has no `Build`, and takes only `--debug-memory` and
+`--optimized`. Every `Build` field is
 a constant in the built program, so with `var build = Build()` beside the attributes, `if build.debug_memory { }`
 keeps one branch.
 
@@ -221,7 +223,7 @@ branch, a template exists only for the names called, and reflection only where i
 ([metaprogramming.md](metaprogramming.md#tree-shaking)).
 
 An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every generated
-function instead, so live reload has all of them to swap and the REPL can reach every internal, and the
+function instead, every function of your classes compiled even when nothing calls it, so live reload has all of them to swap and the REPL can reach every internal, and the
 singletons that hold nothing, such as `Build`, are ordinary objects that `.instances` lists. Every other build
 is a production build ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#inspectable-and-production-builds)). Conditions on
 codegen values and `Build` fields fold in both: they are facts of the build, not values the running program could

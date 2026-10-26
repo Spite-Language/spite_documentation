@@ -614,7 +614,11 @@ name? no input
 | `sleep(milliseconds)` | waits; other `Concurrent` work runs meanwhile ([concurrency.md](concurrency.md)) |
 | `environment(name)` | the process environment variable, as a `String?` |
 | `executable_path()` | the path of the running executable, as the operating system gives it |
-| `live_allocations()` | how many allocations are alive, under `--debug-memory` |
+| `live_allocations()` | how many allocations are alive |
+| `live_bytes()` | how many bytes the live allocations asked for |
+
+A program that calls `live_allocations()` or `live_bytes()` counts every allocation and free it makes, as a
+`--debug-memory` build does; one that calls neither carries none of the counting.
 
 The entry constructor returning normally is exit code `0`.
 
