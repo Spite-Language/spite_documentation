@@ -11,8 +11,7 @@ itself; it writes machine code directly),
 [spite_spec](https://github.com/Spite-Language/spite_spec) (the specification, as programs every compiler must pass),
 [spite_benchmarks](https://github.com/Spite-Language/spite_benchmarks) and
 [mortaros_spite](https://github.com/Spite-Language/mortaros_spite) (every decision and why).
-Some pages still show the C that the first compiler wrote when they explain an optimisation: read it as the shape of the
-code, since the compiler now writes machine code directly. What the compiler does today is in its own
+The compiler writes machine code directly. How it works inside is in its own
 [OPTIMIZATIONS.md](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md) and
 [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md).
 
