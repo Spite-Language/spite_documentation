@@ -143,7 +143,7 @@ so it is declared with only a literal default, and the literal is its type
 ## Compile-time settings: `Build`
 
 `Environment` is read when the program **runs**. `Build` is its twin for when the program is **compiled**: a
-singleton in the standard library (`library/build.spite`) whose fields are decided by the compiler and written
+singleton in the standard library whose fields are decided by the compiler and written
 into the program as constants. Every compiler option is one of them ([compiler.md](compiler.md#build-options)),
 and a program adds its own by reopening `Build` in a file named `build.spite`:
 

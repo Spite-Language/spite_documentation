@@ -4,8 +4,8 @@
 such as `monsters[0].health` or `program.player_name`, a singleton by its class's name (`World().entity_count()`,
 `Tick().step_milliseconds`), assignment of a number, Boolean, text or enum literal (`monsters[0].health = 5`, which
 prints the value read back), and calls with literal arguments that print what they return, chained like any path
-(`monsters[0].roar()`, `monsters.count()`, `World().position_of(1).across`), written in Spite
-(`library/read_evaluate_print_loop.spite`). `--repl-port` answers the same commands over TCP, one JSON line each,
+(`monsters[0].roar()`, `monsters.count()`, `World().position_of(1).across`), written in Spite by the
+compiler into the build that asks for it. `--repl-port` answers the same commands over TCP, one JSON line each,
 answered where the program waits or at the end of a loop's pass
 ([concurrency.md](concurrency.md#the-repl-answers-at-the-waits)), and `spite connect` is its client. `--hot-reload`
 swaps the classes whose files changed into the running program, keeping its state, when a file is saved or when the

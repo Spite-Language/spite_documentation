@@ -840,7 +840,7 @@ A program never names an address, an allocator, an allocation count or where an 
 constructs of the language that each generator implements its own way, so nothing a program could watch ever stands in
 the way of how the compiler places a value: in a register, in the frame when it never leaves its function, together with
 the objects around it, or on the heap. You write the plain version, and the compiler decides ([Placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)).
-There is no `Memory.Heap`, no `Memory.Arena`, no `value.memory` and no list of the live instances of a class. Only
+No class stands for memory, and there is no list of the live instances of a class. Only
 `--debug-memory`, above, reports what leaked, and it does so from outside the program.
 
 A class that needs room for bytes holds a `Buffer`, a class of the library that keeps its bytes in one block and reads
@@ -848,7 +848,7 @@ and writes the numbers in them, and the compiler lays it out from what it proves
 ([standard_library.md](standard_library.md#bytes-are-a-buffer)). Bytes from outside are a `Buffer` too: a file's or a
 socket's bytes, and memory a C library hands out is a `ForeignBytes`, which checks every read and write against the
 size it was given. A container of your own is written over a `List` or a `Buffer`, with nothing the compiler does for
-`List<T>` that it would not do for yours: read `library/list.spite` for a complete one.
+`List<T>` that it would not do for yours: the standard library's `List` is a complete one to read.
 
 ---
 

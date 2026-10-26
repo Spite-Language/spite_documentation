@@ -3,7 +3,7 @@
 The compiler compiles one program. A program is a folder, and its entry file is the one named after the folder:
 compiling `game` compiles `game/game.spite`, whose class `Game` is constructed to start the program. The compiler
 is written in Spite, builds itself, and writes machine code directly (Windows x64): there is no C compiler, linker
-or other toolchain behind it, and nothing to install beside the compiler and its `library/` folder. The command
+or other toolchain behind it, and nothing to install beside the compiler and the standard library's folder, which the program loads by its path. The command
 below is written `spite`, for the compiler's executable, `spite.exe`.
 
 The compiler first reads the **whole** program (the standard library, the program's folder, its `build.spite`
@@ -119,7 +119,7 @@ called it ([failure.md](failure.md)); without the file it prints only the fault 
 
 ## Build options
 
-Every option is a `Build` field with a literal default, declared in `library/build.spite`:
+Every option is a `Build` field with a literal default, declared by the standard library's `Build`:
 
 | Option | Default | What it does |
 |---|---|---|
@@ -221,11 +221,11 @@ change. Which optimisation applies in which build is in [optimizations.md](optim
 
 ## Counting memory: `--debug-memory`
 
-`--debug-memory` builds the program with an allocation table and prints `allocations: N frees: N` when it ends.
+`--debug-memory` builds the program with a table of live allocations and prints `allocations: N frees: N` when it ends.
 The two numbers differ only when something leaked, and then the report names the classes whose instances are
 still alive, which is how a leaked cycle shows up ([memory.md](memory.md#cycles-are-freed)). The table costs a
-lookup under a lock on every allocation and free, and exists only in a `--debug-memory` build: any other build
-calls the allocator directly.
+lookup on every allocation and free, and exists only in a `--debug-memory` build: any other build
+keeps no table.
 
 ## Inspect merged classes
 
@@ -248,7 +248,7 @@ generator after it has run, so a class the generator never made is not there, a 
 and each of its instantiations is. Tree shaking of a production build runs after that, so a library class
 the program never uses (`FileSystemWatcher`, `Socket`) may still be printed although it was dropped from the executable.
 
-Every class the program names comes from a file in `library/`, including `DynamicLibrary`,
+Every class the program names comes from a file of the program or of the standard library, including `DynamicLibrary`,
 `String` and the numbers (`Integer`, `Long`, `Double`, ...), so every one of them is printed like a
 class of your own. A function whose body the compiler supplies (such as a `Buffer`'s reads and writes) is added to its
 class as the compiler's own reopening, and is printed as a declaration without a body:

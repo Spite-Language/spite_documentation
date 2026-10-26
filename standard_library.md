@@ -1,7 +1,7 @@
 # Standard library
 
-The standard library is ordinary Spite in `library/`, and a program reads it the way it reads its own code:
-every class a program can name (`String`, `List`, `Integer`, `File`, `Memory.Heap`) is a file there, and
+The standard library is ordinary Spite, a folder of its own that a program loads by its path, and a program reads it the way it reads its own code:
+every class a program can name (`String`, `List`, `Integer`, `File`) is a file there, and
 `--final-classes` prints each one as the program uses it. Its values are reference counted like every other
 object ([memory.md](memory.md)). When an operation cannot succeed it says so in its type rather than crashing:
 an index or a key that is not there reads as `T?`, a file that cannot be read answers `null`, and text that does
@@ -17,7 +17,7 @@ is added by reopening it ([A class name means one class](classes_and_files.md#a-
 
 **A program carries only the classes it uses.** The library is part of every program's
 source, but a production build keeps only what `main` can reach: a program that never makes a `FileSystemWatcher`,
-a `Socket`, a `Process` or a `ThreadPool` has none of their code, and none of the operating-system functions only
+a `Socket` or a `Process` has none of their code, and none of the operating-system functions only
 they call is looked up when the program starts ([optimizations.md](optimizations.md#tree-shaking)).
 What a class costs when it is used is what its Spite does, and each section below says where that is more than a
 call. An inspectable build (`--repl`, `--repl-port`, `--hot-reload`, `--development`) keeps everything, so the
@@ -47,22 +47,20 @@ REPL can look at any of it.
 | `ForeignBytes` | memory a C library hands out, read and written by position with every access checked | [below](#bytes-are-a-buffer) |
 | `BinaryWriter<T>`, `BinaryReader<T>` | any value to compact bytes (a `Buffer`) and back, for Spite programs talking to each other and for files | [json.md](json.md#write-and-read-bytes) |
 | `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
-| `Concurrent`, `Parallel`, `ThreadPool` | run a function while waiting, or on the thread pool; the handle is the value | [concurrency.md](concurrency.md) |
+| `Concurrent`, `Parallel` | run a function while waiting, or on another thread; the handle is the value | [concurrency.md](concurrency.md) |
 | `Socket` | TCP over IPv4 and IPv6: listen, connect, lines and bytes, waiting or not | [below](#socket) |
 | `UdpSocket` | UDP datagrams over IPv4 and IPv6 | [below](#udpsocket) |
 | `HttpServer`, `HttpClient`, `HttpRequest`, `HttpResponse` | HTTP/1.1, connections kept alive | [below](#http) |
 | `WebSocket`, `WebSocketText`, `WebSocketBinary` | WebSocket (RFC 6455) over an HTTP upgrade: text and binary messages both ways, ping and close | [below](#websocket) |
 | `Base64`, `Deflate`, `Zlib`, `Gzip` | bytes as base64 and base64url text; bytes compressed as raw DEFLATE, zlib and gzip | [below](#bytes-base64-compression-hashes-and-passwords) |
 | `Sha256`, `SecureRandom`, `Argon2` | SHA-256 and HMAC-SHA256; bytes from the operating system's secure random source; password hashes as PHC strings | [below](#bytes-base64-compression-hashes-and-passwords) |
-| `Memory.Address`, `Memory.Heap`, `Memory.Arena`, `TypedMemory<T>` | a place in memory, the allocators that own it, and values of any type there: the floor every other type is built on | [memory.md](memory.md#memory-is-the-floor-and-you-can-build-on-it) |
 | `DynamicLibrary` | call a native library | [foreign_libraries.md](foreign_libraries.md) |
 | `Spite.Class`, `Spite.Function`, ... | reflection | [reflection.md](reflection.md) |
-| `Spite.Memory` | where a value lives, `value.memory` | [memory.md](memory.md#where-a-value-lives-memory) |
 
-The other files of `library/` are the machinery these are built from: `Scheduler` (the event loop under
-`Concurrent`), `HotReload`, `ReadEvaluatePrintLoop`, `AllocationTable` (`--debug-memory`'s table), `NumberText`,
-`JsonCursor`, `BinaryFormat` and the time-zone readers. They are ordinary classes a program can read and the REPL
-can inspect, which a program has no reason to call.
+The other files of the library are the machinery these are built from: `NumberText`, `JsonCursor`, `BinaryFormat`
+and the time-zone readers. They are ordinary classes a program can read and the REPL can inspect, which a program
+has no reason to call. Memory, the event loop under `Concurrent` and the threads under `Parallel` are not classes of
+the library: the compiler writes them ([memory.md](memory.md#memory-belongs-to-the-compiler)).
 
 ## What belongs in the standard library
 
@@ -71,8 +69,8 @@ SHA-256 and HMAC, Argon2, secure random bytes, base64 and gzip are standard, and
 as programs need them. A client for a branded product (a database such as MongoDB or Postgres, a vendor's API) is
 never standard: it is a package, kept by whoever maintains it, and a program loads it pinned to a commit like any
 other repository
-([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)). `library/windows/`, `library/linux/` and
-`library/mac/` are not brand packages: they are how a standard class is written for one system.
+([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)). The `windows`, `linux` and
+`mac` folders of the library are not brand packages: they are how a standard class is written for one system.
 
 The library has TCP and UDP over IPv4 and IPv6, HTTP/1.1 with kept-alive connections and WebSocket over it
 ([below](#socket)), SHA-256 and HMAC, Argon2id, secure random bytes, base64 and base64url, and DEFLATE, zlib and
@@ -504,7 +502,7 @@ each line when it happens rather than when the program ends. `write` leaves its 
 next read of input or the end of the program
 ([the rule and its measurement](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes)). There is no `flush()` to call.
 
-`print`, `write` and `error` are ordinary functions in `library/console.spite`, taking
+`print`, `write` and `error` are ordinary functions of `Console`, taking
 `...values: List<Printable>`, where `Printable` is a `type` that requires `to_string(): String`. Every number,
 `Boolean`, `String`, `Symbol`, enum value, `Spite.Class` and `Spite.Namespace` answers it, and a class of yours
 prints once it declares `to_string()`. Passing one that does not is a compile error naming `to_string`; a `List`
@@ -543,7 +541,7 @@ class shows its name and every attribute, nesting into the attributes that are c
 `Dictionary` `{"key": value}`, text is quoted, a `Symbol` or enum value is written `'like_this'`, and an absent
 `T?` is `null`. An object already being shown further up is written `Name {...}`, so a cycle ends. A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:
-the automatic one is `Spite.Debug<$value_type>` in `library/spite/debug.spite`, compiled only for the classes a
+the automatic one is `Spite.Debug<$value_type>`, compiled only for the classes a
 program debugs.
 
 ```gdscript title=debug_doc/crew.spite
@@ -638,8 +636,8 @@ slept
 | `elapsed_milliseconds(): Long` | the same, in milliseconds |
 | `now(): Instant` | the wall clock, as an exact [`Instant`](time.md): show it through a time zone |
 
-Each system reads its own clock, in `library/windows/clock.spite` (`QueryPerformanceCounter`,
-`GetSystemTimeAsFileTime`) and the `linux` and `mac` folders (`clock_gettime` with `CLOCK_MONOTONIC` and
+Each system reads its own clock, in its own folder of the library (`QueryPerformanceCounter`,
+`GetSystemTimeAsFileTime` on Windows, `clock_gettime` with `CLOCK_MONOTONIC` and
 `CLOCK_REALTIME`), through `DynamicLibrary`. A reading allocates nothing: the operating system writes it into a slot
 in the calling function's frame ([placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)),
 and Windows' counter frequency, fixed at boot, is read once when `Clock()` is first made. The unit is the
@@ -946,7 +944,7 @@ it, and it is only as alive as the library says it is.
 These classes take and answer a `Buffer`, and `text.to_bytes()` gives a text's bytes as one. `bytes.to_utf8_text()`
 turns bytes back into text: it answers a `String?`, `null` when the bytes are not valid UTF-8 (a stray continuation
 byte, a cut sequence, an overlong form, a surrogate or a value past U+10FFFF), so bytes from outside are never
-taken for text they do not spell (`conformance/stage6/utf8_text`). Each is written in Spite in `library/`, so a program that uses none of them
+taken for text they do not spell (`conformance/stage6/utf8_text`). Each is written in Spite, so a program that uses none of them
 carries none of them.
 
 | Class | Member | Does |
