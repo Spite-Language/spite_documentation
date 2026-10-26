@@ -417,8 +417,7 @@ pinned it, and so is a package that reopens such a class: it loads the version i
 
 Messages, reflection and `--final-classes` spell a version's class with the version first, the repository's name
 and the commit (`engine_6c7dca9.Renderer`), and `--final-classes` prints each version into a folder of that
-name. The code the versions share unchanged is folded into one by identical code folding
-([optimizations.md](optimizations.md#identical-functions-are-folded-into-one)).
+name. The code the versions share unchanged is folded into one by identical code folding.
 
 ## Files beside a package's source
 

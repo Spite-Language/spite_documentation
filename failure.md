@@ -1084,7 +1084,7 @@ a core dump is still written where the system keeps them. What the program print
   a table of every function the program kept (its start address and name, 32 bytes and the name each; 73
   functions, about 4 KB, in `examples/hello`). Installing it is two system calls when the program starts, and one
   more when a thread starts. Each foreign call stores one pointer before it goes in, which measured as nothing
-  ([optimizations.md](optimizations.md#the-fault-handler-is-in-every-program)).
+  ([optimizations.md](optimizations.md#a-fault-report-is-the-only-machinery-in-every-program)).
 
 ---
 

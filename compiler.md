@@ -292,7 +292,7 @@ The report has one section per optimisation, with how many places it lists:
   ([optimizations.md](optimizations.md#a-local-list-of-known-size-lives-in-the-frame)) and did not: appended to in
   a loop, more items than the frame holds, or the line that does more than read it.
 - **Objects not in the frame**: a local made by a constructor that stays on the heap
-  ([optimizations.md](optimizations.md#objects-that-never-leave-their-function-live-in-the-frame)), with the line
+  ([optimizations.md](optimizations.md#objects-that-never-leave-their-function-live-in-registers-or-the-frame)), with the line
   that lets it go (`kept.append(badge)`), or what about its class keeps every object on the heap.
 - **Copies not elided**: a `var twin = original.copy()` that allocates, with the line that lets the copy go, or
   why its class cannot be copied into the frame.

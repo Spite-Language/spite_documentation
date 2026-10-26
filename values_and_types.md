@@ -392,7 +392,7 @@ a number not a number
 ```
 
 A parameter can be typed `Number` too, and its operators are the number's own. The function is compiled once for
-each number class that reaches it ([optimizations.md](optimizations.md#a-function-taking-a-type-is-compiled-per-class)),
+each number class that reaches it ([optimizations.md](optimizations.md#the-class-of-an-object-made-in-the-function-is-known)),
 so in the copy that takes an `Integer`, `value + value` is an `Integer` addition, checked like any other:
 
 ```gdscript title=number_parameter_doc/number_parameter_doc.spite entry

@@ -892,7 +892,7 @@ number, and in a loop over the buffer (`while position + 15 < records.count()`, 
 read inside the window is one load, with no test at all
 ([proofs.md](proofs.md#a-proven-count-or-bound-proves-a-read-of-a-width)). An index built from loop counters,
 `row * stride + column`, is proven by one `crash height * stride <= pixels.count()` before the loops
-([proofs.md](proofs.md#an-index-built-from-loop-counters-is-proven-by-one-guard)). A read at the position is always
+([proofs.md](proofs.md#a-proven-count-or-bound-proves-a-read)). A read at the position is always
 checked, so use `_at` in a loop that must not test.
 
 ```gdscript title=byte_numbers/byte_numbers.spite entry

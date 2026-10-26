@@ -478,13 +478,13 @@ each belongs to its owner: two `Counter`s passed around and counted through any 
 as far as this rule sees, so they stay in order, while a `Physics` and an `Audio` that each keep their own
 `var meter = Meter()`, never assigned anything else, overlap, meters and all. The exact conditions are in
 [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Calls in a row run at once"), and
-[optimizations.md](optimizations.md#calls-in-a-row-run-at-once) shows one.
+[optimizations.md](concurrency.md#calls-in-a-row-run-at-once) shows one.
 
 A loop over a list of different objects is the same row, built while the program runs: `systems.each_update()`
 over a `List<System>` holding a `Physics`, an `Animation` and an `Audio` runs the three at once when their classes
 share nothing written, and in order otherwise. The compiler decides which classes may run together while compiling;
 the loop only looks at which objects the list holds when it starts. A list holding two objects of one class runs
-in order ([optimizations.md](optimizations.md#a-loop-over-a-list-of-different-classes-runs-them-at-once)).
+in order ([optimizations.md](concurrency.md#calls-in-a-row-run-at-once)).
 
 ### Threads for `Parallel`
 
@@ -681,7 +681,7 @@ work split between the threads with no lock at all. So:
 - **Keep its reads apart from its writes.** A function that only reads the singleton's state (`at(row)`, a lookup)
   takes the readers' side of the lock: a count on its own thread's cache line, so readers on different threads
   never slow each other down, and only a function that writes waits for them
-  ([optimizations.md](optimizations.md#a-singletons-reading-functions-do-not-exclude-each-other)). Eight systems
+  ([optimizations.md](optimizations.md#a-counted-loop-of-reads-shares-its-singletons-lock)). Eight systems
   reading 15 000 rows each of one singleton through `at(row)`, 20 ticks, take 17 ms, where C taking a mutex for
   every read takes 103 ms ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_reading_functions_do_not_exclude_each_other)). Anything a function calls or assigns beyond reading makes it a writing function,
   so keep lookups small and separate from the functions that change the singleton.
@@ -747,7 +747,7 @@ A program that makes a `Parallel` (or a `Concurrent`, or a `ForeignCallback` C m
 ([foreign_libraries.md](foreign_libraries.md#calling-back-into-spite)), or is built with `--repl-port` or
 `--hot-reload`) counts references with atomic operations, because an object can now be shared between threads; every other program keeps
 the plain, cheaper counts, and so does every class whose objects no other thread can count
-([optimizations.md](optimizations.md#plain-reference-counts-where-no-thread-reaches-a-class)). `Parallel(work)` is checked while compiling: the function it
+([optimizations.md](optimizations.md#plain-counts-where-no-other-thread-counts-a-class)). `Parallel(work)` is checked while compiling: the function it
 runs, and every function of the same class that function calls by name, may read and write only the attributes of
 its own instance that hold values (numbers, `Boolean`, enums, text), its locals and parameters, singletons (which
 the compiler makes safe) which are made to be shared. An attribute holding a

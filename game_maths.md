@@ -312,7 +312,7 @@ instance is a reference-counted object ([memory.md](memory.md)), passed by refer
 it costs depends on where the answer goes. When it stays in the function that asked for it (read, handed to
 functions that keep nothing, given a new value, or returned) the compiler keeps it in that function's frame and
 the function that made it writes it straight there
-([optimizations.md](optimizations.md#objects-that-never-leave-their-function-live-in-the-frame)), so
+([optimizations.md](optimizations.md#objects-that-never-leave-their-function-live-in-registers-or-the-frame)), so
 `position = position + velocity.scaled(delta)` in a loop allocates nothing, and neither do `a + b + c` or
 `var offset = first - second` read only by `offset.length()`. An answer that is stored (in an attribute, a list, a `Vector<T>` column) or printed
 is an object on the heap, one allocation, as any object is.
