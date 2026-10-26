@@ -7,9 +7,11 @@ it runs that code there: a walk is unrolled into one call per attribute, each ca
 and typed by it, and nothing is looked up when the program runs.
 
 Two more tools complete it. A **template** is a function whose name says what it is given, like `show_health(troll)`
-or `filter_alive()`: the compiler writes one copy per name a program calls. A **generic** is a class that takes codegen
-values, `List<Integer>`. All three are ordinary functions and classes, so what they make is typed, visible in
-`--final-classes`, and removed when nothing calls it ([Tree shaking](#tree-shaking)).
+or `filter_alive()`: a parameter named by a word of the function's own name, typed `Spite.AttributeDeclaration`,
+`Spite.FunctionDeclaration` or `Spite.Argument`, says what the function ranges over, and the compiler writes one copy
+for each name a program calls. A **generic** is a class that takes codegen values, `List<Integer>`. All three are
+ordinary functions and classes, so what they make is typed, visible in `--final-classes`, and removed when nothing
+calls it ([Tree shaking](#tree-shaking)).
 
 ```gdscript title=walks_and_templates/monster.spite
 var name = "troll"
@@ -45,8 +47,8 @@ func describe(attribute: Spite.AttributeDeclaration) {
     console.print("Monster has", attribute.name, "of class", attribute.class)
 }
 
-func show_attribute(attribute: Spite.AttributeDeclaration<Monster>, monster: Monster) {
-    console.print(monster.name, attribute.name, monster.attributes[attribute])
+func show_attribute(attribute: Spite.AttributeDeclaration, monster: Monster) {
+    console.print(monster.name, attribute.name, monster[attribute])
 }
 ```
 ```output
@@ -57,9 +59,10 @@ alive 1 with 10 health
 ```
 
 `describe` is compiled twice, once per attribute, and the `each` is two calls to those copies. `show_health` is the
-template `show_attribute` written for `health`, and `filter_alive` and `sum_health` are the standard library's
-member templates written for `alive` and `health`. The objects and every member they answer are
-[reflection.md](reflection.md)'s; this page is what a program builds with them.
+template `show_attribute` written for `health`: `monster[attribute]` is the attribute of that name read on the monster
+it is given, so the body is what tells the compiler the template ranges over `Monster`. `filter_alive` and `sum_health`
+are the standard library's member templates written for `alive` and `health`. The objects and every member they answer
+are [reflection.md](reflection.md)'s; this page is what a program builds with them.
 
 ## Walking a program's structure
 
@@ -70,11 +73,13 @@ walk is `each`, a selection is a filter or a member template, and a member by na
 | To reach | Write |
 |---|---|
 | every attribute of a class | `Monster.attributes.each(show)` |
+| every class of a folder | `Shop.Tools.classes.each(make)`, with `make(part: Spite.Class)` |
+| every value of an enum | `Phase.values.each(run)`, with `run(phase: Phase)` |
 | one function, if the class has it | `Runner.functions['run_each']`, a `Spite.FunctionDeclaration?` narrowed by `if` or `assert` |
 | the same function bound to an instance | `runner.functions['run_each']`, a `Spite.Function?` |
 | a call filled argument by argument | `Spite.Call(Runner.functions['run_each'], runner)`, then `call.arguments['name'] = value` and `call.call()` |
-| the functions whose names end in `_each` | `Runner.functions.filter_name_ends_with("_each")` |
-| a function's arguments | `function.arguments.each(describe)` |
+| the functions whose names end in `_each` | `Runner.functions.filter(walks_each)`, or `Runner.functions.filter_name_ends_with("_each")` to count or to ask |
+| a function's arguments | `function.arguments.each(describe_taken)` |
 | an enum's values, in order | `Phase.values` |
 | every folder named `part`, anywhere | `Spite.Namespace.instances.filter(holds_parts)`, then `namespace.classes` |
 | every class of the program | `Spite.Class.instances` |
@@ -105,18 +110,22 @@ func reset() {
 var console = Console()
 
 func WalkedArguments() {
-    var phases = Runner.functions.filter_name_ends_with("_each")
+    var phases = Runner.functions.filter(walks_each)
     phases.each(describe)
     var count = Runner.functions.count_name_starts_with("re")
     console.print(count, "functions start with re")
 }
 
-func describe(function: Spite.Function) {
-    console.print(function.name)
-    function.arguments.each(describe_argument)
+func walks_each(function: Spite.Function): Boolean {
+    return function.name.ends_with("_each")
 }
 
-func describe_argument(argument: Spite.Argument) {
+func describe(function: Spite.Function) {
+    console.print(function.name)
+    function.arguments.each(describe_taken)
+}
+
+func describe_taken(argument: Spite.Argument) {
     var fresh = made(argument)
     console.print(" ", argument.index, argument.name, "starts as '{fresh}'")
 }
@@ -134,8 +143,12 @@ render_each
 2 functions start with re
 ```
 
-`count_name_starts_with("re")` counts `render_each` and `reset`. A walk over nothing walks nothing: a class with no
-attributes, or a filter that keeps none, calls the function zero times.
+`filter(walks_each)` keeps the functions whose test answers true, and a walk over what it kept is unrolled like a walk over
+`Runner.functions` itself: the test still runs when the program does, but the compiler writes one `describe` for each
+function the class has. `count_name_starts_with("re")` counts `render_each` and `reset`. A walk over nothing walks nothing: a class with no
+attributes, or a filter that keeps none, calls the function zero times. The walker is called `describe_taken`, not
+`describe_argument`: a parameter named by a word of its function's name makes the function a template
+([below](#templates-when-the-name-says-what-it-is-given)), so a plain walker leaves that word out of its name.
 
 ### Asking a question while compiling
 
@@ -216,7 +229,8 @@ branch it rules out may call what that class does not have:
 generic $target_type
 
 func call(target: $target_type): String {
-    if $target_type.functions['run_each'] {
+    var run = $target_type.functions['run_each']
+    if run {
         target.run_each(3)
         return "{$target_type.name} runs"
     }
@@ -252,17 +266,35 @@ Walker runs 3
 Rock has no run_each 3
 ```
 
-`Caller<Rock>` keeps only its last `return`, so `target.run_each(3)` is never compiled for a `Rock`.
+`Caller<Rock>` keeps only its last `return`, so `target.run_each(3)` is never compiled for a `Rock`. The question is
+kept in a `var` and tested by name (`if run {`), which narrows it like any `T?`.
 
 ## Templates: when the name says what it is given
 
 A walk is for "every member". A **template** is for one member named at the call, where the name reads as well as
 an argument would: `show_health(troll)` reads like `show(troll.health)`, and `filter_alive()` like "those that are
-alive". A parameter of type `Spite.AttributeDeclaration<Monster>` whose name is a word of its own function's name
-makes the function a template: `show_attribute(attribute: Spite.AttributeDeclaration<Monster>, ...)` answers
-`show_name` and `show_health`, one copy for each name a program calls. Inside, `attribute` is the constant
-declaration of that member (the instance comes as its own argument), so `attribute.class` is its type, and `monster.attributes[attribute]` is that member of the `Monster` passed
-in, read or written. The member may also be a function that takes no arguments: the read is then a call to it.
+alive". A parameter whose name is a word of its own function's name makes the function a template, and the parameter's
+type says what it ranges over:
+
+| Parameter type | The function ranges over | Inside, the parameter is |
+|---|---|---|
+| `Spite.AttributeDeclaration` | the attributes of a class (and its functions that take no arguments) | the constant declaration of that member |
+| `Spite.FunctionDeclaration` | the functions of a class whose names fit a pattern | the constant declaration of that function |
+| `Spite.Argument` | the arguments of a function | the constant argument |
+
+There is no `Symbol<...>` to write: the name of the parameter is the signal, and the context says the rest.
+`show_attribute(attribute: Spite.AttributeDeclaration, monster: Monster)` answers `show_name` and `show_health`, one
+copy for each name a program calls. Inside, `attribute` is the constant declaration of that member (the instance
+comes as its own argument), so `attribute.class` is its type, and `monster[attribute]` is that member of the
+`Monster` passed in, read or written; `monster[attribute]` is short for `monster.attributes[attribute]`, and both
+work. The member may also be a function that takes no arguments: the read is then a call to it.
+
+The **class a template walks is not written on the parameter: the body says it**. It is the class of the value the
+body reads the declaration on, so `monster[attribute]` makes this a template over `Monster`, and a body that reads it
+on a `Label` and a `Monster` walks the attributes they both have. The value must be known from its declaration: a
+parameter, an attribute, or a local declared with its type or made by a constructor. A value whose class is not
+known that way, or a body that reads the declaration on nothing, is an error that says what to write
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#templates)).
 
 ```gdscript title=name_templates/label.spite
 var text = "fragile"
@@ -283,12 +315,12 @@ func NameTemplates() {
     show_copies(label)
 }
 
-func show_attribute(attribute: Spite.AttributeDeclaration<Label>, label: Label) {
-    console.print(attribute.name, "is", label.attributes[attribute])
+func show_attribute(attribute: Spite.AttributeDeclaration, label: Label) {
+    console.print(attribute.name, "is", label[attribute])
 }
 
-func double_attribute(attribute: Spite.AttributeDeclaration<Label>, label: Label) {
-    label.attributes[attribute] = label.attributes[attribute] * 2
+func double_attribute(attribute: Spite.AttributeDeclaration, label: Label) {
+    label[attribute] = label[attribute] * 2
 }
 ```
 ```output
@@ -298,17 +330,18 @@ copies is 4
 ```
 
 A template over a class's own members is how a class answers `set_age`, `get_age` and the rest without writing
-each one. An exact function always wins over a template, for that one name and direction:
+each one. Inside the class, `attributes[attribute]` is the template's own class. An exact function always wins over a
+template, for that one name and direction:
 
 ```gdscript title=own_accessors/person.spite
 var age = 0
 var name = ""
 
-func set_attribute(attribute: Spite.AttributeDeclaration<Person>, value: attribute.class) {
+func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
     attributes[attribute] = value
 }
 
-func get_attribute(attribute: Spite.AttributeDeclaration<Person>): attribute.class {
+func get_attribute(attribute: Spite.AttributeDeclaration): attribute.class {
     return attributes[attribute]
 }
 
@@ -332,18 +365,150 @@ ANN 30
 
 Writing `person.name` goes through `set_name`, while reading it goes through the `get_attribute` template, since no
 exact `get_name` exists. Inside the class, `attributes[attribute]` is that member of the object the function runs
-on, read or written directly, so the template never calls itself. A template whose parameter is not a word of its name is not a template: it is an ordinary
-function taking a `Spite.Attribute`, which a walk calls or a caller hands a constant to.
+on, read or written directly, so the template never calls itself.
+
+A parameter of the bound types, `Spite.Attribute` (an attribute bound to one object: its `declaration`, its `value`
+and its `owner`) or `Spite.Function`, makes no template. It is an ordinary parameter, and the function is an
+ordinary function that a walk over an instance's members calls, or a caller hands a value to. A template is written
+over the declaration, with the object as a parameter of its own.
+
+### Templates over functions
+
+The same idea ranges over the functions of a class. A parameter typed `Spite.FunctionDeclaration` and named by a
+word of its function's name makes the function a template over the functions of a class whose names have that word as
+a hole, and the class and the pattern come from the call the body makes with the word in its name:
+
+```gdscript title=function_templates/mover.spite
+var steps = 0
+
+func update_each(amount: Integer) {
+    steps = steps + amount
+}
+
+func render_each(amount: Integer) {
+    steps = steps + 10 * amount
+}
+
+func reset() {
+    steps = 0
+}
+```
+```gdscript title=function_templates/runner.spite
+generic $system_type
+
+var console = Console()
+var system = $system_type()
+
+func run_all(amount: Integer) {
+    run_phases_each(amount)
+}
+
+func run_one(amount: Integer) {
+    run_render_each(amount)
+}
+
+func run_phase_each(phase: Spite.FunctionDeclaration, amount: Integer) {
+    console.print("running", phase.name, "for", phase.hole, "at place", phase.index)
+    system.phase_each(amount)
+}
+```
+```gdscript title=function_templates/function_templates.spite entry
+var console = Console()
+
+func FunctionTemplates() {
+    var all = Runner<Mover>()
+    all.run_all(2)
+    console.print(all.system.steps)
+    var one = Runner<Mover>()
+    one.run_one(2)
+    console.print(one.system.steps)
+}
+```
+```output
+running update_each for update at place 0
+running render_each for render at place 1
+22
+running render_each for render at place 1
+20
+```
+
+`system.phase_each(amount)` is the call that says the pattern: the functions of the system's class named
+`<something>_each`, with `phase` standing for the part that varies. `run_phases_each` runs the template for every
+function that fits, in the order they were made, and `run_render_each` for the one named. The hole is any part of the
+name between the pattern's fixed words, with no enum behind it, so `phase_each` would also walk a `sum_each` the class
+happened to have; a name that fits nothing (`run_rendr_each`) is an error that lists the functions that fit. Inside the
+copy, `phase.name` is the function's name (`update_each`), `phase.hole` the text that took the place of `phase`
+(`update`), and `phase.index` its place; `phase.argument_count()` stays. A class can also name the pattern as text on a
+class value: `$system_type.argument_count("<phase>_each")`.
+
+### Templates over arguments
+
+A parameter typed `Spite.Argument` ranges over the arguments of a function. A template over arguments is called as the
+**plural** of its name, and it is spread into the call of the function it fills:
+
+```gdscript title=argument_templates/mover.spite
+var console = Console()
+
+func update_each(amount: Integer, label: String, scale: Float) {
+    console.print("update", amount, "'{label}'", scale)
+}
+```
+```gdscript title=argument_templates/filler.spite
+generic $system_type
+
+var console = Console()
+var system = $system_type()
+
+func run(start: Integer) {
+    system.update_each(made_arguments(start))
+}
+
+func made_argument(argument: Spite.Argument, start: Integer): argument.class {
+    console.print("making", argument.index, argument.name, "as", argument.class)
+    if argument.class == Integer {
+        return start
+    }
+    return argument.class()
+}
+```
+```gdscript title=argument_templates/argument_templates.spite entry
+func ArgumentTemplates() {
+    var filler = Filler<Mover>()
+    filler.run(7)
+}
+```
+```output
+making 0 amount as Integer
+making 1 label as String
+making 2 scale as Float
+update 7 '' 0
+```
+
+`made_arguments(start)` is `made_argument` once for each argument of `update_each`, in order, and its answers are the
+call's arguments; each answer is typed by its own argument (`argument.class`), so the call is the plain call
+`system.update_each(start, "", 0.0)`. The function is the one the plural is spread into or, inside a template over
+`Spite.FunctionDeclaration`, the function that template stands for. Written anywhere else the plural is an error that
+says to spread it into a call. A plain walker over arguments, called by `each`, takes a name without the word
+(`describe_taken(argument: Spite.Argument)`).
+
+### Walking a folder or an enum
+
+Walks over the classes of a namespace and the values of an enum are ordinary code on the reflection objects, unrolled
+while compiling. `Shop.Tools.classes.each(make)` makes one copy of `make` for each class of the folder, in which
+`part` is the class itself: a type (`Column<part>()`), a constant for `part.name`, and the class object where a value
+is wanted. `Phase.values.each(run)` calls `run` once for each value. A walker takes one parameter, and state it needs
+goes in attributes. A parameter typed `Spite.Namespace` is an instance of one, so `class.namespace.classes` and
+`Spite.Namespace.instances` are the lists to walk ([reflection.md](reflection.md#known-while-compiling)).
 
 ### Member templates
 
 The standard library's list functions `filter_<member>()`, `sum_<member>()`, `count_<member>()` and the rest are
 templates over the element's members ([collections.md](collections.md)), written in Spite in `library/list.spite`
-with a parameter `member: Spite.AttributeDeclaration<$element_type>`, so `item.attributes[member]` reads a member of an
-element. A generic class writes its own the same way:
+with a parameter `member: Spite.AttributeDeclaration`, so `item[member]` reads a member of an element (the body
+reads it on a `$element_type`, which is how it says the template ranges over that class's attributes). A generic class writes its own the same way:
 
 ```gdscript
-func average_member(member: Spite.AttributeDeclaration<$element_type>): Float? {
+func average_member(member: Spite.AttributeDeclaration): Float? {
     if item_count == 0 {
         return null
     }
@@ -392,10 +557,10 @@ compile error naming the fix.
 
 ### Templates and walks, side by side
 
-A template is not a loop in disguise. "Every attribute" is a walk, `label.attributes.each(show)`, and "this
+A template is not a loop in disguise. "Every attribute" is a walk, `Label.attributes.each(describe)`, and "this
 attribute" is a template, `show_copies(label)`; there is no third form. The two meet in the same function: a
-function taking a `Spite.Attribute` is a template when its parameter is a word of its name and is called by the
-member's name, and an ordinary function when a walk calls it. Either way it is compiled once per member it is used
+function taking a `Spite.AttributeDeclaration` is a template when its parameter is a word of its name and is called by
+the member's name, and an ordinary function when a walk calls it. Either way it is compiled once per member it is used
 for.
 
 ## Generics and codegen values (`$`)
@@ -578,7 +743,8 @@ var weight = 3
 
 The constraint is optional and names an existing `type` (`Printable` is `Console`'s, found like any type name,
 and a `type` of the generic's own file works too). What fits is what the `type` would accept anywhere, so
-`Shelf<Integer>` above is fine, while a `T?` or a function value is not. It is checked wherever a class is given,
+`Shelf<Integer>` above is fine, and so is a `T?` (`null` prints as `null`), while a `T?` against a `type` that needs
+more than printing, or a function value, is not. It is checked wherever a class is given,
 written out or read from the constructor's arguments, and it costs nothing at run time: the check is the
 compiler's, and the class made is the one an unconstrained line would make
 ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)).

@@ -1,10 +1,9 @@
 # Lists, dictionaries and member templates
 
 `List<T>` and `Dictionary<Key, Value>` are not built into the compiler. They are ordinary generic classes written in Spite
-(`library/list.spite` and `library/dictionary.spite`) over `Memory.Heap` and `Memory.Address`, the floor
-everything else is built on. The compiler keeps only the syntax: `[1, 2, 3]`, `list[index]`, and `List<T>()`. Read
+(`library/list.spite` and `library/dictionary.spite`) over `Buffer`, the room everything else is built on. The compiler keeps only the syntax: `[1, 2, 3]`, `list[index]`, and `List<T>()`. Read
 those two files to see exactly what a list does; write your own container the same way
-([memory.md](memory.md#memory-is-the-floor-and-you-can-build-on-it)).
+([memory.md](memory.md#memory-belongs-to-the-compiler)).
 
 Being ordinary classes, they cost what their code costs and nothing more: a list is one heap
 buffer of its elements, a program compiles only the members it calls, and one that never makes a `Dictionary`
@@ -60,8 +59,8 @@ them, are a `Buffer`, which still reads like a list of bytes and adds what bytes
 
 A dictionary names two types: what it is keyed by, then what it holds. `Dictionary<String, Integer>` finds a count
 by a name, `Dictionary<Integer, Monster>` a monster by its id, and `Dictionary<Player, Party>` a party by the player
-itself. Entries keep the order they were inserted in, and `get`, `has`, `set` and `[]` take the same time however
-many keys there are, because it is a hash table over two lists. `remove` is the exception: it moves every later
+itself. Entries keep the order they were inserted in, and `contains` and `[]` take the same time however
+many keys there are, because it is a hash table over two lists. `remove_at` is the exception: it moves every later
 entry down, as `remove_at` does on a list.
 
 | Member | Result | Notes |
@@ -69,8 +68,8 @@ entry down, as `remove_at` does on a list.
 | `Dictionary<Key, Value>()` | | an empty one, with no table until the first key |
 | `dictionary[key] = value` | | replaces the value of a key already there; it calls `set_at(key, value)`, which is only called through `[] =` |
 | `dictionary[key]` | `Value?` | `null` when the key is absent; it calls `get_at(key)`, which is only called through `[]` |
-| `has(key)` | `Boolean` | |
-| `remove(key)` | | nothing happens when the key is absent |
+| `contains(key)` | `Boolean` | |
+| `remove_at(key)` | | nothing happens when the key is absent |
 | `count()` | `Integer` | |
 | `keys()` / `values()` | `List<Key>` / `List<Value>` | a fresh list, in insertion order |
 | `copy()` / `deep_copy()` | `Dictionary<Key, Value>` | |
@@ -85,7 +84,7 @@ func DictionaryTasks() {
     inventory["potion"] = 6
     var inventory_count = inventory.count()
     console.print("count", inventory_count)
-    var has_shield = inventory.has("shield")
+    var has_shield = inventory.contains("shield")
     console.print("has shield", has_shield)
     crash inventory["potion"]
     console.print("potions", inventory["potion"])
@@ -109,7 +108,7 @@ total items 7
 ```
 
 `inventory["shield"]` is `null`, and `null` equals nothing, so `inventory["shield"] == 0` is `false`: absent is
-not zero. `has(key)` asks the question directly.
+not zero. `contains(key)` asks the question directly.
 
 A dictionary whose entries are known when it is written is a **dictionary literal**: each entry a key, a colon and
 a value, apart with commas or one per line, as a list literal's items are (the formatter puts a short one on one
@@ -158,7 +157,7 @@ func NumberKeysTasks() {
     names[3] = "fern"
     names[11] = "moss"
     names[7] = "reed"
-    names.remove(11)
+    names.remove_at(11)
     crash names[7]
     console.print("seven", names[7])
     var ids = names.keys()
@@ -189,7 +188,7 @@ func PartyKeys() {
     var parties = Dictionary<Player, String>()
     parties[ada] = "red team"
     crash parties[ada]
-    var other_found = parties.has(other_ada)
+    var other_found = parties.contains(other_ada)
     console.print(ada.name, "plays for", parties[ada], "and the other ada is found:", other_found)
 }
 ```
@@ -982,12 +981,12 @@ starts. Written as three steps, the chain above would make two lists every time 
 
 The templates are ordinary Spite in `library/list.spite`, over the list's own buffer on the heap. Each one is a
 template ([metaprogramming.md](metaprogramming.md#member-templates)) whose parameter is
-`member: Spite.AttributeDeclaration<$element_type>`: it names a member of the *element*, and `item.attributes[member]` reads
-it: the field itself, or a call to the zero-argument function. `filter_member` answers `filter_in_stock`,
+`member: Spite.AttributeDeclaration`: it names a member of the *element*, because the body reads it on an item, and
+`item[member]` reads it: the field itself, or a call to the zero-argument function. `filter_member` answers `filter_in_stock`,
 `filter_is_popular` and every other `filter_<member>` call:
 
 ```gdscript
-func filter_member(member: Spite.AttributeDeclaration<$element_type>): List<$element_type> {
+func filter_member(member: Spite.AttributeDeclaration): List<$element_type> {
     var filtered = List<$element_type>()
     var index = 0
     while index < item_count {
@@ -1007,9 +1006,8 @@ once more with the function's owner passed in beside the list, and `item.attribu
 `filter_member` also answers `filter(is_short)` without being written twice. A chain that passes functions is still
 one loop.
 
-`values` is the list's `TypedMemory<$element_type>`: `values.read_value(items, index)` reads the element in slot
-`index` of the list's buffer, retained, the same way a container of your own would
-([memory.md](memory.md#memory-is-the-floor-and-you-can-build-on-it)); everything else is written in the file. A
+`_read_value(index)` reads the element in slot `index` of the list's buffer, retained, the same way a container of
+your own would ([memory.md](memory.md#memory-belongs-to-the-compiler)); everything else is written in the file. A
 build with `--repl` or `--repl-port` compiles every template that fits every element class of a list the loop
 can reach, so `monsters.sum_health()` can be typed at the prompt; that is the one build where templates nobody
 calls are in the program. A private member (`_name`) of the element gets none: a template is
@@ -1018,7 +1016,7 @@ calls are in the program. A private member (`_name`) of the element gets none: a
 in any build.
 
 A `Dictionary`'s templates are written the same way, in `library/dictionary.spite`: their parameter is
-`member: Spite.AttributeDeclaration<$value_type>`, and each walks a copy of the values, `var listed = values()`,
+`member: Spite.AttributeDeclaration`, read on a `$value_type`, and each walks a copy of the values, `var listed = values()`,
 so `inventory.sum_price()` is `inventory.values().sum_price()` and a member that changes the dictionary while the
 template runs changes nothing the walk sees. There is no `remove_where_` among them, since removing from that copy
 would remove nothing.
@@ -1026,17 +1024,18 @@ would remove nothing.
 ## Write your own member template
 
 A program reopens `List` by putting a `list.spite` in its own folder, and a function there with a
-`Spite.AttributeDeclaration<$element_type>` parameter named after a word of its name becomes one more template, exactly like the
-library's:
+`Spite.AttributeDeclaration` parameter named after a word of its name, read on an item (`item[member]`), becomes one
+more template, exactly like the library's:
 
 ```gdscript title=list_average/list.spite
-func average_member(member: Spite.AttributeDeclaration<$element_type>): Float? {
+func average_member(member: Spite.AttributeDeclaration): Float? {
+    var item_count = count()
     assert item_count != 0
     var total = 0.0
     var index = 0
     while index < item_count {
-        var item = values.read_value(items, index)
-        total = total + item.attributes[member]
+        var item = _read_value(index)
+        total = total + item[member]
         index = index + 1
     }
     return total / item_count
@@ -1072,33 +1071,35 @@ folder; their items are read with `values.item_at(items, index)` (an `Items`, wi
 `references.read_value` under `$element_type.fits_vector()`), and an item read so is borrowed, as everywhere
 in the program (`conformance/stage6/own_collection_templates`).
 
-The `<$element_type>` is what makes it a member of the element. A plain `member: Symbol` would name one of the
-list's own attributes, which are its buffer, so it is an error that says what to write:
+What makes `average_member` a template over the element is its body: it reads `member` on an item, `item[member]`, and the item
+is a `$element_type`. A parameter read on the list's own attributes (`attributes[member]`) would range over `List`'s own
+members, which are its buffer, and answer nothing. A body that reads the parameter on nothing says so:
 
-```gdscript title=plain_symbol_template/list.spite
-func total_member(member: Symbol): Integer {
-    var total = 0
-    var index = 0
-    while index < item_count {
-        var item = values.read_value(items, index)
-        total = total + item.attributes[member]
-        index = index + 1
-    }
-    return total
+```gdscript title=unused_member_template/list.spite
+func total_member(member: Spite.AttributeDeclaration): Integer {
+    return 0
 }
 ```
-```gdscript title=plain_symbol_template/plain_symbol_template.spite entry error
+```gdscript title=unused_member_template/score.spite
+var points = 0
+
+func Score(new_points: Integer) {
+    points = new_points
+}
+```
+```gdscript title=unused_member_template/unused_member_template.spite entry error
 var console = Console()
 
-func PlainSymbolTemplate() {
-    var scores = List<Integer>()
-    scores.append(3)
-    var count = scores.count()
-    console.print(count)
+func UnusedMemberTemplate() {
+    var scores = List<Score>()
+    var three = Score(3)
+    scores.append(three)
+    var total = scores.total_points()
+    console.print(total)
 }
 ```
 ```diagnostic
-write 'member: Symbol<$element_type>' to name a member of the element
+'total_member' is a template over the attributes of a class, because 'member' is a word of its name, but its body reads 'member' on no value, so nothing says which class
 ```
 
 ---

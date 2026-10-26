@@ -921,77 +921,69 @@ is a compile error at the `crash`, since the program would halt there every time
 
 ### What a crash reports
 
-A report is the place of the crash and the memory that matters there: its file and line,
-and the values there. It does not repeat the condition, which is on the line it names.
+A report is the place of the crash and the memory that matters there: its file and line, and every value the failed
+condition read, each tied to the position it was read at. It does not repeat the condition, which is on the line it
+names, and it is written for a person and for an AI alike, so it holds whatever is needed to fix the problem without
+running the program again.
 
-A crash flushes what the program printed, writes one tab-separated line to the error stream and exits with
-status 1. The line starts `spite.crash` and carries the site's id, its place, its class and function, every name
-and call in the condition with its value, and then the other values in scope, then a `spite.assert` line for
-each `assert` that failed before it, because those are usually the trail that explains how the program got there.
-Each names what its function answered instead (`answered=nothing` for a function that returns nothing, `null` for
-a `T?`, `empty` for a collection). Last comes the call chain: a `spite.frame` line for each Spite function on the
-stack, innermost first, with the file and line it starts on, as a [native fault](#what-a-native-fault-reports)
-writes them:
-
-```
-spite.crash	64b935f1	crash_report/crash_report.spite:14	CrashReport	check	value=-9	limit=0
-spite.assert	0aae5005	crash_report/crash_report.spite:18	CrashReport	announce	answered=nothing
-spite.frame	crash_report/crash_report.spite:12	CrashReport	check
-spite.frame	crash_report/crash_report.spite:3	CrashReport	CrashReport
-spite.frame	launcher/launcher.spite:3	Launcher	Launcher
-spite.frame	-	-	main
-```
-
-After the condition's parts come the parameters and locals in scope, then the attributes of the object the
-function runs on, each once as `name=value`: text, numbers and enums, and a `T?` of one of them (`name is null`
-when it is empty). An object, a list or a function is left out, and so is a name the condition already reported.
-A report shows at most 12 of these values, and at most the first 80 bytes of a text, followed by its full length:
+A crash flushes what the program printed, writes one line to the error stream, then the failed asserts that came before
+it, then the call chain, and exits with status 1. The first line is
+`spite: the program stopped at <path>:<line> in <Class>.<function> (name=value, ...)`: one field for each value. Each
+failed `assert` that came before is a `spite.assert` line, because those are usually the trail that explains how the
+program got there; each names what its function answered instead (`answered=nothing` for a function that returns
+nothing, `null` for a `T?`, `empty` for a list, a dictionary, a `Vector` or an `Items`). Last comes the call chain, a
+`spite.frame` line for each function of the program on the stack, innermost first, as a
+[native fault](#what-a-native-fault-reports) writes them:
 
 ```
-spite.crash	262f0d5a	crash_scope_values/crash_scope_values.spite:22	CrashScopeValues	load_level	inner=20	level=forest	depth=2	nickname is null	scale=1.5	title=a report longer than the eighty bytes a crash shows of one text, so the rest is ...(92 bytes)	mood=calm	retries=3
+spite: the program stopped at crash_report/crash_report.spite:17 in CrashReport.check (value=-9, limit=0, scale=2)
+spite.assert	6d183761	crash_report/crash_report.spite:11	CrashReport	announce	answered=nothing
+spite.frame	crash_report/crash_report.spite:17	CrashReport	check
+spite.frame	crash_report/crash_report.spite:7	CrashReport	CrashReport
 ```
 
-When the condition is a call on a value, `crash settings.exists()` (or `crash not names.contains(name)`), the
-value the call was made on is the operand: text, a number or an enum is written as it is, and an object whose class
-has a `to_string()` as that text, so a missing `File` names its path:
+The values come in this order. First every part of the condition, left to right and each once, by its text: a bare
+name, a path, a `[ ]` read, the answer of a call (and inside a call its receiver and its arguments). Then the function's
+parameters and locals in scope, in the order they were declared, then the attributes of the object it runs on, leaving
+out a name the condition already mentioned. A report shows at most 12 values unless the condition alone has more.
+Whole numbers, decimals, `Boolean`s, enums and text are shown, and an object only when it is a part of the condition,
+as its `to_string()` (`settings=saves/settings.txt`). A `T?` that is empty is `name is null`, and text is cut to its
+first 80 bytes, back to a whole character, followed by its full length: `...(92 bytes)`. The position says which
+expression a value is, so the report never repeats the source text.
+
+A condition of any shape (`or`, `not`, comparisons, arithmetic, calls inside it) reports every part it read. A call in
+the condition is never run twice: its answer is kept for the check and for the report. A part that an `and` or an `or`
+skipped never ran, so it is left out:
 
 ```
-spite.crash	00b7d810	crash_receiver/crash_receiver.spite:6	CrashReceiver	CrashReceiver	settings=.spite/crash_receiver/missing_settings.txt
+spite: the program stopped at crash_compound/crash_compound.spite:12 in CrashCompound.finish (cooked.count()=1, name=cake, batch=6, portions=2, notes is null)
+spite.frame	crash_compound/crash_compound.spite:12	CrashCompound	finish
+spite.frame	crash_compound/crash_compound.spite:7	CrashCompound	CrashCompound
 ```
 
-A condition of any shape (`or`, `not`, comparisons, arithmetic, calls inside it) reports every part it read,
-left to right and each once: a name or a path with its value, a call with the answer it gave while the condition
-ran (it is never called a second time), and a value that is not there in the words of a failed narrowing
-(`is null`, `is missing: ...`). A part that an `and` or an `or` skipped is left out, since it never ran:
+A crash that narrows a `T?` fails because something is not there, so it never prints a value for it: a default would
+read like a real `0`. It reports only the first link of the path that is missing, and for a `[ ]` read what was asked
+for: the index and the count of a list, the key of a dictionary.
 
 ```
-spite.crash	01478395	crash_compound/crash_compound.spite:21	CrashCompound	finish	record is null	cooked.count()=1	never_cooked_id=cake	name=cake
+spite: the program stopped at crash_missing_item/crash_missing_item.spite:10 in CrashMissingItem.read (keys[start + 1] is missing: index 3, count 2)
+spite: the program stopped at crash_missing_key/crash_missing_key.spite:10 in CrashMissingKey.show (scores[player] is missing: key "bea")
+spite: the program stopped at crash_missing_link/crash_missing_link.spite:10 in CrashMissingLink.show (title is null)
 ```
 
-A crash that narrows a `T?` fails because something is not there, so it never prints a value for it: a default
-would read like a real `0`. It names the first link of the path that is missing, and for a `[]` read what was
-asked for: the index and the count of a list, the key of a dictionary.
+The call chain is always written, even when it is one line. Only the functions of the program and of the packages it
+loads are listed; a frame inside the standard library is left out, as the failed asserts of the library are. Consecutive
+equal lines are one line ending in `repeated=<count>`, at most 16 lines are written, and `spite.frame	more` says the stack
+goes deeper. An inlined function keeps its own frame. The chain is read from the saved frame pointers and a table of
+the program's calls that sits in the executable beside its code, so nothing runs for it until a crash.
 
-```
-spite.crash	26b57b59	crash_missing_item/crash_missing_item.spite:13	CrashMissingItem	read	clip.keys[start + 1] is missing: index 3, count 2	frame=1
-spite.crash	474c3f17	crash_missing_key/crash_missing_key.spite:11	CrashMissingKey	show	scores[player] is missing: key "bea"
-spite.crash	0f912d8f	crash_missing_link/crash_missing_link.spite:14	CrashMissingLink	show	rig.skeleton is null
-spite.crash	75b30821	crash_missing_value/crash_missing_value.spite:10	CrashMissingValue	show	width is null
-```
+The id of a `spite.assert` line is derived from the site's content, so it stays the same when unrelated lines move.
+Each build also writes a `.crashes` file beside the executable it builds: one line per `crash` site of every function
+compiled and per `assert` site outside the library, sorted by id, with its file, line, column, class, function, kind,
+condition and the type of every part of the condition (`value:Integer limit:Integer`), in the order the report shows
+them, receivers whose value the report leaves out included. `grep 6d183761 program.crashes` finds an assert from its
+line and the condition it checked.
 
-The id is derived from the site's content, so it stays the same when unrelated lines move. Each build also writes
-a `.crashes` file beside the executable it builds: one line per `assert` and `crash` site, sorted by id, with its file,
-line, column, class, function, kind and condition, so `grep 64b935f1 program.crashes` finds a site from a report and the
-condition it checked. An `--optimized` build writes only the id where the place would be, and the map is how
-the id is read back:
-
-```
-spite.crash	64b935f1	value=-9	limit=0
-spite.assert	0aae5005	answered=nothing
-```
-
-On Linux and macOS an `--optimized` build keeps no frame pointers, so its crash has no `spite.frame` lines; on
-Windows the chain is read from the unwind tables every build has.
 A failed `assert` prints nothing when it fails, in every build: it is the program answering "nothing" and
 carrying on, and a long run fails thousands of them, which would bury the one line that matters. It is kept for the
 report instead. To watch them as they fail, build with `--trace-asserts` (a `Build` field, `trace_asserts`): each
@@ -1003,13 +995,13 @@ The trace keeps only the latest failed asserts, in a fixed-size ring, so it neve
 step 32 times.
 
 ```
-spite.assert	4b7a8666	conformance/stage6/assert_runs/assert_runs.spite:17	AssertRuns	name_at	answered=null	repeated=1000
-spite.assert	3a356b09	conformance/stage6/assert_runs/assert_runs.spite:22	AssertRuns	title_of	answered=null
+spite.assert	4b7a8666	assert_runs/assert_runs.spite:17	AssertRuns	name_at	answered=null	repeated=1000
+spite.assert	3a356b09	assert_runs/assert_runs.spite:22	AssertRuns	title_of	answered=null
 ```
 
-A line carries no values. The assert's place, the `.crashes` map and its condition are what it says: a guard that
-narrows failed because something was not there, and one that tests a condition names its operands on that line,
-while the crash that ends the run prints every value at its own site.
+A `spite.assert` line carries no values. The assert's place, the `.crashes` map and its condition are what it says: a
+guard that narrows failed because something was not there, and one that tests a condition names its operands on that
+line, while the crash that ends the run prints every value at its own site.
 It holds the asserts of the program and of every package it `load`s, never those of the standard library: an
 `assert` in `library/` is how the library answers routine questions (a key that is not there, text that does not
 match, a read past the end), and those would push the program's own entries out of the ring. The compiler leaves
@@ -1018,10 +1010,7 @@ reports its own site.
 A crash reports the ring as it stood when the crash began. Other threads may still be failing asserts while it
 prints, such as a game's pool threads running their guards, and those never lengthen the report: it is the crash line,
 at most 32 `spite.assert` lines and the `earlier=` count of the lines before them, then the call chain of the thread that crashed, and then
-the program exits. In a program that starts
-threads, each failed `assert` adds to the newest line or takes a new one with a compare-and-swap, so asserts
-failing on several threads at once are all counted, and one site failing on every thread is still one line (`conformance/stage6/assert_ring_threads`); a program without threads pays a
-plain add. Only the first thread to crash
+the program exits. Only the first thread to crash
 reports; one that crashes while that report is being written waits for the program to end, so two reports never
 interleave.
 
@@ -1045,8 +1034,6 @@ stack, and ends the program:
 spite.fault	read-violation	-	-	-	address=0x0	code=0xc0000005	at=fixture.dll+0x1029	foreign=read_integer_at	library=conformance/stage6/native_fault_foreign/fixture.dll	from=conformance/stage6/native_fault_foreign/native_fault_foreign.spite:13
 spite.frame	conformance/stage6/native_fault_foreign/native_fault_foreign.spite:11	NativeFaultForeign	read_nothing
 spite.frame	conformance/stage6/native_fault_foreign/native_fault_foreign.spite:4	NativeFaultForeign	NativeFaultForeign
-spite.frame	launcher/launcher.spite:3	Launcher	Launcher
-spite.frame	-	-	main
 ```
 
 Read it left to right:

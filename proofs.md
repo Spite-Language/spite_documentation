@@ -585,12 +585,17 @@ A short guide by task. Find what you are writing; the entries below say the rest
   answer is known while compiling.
 - **Rule.** The literal's keys and values are literals of one kind each, the local has no declared type, and every
   later mention of its name in its block is `name[literal]` that is not assigned to.
-- **Buys.** The dictionary is never made: each read is the value written for its key, or `null` for a key the
-  literal lacks, still typed `T?`, so a `crash` or an `if` narrows it as before.
+- **Buys.** The dictionary is never made: each read is the value written for its key, still typed `T?`, so a
+  `crash` or an `if` narrows it as before.
+- **Refuses.** A `crash` on a read of a key the literal does not hold, `crash points["platinum"]`, would halt every
+  time it runs, so it is a compile error in every build, the `--repl` and `--development` builds included: `'crash
+  points["platinum"]' always halts: its condition is decided while compiling and is false, ...; the dictionary written
+  out as 'points' holds no key 'platinum'`. Without the `crash`, a read of a key the literal lacks keeps the dictionary,
+  which answers `null` for it at run time.
 - **Falls back.** Any other mention (a variable key, a write, passing it, `count()`, a loop over it), a dictionary held
   in an attribute, and a `--hot-reload` or inspectable build keep the dictionary as written.
 - **See.** [optimizations.md](optimizations.md#a-dictionary-written-out-and-only-read-by-literal-keys-is-folded);
-  `conformance/stage6/dictionary_folding`.
+  `conformance/dictionary_literal_missing_key`.
 
 ## Compile-time questions
 
@@ -1224,7 +1229,7 @@ These apply only in a program that uses threads: one that makes a `Parallel`, ru
   its own element is told apart from what it reaches on any other object of the class.
 - **Rule.** [concurrency.md](concurrency.md#calls-in-a-row-run-at-once): the function and everything it reaches
   write nothing else, count no reference, print, wait, call out of the program or through a function value, write
-  memory through an address or reach a `Weak`. The compiler weighs the pass while compiling and writes the smallest
+  memory through an address. The compiler weighs the pass while compiling and writes the smallest
   count at which bands pay; when the loop runs, it compares the count with it and, for a `List`, checks that each
   element is held by the list alone.
 - **Buys.** The passes run in bands on the thread pool, one band for each thread, with no `parallel_each_` written.
@@ -1320,7 +1325,7 @@ These apply only in a program that uses threads: one that makes a `Parallel`, ru
   their call effects to write no attribute, grow, shrink or store into no list, and let nothing go; nothing reaches
   `Parallel`, `Concurrent`, a lock, a file or a socket; nothing reads `.memory`, `.class`, `.attributes` or
   `.functions`; and a `return` answers a plain value. The copied classes (every class, list and dictionary its
-  attributes reach) have no `drop()`, are not reached by a `Weak`, have no cycle (so the copy keeps no table), are
+  attributes reach) have no `drop()`, have no cycle (so the copy keeps no table), are
   the program's own, and nothing in the whole program compares one of them by identity (`==`, `!=`), reads its
   `.memory`, keys a `Dictionary` by it or walks its `instances`. The program starts no thread and no
   `Concurrent`. Not in the inspectable builds.
@@ -1524,7 +1529,7 @@ counter, one load per call, not a proof: [optimizations.md](optimizations.md#whi
   their locals and singletons (which the compiler makes safe); an object handed over and held only by the task may
   keep its lists and objects; a `Parallel`'s work writes a value attribute only of an object handed over to it
   (not `this`, a parameter, an attribute or a local named again before), except inside a function it passes to a
-  `Lock` attribute's `while_locked(...)`; a `Weak` a `Parallel` reaches is an error.
+  `Lock` attribute's `while_locked(...)`.
 - **Buys.** A data race is a compile error.
 - **Falls back.** Refused, naming what the other thread could reach.
 - **See.** [concurrency.md: Work of its own, and a short

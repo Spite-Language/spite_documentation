@@ -329,8 +329,8 @@ func environment_address(name: String): Long {
 ```
 
 and `library/program.spite` calls `exit_process` and `environment_address` without declaring them, because
-every system's folder defines them with the same signature. The launcher loads `library/` and then exactly one of
-these folders, named by `build.target_operating_system` ([programs.md](programs.md#how-a-program-is-loaded)), so
+every system's folder defines them with the same signature. A program loads exactly one of
+these folders, the one for its system, and it loads `common` itself ([programs.md](programs.md#how-a-program-is-loaded)), so
 their functions replace or add members by the ordinary reopening rule ([packages.md](packages.md#monkey-patching-mods)).
 `--final-classes` prints each class as it came out, its system's functions included.
 

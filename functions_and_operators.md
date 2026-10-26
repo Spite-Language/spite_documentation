@@ -15,7 +15,7 @@ func add_one(value: Integer) Integer {
 }
 ```
 ```diagnostic
-a return type is written '(): Integer'
+a function's answer is written after a ':', as in 'func total(): Integer', and found 'Integer'
 ```
 
 ## Functions are values
@@ -56,6 +56,38 @@ func quiet(text: String): String {
 ```output
 HI! hi
 shout AGAIN!
+```
+
+A function value read from a list is called where it is read: `steps[index](value)` calls the function in slot
+`index`. Like every `[ ]` read it answers a value that may be missing, so the index is proven first, here by the loop's
+own condition:
+
+```gdscript title=function_list/function_list.spite entry
+var console = Console()
+var steps = List<Spite.Function<Integer, Integer>>()
+
+func FunctionList() {
+    steps.append(double)
+    steps.append(add_one)
+    var value = 5
+    var index = 0
+    while index < steps.count() {
+        value = steps[index](value)
+        index = index + 1
+    }
+    console.print(value)
+}
+
+func double(number: Integer): Integer {
+    return number * 2
+}
+
+func add_one(number: Integer): Integer {
+    return number + 1
+}
+```
+```output
+11
 ```
 
 An ordinary call, `shouter.shout("hi")`, is a direct call and builds no function value; only a function
@@ -255,9 +287,9 @@ needs it to define 'sum(other)'
 ## Setter/getter interception
 
 Attribute access **from outside a class** also goes through operator-style functions. `person.age = 1` calls
-`set_age(1)` when the class defines it (an exact function, or Symbol codegen; see
+`set_age(1)` when the class defines it (an exact function, or a template; see
 [metaprogramming.md](metaprogramming.md)); `person.age` (a read) calls `get_age()` the same way. An exact
-function always wins over Symbol codegen. Compound assignment goes through both: `person.age = person.age + 1`
+function always wins over a template. Compound assignment goes through both: `person.age = person.age + 1`
 reads through `get_age()` and writes through `set_age(...)`.
 
 ```gdscript title=interception/account.spite
@@ -269,11 +301,11 @@ func Account(starting_balance: Integer, starting_owner: String) {
     owner = starting_owner
 }
 
-func set_attribute(attribute: Symbol, value: attribute.class) {
+func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
     attributes[attribute] = value
 }
 
-func get_attribute(attribute: Symbol): attribute.class {
+func get_attribute(attribute: Spite.AttributeDeclaration): attribute.class {
     return attributes[attribute]
 }
 
@@ -285,8 +317,8 @@ func get_owner(): String {
     return owner
 }
 ```
-`balance` has no exact `set_balance`/`get_balance`, so Symbol codegen answers reads and writes to it from
-outside the class. `owner` has exact functions instead, which always win over Symbol codegen, so every name
+`balance` has no exact `set_balance`/`get_balance`, so a template answers reads and writes to it from
+outside the class. `owner` has exact functions instead, which always win over a template, so every name
 written through `set_owner` is capitalized.
 
 The templates answer `account.balance = 5` and `account.balance`. Calling one with the attribute written out, `account.set_attribute('balance', 5)`, is an error that tells you to write `account.balance = 5`, since a write has one spelling; a template is called with an attribute only when the attribute is a value, such as the one a walk over the attributes hands you.

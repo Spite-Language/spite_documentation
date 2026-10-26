@@ -223,7 +223,7 @@ change. Which optimisation applies in which build is in [optimizations.md](optim
 
 `--debug-memory` builds the program with an allocation table and prints `allocations: N frees: N` when it ends.
 The two numbers differ only when something leaked, and then the report names the classes whose instances are
-still alive, which is how a leaked cycle shows up ([memory.md](memory.md#cycles-leak)). The table costs a
+still alive, which is how a leaked cycle shows up ([memory.md](memory.md#cycles-are-freed)). The table costs a
 lookup under a lock on every allocation and free, and exists only in a `--debug-memory` build: any other build
 calls the allocator directly.
 
@@ -248,28 +248,22 @@ generator after it has run, so a class the generator never made is not there, a 
 and each of its instantiations is. Tree shaking of a production build runs after that, so a library class
 the program never uses (`FileSystemWatcher`, `Socket`) may still be printed although it was dropped from the executable.
 
-Every class the program names comes from a file in `library/`, including `Memory.Heap`, `DynamicLibrary`,
-`String` and the numbers (`Integer`, `Long`, `Double`, `Memory.Address`, ...), so every one of them is printed like a
-class of your own. A function whose body the compiler supplies (such as
-`Memory.Heap.allocate`) is added to its class as the compiler's own reopening, and is printed as a declaration
-without a body. The printed `memory/heap.spite` is:
+Every class the program names comes from a file in `library/`, including `DynamicLibrary`,
+`String` and the numbers (`Integer`, `Long`, `Double`, ...), so every one of them is printed like a
+class of your own. A function whose body the compiler supplies (such as a `Buffer`'s reads and writes) is added to its
+class as the compiler's own reopening, and is printed as a declaration without a body:
 
 ```gdscript
-singleton
-
-func allocate(bytes: Long): Memory.Address
-func resize(address: Memory.Address, bytes: Long): Memory.Address
-func free(address: Memory.Address)
-func live_allocations(): Integer
+func _read_integer_at(at: Integer): Integer
+func _write_integer_at(at: Integer, value: Integer)
 ```
 
 A declaration without a body is what the compiler reads back, so the printed program still compiles: the
-printed `memory/heap.spite` reopens `Memory.Heap` with the same members, and the compiler supplies the same bodies
+printed file reopens the class with the same members, and the compiler supplies the same bodies
 again. Anywhere else, a `func` with no body is an error, because only the compiler can supply one.
 
 `instantiated/` holds one file per generic instantiation, named for the values it was given
 (`weapon_integer_true.spite`, class `WeaponIntegerTrue`), written as a `type` with the members that instantiation has.
-`Launcher` is printed with the rest.
 
 The folder has no default: anything inside the program's own folder would be read back as part of the program,
 so the folder is always named. It combines with every build; with `--check` it is the only thing written:

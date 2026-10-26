@@ -19,9 +19,9 @@ func Game() {
   by side, `engine/renderer.spite` beside `engine/renderer/`, would make `Engine.Renderer` both a class and a
   namespace, so that is an error ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 - `load` only ever takes a literal string: a variable or expression there is an error, so the compiler
-  always knows every bundle statically. The one exception is the launcher, the Spite program that loads the
-  standard library and then yours ([programs.md](programs.md#how-a-program-is-loaded)): its `load` may also use
-  the `Build` fields the compiler already knows, like `build.target_operating_system` after `var build = Build()`.
+  always knows every bundle statically. A `load` may sit under an `if` on a `Build` field the compiler already knows,
+  which is how one entry function loads the standard library folder of the system it is built for
+  ([programs.md](programs.md#how-a-program-is-loaded)).
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
   `window-plugin`, and a folder that is not is an error before anything compiles. Of the folders a `load` names,
   only the last one becomes a namespace, so only it is held to the rule: `load "../../Old Tools/render_vulkan"`
@@ -261,8 +261,7 @@ to use.
 ## `load` is a bundle boundary
 
 `load` marks where a dynamic library or lazy-loaded bundle can split, the way an async `import()` does in
-webpack. A `load` line compiles to nothing at run time, except the launcher's `load build.program`, which runs the
-program by constructing its entry class. So a `load` costs nothing when the program runs; what it loads is
+webpack. A `load` line compiles to nothing at run time. So a `load` costs nothing when the program runs; what it loads is
 tree-shaken like the rest of the program.
 `load` is a keyword written without parentheses, on a line of its own, and nothing else may be named `load`: a
 function that loads something says what, `load_texture` ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).

@@ -105,23 +105,20 @@ test that cannot compile reports `path:line: error: ...` and runs nothing.
 **When every test passes**, the run prints what the runner prints (here a line per test and `every test passed`)
 and exits with status 0.
 
-**When a test fails**, its `crash` halts the program: everything printed so far is flushed, one `spite.crash` line
-and the call chain go to the error stream and the program exits with status 1. Break
+**When a test fails**, its `crash` halts the program: everything printed so far is flushed, one report line and the
+call chain go to the error stream and the program exits with status 1. Break
 `test_split_keeps_empty_pieces` by expecting two pieces, and the run says:
 
 ```
 passed test_trim_removes_the_spaces_around_text
-spite.crash	59bbba06	test_package/text_tests.spite:8	TextTests	test_split_keeps_empty_pieces	pieces.count()=3
-spite.frame	test_package/text_tests.spite:6	TextTests	test_split_keeps_empty_pieces
-spite.frame	compiler/source/generation/prelude.spite:1	Spite.Function	call_function
+spite: the program stopped at test_package/text_tests.spite:8 in TextTests.test_split_keeps_empty_pieces (pieces.count()=3)
+spite.frame	test_package/text_tests.spite:8	TextTests	test_split_keeps_empty_pieces
 spite.frame	test_package/test_package.spite:19	TestPackage	run
 spite.frame	test_package/test_package.spite:5	TestPackage	TestPackage
-spite.frame	launcher/launcher.spite:3	Launcher	Launcher
-spite.frame	-	-	main
 ```
 
 The first line is the report, and it is enough: the file and line of the `crash` (`text_tests.spite:8`), the
-class and the test, and the value of every part of the condition, then every other text, number and enum in scope
+class and the test, and the value of every part of the condition, then the other values in scope
 ([what a crash reports](failure.md#what-a-crash-reports)); the `spite.frame` lines below it say how the run got
 there. The condition itself is not repeated, since it is on the
 line named. There is no expected-versus-actual prose: the test says `pieces.count() == 2`, the report says

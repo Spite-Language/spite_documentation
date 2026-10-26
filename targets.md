@@ -110,7 +110,7 @@ to, as `Mouse` sits on `DynamicLibrary`.
 ## Markup
 
 There is no JSX and no trailing block. Markup is `missing_function` plus
-literals, with as many children as the call has arguments. That costs no new feature, because a Symbol codegen
+literals, with as many children as the call has arguments. That costs no new feature, because a template
 function is generated per call site:
 
 ```gdscript

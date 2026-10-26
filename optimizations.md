@@ -451,9 +451,9 @@ helpers and frees them, 5 000 000 times): 210 ms against 106 ms with the helpers
 -fno-inline-functions`); with `clang -O2` both are 0 ms, since clang inlines the helpers and removes the heap call
 itself.
 
-**What you notice.** Fewer allocations under `--debug-memory`, and `value.memory.section` answering `'stack'`,
-`'heap'` or `'constant'` ([memory.md](memory.md#where-a-value-lives-memory)). You never choose the stack
-yourself: there is no second way to allocate, so there is no address to keep past a return by mistake.
+**What you notice.** Fewer allocations under `--debug-memory` ([memory.md](memory.md#memory-belongs-to-the-compiler)).
+You never choose the stack yourself: there is no second way to allocate, so there is no address to keep past a return
+by mistake.
 
 ### Reading an address is one machine operation
 
@@ -1915,8 +1915,8 @@ values its report prints; other builds keep the place, so a local run needs no l
 
 **When it applies.** Every `crash` and every program `assert` (a library `assert` records nothing).
 
-**What a user can observe.** The report lines ([failure.md](failure.md#what-a-crash-reports)): `spite.crash<TAB>id`
-and `spite.assert<TAB>id<TAB>answered=...` in an optimised build, and `grep <id> program.crashes` gives the rest.
+**What a user can observe.** The report lines ([failure.md](failure.md#what-a-crash-reports)): the crash line with the place and the values,
+and `spite.assert<TAB>id<TAB>place<TAB>...<TAB>answered=...`; `grep <id> program.crashes` gives the condition.
 `conformance/stage6/trace_asserts_optimized`.
 
 ### Smaller ones
@@ -1975,8 +1975,8 @@ again, and a call through a function value keeps no proof about attributes or li
 **What it does.** `"line {index} of {round};"` and `prefix + name + suffix` are one join, not a chain of pairs:
 every piece is computed in order, left to right as written, and the text is made once, at its final length. Before,
 each `+` (and each `{...}` hole) made a whole new text, so a text of five pieces made four texts and threw three
-away. Pieces the compiler already knows (written text, a symbol's name such as `attribute.name` in a Symbol
-walk) are joined while compiling, and empty ones are dropped, so `"{index} of"` is two pieces, not three, and
+away. Pieces the compiler already knows (written text, a symbol's name such as `attribute.name` in a walk
+over attributes) are joined while compiling, and empty ones are dropped, so `"{index} of"` is two pieces, not three, and
 `"{attribute.name}="` is one constant.
 
 **When.** Every `+` whose left side is text, and every text with `{...}` holes, in every build. `text = "{text}..."`
@@ -2951,7 +2951,7 @@ table is one block, twice as large.
 **The case:** [benchmarks/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_deep_copy_is_written_per_class_with_a_table_only_where_a_graph_needs_one).
 
 **What it does.** The compiler writes one deep copy function per class it is used on. A class whose attributes can
-lead back to itself, lead to a `Weak`, or that some `Weak` holds, gets a copy that looks each object up in a table
+lead back to itself, or lead to a back reference, gets a copy that looks each object up in a table
 of the objects copied during that `deep_copy()` call, so an object reached twice is copied once and the copy keeps
 the original's cycles and weak references ([memory.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)). Every other class gets a plain
 copy: allocate, copy each attribute, return, with no table and no lookup.
@@ -3020,12 +3020,12 @@ prints, and every value it reads through the copy, is the same.
 
 **What it does.** `pluralize()` or `singularize()` called on a text literal of lower-case letters and underscores
 (`"cactus".pluralize()`) is worked out while compiling, through the same rules and the same
-[`String.Inflection`](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#the-string-class) table the call would read at run time, and the program
+[`String`](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#the-string-class) tables the call would read at run time, and the program
 holds the answer as a constant (`"cacti"`): no call, no table read, no allocation.
 
 **When.** Every build, for a literal receiver of lower-case letters and underscores, while the program's
-`String.Inflection` table is the library's own. A literal with capitals, spaces or other characters, a receiver that
-is not a literal, and every call in a program that reopens `String.Inflection` with other words run at run time.
+`String` tables of irregular and uncountable words are the library's own. A literal with capitals, spaces or other characters, a receiver that
+is not a literal, and every call in a program that reopens `String` with other words run at run time.
 **What you notice.** Nothing but speed and size: the answer is the one the call gives, and a program whose only
 inflections are literals carries none of the inflection code or its table (`conformance/stage6/inflection_fold`
 makes 5 allocations, against 19 when the calls run).
@@ -3120,7 +3120,7 @@ row clang removes once it inlines the system, and 3.3 ms for expert C; the cost 
 not in it, as the case's README lists. A `__lent_` function appears in the C beside the ordinary
 one, which is shaken out when no ordinary call reaches it.
 
-A row filled by a `Symbol` walk is the same struct: the compiler writes the walk out as the literal it
+A row filled by a walk over attributes is the same struct: the compiler writes the walk out as the literal it
 amounts to, in the caller, so the walk's template is not called and is not compiled for that walk, and
 `--final-classes` shows no `fill_<attribute>` function for it.
 
@@ -3697,8 +3697,8 @@ slot, a temporary and a copy used as a value stay limited to classes of numbers.
 `conformance/stage6/frame_held_attributes` pins it: a loop making 1 000 such objects, each with a list of tags
 and a held object, allocates 3 029 times in all (4 032 without).
 
-**What you notice.** Fewer allocations under `--debug-memory`, and `value.memory.section` answering `'stack'` for a
-local that lives in the frame ([memory.md](memory.md#where-a-value-lives-memory)).
+**What you notice.** Fewer allocations under `--debug-memory` for a local that lives in the frame
+([memory.md](memory.md#memory-belongs-to-the-compiler)).
 [Its case](https://github.com/Spite-Language/spite_benchmarks/tree/master/objects_that_never_leave_their_function_live_in_the_frame), 20 000 000 steps of a falling
 point, makes 6 allocations in all and takes 15.3 ms, against 1 132.8 ms for naive C, which `malloc`s every answer,
 and 15.2 ms for expert C, which holds the numbers by value. The whole program
@@ -3973,7 +3973,7 @@ passes are cut into a band for each thread and run at once; `sum_turns` runs aft
 **When.** Every build but `--hot-reload`, `--repl` and `--development`, for a `List` or a `Vector` of a class of
 the program, when every pass writes only its own element's attributes (or the items of a list attribute made for
 it), reads nothing another pass writes, counts no reference, prints, waits, calls out of the program or through a
-function value, and does not reach a `Weak`.
+function value.
 
 **What it costs, and when it is not worth it.** Starting the bands costs about as much as a few thousand light
 passes, so the compiler weighs the function while compiling (each statement 1, a loop's body its bound or 8 times,

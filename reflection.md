@@ -101,9 +101,8 @@ func ClassAndInstance() {
     console.print("health is now", troll.health)
     console.print("troll is a Monster:", troll.class == Monster)
     var bound = troll.functions['alive']
-    if bound {
-        console.print("bound to troll:", bound.name)
-    }
+    crash bound
+    console.print("bound to troll:", bound.name)
 }
 
 func describe(attribute: Spite.AttributeDeclaration) {
@@ -169,9 +168,13 @@ call.call()
 
 Nothing runs until `call.call()`. `system` must be a `MoveSystem`, or the line is a compile error. This is the only
 way to build a call; a bound function, `system.functions['run_each']`, is for passing the function as a value and
-calling it. When the function and the arguments are known while compiling, as in a walk, the
-whole thing is the plain call `system.run_each(position, velocity)`, with no object made. An argument left unfilled
-is a compile error where the compiler can see it; otherwise `call.call()` halts and names it.
+calling it. When the function is named in the code (`MoveSystem.functions['run_each']`, or a `var` holding it that is
+never assigned again), the whole thing is the plain call `system.run_each(position, velocity)`, with no object made.
+An argument left unfilled is a compile error at `call.call()`; so is filling one twice, or naming one the function
+does not have. A call built from a function known only at run time is a real object, and `call()` halts when the
+instance is not of the class that declares the function, or when the function takes arguments, since a run-time call
+cannot be handed any yet. Calling a class known only at run time (`part()`, with `part: Spite.Class`) makes an object of
+it, typed `Anything`.
 
 ## Reaching a reflection object
 
@@ -244,8 +247,7 @@ is an error saying to make a `Gadget()` first ([Functions of `Spite.Class`](#fun
 
 A class in a folder has a namespace ([packages.md](packages.md)); a class at the root of its program has none.
 `.namespace` is a `Spite.Namespace?`, narrowed before its members are read, and printing a namespace prints its
-dotted name. Comparing needs no narrowing: a namespace compares with text through its dotted name, and a class
-with no namespace simply compares unequal.
+dotted name.
 
 ```gdscript title=namespace_walk/shop/tools/hammer.spite
 func weight(): Integer {
@@ -258,8 +260,6 @@ var console = Console()
 func NamespaceWalk() {
     var hammer = Shop.Tools.Hammer()
     describe(hammer)
-    var in_shop = NamespaceWalk.namespace == "Shop"
-    console.print("entry class in Shop", in_shop)
 }
 
 func describe(hammer: Shop.Tools.Hammer) {
@@ -272,7 +272,6 @@ func describe(hammer: Shop.Tools.Hammer) {
 ```output
 Hammer Shop.Tools Tools
 parent Shop
-entry class in Shop false
 ```
 
 One `assert` proves the whole path it names and every prefix of it, so `described.namespace` is a plain value
@@ -292,7 +291,6 @@ that would take an argument is a collection indexed or filtered instead, so ther
 | `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
 | `.attributes` | a `List<Spite.AttributeDeclaration>`, in declaration order | `Monster.attributes['health']` |
 | `.functions` | a `List<Spite.Function>`, in the order they were made | `Monster.functions['alive']` |
-| `.instances` | every live instance, in the order they were made | `Monster.instances.count()` |
 | `.values` | an enum's values, in order | `Phase.values[1]` is `'update'` |
 | `.is_singleton` | the class has a `singleton` line | `Console.is_singleton` is `true` |
 | `.is_stateful` | a function besides the constructor and `drop()` changes the object, or a singleton it binds does | `Counter.is_stateful` |
@@ -327,14 +325,14 @@ There is no root namespace object: a namespace at the top has `null` as its `.pa
 | `.name` | the function's name | `alive.name` is `alive` |
 | `.arguments` | a `List<Spite.Argument>`, in order | `hurt.arguments[0].name` is `amount` |
 | `.returns` | a `Spite.Class`, `Nothing` when none is declared | `alive.returns` is `Boolean` |
-| `.owner` | the class it belongs to | `alive.owner` is `Monster` |
+| `.owner` | on a bound function: the instance it is bound to | `troll.functions['alive'].owner` is `troll` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
 | `.accesses` | a `Dictionary<String, Spite.Access>` keyed by name: every attribute and argument it reads or writes | `update_each.accesses.filter_written()` |
 
-A class's `.functions` holds `Spite.FunctionDeclaration`s, which have every member above but `.owner`'s instance:
-their `.owner` is the class that declares them. An instance's `.functions` holds `Spite.Function`s bound to it, and
-`call_function()` calls one. A call built argument by argument is a `Spite.Call` of a declaration and an instance
+A class's `.functions` holds `Spite.FunctionDeclaration`s: the members above, none bound to an instance, and in a
+template over functions `.hole` (the text that stands in the function's name for the template's word) and `.index`. An
+instance's `.functions` holds `Spite.Function`s bound to it, and `call_function()` calls one. A call built argument by argument is a `Spite.Call` of a declaration and an instance
 ([above](#a-call-built-before-it-runs)).
 
 ### `Spite.Call`
@@ -362,13 +360,16 @@ their `.owner` is the class that declares them. An instance's `.functions` holds
 | `.name` | the attribute's name | `attribute.name` is `health` |
 | `.class` | its declared class | `attribute.class` is `Integer` |
 | `.index` | its place in declaration order, 0 for the first | `Monster.attributes['health'].index` is `1` |
-| `.owner` | the class that declares it | `attribute.owner` is `Monster` |
+| `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes['health'].declaration` |
+| `.owner` | on a bound attribute: the object it belongs to | `troll.attributes['health'].owner` is `troll` |
 | `.camel_case_name`, `.pascal_case_name` | its name as other systems spell it | `buy_price` is `buyPrice`, `BuyPrice` |
 | `.is_singleton` | its class is a singleton | `ReflectionObjects.attributes['console'].is_singleton` |
 | `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes['health'].value` |
 
-A class's `.attributes` holds `Spite.AttributeDeclaration`s: every member above but `.value`, with `.owner` the
-class. An instance's holds `Spite.Attribute`s bound to it, whose `.owner` is the instance.
+A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index`, the case spellings and
+`.is_singleton`, never a `.value`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
+declaration, plus `.value` and `.owner`. Which one a function takes depends on what it is for: a template, or a walk of the
+class, takes the declaration, and a walk of an instance's data takes the bound attribute.
 
 ### `Spite.Access`
 
@@ -436,13 +437,6 @@ a function of the standard library, a function value taken through a `type` (whi
 it) and any function in a `--hot-reload` build, where reloading would make the table stale, are not in it, and
 asking their `.accesses` at run time halts.
 
-### `Spite.Memory`
-
-`value.memory` is where a named value lives: `.address: Long`, `.bytes: Long` and `.section` (`'heap'`,
-`'stack'` or `'constant'`). It is [memory.md](memory.md#where-a-value-lives-memory)'s. An object's
-`value.memory.allocator` (and `memory.allocator` inside its class) is the allocator it was made in
-([memory.md](memory.md#an-object-reads-its-own-allocator)).
-
 ## Members are lists
 
 Every collection above is an ordinary `List` (and `.accesses` an ordinary `Dictionary`), so everything a list has
@@ -477,17 +471,21 @@ func ConstantSelection() {
     if not Runner.functions['draw_each'] {
         console.print("no draw_each")
     }
-    var walked = Runner.functions.filter_name_ends_with("_each")
+    var walked = Runner.functions.filter(walks_each)
     walked.each(describe)
+}
+
+func walks_each(function: Spite.Function): Boolean {
+    return function.name.ends_with("_each")
 }
 
 func describe(function: Spite.Function) {
     var count = function.arguments.count()
     console.print(function.name, "takes", count)
-    function.arguments.each(describe_argument)
+    function.arguments.each(describe_taken)
 }
 
-func describe_argument(argument: Spite.Argument) {
+func describe_taken(argument: Spite.Argument) {
     var fresh = made(argument)
     console.print(" ", argument.index, argument.name, argument.class, "'{fresh}'")
 }
@@ -506,8 +504,9 @@ render_each takes 1
   0 scale Float '0'
 ```
 
-`filter_name_ends_with("_each")` keeps the functions whose `name` answers `ends_with("_each")`: a member template
-chains through a function of the member, and nothing in it is special to reflection
+`filter(walks_each)` keeps the functions whose test answers true, and a walk over what it kept is unrolled: the compiler
+writes one `describe` for each function of `Runner`. `filter_name_ends_with("_each")` keeps the same functions: a
+member template chains through a function of the member, and nothing in it is special to reflection
 ([collections.md](collections.md)). A name is selected, never built: `[]` takes a name written in the code, and
 anything else is a filter over the names that exist. `made` answers `argument.class`, a different class for each
 argument, which is fine because it is compiled once for each.
@@ -670,70 +669,46 @@ every class, so the prompt can ask anything the program can:
 name, health
 > Monster.functions['alive'].returns
 Boolean
-> Monster.instances.count()
-2
-> Monster.instances.first().attributes['health'].value = 40
+> troll.attributes['health'].value = 40
 ```
 
-## Instances, and every class in the program
+## Every class in the program
 
-`Monster.instances` is every instance of `Monster` alive at that moment, in the order they were made.
 `Spite.Class.instances` is every class of the program, its own folder and every package it loads but not the
-standard library, because a class is an instance of `Spite.Class`. That is how the test package finds its tests
-without being told about them ([testing.md](testing.md)).
+standard library, in the order of their dotted names, because a class is an instance of `Spite.Class`. That is how the
+test package finds its tests without being told about them ([testing.md](testing.md)). Memory and threads are not
+reflected: a program cannot ask where a value lives, how many objects exist or which are alive, so nothing it
+could watch ever stands in the way of how the compiler places them.
 
-```gdscript title=live_registry/monster.spite
+```gdscript title=every_class_of_the_program/monster.spite
 var name = ""
 
 func Monster(starting_name: String) {
     name = starting_name
 }
 ```
-```gdscript title=live_registry/live_registry.spite entry
+```gdscript title=every_class_of_the_program/every_class_of_the_program.spite entry
 var console = Console()
-var kept = List<Monster>()
 
-func LiveRegistry() {
-    var rat = Monster("rat")
-    kept.append(rat)
-    var bat = Monster("bat")
-    kept.append(bat)
-    spawn_and_forget()
-    var alive_count = Monster.instances.count()
-    console.print("alive:", alive_count)
+func EveryClassOfTheProgram() {
     var classes = Spite.Class.instances
-    crash classes['Monster']
-    console.print("the program has", classes['Monster'])
-}
-
-func spawn_and_forget() {
-    var ghost = Monster("ghost")
-    var instances_count = Monster.instances.count()
-    console.print("while the ghost is alive:", instances_count, ghost.name)
+    var class_count = classes.count()
+    var found = classes['Monster']
+    crash found
+    console.print("the program has", class_count, "classes, among them", found)
 }
 ```
 ```output
-while the ghost is alive: 3 ghost
-alive: 2
-the program has Monster
+the program has 2 classes, among them Monster
 ```
 
-A class nobody asks the instances of keeps no list; one that is asked adds every instance when it is made and
-removes it when it is released. Describing a class makes none: a class object's `.attributes` are its declarations,
-which need no object, and its `.functions` are read from a stand-in at its defaults, made without running any
-constructor, which is not one of `.instances`. A
-singleton's stand-in is not the singleton, so describing `Console` neither makes the program's console nor keeps a
-second one alive. The program's entry class has no stand-in, since making one would run the program again, so its
-`.functions` is empty.
-
-Which singletons are objects at all depends on the build: in a `--development`, `--hot-reload`, `--repl` or
-`--repl-port` build a singleton that holds nothing, such as `Build`, is an ordinary object you can find in its
-`.instances`; in every other build it is one static object that `.instances` does not list
-([optimizations.md](optimizations.md#singletons-that-hold-nothing-are-static-objects)).
+Describing a class makes no object of it: a class object's `.attributes` are its declarations, which need no object,
+and its `.functions` are read from the class as the compiler built it. The program's entry class is described the
+same way, but its `.functions` is empty, since making one would run the program again.
 
 ## The names reflection gives every object
 
-`class`, `attributes`, `functions`, `instances` and `memory` belong to reflection on every class, so a class
+`class`, `attributes` and `functions` belong to reflection on every class, so a class
 cannot declare an attribute or a function of its own by those names, nor a `get_` or `set_` function that would be
 read as one. One named `attributes` would otherwise hide the real list from everything that walks a class:
 `JsonReader` would read every key as a key the class does not have. The error names what the member means and a

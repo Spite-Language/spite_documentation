@@ -113,9 +113,9 @@ original label a
 independent label b
 ```
 
-`deep_copy()` copies the shape of what it reaches: an object reached twice in one copy, through a cycle or a
-`Weak`, is copied once, so a child's `parent` in the copy is the copied parent, and a `Weak` in the copy holds the
-copy of its object when the same `deep_copy()` copied it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
+`deep_copy()` copies the shape of what it reaches: an object reached twice in one copy, through a cycle, is copied
+once, so a child's `parent` in the copy is the copied parent, and a back reference in the copy holds the copy of its
+object when the same `deep_copy()` copied it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
 
 ## A `Vector` lends its items
 
@@ -187,7 +187,7 @@ not append to or remove from a vector the row borrows from, directly or through 
 ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)).
 
 A generic runner does not know the attributes of the `type` it is given, so it cannot write the literal. It fills
-the row with a `Symbol` walk instead, and a local of the `type` declared `= null` and filled by the walk on the
+the row with a walk over its attributes instead, and a local of the `type` declared `= null` and filled by the walk on the
 next line is a row exactly like the literal:
 
 ```gdscript title=walked_row_doc/position.spite
@@ -235,7 +235,7 @@ func run(mover: Mover) {
     }
 }
 
-func fill_attribute(attribute: Symbol<$row_type>, row: $row_type, index: Integer) {
+func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, index: Integer) {
     crash columns.attributes[attribute][index]
     row.attributes[attribute] = columns.attributes[attribute][index]
 }
@@ -374,15 +374,15 @@ func run(mover: Mover, entity_count: Integer) {
     var entity = 0
     while entity < entity_count {
         found.clear()
-        find_attributes(entity)
         var row: $row_type = null
+        find_attributes(row, entity)
         fill_attributes(row, found, entity)
         mover.update_each(row)
         entity = entity + 1
     }
 }
 
-func find_attribute(attribute: Symbol<$row_type>, entity: Integer) {
+func find_attribute(attribute: Spite.AttributeDeclaration, _row: $row_type, entity: Integer) {
     if attribute.class == Entity {
         found.append(entity)
     } else if attribute.class.fits_vector() {
@@ -396,7 +396,7 @@ func find_attribute(attribute: Symbol<$row_type>, entity: Integer) {
     }
 }
 
-func fill_attribute(attribute: Symbol<$row_type>, row: $row_type, rows: List<Integer>, entity: Integer) {
+func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, rows: List<Integer>, entity: Integer) {
     if attribute.class == Entity {
         row.attributes[attribute] = Entity(entity)
     } else if attribute.class.fits_vector() {
@@ -444,6 +444,10 @@ func SparseRowDoc() {
 1 2 2
 ```
 
+`find_attribute` only asks about each attribute's class, so it takes the row as a parameter it never reads
+(`_row`): that is how its body says the template walks the attributes of `$row_type`, and the underscore says the
+parameter is there on purpose.
+
 For `Runner<Moving>` the walk is written out as `{entity: <an Entity in the frame>, position:
 Column<Position>().values[found[1]], velocity: Column<Velocity>().values[found[2]], trail:
 ReferenceColumn<Trail>().at(found[3])}`: the `Entity` is made in the frame, since `Entity` could be a `Vector`
@@ -457,7 +461,7 @@ the class fits and by reference when it does not, so one `Column<$component_type
 `var values = Items<$component_type>()` serves every component, and the fill template needs no `fits_vector()`:
 
 ```gdscript
-func fill_attribute(attribute: Symbol<$row_type>, row: $row_type, rows: List<Integer>, entity: Integer) {
+func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, rows: List<Integer>, entity: Integer) {
     if attribute.class == Entity {
         row.attributes[attribute] = Entity(entity)
     } else {
@@ -523,11 +527,11 @@ func run(index: Integer) {
     run_phases_each()
 }
 
-func run_phase_each(phase: Symbol<$system_type.phase_each>) {
+func run_phase_each(phase: Spite.FunctionDeclaration) {
     system.phase_each(made_arguments(found))
 }
 
-func made_argument(argument: Symbol<$system_type.phase_each>, rows: List<Integer>): argument.class {
+func made_argument(argument: Spite.Argument, rows: List<Integer>): argument.class {
     crash rows[argument.index]
     var stored_row = rows[argument.index]
     crash Column<argument.class>().values[stored_row]
@@ -755,14 +759,17 @@ func TreeBasics() {
 total 6
 ```
 
-## Cycles leak
+## Cycles are freed
 
-Two objects that hold each other, directly or through several hops, keep each other's count above zero, so
-neither is ever freed. The back reference is written with `Weak<T>` instead: it holds a
-`T` without counting it, and `get()` answers a `T?` that is `null` once the object is freed, so the usual
-narrowing does the rest. A parent that owns its children and a child that knows its parent is the common case:
+Two objects that hold each other, directly or through several hops, would keep each other's count above zero. You never
+write a special reference for that: a parent that owns its children and a child that knows its parent are plain
+references, and the compiler decides which reference of the cycle holds no count, from how the program links its
+objects. A child's `parent` is the usual case: the parent makes the child with `Child(child_name, this)`, the
+constructor stores the parent in `parent`, and the parent stores the child in `children`, so the compiler reads
+`parent` as the back reference and the cycle is freed with its owner.
 
-```gdscript title=weak_family/parent.spite
+```gdscript title=back_reference_family/parent.spite
+var console = Console()
 var name = ""
 var children = List<Child>()
 
@@ -774,36 +781,48 @@ func adopt(child_name: String) {
     var child = Child(child_name, this)
     children.append(child)
 }
+
+func drop() {
+    console.print("{name} is freed")
+}
 ```
-```gdscript title=weak_family/child.spite
+```gdscript title=back_reference_family/child.spite
 var name = ""
-var parent = Weak<Parent>(null)
+var parent: Parent? = null
 
 func Child(new_name: String, new_parent: Parent) {
     name = new_name
-    parent = Weak(new_parent)
+    parent = new_parent
 }
 ```
-```gdscript title=weak_family/weak_family.spite entry
+```gdscript title=back_reference_family/back_reference_family.spite entry
 var console = Console()
 
-func WeakFamily() {
+func BackReferenceFamily() {
+    visit()
+    console.print("the family is gone")
+}
+
+func visit() {
     var parent = Parent("ada")
     parent.adopt("grace")
     var child = parent.children.first()
     crash child
-    var found = child.parent.get()
-    crash found
-    console.print(child.name, "belongs to", found.name)
+    crash child.parent
+    console.print(child.name, "belongs to", child.parent.name)
 }
 ```
 ```output
 grace belongs to ada
+ada is freed
+the family is gone
 ```
 
-Everything above is freed when `WeakFamily` returns, which is what `--debug-memory`, below, checks: a cycle left
-in shows up there as leaked objects by class. Without `Weak`, clear the `T?` field that closes the loop when you
-are done with it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
+A back reference reads `null` once its object is freed, so no read is ever dangling, and the narrowing above is the
+usual one. Everything above is freed when `visit` returns, which is what `--debug-memory`, below, checks: a cycle the
+program links in a way the compiler cannot read keeps its counts and shows up there as leaked objects by class. Then
+clear the `T?` field that closes the loop when you are done with it
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
 
 ## `--debug-memory`
 
@@ -812,238 +831,24 @@ the program exits. A mismatch means something leaked; when the two do not balanc
 **leaked-object summary by class name**, naming which classes' instances are still alive, which is what makes a
 leaked cycle visible instead of an unexplained count. Every program on these pages is run this way, and must
 balance. It also fills every byte it hands out that nobody has written yet with the same pattern, so a program that
-reads memory it never wrote fails the same way on every run and from every launcher, instead of reading whatever
+reads memory it never wrote fails the same way on every run and in every environment, instead of reading whatever
 the heap held. The table exists only in a `--debug-memory` build ([what it records](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#--debug-memory)).
 
-## `Memory` is the floor, and you can build on it
+## Memory belongs to the compiler
 
-Memory is its own namespace, because it is the most basic thing a program has and the most dangerous. It holds two kinds of class:
+A program never names an address, an allocator, an allocation count or where an object lives. Memory and threads are
+constructs of the language that each generator implements its own way, so nothing a program could watch ever stands in
+the way of how the compiler places a value: in a register, in the frame when it never leaves its function, together with
+the objects around it, or on the heap. You write the plain version, and the compiler decides ([Placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)).
+There is no `Memory.Heap`, no `Memory.Arena`, no `value.memory` and no list of the live instances of a class. Only
+`--debug-memory`, above, reports what leaked, and it does so from outside the program.
 
-- **`Memory.Address` is a place in memory** (`library/memory/address.spite`). It is a number, eight bytes, kept
-  in a register like a `Long` and cast to and from one by the ordinary casting rule, so `address + 16` is the
-  address sixteen bytes on. What makes it an address is what it answers: `read_long(offset)`,
-  `write_float(offset, value)` and the rest read and write the value at `address + offset`.
-- **An allocator is who owns memory**: `Memory.Heap()` is the one every object uses unless told otherwise.
-  It hands out addresses and takes them back; `Memory.Arena` is another
-  ([below](#choosing-an-allocator-memoryallocator)).
-
-Every type in the standard library is Spite over these two: `String`, `List<T>` and `Dictionary<Key, Value>` keep their
-bytes in memory the heap hands out, and each number says in its own file how much memory it is. A container of
-your own is written over the heap and `TypedMemory<T>` (below), with nothing the compiler does for `List<T>`
-that it would not do for yours: read `library/list.spite` for a complete one. The rules of this floor are in
-[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-floor-memoryaddress-memoryheap-and-typedmemoryt).
-
-Bytes that come from outside are not this floor: a file's or a socket's bytes are a `Buffer`, a class of the library
-that keeps its bytes in one block of this floor and reads the numbers in them, and memory a C library hands out is a
-`ForeignBytes`, which checks every read and write against the size it was given
-([standard_library.md](standard_library.md#bytes-are-a-buffer)).
-
-### Where `String` and `Integer` keep their memory
-
-A type's storage is attributes at the top of its file. `library/string.spite` starts with the memory a
-`String` is:
-
-```gdscript
-var _bytes: Memory.Address = 0
-var _length: Long = 0
-```
-
-Sixteen bytes, kept wherever the `String` is (in a local, an attribute, a list's element) and never an object
-of their own. `_bytes` is where its characters are, with a 0 after the last one for C, and `_length` is how many
-there are. Where the characters live is the compiler's choice: text of up to 15 bytes is
-kept in those sixteen bytes themselves, so it allocates nothing and is never counted; longer text is one block the
-heap hands out, with its reference count and capacity in front of the characters; and a written text (`"hello"`)
-points at the characters the program already carries, which are never counted or freed. Everything else is Spite
-in the same file: `length()` answers `_length`, `equals` and `less_than` compare `_bytes` with `compare_bytes`, and
-`slice` ends in `_bytes.text(length)`. What stays C is what depends on where the characters are: reading one
-(`code_at`, which is one load in a loop over the text, and halts naming the index and the length when the index
-is below 0 or past the end, rather than answer a byte nobody wrote), making
-text from bytes (`Memory.Address.text`), joining two texts (`sum`), counting a block's references, and growing text
-in place, which fills the sixteen bytes first and moves the text into a block once it passes 15 bytes, and only
-when nothing else holds that block.
-
-`library/integer.spite` starts with the size of an `Integer`:
-
-```gdscript
-var _memory = Buffer(4)
-```
-
-Four bytes, and nothing is allocated: `Buffer(4)` says only how big the value is (a number is a buffer of its bytes), which is true wherever it
-lives. The compiler places it (a number's memory is a register, a
-local on the stack, an attribute inside an object, or the value of a `type` beside its class's tag), so there is no
-address behind `this` and nothing to free. The line is not run: it is how a value
-class states its size, and it is read only there. Every number file says the same with its own width (`Long` 8, `Short` 2,
-`Byte` 1, `Boolean` 1, `Double` 8, `Memory.Address` 8, ...), the compiler checks it against the number's type,
-and `count.memory.bytes` reads it. Inside a number, `this` is the value itself, not `_memory`.
-
-What a container of your own works with:
-
-- **Allocating:** `heap.allocate(bytes)` returns a `Memory.Address`, `heap.resize(address, bytes)` grows it and
-  `heap.free(address)` gives it back, from your `drop()`. The bytes are not cleared, so write before you read.
-- **Where it lives is the compiler's choice** ([placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)):
-  a buffer a function allocates, uses and frees itself lands in the function's own frame, with no allocation at
-  all; anything else is on the heap. You write the same `allocate` and `free` either way.
-- **Reading and writing an address:** `address.read_long(offset)`, `address.write_float(offset, value)` and the
-  other widths are primitives of the language, one machine operation each, and **only `library/` may call them**.
-  `copy_to`, `compare_bytes`, `text(length)` and `terminated_text()` are open to every program.
-- **Values of any type:** a generic class holds a `TypedMemory<$value_type>`, whose `read_value`, `write_value`
-  and `release_value` store a value of that type at an index and keep its reference count right. It is exactly
-  what `library/list.spite` uses for its elements, and it is how a program's own class reaches memory.
-
-A ring buffer that keeps the last few values it was given, whose slots are on the heap, and a sum whose
-numbers the compiler places in the function's frame, so the live allocations do not move while it runs:
-
-```gdscript title=ring_buffer_program/ring_buffer.spite
-generic $value_type
-
-var heap = Memory.Heap()
-var values = TypedMemory<$value_type>()
-var slots: Memory.Address = 0
-var capacity = 0
-var start = 0
-var used = 0
-
-func RingBuffer(starting_capacity: Integer) {
-    capacity = starting_capacity
-    var value_bytes = values.value_bytes()
-    slots = heap.allocate(value_bytes * capacity)
-}
-
-func push(value: $value_type) {
-    if used == capacity {
-        values.release_value(slots, start)
-        values.write_value(slots, start, value)
-        start = (start + 1) % capacity
-        return
-    }
-    values.write_value(slots, (start + used) % capacity, value)
-    used = used + 1
-}
-
-func oldest(): $value_type {
-    return values.read_value(slots, start)
-}
-
-func count(): Integer {
-    return used
-}
-
-func drop() {
-    var index = 0
-    while index < used {
-        values.release_value(slots, (start + index) % capacity)
-        index = index + 1
-    }
-    heap.free(slots)
-}
-```
-```gdscript title=ring_buffer_program/ring_buffer_program.spite entry
-var console = Console()
-var heap = Memory.Heap()
-var numbers = TypedMemory<Long>()
-
-func RingBufferProgram() {
-    var names = RingBuffer<String>(3)
-    names.push("ada")
-    names.push("grace")
-    names.push("linus")
-    names.push("barbara")
-    var oldest = names.oldest()
-    var names_count = names.count()
-    console.print(oldest, names_count)
-    var total = sum_in_the_frame(4)
-    console.print(total)
-}
-
-func sum_in_the_frame(count: Integer): Long {
-    var before = heap.live_allocations()
-    var slots = heap.allocate(count * 8)
-    var index = 0
-    while index < count {
-        numbers.write_value(slots, index, index * 10)
-        index = index + 1
-    }
-    var total: Long = 0
-    index = 0
-    while index < count {
-        total = total + numbers.read_value(slots, index)
-        index = index + 1
-    }
-    var during = heap.live_allocations()
-    heap.free(slots)
-    console.print("allocated while summing:", during - before)
-    return total
-}
-```
-```output
-grace 3
-allocated while summing: 0
-60
-```
-
-### Where a value lives: `.memory`
-
-Every named value can see its own memory through reflection: `value.memory` is a `Spite.Memory`
-(`library/spite/memory.spite`) with a read-only `address`, `bytes` and `section`: `'heap'`, `'stack'` or
-`'constant'` (the text of a literal, which is part of the program). A class instance or a list answers with
-its object; a `String` with its characters; a number held in a local with the local itself. It is built only
-where a program reads it, so it costs nothing anywhere else ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#where-a-value-lives-memory)).
-
-```gdscript title=memory_sections/memory_sections.spite entry
-var console = Console()
-
-func MemorySections() {
-    var count = 3
-    var count_memory = count.memory
-    console.print(count_memory.section, count_memory.bytes)
-    var literal = "fixed"
-    var literal_memory = literal.memory
-    var has_address = literal_memory.address != 0
-    console.print(literal_memory.section, literal_memory.bytes, has_address)
-}
-```
-```output
-stack 4
-constant 5 true
-```
-
-### The compiler chooses the allocator
-
-Every object is made where the compiler decides: in the frame when it never leaves its function, in a pool, in an
-arena when many die together, and on `Memory.Heap` otherwise ([Placement](#placement-the-compiler-decides-where-memory-lives)).
-A program does not choose, and `.memory` is read-only: it only tells you about a value. Writing
-`spark.memory.allocator = arena` is an error, because there is nothing to assign. If you want objects kept
-together, keep them in one list and let the compiler lay it out.
-
-The standard library's allocators are `Memory.Heap` and **`Memory.Arena(block_bytes)`**, which hands out memory
-from blocks of that size, one after another, never gives any of it back one piece at a time, and frees every block
-at once when the arena itself goes. An object made in an arena holds the arena, so the arena cannot go while
-anything made in it is alive.
-
-The exact rules and the errors are in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#allocators-memoryallocator).
-
-### An object reads its own allocator
-
-`value.memory.allocator` answers where an object was made: `Memory.Heap` unless the compiler chose another.
-Inside a class, the object a function runs on reads its own as `memory.allocator`, and that is how a `List`
-keeps its buffer in the list's arena: `library/list.spite` grows its buffer with
-`memory.allocator.allocate(bytes)` and gives the old one back with `memory.allocator.free(address)`. The answer
-is one of the program's allocators, so `== Memory.Arena` asks which, as for a
-[union](values_and_types.md#unions).
-
-```gdscript title=heap_scores/heap_scores.spite entry
-var console = Console()
-
-func HeapScores() {
-    var plain = List<Integer>()
-    plain.append(1)
-    var on_heap = plain.memory.allocator == Memory.Heap
-    console.print("plain list on the heap:", on_heap)
-}
-```
-```output
-plain list on the heap: true
-```
+A class that needs room for bytes holds a `Buffer`, a class of the library that keeps its bytes in one block and reads
+and writes the numbers in them, and the compiler lays it out from what it proves
+([standard_library.md](standard_library.md#bytes-are-a-buffer)). Bytes from outside are a `Buffer` too: a file's or a
+socket's bytes, and memory a C library hands out is a `ForeignBytes`, which checks every read and write against the
+size it was given. A container of your own is written over a `List` or a `Buffer`, with nothing the compiler does for
+`List<T>` that it would not do for yours: read `library/list.spite` for a complete one.
 
 ---
 

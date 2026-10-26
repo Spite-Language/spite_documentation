@@ -199,7 +199,7 @@ An `assert` that would answer a default a caller cannot tell from a real answer 
 prose message: it names the file and line, and shows the values there.
 
 ```
-spite.crash	64b935f1	crash_report/crash_report.spite:14	CrashReport	check	value=-9	limit=0
+spite: the program stopped at crash_report/crash_report.spite:17 in CrashReport.check (value=-9, limit=0, scale=2)
 ```
 
 Even a fault inside a foreign C library prints where it happened and the Spite line that called it
@@ -289,7 +289,8 @@ where each value lives, what is counted, what runs at once and what is locked is
 
 Nothing is left to get wrong by hand either. Where the compiler lends you an item stored inline, it checks at
 compile time that you do not keep it past the call, and the error names the fix. Two objects that hold each other
-would never be freed, so a back reference is a `Weak<T>`. `Concurrent` and `Parallel` still exist for the library
+are freed together: a parent that owns its children and a child that knows its parent are plain references, and
+the compiler decides which one of the cycle holds no count. `Concurrent` and `Parallel` still exist for the library
 and for measuring the compiler against a hand-threaded form ([docs/concurrency.md](concurrency.md),
 [docs/memory.md](memory.md)); the moron is never expected to reach for them.
 
@@ -402,8 +403,7 @@ there, which an AI reads directly. Whatever the compiler can prove is a compile 
 
 **How is memory managed, and is it safe?** Reference counting, no garbage collector and no pause. Absence is a `T?`
 you must check, a read past the end of a list answers nothing instead of reading memory, borrowed items are checked
-at compile time, and a fault prints where it happened. Two objects holding each other leak unless one holds a
-`Weak`. [docs/memory.md](memory.md)
+at compile time, and a fault prints where it happened. Two objects holding each other, a parent and its children, are freed together. [docs/memory.md](memory.md)
 
 **How do errors work without exceptions?** A compile error, `assert` (the function answers "nothing"), or `crash`
 (the program halts and shows the line and the values). [docs/failure.md](failure.md)

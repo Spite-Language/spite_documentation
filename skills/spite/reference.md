@@ -23,7 +23,7 @@ spite program --check --optimization-report=report.md   list what was not optimi
 spite program --player-name=ada         a setting the program's Environment declares (kebab-case, no '--')
 ```
 
-**Iterate on the running program, not by rebuilding** (D242). Start it once with
+**Iterate on the running program, not by rebuilding**. Start it once with
 `spite program --hot-reload --repl-port=4000` and keep it running (it stays up after its constructor returns, until
 a client sends `exit`). Save a file, then `spite connect 4000 --command="wait_reload"`: it answers once the save is
 compiled and swapped in, with what was rebuilt or the compiler's errors, and objects keep their state. Ask instead
@@ -37,8 +37,8 @@ value go. Use `--check` only to see every error at once or for a program that ca
 tests before calling the work done, and build `--optimized` only to measure. Every answer is one JSON line. The
 commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
-A program lives in its own folder, and `spite game` runs it: `launcher/launcher.spite` loads `library/`, then the
-target system's folder of it, then `game/`, whose every sub folder is a
+A program lives in its own folder, and `spite game` runs it: the first line of its entry function loads the standard
+library by its relative path (`load "../spite_standard_library/windows"`, which loads `common` itself), and `game/`'s every sub folder is a
 namespace and nothing else (`game/engine/renderer/shader.spite` is `Engine.Renderer.Shader`, and
 `game/engine/physics/physics.spite` is `Engine.Physics.Physics`: no file is special). A file and a folder of one
 name side by side (`engine/renderer.spite` beside `engine/renderer/`) is an error, since a dotted name means one
@@ -199,7 +199,7 @@ func is_alive(): Boolean {
 - Everything that is not a number, a `Boolean` or an enum value is a reference: passing, assigning and storing share
   the same object. `copy()` copies one level, `deep_copy()` all the way down (through unions and `type` shapes by
   the class each value holds; a union value has `deep_copy()` too; never on a cycle). `drop()` runs when the last reference
-  goes. Two objects that refer to each other leak: hold the back reference as a `Weak<T>` (`get()` is a `T?`, `null` once the object is freed), or clear one side.
+  goes. Two objects that refer to each other (`parent.adopt(child)` where `Child(name, this)` stores the parent, and the parent keeps the child) are plain references: the compiler picks the back reference from how the program links them, reads it as `null` once its object is freed, and frees the cycle; a cycle it cannot read this way leaks, so clear one side.
 - `var item = list[index]` names the stored item: `item.x = 1` writes it, but `item = made` only renames the local,
   and an assignment nothing reads after is an error; replace an item with `list[index] = made`. Writing back
   `list[index] = item` after changing it costs nothing when nothing between can change the slot.
@@ -246,11 +246,11 @@ func is_alive(): Boolean {
   independent object, or reading `velocities[index]` again. Borrowing from a collection nothing keeps
   (`var found = velocities.copy().find_by_name("x")`) is an error: keep the collection in a `var` first.
 - Pass a borrowed item (a name read from a vector, `velocities[index]`, a row's attribute, an item a lookup lent
-  you) to your own functions freely: it is lent for the call (D257). `apply(event, mouse, keyboard)` writes the
+  you) to your own functions freely: it is lent for the call. `apply(event, mouse, keyboard)` writes the
   stored items in place and may pass them on to `press(mouse)`; nothing is copied. The function may not keep it
   (attribute, list, return, function value) or reach a call that appends to or removes from its collection;
   each is an error naming the parameter and the call that lent it. Never pass `.copy()` to a function that
-  writes the item: the writes would land on the copy and vanish (D244). A library function or a union parameter
+  writes the item: the writes would land on the copy and vanish. A library function or a union parameter
   is not lent an item: pass the attributes it needs.
   A class kept in a `Vector` may not use `this` as a value, nor have a `drop()`.
 - A `Vector` or an `Items` takes no passed function (`each(f)`, `filter(f)`, ...): its items are borrowed, or text.
@@ -268,23 +268,23 @@ func is_alive(): Boolean {
   `fill_attributes(row, index)` whose template is `crash columns.attributes[attribute][index]` and then the line
   `row.attributes[attribute] = columns.attributes[attribute][index]`: a `[]` read answers a `T?` and a row holds
   items, so the template states each read with a `crash` line before the fill. The compiler writes those checks
-  and the literal in its place (D212), with the same rules.
+  and the literal in its place, with the same rules.
 - Over sparse sets (each entity at a different place in each column), the runner first walks the attributes to
   fill `found: List<Integer>` with each one's place, then the fill template reads each attribute from its own
   generic singleton, after a `crash` line for each read (the places arrive as the parameter `rows`): `crash
   rows[attribute.index]`, `var stored_row = rows[attribute.index]`, `crash
   Column<attribute.class>().values[stored_row]`, then `row.attributes[attribute] =
-  Column<attribute.class>().values[stored_row]`. An index never holds another `[]` read (D285). Choose
+  Column<attribute.class>().values[stored_row]`. An index never holds another `[]` read. Choose
   per attribute with an `if` on `attribute.class == Entity` or `attribute.class.is_fixed_size` (both decided while
   compiling), each branch one such line: `Entity(entity)` is made in the frame, a reference column's value
   (`ReferenceColumn<attribute.class>().at(rows[attribute.index])`, after `crash rows[attribute.index]`) is counted
-  for the row (D217). Keep the index
+  for the row. Keep the index
   expression to parameters, `attribute.index` and whole numbers; work anything else out before the walk. The
   places may live in another object: pass its list straight in (`fill_attributes(row, matcher.rows)`) or read
   `matcher.rows[attribute.index]` into the line's `var` (its items are numbers in a `List`), and never copy them into a
   list of the runner's first.
 - In a generic class that keeps values of a type it does not know (an engine's `Column<$component_type>`), use
-  `Items<$component_type>()` (D218, name provisional): inline and borrowed like a `Vector` when the type fits
+  `Items<$component_type>()` (name provisional): inline and borrowed like a `Vector` when the type fits
   one, references like a `List` when not, with one set of members (`append`, `items[index]` (a `T?`, `null` out
   of range, narrowed like a list's), `set_at`, `remove_at`, `remove_swapping(index)` (the last item moves into `index`; all three halt out of range), `count`, `is_empty`,
   `clear`, `copy`, `deep_copy`, and the `each_`/`map_`/`filter_`/`count_`/`any_`/`all_`/`sum_`/`find_by_`/
@@ -298,16 +298,16 @@ func is_alive(): Boolean {
   Symbol<$system_type.phase_each>, rows: List<Integer>): argument.class` is `crash rows[argument.index]`, `var
   stored_row = rows[argument.index]`, `crash Column<argument.class>().values[stored_row]` and `return
   Column<argument.class>().values[stored_row]` (an `if` on `argument.class == Entity` may choose another
-  line, such as `return Entity(entity)`). The items are borrowed for that one call only (D220): the system may not
-  keep them or resize their columns (it may lend them on to its own helpers, D257), and calling `made_position(...)` anywhere else is the error for returning a
-  borrowed item. The template's `Symbol` parameter must be a word of its name (`made_argument(argument: ...)`), or
+  line, such as `return Entity(entity)`). The items are borrowed for that one call only: the system may not
+  keep them or resize their columns (it may lend them on to its own helpers), and calling `made_position(...)` anywhere else is the error for returning a
+  borrowed item. The template's `Spite.Argument` parameter must be a word of its name (`made_argument(argument: ...)`), or
   it has no plural.
-- `null` is only for `T?`: `var target: Monster = null` is an error (D236); write `var target: Monster? = null`
+- `null` is only for `T?`: `var target: Monster = null` is an error; write `var target: Monster? = null`
   for none yet, or `var target = Monster()` for a default. In a generic class write `var system = $system_type()`,
   in a template `var made = argument.class()`. `= null` stays only on an attribute the constructor assigns and on
   a local a walk over its attributes fills (`var row: $row_type = null` then `fill_attributes(row, ...)`).
 - To hand one stored component to a caller, return it straight from the singleton's storage: `func of(entity:
-  Integer): $component_type?` ending `return column.values[row]` (D230). The caller gets the stored item, so
+  Integer): $component_type?` ending `return column.values[row]`. The caller gets the stored item, so
   `layout.order = 3` writes the column; never return `.copy()` for this, since writes to a copy are lost. The
   caller follows every borrow rule (no keeping, second name, reading after a line that may grow or shrink the
   column; lending it to a call is fine), may not return it further, and gives it a name not used before in the block. A function that lends
@@ -393,12 +393,12 @@ func is_alive(): Boolean {
 
 ## Nothing, null, and failure
 
-- **Anything that can go wrong silently is a bug** (D244). Write every failure loud: a compile error where the
+- **Anything that can go wrong silently is a bug**. Write every failure loud: a compile error where the
   compiler can know, a `crash` naming its cause where only the run can. Never let a caller get a default it cannot
   tell from a real answer, lose a write, skip a step, leak or hang. When a function cannot answer, its result says
   so (`T?`, or an empty list), or it returns a value you chose on purpose, or it crashes because a caller broke the
   rule ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#nothing-fails-silently)).
-- `crash` and `assert` take a condition and never a message (D297): the report names the file and line and shows
+- `crash` and `assert` take a condition and never a message: the report names the file and line and shows
   the values there. Never add a clause only to get text printed (`crash found or name == ""`).
 - `Monster?` is a value that may be `null`. It must be narrowed before use: `if target { }` (with `else`),
   `assert target`, `crash target`, `while target { }`, or `switch target { Monster: ... Null: ... }`. One
@@ -445,12 +445,13 @@ func is_alive(): Boolean {
     it: `if not found { return -1 }` narrows `found`, `if index >= names.count() { return "" }` proves
     `names[index]`;
   - absence is a bug: `crash condition` halts with
-    `spite.crash<TAB>id<TAB>path:line<TAB>Class<TAB>function<TAB>name=value...`, followed by the
+    `spite: the program stopped at path:line in Class.function (name=value, ...)`, followed by the
     asserts that failed before it (each with `answered=nothing`, `null` or `empty`, what its function gave back)
     and the call chain as `spite.frame` lines, innermost first. Every name and call the condition read is there with its value, whatever its
-    shape: `crash record or cooked.count() > 2` reports `record is null	cooked.count()=1`; a part an `and` or `or`
+    shape: `crash record or cooked.count() > 2` reports `record is null, cooked.count()=1`; a part an `and` or `or`
     skipped is left out. Then come the other texts, numbers and enums in scope (parameters, locals, the object's
-    attributes). The condition is not on the line: open the line it names, or `grep <id> program.crashes`. A bare `crash` marks a branch that cannot happen (`crash false` is formatted to it).
+    attributes). The condition is not on the line: open the line it names; the position identifies each value, and
+    `grep <id> program.crashes` finds an assert's condition. A bare `crash` marks a branch that cannot happen (`crash false` is formatted to it).
     A failed narrowing names what is absent instead of a value: `clip.keys[start + 9] is missing: index 11990,
     count 11500`, `scores[key] is missing: key "bea"`, `rig.skeleton is null`. Read it as an index past the end or
     a key never set, not as a zero. A failed `assert` prints nothing as it fails; it shows up only in a crash's
@@ -487,15 +488,27 @@ func is_alive(): Boolean {
   one call per attribute, each copy typed by its attribute (a function of another object handed a constant,
   `helper.describe(attribute)`, is compiled once for it too). A member by name is `[]` and answers a `T?`
   (`Runner.functions['run_each']`); a selection is a member template (`Runner.functions.filter_name_ends_with("_each")`).
-  A name is selected, never built from text. There are no `Symbol` walks. A walk sees private `_` attributes and
+  A name is selected, never built from text. There is no `Symbol<...>`: walks are plain code on the reflection objects. A walk sees private `_` attributes and
   reads and writes them through the walked attribute; a serializer skips them, and attributes holding a singleton,
   with `if not attribute.name.starts_with("_") and not attribute.is_singleton`, which folds. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
-- A **template** is a function whose `Spite.AttributeDeclaration<Label>` parameter is a word of its name:
-  `func show_attribute(attribute: Spite.AttributeDeclaration<Label>, label: Label)` answers `show_text(label)` and
-  `show_copies(label)`, reading the member as `label.attributes[attribute]` (a member that is a function taking
-  nothing is called). `func set_attribute(attribute: Spite.AttributeDeclaration<Person>, value: attribute.class) {
+- A **template** is a function with a parameter that is a word of its name, typed by what it ranges over:
+  `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument` (there is no `Symbol<...>`, and the class
+  is never written on the type: the body says it). `func show_attribute(attribute: Spite.AttributeDeclaration, label:
+  Label)` answers `show_text(label)` and `show_copies(label)`, reading the member as `label[attribute]`, short for
+  `label.attributes[attribute]` (a member that is a function taking nothing is called); the class walked is the class of
+  the value the body reads it on. `func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
   attributes[attribute] = value }` makes `person.age = 2` and `person.name = "x"` work. An exact function
   always wins. A parameter that is not a word of its name makes an ordinary function a walk calls.
+- A template over **functions**: `func run_phase_each(phase: Spite.FunctionDeclaration, amount: Integer) {
+  system.phase_each(amount) }` ranges over the functions of `system`'s class that fit `<phase>_each` (the call in the
+  body says the class and the pattern); `run_phases_each(2)` runs it for every one in the order they were made,
+  `run_render_each(2)` for one. Inside, `phase.name`, `phase.hole` (the symbol in place of `phase`) and `phase.index`.
+  A name that fits nothing is an error listing the functions that fit. A template over **arguments**: `func
+  made_argument(argument: Spite.Argument, start: Integer): argument.class`, called as its plural spread into a call,
+  `system.update_each(made_arguments(start))`, once for each argument of `update_each`. A plain walker over arguments
+  leaves the word out of its name (`describe_taken`). `Spite.Attribute` and `Spite.Function` (bound to an object, with
+  `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
+  compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
 - A call built before it runs: `var call = Spite.Call(MoveSystem.functions['run_each'], system)` (a declaration and
   an instance of its class, the only way to build one), `call.arguments['position'] = value`, `call.call()`; known
   while compiling it is the direct call.
@@ -715,7 +728,7 @@ negative number in an unsigned type halts); they cost nothing (a C union), so us
 into memory to read its bytes.
 Every class here, the numbers and `List` included, is a Spite file in `library/`, and a program's own file of the
 same name reopens it: `list.spite` adds a member template (`dictionary.spite` one over a dictionary's values,
-`member: Spite.AttributeDeclaration<$value_type>`), `integer.spite` a function on every `Integer`.
+`member: Spite.AttributeDeclaration`, read on a `$value_type`), `integer.spite` a function on every `Integer`.
 
 A statement is one line: anything after it on the same line (after a `return` value, a call, or the `}` that
 closes an `if`, `while` or `switch`) is a parse error (`'attribute' is left over after the end of the statement`),
@@ -771,8 +784,8 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `angle.pi`, `Float.pi()` | `'pi' is a constant of the class Float, not of a value` | `Float.pi` |
 | `count++`, `count += 1` | `Spite has no '++': write 'count = count + 1'` | `count = count + 1` |
 | `condition ? a : b` | `Spite has no 'condition ? a : b'` | an `if` with an `else`, or a function that returns one or the other |
-| `int`, `Int`, `bool`, `Bool`, `to_int()` | `'Int' is spelled 'Integer'`, `'int' abbreviates: write 'integer'` | `Integer`, `Boolean`, `to_integer()`: no name is abbreviated, the language's own included (D122) |
-| `LocalDate`, `PlainDate`, `NaiveDate` | `'LocalDate' is spelled 'Date'` | `Date`, `Time`, `DateTime`: a calendar reading with no zone (D160) |
+| `int`, `Int`, `bool`, `Bool`, `to_int()` | `'Int' is spelled 'Integer'`, `'int' abbreviates: write 'integer'` | `Integer`, `Boolean`, `to_integer()`: no name is abbreviated, the language's own included |
+| `LocalDate`, `PlainDate`, `NaiveDate` | `'LocalDate' is spelled 'Date'` | `Date`, `Time`, `DateTime`: a calendar reading with no zone |
 | `let x = 1`, `const x = 1` | `Spite has no 'let': a variable is declared 'var name = value'` | `var value = 1`: every `var` has a default, and there is no `const` |
 | `var total: Integer` | `expected '=' (every variable needs a default value)` | `var total = 0` |
 | `new Monster()` | `there is no 'new' in Spite` | `Monster()` |
@@ -794,7 +807,6 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `flags.bits_and(mask)` with a wider `mask` | `'flags.bits_and(mask)' works in a Byte, since a bitwise function takes its receiver's type` | widen the receiver first: `var wide: Long = flags` |
 | `var held: $held_type = null` bound to a `type` that requires a function | `'held' is a Weapon, a type that requires the function 'strike', so '= null' has no default to make` | `$held_type?`, or set it in the constructor |
 | a `while true` frame loop in a singleton a `Parallel` reaches | `'Window.run' holds Window's lock for the whole call ... and this loop never ends` | put the loop in a plain object that calls the singleton each pass |
-| a `Weak` in something a `Parallel` runs | `'Parallel(tree.grow)' runs on another thread, and what it runs reaches 'Branch', which is a Weak or is held by one` | hold the object itself in the work; keep `Weak` on the program's thread |
 | `for item in list` | `Spite only has 'while' loops; there is no 'for'` | `each_<member>()`, `map_`/`filter_<member>()`, or `list.each(function)` with a function of yours; `while index < list.count()` when the body needs more |
 | `break`, `continue` | `Spite has no 'break': a loop stops in its own condition` | the loop's own condition: `while index < count and not found` |
 | `list.add(x)`, `list.pop()` | `List has no method 'add', which does not say where` | `append`/`prepend`, `remove_last()`/`remove_first()` |
@@ -813,7 +825,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `spite game -- --player-name=ada` | `'--' is not a separator` | `spite game --player-name=ada`: settings sit beside the compiler's flags |
 | `spite game --player_name=ada` | `'--player_name' is written '--player-name'` | settings are kebab-case on the command line, like flags |
 | `spite game/game.spite` | `'game/game.spite' is a file, and a program is named by its folder` | `spite game` |
-| renaming `short`, `static` or `near` because C takes them | | the name you meant: Spite reserves nothing for C (D168) |
+| renaming `short`, `static` or `near` because C takes them | | the name you meant: Spite reserves nothing for C |
 
 Text is written with its values inside it: `"hello {name}"`, where `{ }` holds one value of any type and
 `\{` is a brace meant literally.

@@ -1,4 +1,4 @@
-# Programs: the entry, the launcher, and settings
+# Programs: the entry and settings
 
 A program is a folder. Its **entry file** is the file named after the folder (`game/game.spite`, class `Game`),
 and the program runs by constructing that class. There is no `main` and no entry point declaration: the
@@ -254,39 +254,32 @@ compiled for this machine true
 ```
 
 Neither `operating_system` nor `program` can be given as a flag: the compiler supplies both. Which operating
-system a program targets also decides which folder of the standard library is loaded, which is the next
+system a program targets is the one whose folder of the standard library it loads, which is the next
 section.
 
 ## How a program is loaded
 
-Nothing about starting a program is hidden in the compiler. Running one is itself a Spite program,
-`launcher/launcher.spite` at the root of the repository, and its constructor is the whole story. Its `load`
-paths are relative to the repository, which the compiler finds from its own executable; the program itself runs
-in the folder `spite` was run from ([compiler.md](compiler.md#where-it-runs)).
+Nothing about starting a program is hidden in the compiler. The program is the entry point: its entry function names
+the standard library in its first lines, with `load` paths that are relative to the entry file, and the compiler
+follows those lines. The compiler looks for no library of its own and reads no environment variable that names one.
 
 ```gdscript
-var build = Build()
-
-func Launcher() {
-    load "library"
-    load "library/{build.target_operating_system}"
-    load build.program
+func Game() {
+    load "../spite_standard_library/windows"
+    ...
 }
 ```
 
-The compiler reads that file first and follows its `load` lines in order:
-
-1. `library/`, the standard library every system shares;
-2. the folder of the operating system the program is compiled for (`library/windows/`, `library/linux/` or
-   `library/mac/`, each loaded only by name), whose files reopen the classes that system does differently
-   ([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes));
-3. the program's own folder, `build.program`, the folder named on the command line.
-
-A `load` in the launcher may use text and the `Build` fields the compiler knows before reading anything; a
-`load` anywhere else names its folder with literal text, though it may sit under an `if` on a `Build` field
-([packages.md](packages.md#load-is-a-bundle-boundary)). Loading the program's folder is what runs it: that one `load` constructs
-the program's entry class (and runs the `--repl` loop around it, when asked), and of the program the
-executable's `main` constructs only `Launcher`.
+A program two folders down from the clones writes `load "../../spite_standard_library/windows"`. The standard library
+is a folder like any other, so anyone can bring their own. It holds `common`, what every system shares, and one
+folder for each operating system (`windows`, `linux`, `mac`) whose files reopen the classes that system does
+differently ([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)). A program
+loads only the folder of the system it is compiled for, and that folder loads `common` itself, so one line is the
+whole library. A program that targets several systems loads each under an `if` on a `Build` field:
+`load` takes literal text, though it may sit under an `if` on a `Build` field
+([packages.md](packages.md#load-is-a-bundle-boundary)). The program's own folder needs no `load`: it is the root the
+entry file sits in. The entry class is constructed when the executable starts, and its exit code is what the
+constructor answers.
 
 ```gdscript title=loaded_program/loaded_program.spite entry
 var console = Console()
@@ -303,9 +296,8 @@ loaded from true
 for this machine true
 ```
 
-`--final-classes` writes `Launcher` out with the rest of the program, so the printed program shows how it is
-loaded too. What the executable's `main` still does below it (handing over the command line, and the teardown
-after `Launcher` returns) is listed in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#constructors-and-the-entrypoint).
+What the executable does around the entry constructor (handing over the command line, and the teardown after it
+returns) is listed in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#constructors-and-the-entrypoint).
 
 ## Configuration is a class
 

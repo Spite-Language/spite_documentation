@@ -586,7 +586,7 @@ func is_fish(creature: Creature): Boolean {
 }
 ```
 ```diagnostic
-this switch only asks what class 'creature' is: write 'return creature == Fish'
+this switch only asks what 'creature' is: write 'return creature == Fish'
 ```
 
 Anything that would need an `else` stays a switch, and so does a switch with more cases: `_:` narrows to each

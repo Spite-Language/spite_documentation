@@ -76,7 +76,7 @@ Read the pages in this order the first time; each page assumes the ones before i
 
 3. [classes_and_files.md](classes_and_files.md): the lexical rules; a file is a class; what a file holds and in
    what order; constructors, singletons, `this`, references.
-4. [programs.md](programs.md): the entry file, the launcher that loads a program, `Arguments`, run-time settings
+4. [programs.md](programs.md): the entry file, how a program loads the standard library, `Arguments`, run-time settings
    (`Environment`) and compile-time settings (`Build`, `target_operating_system`).
 5. [values_and_types.md](values_and_types.md): variables, numbers and the casting rule, numbers as classes,
    `String`, enums, unions, `type` shapes and duck typing.
@@ -87,8 +87,8 @@ Read the pages in this order the first time; each page assumes the ones before i
 8. [control_flow.md](control_flow.md): `if`, `while` (the only loop), `switch` with `_:`, and `value == Class`.
 9. [style.md](style.md): the formatter and the lints: names, comments, blank lines, nothing unused, one call
    per line, and the short forms the compiler insists on.
-10. [memory.md](memory.md): reference counting, `copy`, `drop`, cycles, `Memory.Address`, `Memory.Heap`,
-   placement, allocators, `TypedMemory`, and writing your own container.
+10. [memory.md](memory.md): reference counting, `copy`, `drop`, cycles, borrowed items, placement, and
+   why a program cannot observe memory.
 11. [metaprogramming.md](metaprogramming.md): walks over a program's classes and functions, templates whose name
     carries the member, member templates, generics, codegen values and compile-time type tests, tree shaking.
 12. [reflection.md](reflection.md): every class an instance of `Spite.Class`, a class against an instance, the

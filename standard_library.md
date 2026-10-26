@@ -7,8 +7,8 @@ object ([memory.md](memory.md)). When an operation cannot succeed it says so in 
 an index or a key that is not there reads as `T?`, a file that cannot be read answers `null`, and text that does
 not parse as a number reads as `0`.
 
-`library/` holds what every operating system shares; `library/windows/`, `library/linux/` and `library/mac/`
-reopen the classes each system does differently, and the launcher loads the one the program is compiled for
+`common` holds what every operating system shares; `windows`, `linux` and `mac`
+reopen the classes each system does differently, and a program loads the one it is compiled for
 ([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)).
 
 **Use the library's class instead of making your own.** A class of your own named like one of the library's, a
@@ -85,8 +85,10 @@ one reference-counted block ([optimizations.md](optimizations.md#short-text-live
 it changes what a program means. A value is placed inside written text, `"hello {name}"`, and two values join
 with `+` ([values_and_types.md](values_and_types.md#string)). `==`, `!=`, `<` and `>` compare by content.
 
-No member of a `String` halts: an index past the end answers `""` or `0`, a range is clamped to the text, and a
-search that finds nothing answers `-1`. Reading a number is the one that can find nothing to answer, so
+A `String` answers where it can: `character_at` past the end answers `""`, a range is clamped to the text, and
+`index_of` answers an `Integer?`, `null` when the text is absent. The one member that halts is `code_at`, which reads
+a code below 0 or past the end and stops the program, naming the index and the length, since a `0` there could not be
+told from a real one. Reading a number is the one that can find nothing to answer, so
 `to_integer()` and the other `to_<type>()` readings answer a `T?`: `null` when the text is not a number that fits
 the type. Assigning text to a number calls the matching one, so it is allowed only into a `T?`:
 `var age: Integer? = "42"` is `42`, and `var age: Integer = "42"` is an error naming `to_integer()`. Every member,

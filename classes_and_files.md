@@ -184,7 +184,7 @@ func DroppedReport() {
 A file whose first line is `singleton` has one instance: calling its constructor anywhere answers that same
 instance, made the first time it is asked for (one instance *per argument values* when the constructor takes
 arguments, [below](#one-instance-per-argument-values)). `Console`, `Program`,
-`Environment`, `Build` and `Memory.Heap` are singletons; `File`, `Directory` and `Process` are not, since
+`Environment`, `Build` and `Console` are singletons; `File`, `Directory` and `Process` are not, since
 several may exist at once.
 
 ```gdscript title=singleton_basics/scoreboard.spite
@@ -488,16 +488,18 @@ and a reader would have to work out which one each line reaches. So that is an e
 clearer name. It holds against the classes of a package the program loads, and against the standard library: a
 class of your own named like a library class is an error naming the library's class, since a `Vector3` or a `Color`
 of your own is most likely one the library already has. To add what the library's class lacks, reopen it. A
-library class that is always written with its namespace, `Spite.Function` or `Memory.Arena`, cannot be mistaken for
-yours, so a `Function` or an `Arena` of your own is fine: the name is refused only where a reader could not tell at
+library class that is always written with its namespace, `Spite.Function` or `Spite.Call`, cannot be mistaken for
+yours, so a `Function` or a `Call` of your own is fine: the name is refused only where a reader could not tell at
 first glance which class it means.
 
 Names that all start with the same word say the same thing: `HighBlock`, `HighFunction`, `HighValue` are a
 namespace written into each name. Make it a folder instead, `high/block.spite` and the rest, and the classes are
 `High.Block`, `High.Function` and `High.Value` outside it and `Block`, `Function` and `Value` inside it, where a
 reader already knows which namespace they are in. Three or more such names in one folder are an error naming the
-folder to move them into ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#files-are-classes)). And name the namespace
-for what it holds: `High` alone does not say high what.
+folder to move them into ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#files-are-classes)). A class named for its own folder
+(the folder's entry class, `backend/backend.spite` beside `BackendBlock` and `BackendValue`) does not count: its name
+is the namespace itself, not a word repeated in it. And name the namespace for what it holds: `High` alone does not
+say high what.
 
 ```gdscript title=own_vector/geometry/vector3.spite
 var height = 0.0
@@ -516,4 +518,4 @@ the class 'Geometry.Vector3' is named like the standard library's class 'Vector3
 
 ---
 
-Next: [Programs](programs.md), the entry file, the launcher that loads a program and its settings.
+Next: [Programs](programs.md), the entry file, how a program loads the standard library, and its settings.

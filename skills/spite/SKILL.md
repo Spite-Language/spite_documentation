@@ -56,7 +56,7 @@ Leave the loop only when you need to:
 
 Every compile, a reload included, rewrites your files into the one style first: read a file back before editing it
 again. Every error comes as `path:line: error: message (in Class.function)` and says what to write instead: write
-that, and nothing cleverer. A failure at run time is a `spite.crash` or `spite.fault` line naming the file, the line
+that, and nothing cleverer. A failure at run time is a `spite: the program stopped at ...` or `spite.fault` line naming the file, the line
 and the values there: open that line, and do not add logging. The commands are in
 [docs/repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
@@ -90,6 +90,12 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   types. No single letters except the axis names `x`, `y`, `z`, `w`.
 - No `for`, `break` or `continue`. Prefer the list templates (`monsters.filter_alive().sum_health()`,
   `names.each(say_hello)`); a `while` that only does what a template does is an error naming the template.
+- Metaprogramming is ordinary code on reflection objects, run while compiling: `Monster.attributes.each(describe)` with
+  `describe(attribute: Spite.AttributeDeclaration)`. A function with a parameter named by a word of its own name is a
+  template over that kind of member: `Spite.AttributeDeclaration` (read as `monster[attribute]`),
+  `Spite.FunctionDeclaration` (called as `system.phase_each(...)`) or `Spite.Argument` (spread as
+  `system.update_each(made_arguments(row))`). There is no `Symbol<...>`, and the class is never written on the type: the
+  body says it.
 - No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `assert`, `crash`, `switch`).
   `assert condition` returns "nothing" where that is a fine answer; `crash condition` halts on a developer
   mistake. Neither takes a message: the crash report shows the values.
@@ -100,8 +106,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - A call or a constructor is never an argument of another call: compute it into a named `var` first.
 - A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
   blank lines: name the part and call it.
-- Every object is a reference counted by the compiler. Two objects that hold each other leak: hold the back
-  reference as `Weak<T>`.
+- Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
+  children) are plain references: the compiler finds the back reference and frees the cycle.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
 
 ## Installing this skill in a project
