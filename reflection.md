@@ -569,7 +569,7 @@ func ConstantNamespaces() {
 }
 
 func holds_parts(namespace: Spite.Namespace): Boolean {
-    return namespace.name == 'Part'
+    return namespace.name == "Part"
 }
 
 func make_every_class(namespace: Spite.Namespace) {
