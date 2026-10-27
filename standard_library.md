@@ -57,8 +57,7 @@ REPL can look at any of it.
 | `DynamicLibrary` | call a native library | [foreign_libraries.md](foreign_libraries.md) |
 | `Spite.Class`, `Spite.Function`, ... | reflection | [reflection.md](reflection.md) |
 
-The other files of the library are the machinery these are built from: `NumberText`, `JsonCursor`, `BinaryFormat`
-and the time-zone readers. They are ordinary classes a program can read and the REPL can inspect, which a program
+The other files of the library are the machinery these are built from: `NumberText` and the time-zone readers. They are ordinary classes a program can read and the REPL can inspect, which a program
 has no reason to call. Memory, the event loop under `Concurrent` and the threads under `Parallel` are not classes of
 the library: the compiler writes them ([memory.md](memory.md#memory-belongs-to-the-compiler)).
 

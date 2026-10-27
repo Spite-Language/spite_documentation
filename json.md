@@ -472,8 +472,7 @@ of JSON and 24 bytes of binary. What testing a binary schema costs against C is 
 
 JSON's cost is making and parsing text: every number is formatted and parsed, every key written and matched, and
 every member is a `String` of its own. The binary writer stores each number with one instruction and reads it
-with one, and its walk makes no object at all; what it allocates is the writer and its cursor for each value, and
-each value read back.
+with one; what it allocates is the buffer, a small writer for each nested value, and each value read back.
 
 ## How it is written
 
@@ -510,12 +509,7 @@ object, is not walked (`if $value_type.namespace != Spite`): its attributes are 
 generic class's file is shared by all of its instances), but they are ordinary typed functions in the program
 the compiler builds.
 
-The binary pair keeps the walk in `BinaryFormat<T>` (`library/binary_format.spite`), a singleton that holds
-nothing, so it is a static object and the walk makes no object at all; its `write_attribute` is the one above
-with `BinaryFormat<attribute.class>()` in place of the `JsonWriter`. An enum is walked the same way, over its
-values, to find its index. Its numbers are written and read with the
-buffer's own appends and reads of numbers, so the walk adds no cursor class of its own. Reading JSON text goes through `JsonCursor` (`library/json_cursor.spite`), a cursor over the
-text that remembers the first thing that went wrong.
+The binary pair walks the value inside `BinaryWriter<T>` and `BinaryReader<T>` themselves, with no helper class: a nested class, list element or dictionary entry is walked by a `BinaryWriter<attribute.class>()` (or `BinaryReader<attribute.class>()`) of its own that continues in the same buffer at the same position, and `write_attribute` is the one above with that in place of the `JsonWriter`. An enum is walked the same way, over its values, to find its index. Its numbers are written and read with the buffer's own appends and reads of numbers. `JsonReader<T>` reads the text the same way, a nested value by a `JsonReader` of its own that continues at the same place, and it remembers the first thing that went wrong.
 
 ---
 
