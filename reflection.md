@@ -292,7 +292,7 @@ that would take an argument is a collection indexed or filtered instead, so ther
 
 | Member | Answers | Example |
 |---|---|---|
-| `.name` | the class's own name, a `Symbol` | `Monster.name` is `Monster` |
+| `.name` | the class's own name, a `String` | `Monster.name` is `Monster` |
 | `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
 | `.attributes` | a `List<Spite.AttributeDeclaration>`, in declaration order | `Monster.attributes['health']` |
 | `.functions` | a `List<Spite.Function>`, in the order they were made | `Monster.functions['alive']` |
@@ -569,7 +569,7 @@ func ConstantNamespaces() {
 }
 
 func holds_parts(namespace: Spite.Namespace): Boolean {
-    return namespace.name == 'Part'
+    return namespace.name == "Part"
 }
 
 func make_every_class(namespace: Spite.Namespace) {

@@ -517,7 +517,7 @@ func is_alive(): Boolean {
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.accesses` (a `Dictionary<String, Spite.Access>` of what it reads and writes); `Loader.is_stateful`,
   `Vector3.is_fixed_size`, `Monster.is_singleton`. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
-- In a generic class, `if $value_type == List { }` (also `Dictionary`, `Null` for any `T?`, `Symbol` for any enum or `Symbol`, `Enum` for an enum only,
+- In a generic class, `if $value_type == List { }` (also `Dictionary`, `Null` for any `T?`, `Enum` for any enum,
   or an exact type) is decided while compiling, and `$value_type.element_type` names what the type holds. It is
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
@@ -658,8 +658,8 @@ to make a system that breaks its rule a compile error
 `read(text): T?`, reads it (`read_or_crash(text): T` halts instead), for any class, list, dictionary, enum, number, `Boolean`, `String` or `T?`;
 `read` skips unknown keys, keeps defaults for missing ones, reads a camelCase or PascalCase key (`buyPrice`,
 `BuyPrice`) into its snake_case attribute (`buy_price`) when no attribute has the key's exact name, so never
-rename attributes to match foreign JSON, and is `null` on a value of the wrong kind; a `Symbol`
-reads back only as a name the program already uses. Writing a `Float` or `Double` that is infinity or not-a-number
+rename attributes to match foreign JSON, and is `null` on a value of the wrong kind; an enum
+reads back only as one of its values' names. Writing a `Float` or `Double` that is infinity or not-a-number
 to JSON crashes showing the value and the attribute (`shown=inf	path=Order.price`): check the number first
 if `null` is wanted. **Between Spite programs, and for files a Spite program reads back, use bytes instead**:
 `BinaryWriter<T>()` with `write(value): Buffer` (or `append_to(value, bytes)` to add to a buffer you have) and
@@ -803,7 +803,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `"hello " + name` | `text written down is not joined with '+'` | `"hello {name}"`; two values still join with `+` |
 | `label.text = "{clicks}"`, to turn a value into text | `'"{clicks}"' is a text of one value and nothing else: assign the value directly, 'label.text = clicks'` | `label.text = clicks`: a value casts to text where text is wanted; `clicks.to_string()` elsewhere |
 | `"hello ${name}"` | *silent*: prints `hello $` and the name | `"hello {name}"` |
-| `'hello'` for text | `'hello' in single quotes is a symbol, and text is wanted here: text is always written in double quotes` | `"hello"`: single quotes are symbols and enum values |
+| `'hello'` for text | `'hello' in single quotes is an enum value literal, and text is wanted here: text is always written in double quotes` | `"hello"`: single quotes are enum values only |
 | `flags.bits_and(mask)` with a wider `mask` | `'flags.bits_and(mask)' works in a Byte, since a bitwise function takes its receiver's type` | widen the receiver first: `var wide: Long = flags` |
 | `var held: $held_type = null` bound to a `type` that requires a function | `'held' is a Weapon, a type that requires the function 'strike', so '= null' has no default to make` | `$held_type?`, or set it in the constructor |
 | a `while true` frame loop in a singleton a `Parallel` reaches | `'Window.run' holds Window's lock for the whole call ... and this loop never ends` | put the loop in a plain object that calls the singleton each pass |

@@ -619,11 +619,12 @@ quotes (single quotes mean an enum value and nothing else), and `'mage'` alone r
 `Player.Job`, because the parameter, the annotation, the assignment or the comparison it is used in says which
 enum it belongs to ([how it resolves](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
 
-An enum is a closed list of **symbols**: a value the enum does not list is a compile error naming the ones it
-does, and `var choice = 'orange'`, with nothing to check it against, is an error too. A `Symbol` on its own is
-text from the program's table of names (reflection answers class and function names as symbols) and reads as
-text anywhere text is expected. At run time an enum value is a small integer and a `Symbol` a pointer into a table
-holding only the symbols the program uses ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
+An enum is a closed list of values, and `'knight'` is an **enum value literal**: a value the enum does not list
+is a compile error naming the ones it does, and `'orange'` where no enum is expected (`var choice = 'orange'`, with
+nothing to check it against) is an error too. Every enum is its own class with its conversions: `value.to_string()`
+is its name, `value.to_integer()` its number, `"tail".to_part()` and `7.to_part()` make a `Part?` from a name or a
+number (`null` when no value has it), and `Part.values` lists the values. At run time an enum value is a small
+integer ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
 
 Text is read as an enum value the way it is read as a number: `"soup".to_course()` answers a `Course?`, the value
 spelled that way, or `null` when the enum has none, since any value of the enum there would read as a real one.

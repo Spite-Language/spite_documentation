@@ -766,7 +766,7 @@ compiler's, and the class made is the one an unconstrained line would make
 
 When a codegen value is a type, `if $value_type == String { }` asks which type it is. The answer is known when
 the class is made, so only the branch taken is compiled, and each branch may use what only that type has. Besides
-naming a type exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Symbol` (an enum),
+naming a type exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Enum` (any enum),
 and a `type` name asks whether the type fits it (`$value_type == Number` for any number class).
 The table is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-).
 
