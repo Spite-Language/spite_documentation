@@ -863,7 +863,7 @@ the particles moved 5997000
 
 **The member may reach only its own element.** Every element runs at the same time as the others, so the
 compiler reads the member (and every function of the element's class it calls) and allows only the element's
-own attributes that hold a value (a number, a `Boolean`, text, an enum or a `Symbol`), any singleton and the
+own attributes that hold a value (a number, a `Boolean`, text, or an enum), any singleton and the
 member's locals. A singleton of the program's own that can change is made safe for you in a program that uses
 `Parallel`: nothing when it is read-only, atomics when it only counts or flags, a
 lock otherwise ([optimizations.md](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)). So a

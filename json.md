@@ -210,7 +210,6 @@ A reader reads one type; to read a different one from the same bytes, a second r
 | `Long`, `UnsignedLong`, `Double` | a number | 8 bytes, little-endian (`Double` as its IEEE 754 bits) |
 | `Boolean` | `true` or `false` | 1 byte, `1` or `0` |
 | an enum | its value's name, as text | its index in the enum, in 1 byte for up to 256 values, 2 up to 65 536, else 4 |
-| a `Symbol` | its name, as text; read back only as a name the program already uses as a `Symbol` | its name, as a `String` is written; read back the same way |
 | a class | an object, one key per attribute | its attributes, one after another in declaration order, with nothing around them |
 | `List<T>` | an array | its count as a count, then each element |
 | `Dictionary<Key, Value>` | an object, one key per entry; a number key as the number in quotes, an enum key as its name | its count as a count, then each key as its type is written (a `String`, or the whole number) and its value |

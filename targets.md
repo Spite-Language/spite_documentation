@@ -90,7 +90,7 @@ func format_name(first_name: String, last_name: String): String { }
 ## Targets
 
 A class says where it can run by overriding an ordinary member of
-`Spite.Class`, `func targets(): List<Symbol>`. The default is every target; `DynamicLibrary` answers `['native']`
+`Spite.Class`, `func targets(): List<Spite.Target>`, a list of the enum `Spite.Target`. The default is every target; `DynamicLibrary` answers `['native']`
 and `Html` answers `['web']`. Using a class against the wrong target is a compile error naming the class, the
 target and the flag. So `File`, `Directory` and `Process` on the web need no special rule: they
 declare their targets like everything else. The check runs after compile time folding and tree shaking, so a
