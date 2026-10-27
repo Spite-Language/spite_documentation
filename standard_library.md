@@ -5,7 +5,7 @@ every class a program can name (`String`, `List`, `Integer`, `File`) is a file t
 `--final-classes` prints each one as the program uses it. Its values are reference counted like every other
 object ([memory.md](memory.md)). When an operation cannot succeed it says so in its type rather than crashing:
 an index or a key that is not there reads as `T?`, a file that cannot be read answers `null`, and text that does
-not parse as a number reads as `0`.
+not parse as a number answers `null`.
 
 `common` holds what every operating system shares; `windows`, `linux` and `mac`
 reopen the classes each system does differently, and a program loads the one it is compiled for
