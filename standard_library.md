@@ -791,7 +791,8 @@ loop that serves connections keeps running because the compiler parks the wait (
 because the program asks whether anything has arrived. Resolving a host name and connecting always wait in place.
 
 **A closed peer is an answer, not a failure.** A read answers `null` when the connection has ended, and sets
-`closed`. A write to a closed connection sends nothing, answers `false`, and sets `closed` too; nothing crashes.
+`closed`; `read_line()` answers `null` too for a line whose bytes are not UTF-8, and the next call reads the line
+after it, so a peer's bytes never ride inside a `String`. A write to a closed connection sends nothing, answers `false`, and sets `closed` too; nothing crashes.
 Every read answers a buffer of its own, as a `Udp.Datagram`'s does, and the numbers in it are read from it
 ([below](#bytes-are-a-buffer)). UDP, HTTP and WebSocket are [below](#udp).
 
@@ -873,7 +874,7 @@ or `write_body_buffer(buffer)`, so an image or a compressed body is never forced
 |---|---|
 | `Http.Server.listen_locally(port)`, `listen_everywhere(port)` | listens, like `Tcp.Server` |
 | `Http.Server.next_request(): Http.Request?` | waits for the next well-formed request, on a new connection or on one kept open; a malformed one is answered `400 Bad Request` and its connection closed, and a body over `largest_body` (1 MiB) counts as malformed; `null` when the listener fails or is closed |
-| `Http.Server.respond(request, response)` | writes the response with its `content-length`, and keeps the connection open for the client's next request unless the client asked to close it |
+| `Http.Server.respond(request, response): Boolean` | writes the response with its `content-length`, and keeps the connection open for the client's next request unless the client asked to close it; `false` when the response could not be written whole |
 | `Http.Server.close()` | stops listening and closes every connection kept open |
 | `Http.Client.send(host, port, request): Http.Response?` | sends the request with `host` and `content-length` over a connection kept open to that host and port, or a new one, and reads the response, whether its body is sized, chunked or ends when the connection closes; `null` when nobody answers or the response is malformed |
 | `Http.Client.close()` | closes the connections it keeps open |
