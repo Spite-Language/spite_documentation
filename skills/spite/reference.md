@@ -652,10 +652,12 @@ Time is stored as an `Instant` and nothing else: `clock.now()`, or `Instant(sinc
 calendar time, added to a `Date`,
 `Time` is a clock reading and `DateTime(date, time)` both, none of them an instant. A zone only shows or
 reads a local reading: `var zones = TimeZones()`, `zones.find("America/New_York"): TimeZone?`, `zones.utc()`,
-`zones.fixed_offset(duration)`, then `zone.to_local(instant)`, `zone.to_text(instant)` and
-`zone.to_instant(local, 'compatible')` (or `'earlier'`/`'later'`, always written). `TimeText()` reads ISO 8601
-(`read_instant(text): Instant?`, `read_date`, `read_duration`, ...) and `to_string()` writes it. `Date(2023, 2,
-29)` halts, so read outside text with `TimeText`, which answers `null` ([time.md](https://github.com/Spite-Language/spite_documentation/blob/master/time.md)).
+`zones.fixed_offset(duration)`, then `instant.to_date_time_in(zone)`, `instant.to_string_in(zone)` and
+`local.to_instant_in(zone, 'compatible')` (or `'earlier'`/`'later'`, always written); `zone.identifier` is its
+IANA identifier. Text reads ISO 8601 through `to_<type>()` (`"2024-03-10T07:00:00Z".to_instant(): Instant?`,
+`to_date()`, `to_duration()`, ...) and `to_string()` writes it. `Date(2023, 2, 29)` halts, so read outside text
+with `text.to_date()`, which answers `null`, as a leap second and a bracketed zone that disagrees with the offset
+do ([time.md](https://github.com/Spite-Language/spite_documentation/blob/master/time.md)).
 `DynamicLibrary("ucrtbase.dll", 'identity', "")` calls a native library's functions as members
 (`c_runtime.strlen(text)`, `_as_long`/`_as_double`/`_as_text` for wider results); the standard library's
 `library/windows/`, `linux/` and `mac/` folders reopen the classes each system changes (docs/foreign_libraries.md).
@@ -784,7 +786,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `value == null`, `value != null` | `'null' is not a value to compare against or pass around` | `if value { } else { }`, `assert value`, `crash value`, or `switch` |
 | `task.wait()`, `await task` | `an Integer has no function 'wait'` | read the handle: it is the result, and reading it waits |
 | `new Date()`, `DateTime.Now`, `datetime.now()` | | `clock.now()`, an `Instant`; shown through a zone from `TimeZones()`, never stored as a local reading |
-| `timestamp + 86400000` for tomorrow | *silent*: wrong across a daylight-saving change | `zone.to_local(instant) + Period(1, 'days')`, then `zone.to_instant(tomorrow, 'compatible')` |
+| `timestamp + 86400000` for tomorrow | *silent*: wrong across a daylight-saving change | `instant.to_date_time_in(zone) + Period(1, 'days')`, then `tomorrow.to_instant_in(zone, 'compatible')` |
 | `text[0].upper_case()` | `'text[0]' may be missing, since every '[ ]' answers a 'T?'` | `crash text[0]` first: `text[index]` is the whole character at that byte, `null` out of range or inside one |
 | `// comment`, `/* comment */` | `Spite has no '//' or '/* */' comments` | nothing, or `# docs/page.md#section` on its own line outside a function |
 | `;` at the end of a line | `';' is not something Spite reads` | nothing |

@@ -20,22 +20,21 @@ compiler places it ([memory.md](memory.md#where-a-value-lives-memory)).
 | `Time` | a clock reading with no date and no zone: `02:30:00` | hour, minute, second, nanosecond |
 | `DateTime` | a date and a clock reading, with no zone | a `Date` and a `Time` |
 | `Period` | an amount of calendar: `P1Y2M3D` | years, months, days |
-| `TimeZone` | the rules that map instants to local readings | a name and its rules |
+| `TimeZone` | the rules that map instants to local readings | an IANA identifier and its rules |
 | `TimeZones()` | the time zone database, a singleton | the operating system's |
-| `TimeText()` | ISO 8601 text, read and written, a singleton | |
 | `Clock()` | `now()` for the wall clock, and elapsed time for measuring | |
 | `Benchmark(work)` | one run of a function, timed | what it answered and a `Duration` |
 
 What cannot happen, by construction:
 
 - **A local reading is never an instant.** `DateTime` has no function that answers an `Instant`, and
-  comparing one with an `Instant` is a type error. The only way across is `zone.to_instant(local, ...)`, which
+  comparing one with an `Instant` is a type error. The only way across is `local.to_instant_in(zone, ...)`, which
   names the zone.
 - **A day is never 24 hours by accident.** `Duration` has no days; `Period(1, 'days')` is one calendar day and is
   added to dates, never to instants. Adding "one day" to an instant is written through a zone, where it means
   what the zone says it means.
 - **A daylight-saving gap or overlap is never resolved silently by a default you did not choose.** Every
-  `to_instant` names the rule for the ambiguous case.
+  `to_instant_in` names the rule for the ambiguous case.
 
 The first of them is the type checker's to enforce, so the mistake never runs:
 
@@ -147,8 +146,8 @@ read the clock twice around the code instead.
 
 `Date(year, month, day)` is a date in the proleptic Gregorian calendar, the one ISO 8601 uses, for any year
 (year 0 is 1 BC). A date that does not exist (`Date(2023, 2, 29)`) halts the program, since a program that
-builds one from its own numbers has a bug; text from outside is read with `TimeText` instead, which answers
-`null`. `Time(hour, minute, second, nanosecond)` is the same for a clock reading, and
+builds one from its own numbers has a bug; text from outside is read with `text.to_date()` instead, which
+answers `null` ([Text](#text)). `Time(hour, minute, second, nanosecond)` is the same for a clock reading, and
 `DateTime(date, time)` joins the two.
 
 A `Period` adds to a date by months first and then by days, and a day of the month that the new month does not
@@ -188,25 +187,26 @@ are equal when their years, months and days are.
 
 ## Time zones
 
-`TimeZones()` is the database. `find(name)` answers the zone with an IANA name such as `"America/New_York"`,
-or `null` when the database has none by that name; `utc()` is UTC; `fixed_offset(offset)` is a zone that is
+`TimeZones()` is the database. `find(identifier)` answers the zone with an IANA identifier such as
+`"America/New_York"`, or `null` when the database has none by that identifier; `utc()` is UTC;
+`fixed_offset(offset)` is a zone that is
 always the same distance from UTC; `system()` is the zone the machine is set to, for showing times to the person
 at it. Nothing uses it unless it is asked for by name, so a program never depends on the machine's zone by
 accident.
 
-What a zone answers:
+A zone is one class, `TimeZone`, and all it answers is its own: `offset_at(instant)`, its distance from UTC at
+that instant as a `Duration`, and `identifier`, the IANA identifier it was found by. A conversion is asked of the
+value being converted, naming the zone:
 
-| Member | Answers |
+| Call | Answers |
 |---|---|
-| `to_local(instant)` | the `DateTime` a clock in the zone reads at that instant |
-| `to_instant(local, ambiguity)` | the `Instant` at which the zone's clocks read `local` |
-| `to_text(instant)` | the local reading with its offset: `2024-03-10T03:00:00-04:00` |
-| `offset_at(instant)` | the zone's distance from UTC at that instant, as a `Duration` |
-| `name` | the name it was found by |
+| `instant.to_date_time_in(zone)` | the `DateTime` a clock in the zone reads at that instant |
+| `local.to_instant_in(zone, ambiguity)` | the `Instant` at which the zone's clocks read `local` |
+| `instant.to_string_in(zone)` | the local reading with its offset: `2024-03-10T03:00:00-04:00` |
 
 A local reading is not always one instant. When clocks spring forward, a reading in the gap never happens; when
-they fall back, a reading in the overlap happens twice. `to_instant` takes what to do about it, and there is no
-default:
+they fall back, a reading in the overlap happens twice. `to_instant_in` takes what to do about it, and there is
+no default:
 
 | Ambiguity | In an overlap | In a gap |
 |---|---|---|
@@ -228,7 +228,7 @@ func TimeZonesNamed() {
     crash new_york
     var launch_since_1970 = Duration(1710054000, 'seconds')
     var launch = Instant(launch_since_1970)
-    var shown = new_york.to_text(launch)
+    var shown = launch.to_string_in(new_york)
     var offset = new_york.offset_at(launch)
     console.print(launch, shown, offset)
     var skipped_day = Date(2024, 3, 10)
@@ -237,16 +237,16 @@ func TimeZonesNamed() {
     var repeated_day = Date(2024, 11, 3)
     var repeated_time = Time(1, 30, 0, 0)
     var repeated = DateTime(repeated_day, repeated_time)
-    var after_gap = new_york.to_instant(skipped, 'compatible')
-    var first = new_york.to_instant(repeated, 'earlier')
-    var second = new_york.to_instant(repeated, 'later')
-    var after_gap_text = new_york.to_text(after_gap)
-    var first_text = new_york.to_text(first)
-    var second_text = new_york.to_text(second)
+    var after_gap = skipped.to_instant_in(new_york, 'compatible')
+    var first = repeated.to_instant_in(new_york, 'earlier')
+    var second = repeated.to_instant_in(new_york, 'later')
+    var after_gap_text = after_gap.to_string_in(new_york)
+    var first_text = first.to_string_in(new_york)
+    var second_text = second.to_string_in(new_york)
     console.print(after_gap_text, first_text, second_text)
     var nowhere = zones.find("Atlantis/Capital")
     if nowhere {
-        console.print("found", nowhere.name)
+        console.print("found", nowhere.identifier)
     } else {
         console.print("no such zone")
     }
@@ -271,11 +271,11 @@ func TimeTomorrow() {
     crash new_york
     var saturday_since_1970 = Duration(1709996400, 'seconds')
     var saturday = Instant(saturday_since_1970)
-    var local = new_york.to_local(saturday)
+    var local = saturday.to_date_time_in(new_york)
     var tomorrow = local + Period(1, 'days')
-    var sunday = new_york.to_instant(tomorrow, 'compatible')
+    var sunday = tomorrow.to_instant_in(new_york, 'compatible')
     var elapsed = sunday - saturday
-    var sunday_text = new_york.to_text(sunday)
+    var sunday_text = sunday.to_string_in(new_york)
     console.print(local, sunday_text, elapsed)
 }
 ```
@@ -286,9 +286,11 @@ func TimeTomorrow() {
 ### Fixed offsets and UTC
 
 A fixed offset has no rules at all: `zones.fixed_offset(india_offset)`, with `india_offset` a
-`Duration(330, 'minutes')`, is named `+05:30` and is five
+`Duration(330, 'minutes')`, is identified as `+05:30` and is five
 and a half hours ahead of UTC at every instant. It is the right zone for text that carries its own offset and
-nothing more, and the wrong one for a place, whose offset changes.
+nothing more, and the wrong one for a place, whose offset changes. It is `TimeZone(identifier, offset)` with the
+offset written as its identifier: the constructor makes only fixed offsets (under a day either way, or the
+program halts), and a zone with rules comes from the database.
 
 ```gdscript title=time_offsets/time_offsets.spite entry
 var console = Console()
@@ -301,9 +303,9 @@ func TimeOffsets() {
     var india_offset = Duration(330, 'minutes')
     var india = zones.fixed_offset(india_offset)
     var universal = zones.utc()
-    var india_text = india.to_text(launch)
-    var universal_text = universal.to_text(launch)
-    console.print(india.name, india_text, universal.name, universal_text)
+    var india_text = launch.to_string_in(india)
+    var universal_text = launch.to_string_in(universal)
+    console.print(india.identifier, india_text, universal.identifier, universal_text)
 }
 ```
 ```output
@@ -316,10 +318,10 @@ The rules are the operating system's, so a change in a country's daylight-saving
 with the system's own updates, and a program carries no copy of the database:
 
 - **Windows** reads them through `icu.dll`, the ICU library Windows 10 (version 1903 and later) and Windows 11
-  ship and update, which holds the IANA database under its IANA names (`library/windows/zone_calendar.spite`, over
+  ship and update, which holds the IANA database under its IANA identifiers (`windows/time_zone.spite`, over
   `DynamicLibrary`). Windows' own registry zones are not used: they have Windows names, and less history.
 - **Linux and macOS** read the compiled database in `/usr/share/zoneinfo`, one TZif file per zone (RFC 8536),
-  through `File` and parsed in Spite (`library/tzif_reader.spite`); `system()` follows `TZ`, then the
+  through `File` and parsed in Spite (`TimeZone`'s TZif reading, in `common/time_zone.spite`); `system()` follows `TZ`, then the
   `/etc/localtime` link.
 
 What a zone costs when it runs: on Windows, `icu.dll` is loaded only by a program that asks for a named zone or
@@ -327,7 +329,8 @@ What a zone costs when it runs: on Windows, `icu.dll` is loaded only by a progra
 ICU; on Linux and macOS, `find` reads and parses the zone's file once, and each answer looks through the
 transitions it read. UTC and fixed offsets need neither.
 
-`zones.read_tzif(name, data)` reads a TZif file you bring, its bytes as `File.read_as_buffer()` gives them, which is the answer for a machine with no database (a
+`zones.read_tzif(identifier, data)` reads a TZif file you bring, its bytes as `File.read_as_buffer()` gives them,
+which is the answer for a machine with no database (a
 bare container) or a program that must pin one version of the rules. It is the same reader Linux and macOS use,
 so it runs on Windows too.
 
@@ -337,44 +340,54 @@ known up to when they were written, on every system: a future law change is not 
 
 ## Text
 
-`TimeText()` reads and writes ISO 8601 as RFC 3339 and RFC 9557 profile it. Writing is every type's
-`to_string()`; reading is one function per type, each answering `null` for text that is not exactly that type:
+Time text is ISO 8601 as RFC 3339 and RFC 9557 profile it. Writing is every type's `to_string()`; reading is a
+`to_<type>()` on the text, as `to_integer()` and `to_color()` are, each answering `null` for text that is not
+exactly that type:
 
 | Function | Reads | Refuses |
 |---|---|---|
-| `read_instant(text)` | `2024-03-10T07:00:00Z`, `2024-03-10T03:00:00-04:00[America/New_York]` | a reading with no offset |
-| `read_date_time(text)` | `2024-03-10T02:30:00`, `2024-03-10 02:30` | a reading with an offset |
-| `read_date(text)` | `2024-02-29`, `+012345-06-07` | `2023-02-29` |
-| `read_time(text)` | `09:30`, `23:59:59.5` | `24:00` |
-| `read_duration(text)` | `PT1H30M`, `-PT0.5S` | `P1D`: a day is a `Period` |
-| `read_period(text)` | `P1Y2M3D`, `P2W` | `PT1H`: an hour is a `Duration` |
+| `text.to_instant()` | `2024-03-10T07:00:00Z`, `2024-03-10T03:00:00-04:00[America/New_York]` | a reading with no offset |
+| `text.to_date_time()` | `2024-03-10T02:30:00`, `2024-03-10 02:30` | a reading with an offset |
+| `text.to_date()` | `2024-02-29`, `+012345-06-07` | `2023-02-29` |
+| `text.to_time()` | `09:30`, `23:59:59.5` | `24:00`, the leap second `23:59:60` |
+| `text.to_duration()` | `PT1H30M`, `-PT0.5S` | `P1D`: a day is a `Period` |
+| `text.to_period()` | `P1Y2M3D`, `P2W` | `PT1H`: an hour is a `Duration` |
 
 The refusals are the point: text that carries an offset is an instant, and reading it as a local reading would
 drop the one fact that makes it exact, while text without one is a local reading and needs a zone to become an
-instant. A bracketed zone name after an offset is read and ignored, since the offset already says exactly when.
-A leap second (`23:59:60`) reads as `23:59:59`; `T` may be written `t` or a space, and a fraction may follow
-`,` as well as `.`.
+instant. A bracketed zone after the offset must agree with it: `-04:00[America/New_York]` is read, while
+`-05:00[America/New_York]` on a day New York is four hours behind, a zone the database does not have, and a
+second zone are `null`, since one of the two would be wrong and the text does not say which. After `Z`, which
+says the offset is not known, any zone the database has agrees. The one other annotation read is the ISO
+calendar, `[u-ca=iso8601]`; any other is `null`, since Spite has no other calendar. A leap second (`23:59:60`)
+is `null` too: no type holds it, and reading it as `23:59:59` would change the value read. `T` may be written
+`t` or a space, and a fraction may follow `,` as well as `.`.
 
 ```gdscript title=time_text_reading/time_text_reading.spite entry
 var console = Console()
-var time_text = TimeText()
 
 func TimeTextReading() {
     load "../spite_standard_library/windows"
-    var exact = time_text.read_instant("2024-03-10T03:00:00-04:00[America/New_York]")
+    var exact = "2024-03-10T03:00:00-04:00[America/New_York]".to_instant()
     crash exact
-    var local = time_text.read_date_time("2024-03-10 02:30")
+    var local = "2024-03-10 02:30".to_date_time()
     crash local
-    var lap = time_text.read_duration("PT90M")
+    var lap = "PT90M".to_duration()
     crash lap
     console.print(exact, local, lap)
-    var no_offset = time_text.read_instant("2024-03-10T02:30:00")
+    var no_offset = "2024-03-10T02:30:00".to_instant()
     if no_offset {
         console.print("unexpected")
     } else {
         console.print("a local reading is not an instant")
     }
-    var no_such_day = time_text.read_date("2023-02-29")
+    var wrong_zone = "2024-03-10T03:00:00-05:00[America/New_York]".to_instant()
+    if wrong_zone {
+        console.print("unexpected")
+    } else {
+        console.print("New York was not five hours behind")
+    }
+    var no_such_day = "2023-02-29".to_date()
     if no_such_day {
         console.print("unexpected")
     } else {
@@ -385,13 +398,14 @@ func TimeTextReading() {
 ```output
 2024-03-10T07:00:00Z 2024-03-10T02:30:00 PT1H30M
 a local reading is not an instant
+New York was not five hours behind
 2023 has no February 29
 ```
 
 ## What time does not cover
 
-There are no calendars other than the ISO one, no leap seconds (a leap second reads as the second before it, as
-everywhere else), no formatting patterns or localized month names, and no zone abbreviations (`EST`).
+There are no calendars other than the ISO one, no leap seconds (text with one is `null`, never moved to the second
+before it), no formatting patterns or localized month names, and no zone abbreviations (`EST`).
 
 ## Why this design
 

@@ -39,7 +39,7 @@ REPL can look at any of it.
 | `Program` | this program: exit, sleep, environment variables, its own path | [below](#program) |
 | `Clock` | elapsed time for measuring, and the wall clock | [below](#clock) |
 | `Benchmark<T>` | one timed run of a function: what it answered and how long it took | [time.md](time.md#measuring-a-piece-of-work) |
-| `Instant`, `Duration`, `Date`, `Time`, `DateTime`, `Period`, `TimeZone`, `TimeZones`, `TimeText` | exact time, the calendar, time zones as presentation, ISO 8601 text | [time.md](time.md) |
+| `Instant`, `Duration`, `Date`, `Time`, `DateTime`, `Period`, `TimeZone`, `TimeZones` | exact time, the calendar, time zones as presentation, ISO 8601 text (read with `text.to_instant()` and the rest) | [time.md](time.md) |
 | `Environment`, `Build`, `Arguments` | settings and the command line | [programs.md](programs.md) |
 | `Reload` | how many reloads a `--hot-reload` program has swapped in, and which classes they rebuilt | [repl.md](repl.md#knowing-what-a-reload-rebuilt) |
 | `JsonWriter<T>`, `JsonReader<T>` | any value to JSON text and back | [json.md](json.md) |
