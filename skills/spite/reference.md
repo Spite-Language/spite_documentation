@@ -214,7 +214,7 @@ func is_alive(): Boolean {
   and `while index < names.count()` proves `names[index]` in the loop body, so a `crash names[index]` inside that
   loop is an error saying so: delete it). `[]` calls `get_at(index)`, which is only ever called through `[]`:
   `names.get_at(0)` is an error naming `names[0]` (passing `counts.get_at` as a value is fine). Every `[]` answers a `T?`. A
-  list also has `remove_swapping(index)` and `reserve(count)`.
+  list also has `remove_swapping(index)`; how much room it keeps is the compiler's.
   `Dictionary<Key, Value>` (insertion order) names its key type, then its value type:
   `Dictionary<String, Integer>()`, `Dictionary<Integer, Monster>()`, `Dictionary<Player, Party>()`; one type
   argument is an error. `dictionary["key"] = value`, `has`, `remove`, `count`, `keys` (a `List<Key>`),
@@ -549,44 +549,50 @@ func is_alive(): Boolean {
 
 `Console()` (`print`, `write`, `error`, `debug`, `read_line(): String?`; each value printed is its `to_string()`, so
 a class prints once it declares `func to_string(): String`, and `debug` shows any value's state, a class as
-`Name { attribute: value }`, through the `to_debug()` every value has), `File(path)` (`map(): MappedFile?` for a file too big to read: `size()`, `mapped[position]`, `read_long_at(position)`, ... each a `T?`; `read(): String?`, `write`,
-`append`, `exists`, `remove`, `move_to(path)`: renames or moves, `false` when something is already there; bytes are a `Buffer`: `read_bytes(): Buffer?`, `read_bytes_at(position, count): Buffer?`, `write_bytes(bytes)`, `append_bytes(bytes): Long?` where they start), `Directory(path)` (`path`, `name`, `entries(): List<Directory.Entry>` (each entry a `Directory` or a `File`, switched on;
+`Name { attribute: value }`, through the `to_debug()` every value has), `File(path)` (`file_name`, `read_as_string(): String?`, `write_string(text)`,
+`append_string(text)`, `byte_count()`, `last_written()`, `exists`, `remove`, `move_to(path)`: renames or moves, `false` when something is already there; bytes are a `Buffer`: `read_as_buffer(): Buffer?` (the whole file; read or mapped is the compiler's choice), `read_buffer_at(position, count): Buffer?` for a file too big for one buffer, `write_buffer(buffer)`, `append_buffer(buffer): Long?` where they start), `Directory(path)` (`path`, `folder_name`, `entries(): List<Directory.Entry>` (each entry a `Directory` or a `File`, switched on;
 one kind is `entries.filter_files()` or `filter_directories()`, never a helper of its own), `exists`, `create`, `move_to(path)`),
-`Process(command, arguments)` (`run(): Integer`, `output()`: standard output only; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(milliseconds)`,
+`Process(command, arguments)` (`run(): Integer`, `read_output_as_string(): String?` or `read_output_as_buffer()`: standard output only; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(milliseconds)`,
 `environment(name): String?`). `Console` is a singleton: `Console()` is the same instance everywhere, bound once
 as `var console = Console()`.
 `print`, `error` and `debug` write their line out at once, so a log redirected to a file shows every line as it
 happens; `write` waits for the next line end, the next `read_line()` or the exit. There is no `flush()`: lines from
 two threads never split each other, and everything is out before an exit, a crash report or a read.
 `Socket()` is TCP over IPv4 and IPv6 on every system (`connect("::1", port)`; `listen_everywhere` takes both): `listen_locally(port)`, `listen_everywhere(port)`, `listen_at(host,
-port)`, `connect_locally(port)`, `connect(host, port)`, then lines (`read_line(): String?`, `write_line(text)`) or
-bytes as a `Buffer` (`read_bytes(): Buffer?`, a fresh buffer of what arrived, `write_bytes(bytes)`), which wait.
+port)`, `connect_locally(port)`, `connect(host, port)`, then lines (`read_line(): String?`, `write_line(text)`),
+text (`read_as_string(): String?`, `write_string(text)`) or bytes as a `Buffer` (`read_as_buffer(): Buffer?`, a fresh
+buffer of what arrived, `write_buffer(buffer)`), which wait.
 A loop that must not wait (a game server's tick) calls `accept_client_now(): Socket?`, `read_line_now():
-String?`, `read_bytes_now(): Buffer` (empty is nothing yet) and `write_bytes_now(bytes):
+String?`, `read_as_buffer_now(): Buffer` (empty is nothing yet) and `write_buffer_now(buffer):
 Integer` (how many the system took). A peer that hung up is not an error: `socket.closed` turns `true`, reads
 answer an empty buffer or `null` and writes send nothing. Check `closed`, never a count of `-1`.
 **Bytes are a `Buffer`**, never a `List<Byte>` (a list has no byte functions; calling one is a compile error naming
 `Buffer`). A `Buffer` is still a run of bytes (`count()`, `buffer[index]`, `append(byte)`, templates) and adds:
-made with a size, `Buffer(size)` (`Buffer(0)` when nothing is known; the size is room, never a limit),
+made with a size, `Buffer(size)` (`Buffer(0)` when nothing is known; the size is room, never a limit; a foreign
+function that writes into it is passed `Buffer(4096)`, then `take_written(count)` says how much it wrote),
 a byte order named in every number of two bytes or more (`_little_endian` or `_big_endian` after the number, like
 `read_integer_big_endian_at(position)`; `byte` and `tiny` have none),
-a `position` that `read_<number>(): <number>?` reads at and moves past, `read_<number>_at(position): <number>?`
-anywhere without moving (`tiny`, `short`, `unsigned_short`, `integer`, `unsigned_integer`, `long`,
-`unsigned_long`, `float`, `double`, each with its order; `byte` only as `read_byte()`), `append_<number>(value)`,
-`write_<number>_at(position, value)` (halts outside), `read_bytes(count)` / `read_bytes_at(position, count): Buffer?`,
-`append_bytes(other, start, count)`, `remaining()`, `reserve(count)` and `to_utf8_text(): String?`. Prove `_at` reads
+no reading position: every read is `read_<number>_at(position): <number>?` and a walk keeps its own `var at = 0`
+(`tiny`, `short`, `unsigned_short`, `integer`, `unsigned_integer`, `long`,
+`unsigned_long`, `float`, `double`, each with its order; one byte is `buffer[position]`), `append_<number>(value)`,
+`write_<number>_at(position, value)` (halts outside), `read_buffer_at(position, count): Buffer?`,
+`append_buffer(other, start, count)`, `read_string_at(position, count): String?` and `read_as_string(): String?`. Prove `_at` reads
 instead of narrowing each: `crash body + 13 <= bytes.count()` proves every read inside those 13 bytes, a loop `while position + 15 <
 bytes.count()` stepping `position = position + 16` reads each record with no test, and `crash height * stride <=
 pixels.count()` proves `pixels[row * stride + column]` inside `while row < height` and `while column < stride`.
 Memory a C library hands out (a mapped GPU buffer) is `ForeignBytes(address, count)`, with the same `_at` reads and
-writes, orders named, bounds checked. A program never reads or writes bytes through a `Memory.Address`: the old forms
-(`read_bytes(position, count, address)`, `read_bytes_now(address, count)`, `read_memory`) are compile errors naming
-the plain form.
-`UdpSocket()` opens with `open()`, `open_locally(port)`, `open_everywhere(port)` or `open_at(host, port)` and sends one `Buffer` datagram per `send_to(host, port, bytes)`; `HttpServer` (`next_request(): HttpRequest?`, `respond(request, response)`) and `HttpClient` (`send(host, port, request): HttpResponse?`) speak HTTP/1.1 and keep connections alive on their own.
-`WebSocket()` speaks RFC 6455 (`ws`): a server takes a request from `next_request()` with `accept(request): Boolean`,
-a client calls `connect(host, port, request): Boolean`, then `send_text(text)`, `send_bytes(bytes)`,
-`send_ping(bytes)` and `receive(): WebSocket.Message?`, a union of `WebSocketText` (`.text`) and `WebSocketBinary`
-(`.bytes`) to `switch` on. Pings are answered by itself and the latest pong is `last_pong`. `null` from `receive()`
+writes, orders named, bounds checked. A program never reads or writes bytes through a `Memory.Address`: a `File`,
+a `Socket` and a `BinaryReader` take and answer a `Buffer`.
+**Bytes that may be text are one holder with two reads**: `read_as_string(): String?` (`null` when not UTF-8) and
+`read_as_buffer()`, on a `File`, a `Socket`, a `WebSocket.Message`, a datagram, an HTTP body and a `Process`'s
+output, so nothing that carries bytes forces them through a `String`.
+`UdpSocket()` opens with `open()`, `open_locally(port)`, `open_everywhere(port)` or `open_at(host, port)`, sends one `Buffer` datagram per `send_to(host, port, buffer)` and receives one per `receive_as_buffer()` or `receive_as_string()`; `Http.Server` (`next_request(): Http.Request?`, `respond(request, response)`) and `Http.Client` (`send(host, port, request): Http.Response?`) speak HTTP/1.1 and keep connections alive on their own; a body is bytes, `read_body_as_string(): String?`, `read_body_as_buffer()`, `write_body_string(text)`, `write_body_buffer(buffer)`.
+WebSocket (RFC 6455, `ws`) is a namespace: a server is `var sockets = WebSocket.Server(http)` over the program's own
+`Http.Server`, like an Express app; in the program's HTTP loop, `if sockets.asks_to_upgrade(request)` then
+`sockets.accept(request): WebSocket.Connection?` (`null` after it refused a malformed upgrade itself), and every other
+request is answered with `http.respond`. A client is `WebSocket.Client()` with `connect(host, port, request): Boolean`.
+Both sides have `send_string(text)`, `send_buffer(buffer)`, `send_ping(buffer)` and `receive(): WebSocket.Message?`,
+whose `is_text()`, `read_as_string(): String?` and `read_as_buffer()` read it. Pings are answered by itself and the latest pong is `last_pong`. `null` from `receive()`
 means the connection ended: `close_code` says how (`1000` a normal close, `1002` a broken frame, `1006` no close at
 all), so a protocol violation is never silent. `close()` sends the close and `receive()` keeps answering until the
 peer's close arrives.
@@ -617,16 +623,16 @@ number 1 (from 0) is given or anything reached through it; an engine writes `cra
 to make a system that breaks its rule a compile error
 ([metaprogramming.md](https://github.com/Spite-Language/spite_documentation/blob/master/metaprogramming.md#asking-a-question-while-compiling)).
 `JsonWriter<T>()` made once, then `write(value): String`, writes JSON, and `JsonReader<T>()`, then
-`read(text): T?`, reads it (`read_or_crash(text): T` halts instead), for any class, list, dictionary, enum, number, `Boolean`, `String` or `T?`;
+`read(text): T?`, reads it (`crash` it when bad text is a bug), for any class, list, dictionary, enum, number, `Boolean`, `String` or `T?`;
 `read` skips unknown keys, keeps defaults for missing ones, reads a camelCase or PascalCase key (`buyPrice`,
 `BuyPrice`) into its snake_case attribute (`buy_price`) when no attribute has the key's exact name, so never
 rename attributes to match foreign JSON, and is `null` on a value of the wrong kind; an enum
 reads back only as one of its values' names. Writing a `Float` or `Double` that is infinity or not-a-number
 to JSON crashes showing the value and the attribute (`shown=inf	path=Order.price`): check the number first
 if `null` is wanted. **Between Spite programs, and for files a Spite program reads back, use bytes instead**:
-`BinaryWriter<T>()` with `write(value): Buffer` (or `append_to(value, bytes)` to add to a buffer you have) and
-`BinaryReader<T>()` with `read(bytes): T?`, `null` on bytes that are not exactly one `T`, and `read_from(bytes,
-start): T?` for the next value of many, starting at the last read's `position`; both are made once and reused;
+`BinaryWriter<T>()` with `write(value): Buffer` and
+`BinaryReader<T>()` with `read(bytes): T?`, `null` on bytes that are not exactly one `T`; many values are one
+value, a `List<T>` or a class holding them; both are made once and reused;
 a quarter of JSON's size and more than ten times faster, with no keys, so both ends must be built from the same
 classes. A socket's or a file's bytes are a `Buffer` already, read the same way. The pair is a typed serializer, the binary twin of the JSON one: whole values in, whole values out; single numbers at positions are the `Buffer`'s own reads. To catch two ends built from
 different classes, write `writer.schema()` (a `Long` the compiler works out from the classes, free to ask) once at
@@ -679,7 +685,7 @@ highest)`, `Plane()` with `set_point_normal`, `Frustum()` with `set_from_view_pr
 `intersects_box`/`intersects_sphere`, and `Ray(origin, direction)` whose `hit_plane`, `hit_box` and `hit_triangle`
 answer a `Float?` distance, `null` for a miss. Colours: `Color(0.2, 0.5, 0.9, 1.0)` holds `red`, `green`, `blue`, `alpha` from 0 to 1, its one
 constructor; text becomes one only through `"#ff6347".to_color()`, a `Color?` (also `rgb()`, `rgba()`, `hsl()`,
-`hsla()` and CSS names; `null` for text naming none, so `crash` it), written with `to_hex()`, `to_rgb_text()`, `to_hsl_text()`, converted with
+`hsla()` and CSS names; `null` for text naming none, so `crash` it), written with `to_hexadecimal_string()`, `to_rgb_string()`, `to_hsl_string()`, converted with
 `to_linear()` and `to_standard_rgb()`. Animation and shading: `CubicBezier(start, first_handle, second_handle, end)`
 with `y_at_x(x)`, `var easing = Easing()` then `easing.in_out_cubic(amount)` and the rest, `Noise(seed)` with
 `gradient_2d(x, y)` and `interleaved_gradient`, and `value.to_half_precision()` / `bits.half_precision_to_float()`

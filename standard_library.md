@@ -43,15 +43,15 @@ REPL can look at any of it.
 | `Environment`, `Build`, `Arguments` | settings and the command line | [programs.md](programs.md) |
 | `Reload` | how many reloads a `--hot-reload` program has swapped in, and which classes they rebuilt | [repl.md](repl.md#knowing-what-a-reload-rebuilt) |
 | `JsonWriter<T>`, `JsonReader<T>` | any value to JSON text and back | [json.md](json.md) |
-| `Buffer` | bytes, and the numbers and text laid out in them, in either byte order, read by position or front to back | [below](#bytes-are-a-buffer) |
+| `Buffer` | bytes, and the numbers and text laid out in them, in either byte order, read at a position | [below](#bytes-are-a-buffer) |
 | `ForeignBytes` | memory a C library hands out, read and written by position with every access checked | [below](#bytes-are-a-buffer) |
 | `BinaryWriter<T>`, `BinaryReader<T>` | any value to compact bytes (a `Buffer`) and back, for Spite programs talking to each other and for files | [json.md](json.md#write-and-read-bytes) |
 | `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
 | `Concurrent`, `Parallel` | run a function while waiting, or on another thread; the handle is the value | [concurrency.md](concurrency.md) |
 | `Socket` | TCP over IPv4 and IPv6: listen, connect, lines and bytes, waiting or not | [below](#socket) |
 | `UdpSocket` | UDP datagrams over IPv4 and IPv6 | [below](#udpsocket) |
-| `HttpServer`, `HttpClient`, `HttpRequest`, `HttpResponse` | HTTP/1.1, connections kept alive | [below](#http) |
-| `WebSocket`, `WebSocketText`, `WebSocketBinary` | WebSocket (RFC 6455) over an HTTP upgrade: text and binary messages both ways, ping and close | [below](#websocket) |
+| `Http.Server`, `Http.Client`, `Http.Request`, `Http.Response` | HTTP/1.1, connections kept alive | [below](#http) |
+| `WebSocket.Client`, `WebSocket.Server`, `WebSocket.Connection`, `WebSocket.Message` | WebSocket (RFC 6455) over an HTTP upgrade: text and binary messages both ways, ping and close | [below](#websocket) |
 | `Base64`, `Deflate`, `Zlib`, `Gzip` | bytes as base64 and base64url text; bytes compressed as raw DEFLATE, zlib and gzip | [below](#bytes-base64-compression-hashes-and-passwords) |
 | `Sha256`, `SecureRandom`, `Argon2` | SHA-256 and HMAC-SHA256; bytes from the operating system's secure random source; password hashes as PHC strings | [below](#bytes-base64-compression-hashes-and-passwords) |
 | `DynamicLibrary` | call a native library | [foreign_libraries.md](foreign_libraries.md) |
@@ -84,8 +84,8 @@ with `+` ([values_and_types.md](values_and_types.md#string)). `==`, `!=`, `<` an
 
 A `String` answers where it can: `text[index]` is the whole character that starts at byte `index`, a `String?`
 that is `null` past the end, before the start or inside a character of several bytes, a range is clamped to the
-text, and `index_of` answers an `Integer?`, `null` when the text is absent. The one member that halts is `code_at`, which reads
-a code below 0 or past the end and stops the program, naming the index and the length, since a `0` there could not be
+text, and `index_of` answers an `Integer?`, `null` when the text is absent. The one member that halts is `byte_at`, which reads
+a byte below 0 or past the end and stops the program, naming the index and the length, since a `0` there could not be
 told from a real one. Reading a number is the one that can find nothing to answer, so
 `to_integer()` and the other `to_<type>()` readings answer a `T?`: `null` when the text is not a number that fits
 the type. Assigning text to a number calls the matching one, so it is allowed only into a `T?`:
@@ -128,17 +128,20 @@ ADA 3 null da d
 |---|---|---|
 | `path` | `String` | |
 | `to_string()` | `String` | the path, so a `File` prints as its path and a crash on one names it ([failure.md](failure.md#what-a-crash-reports)) |
-| `read()` | `String?` | `null` when the file cannot be read |
-| `write(text)` / `append(text)` | `Boolean` | replaces the content / adds to its end |
+| `file_name` | `String` | the last piece of the path: `File("levels/forest.txt").file_name` is `forest.txt` |
+| `read_as_string()` | `String?` | `null` when the file cannot be read, or its bytes are not UTF-8 |
+| `write_string(text)` / `append_string(text)` | `Boolean` | replaces the content / adds to its end |
 | `exists()` / `remove()` | `Boolean` | |
 | `move_to(path)` | `Boolean` | renames or moves it ([below](#rename-or-move-a-file-or-folder)) |
-| `size()` | `Long?` | how many bytes it holds; `null` when it cannot be opened |
-| `modified()` | `Instant?` | when it was last written ([time.md](time.md)); `null` when it does not exist |
-| `read_bytes()` | `Buffer?` | the whole file; `null` when it cannot be read, and an empty buffer for an empty file |
-| `read_bytes_at(position, count)` | `Buffer?` | up to `count` bytes starting `position` bytes in: fewer at the end, none past it; `null` when it cannot be opened |
-| `write_bytes(bytes)` | `Boolean` | replaces the content with `bytes` |
-| `append_bytes(bytes)` | `Long?` | adds `bytes` to the end; answers the position they start at, `null` when they could not all be written |
-| `map()` | `MappedFile?` | the whole file mapped into memory, read-only ([below](#a-file-larger-than-memory-map-it)); `null` when it cannot be opened |
+| `byte_count()` | `Long?` | how many bytes it holds; `null` when it cannot be opened |
+| `last_written()` | `Instant?` | when it was last written ([time.md](time.md)); `null` when it does not exist |
+| `read_as_buffer()` | `Buffer?` | the whole file; `null` when it cannot be read, and an empty buffer for an empty file |
+| `read_buffer_at(position, count)` | `Buffer?` | up to `count` bytes starting `position` bytes in: fewer at the end, none past it; `null` when it cannot be opened |
+| `write_buffer(buffer)` | `Boolean` | replaces the content with the buffer's bytes |
+| `append_buffer(buffer)` | `Long?` | adds the buffer's bytes to the end; answers the position they start at, `null` when they could not all be written |
+
+A file is one holder with two reads: `read_as_string()` when it is text and `read_as_buffer()` when it is bytes,
+and the two writes match them.
 
 ```gdscript title=file_tasks/file_tasks.spite entry
 var console = Console()
@@ -146,11 +149,11 @@ var console = Console()
 func FileTasks() {
     load "../spite_standard_library/windows"
     var log_file = File(".spite/documentation_demo_log.txt")
-    log_file.write("first line")
-    log_file.append(", second line")
+    log_file.write_string("first line")
+    log_file.append_string(", second line")
     var log_exists = log_file.exists()
     console.print("exists", log_exists)
-    var content = log_file.read()
+    var content = log_file.read_as_string()
     crash content
     console.print("content", content)
     var removed = log_file.remove()
@@ -166,13 +169,13 @@ removed true
 exists after remove false
 ```
 
-`read()` is a `String?`: narrow it with `if content { }`, `assert content` (which returns the function's
+`read_as_string()` is a `String?`: narrow it with `if content { }`, `assert content` (which returns the function's
 default) or `crash content` (which halts), exactly like any other `T?` ([failure.md](failure.md)). This entry
 constructor uses `crash`, because `assert` is not allowed in a constructor.
 
-**Bytes.** A cache or an asset file is bytes, not text, and bytes are a `Buffer`: `read_bytes()` reads the
-whole file, `read_bytes_at(position, count)` reads from any position, which is what seeking is for, and
-`append_bytes(bytes)` says where a record landed, which is what an index needs. A `Buffer` reads and writes the
+**Bytes.** A cache or an asset file is bytes, not text, and bytes are a `Buffer`: `read_as_buffer()` reads the
+whole file, `read_buffer_at(position, count)` reads from any position, which is what seeking is for, and
+`append_buffer(buffer)` says where a record landed, which is what an index needs. A `Buffer` reads and writes the
 numbers in it ([below](#bytes-are-a-buffer)). Every call opens and closes the file, so read a large file in
 one call and walk the buffer rather than record by record.
 
@@ -184,16 +187,16 @@ func ByteRecords() {
     var store = File(".spite/documentation_byte_records.bin")
     var record = Buffer(8)
     record.append_long_little_endian(1111)
-    store.write_bytes(record)
+    store.write_buffer(record)
     var next = Buffer(8)
     next.append_long_little_endian(2222)
-    var second_at = store.append_bytes(next)
+    var second_at = store.append_buffer(next)
     crash second_at
-    var read_back = store.read_bytes_at(second_at, 8)
+    var read_back = store.read_buffer_at(second_at, 8)
     crash read_back
-    var second = read_back.read_long_little_endian()
+    var second = read_back.read_long_little_endian_at(0)
     crash second
-    var size = store.size()
+    var size = store.byte_count()
     crash size
     console.print("the second record starts at", second_at, "and holds", second, "of", size, "bytes")
 }
@@ -226,13 +229,13 @@ func MovingFiles() {
     var folder = Directory(".spite/documentation_moving")
     folder.create()
     var draft = File(".spite/documentation_moving/draft.txt")
-    draft.write("notes")
+    draft.write_string("notes")
     var renamed = draft.move_to(".spite/documentation_moving/final.txt")
-    console.print(renamed, draft.name)
+    console.print(renamed, draft.file_name)
     var keeper = File(".spite/documentation_moving/keeper.txt")
-    keeper.write("keep me")
+    keeper.write_string("keep me")
     var replaced = draft.move_to(".spite/documentation_moving/keeper.txt")
-    var kept = keeper.read()
+    var kept = keeper.read_as_string()
     crash kept
     console.print(replaced, kept)
     draft.remove()
@@ -244,56 +247,16 @@ true final.txt
 false keep me
 ```
 
-### A file larger than memory: map it
+### A large file
 
-`file.map()` maps the whole file into the program's memory, read-only, without reading it: the operating system
-brings each page in the first time it is read and may drop it again, so a file of many gigabytes is walked as if
-it were in memory. A `MappedFile` answers `size(): Long`,
-and reads by position with the names a `Buffer` uses ([below](#bytes-are-a-buffer)): `mapped[position]` (a `Byte`),
-`read_short_little_endian_at`, `read_integer_little_endian_at`, `read_long_little_endian_at`, `read_float_little_endian_at`, `read_double_little_endian_at` and their `_big_endian_at` twins,
-`read_bytes_at(position, count)` and `text(position, count)`, each a `T?` that is `null` when the bytes it would read
-are not all inside the file, since a position read from a file is data from outside ([failure.md](failure.md)). The mapping
-is undone when the `MappedFile` is dropped, and a file that is mapped cannot be removed on Windows until then.
+`read_as_buffer()` answers the whole file as a `Buffer`, and whether the bytes are read or the file is mapped into
+memory is the compiler's choice, never the program's: a program says what it reads, not how. A file too large for one
+`Buffer` (past 2 GB) is read in pieces with `read_buffer_at(position, count)`: each call opens, seeks and closes the
+file, which measured about 50 microseconds a call on Windows, so a loop reading a megabyte at a time spends almost
+nothing on it (512 MB in 169 ms, against 572 ms in 64 KB pieces, warm cache). Read a megabyte or more per call;
+there is no separate reader to open and close.
 
-```gdscript title=mapped_records/mapped_records.spite entry
-var console = Console()
-
-func MappedRecords() {
-    load "../spite_standard_library/windows"
-    var store = File(".spite/documentation_mapped_records.bin")
-    var record = Buffer(16)
-    record.append_long_little_endian(1111)
-    record.append_long_little_endian(2222)
-    store.write_bytes(record)
-    total_records(store)
-    store.remove()
-}
-
-func total_records(store: File) {
-    var mapped = store.map()
-    crash mapped
-    var total: Long = 0
-    var position: Long = 0
-    while position < mapped.size() {
-        var value = mapped.read_long_little_endian_at(position)
-        crash value
-        total = total + value
-        position = position + 8
-    }
-    var past_end = mapped.read_long_little_endian_at(16)
-    console.print("the records add up to", total, "and a read past the end is null:", not past_end)
-}
-```
-```output
-the records add up to 3333 and a read past the end is null: true
-```
-
-To stream instead (a file read once, front to back, with no mapping), `read_bytes_at(position, count)`
-already covers it: each call opens, seeks and closes the file, which measured about 50 microseconds a call on
-Windows, so a loop reading a megabyte at a time spends almost nothing on it (512 MB in 169 ms, against 572 ms in
-64 KB pieces, warm cache). Read a megabyte or more per call; there is no separate reader to open and close.
-
-**Independent reads overlap.** Two or more untyped `var name = file.read()` in a row (or `socket.read_line()`),
+**Independent reads overlap.** Two or more untyped `var name = file.read_as_string()` in a row (or `socket.read_line()`),
 each on a name or an attribute and none naming an earlier one, are started together and all finished before the next
 statement: the compiler starts each but the last as a `Concurrent` of its own, so the program waits once for the
 slowest instead of once per file. Nothing is written for it, and nothing after the reads can see a difference:
@@ -301,7 +264,7 @@ a file written by the next statement is written after every read has finished
 ([concurrency.md](concurrency.md#reads-in-a-row-overlap)). What it costs is what a `Concurrent` costs, a frame on
 the heap for each read but the last and the event loop that finishes them, and only in a program that reads this
 way ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-used)). A read or write of a
-`File`, `console.read_line()`, a `Socket`'s `accept_client()`, `read_line()` and `read_bytes()`, and
+`File`, `console.read_line()`, a `Socket`'s `accept_client()`, `read_line()`, `read_as_string()` and `read_as_buffer()`, and
 `program.sleep()` are the library's waits: inside a `Concurrent` each lets other work run. Everything else,
 `Process.run()` included, blocks the thread that calls it, except a `Socket`'s `_now` calls, which never wait.
 
@@ -310,7 +273,7 @@ way ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-
 | Member | Result | Notes |
 |---|---|---|
 | `path` | `String` | |
-| `name` | `String` | the last piece of the path: `Directory("levels/forest").name` is `forest` |
+| `folder_name` | `String` | the last piece of the path: `Directory("levels/forest").folder_name` is `forest` |
 | `entries()` | `List<Directory.Entry>` | every folder and file inside it, as `Directory` and `File` values, each kind sorted by name with a merge sort (`n log n`), so a folder of thousands of files lists quickly |
 | `exists()` / `create()` | `Boolean` | |
 | `move_to(path)` | `Boolean` | renames or moves it with everything inside ([below](#rename-or-move-a-file-or-folder)) |
@@ -325,7 +288,7 @@ func DirectoryTasks() {
     var target_exists = target.exists()
     console.print("exists", target_exists)
     var examples = Directory("examples")
-    var has_hello = examples.entries().filter_directories().map_names().contains("hello")
+    var has_hello = examples.entries().filter_directories().map_folder_names().contains("hello")
     console.print("has hello", has_hello)
 }
 ```
@@ -353,8 +316,8 @@ func DirectoryWalk() {
     var inner = Directory("{root.path}/inner")
     root.create()
     inner.create()
-    File("{root.path}/top.txt").write("top")
-    File("{inner.path}/deep.txt").write("deep")
+    File("{root.path}/top.txt").write_string("top")
+    File("{inner.path}/deep.txt").write_string("deep")
     walk(root)
 }
 
@@ -412,7 +375,7 @@ func WatchFolder() {
     folder.create()
     var watcher = FileSystemWatcher()
     watcher.watch_for_changes(folder)
-    File("{folder.path}/level.txt").write("three goblins")
+    File("{folder.path}/level.txt").write_string("three goblins")
     var changed = watcher.changes()
     var tries = 0
     while changed.is_empty() and tries < 250 {
@@ -453,7 +416,9 @@ func ProcessTasks() {
     var listing = Process("echo", ["build", "finished"])
     var code = listing.run()
     console.print("exit code", code)
-    var trimmed_output = listing.output().trim()
+    var output = listing.read_output_as_string()
+    crash output
+    var trimmed_output = output.trim()
     console.print("output", trimmed_output)
 }
 ```
@@ -468,7 +433,8 @@ output build finished
 | `working_directory` | `String` | the folder the child runs in; `""`, the default, is the program's own |
 | `environment_variables` | `Dictionary<String, String>` | variables set for the child alone, on top of the program's own: `process.environment_variables["LOG"] = "1"` |
 | `run()` | `Integer` | runs it through the system's shell, waits for it and answers its exit code (`-1` when it could not start; on Linux and macOS, a child a signal ended answers 128 plus the signal's number, as a shell reports it); captures standard output as bytes on Windows, where byte `0x1A` does not end the output |
-| `output()` | `String` | what it wrote to its standard output, valid after `run()` |
+| `read_output_as_string()` | `String?` | what it wrote to its standard output, valid after `run()`; `null` when those bytes are not UTF-8 |
+| `read_output_as_buffer()` | `Buffer` | the same output as the bytes it wrote, for a child that writes bytes |
 | `run_attached()` | `Integer` | runs it with the program's own terminal, so what it writes and reads is the user's, and answers its exit code, read as `run()` reads it |
 
 Each argument reaches the child whole, as one argument, whatever it holds. On Linux and macOS each is put in single
@@ -482,10 +448,11 @@ programs that read `-key=value` themselves expect) and still splits back into `-
 
 `working_directory` and `environment_variables` are set by the shell line itself, before the command: a
 `cd` into the folder and one assignment per variable, so a relative command or path is read from that folder, and
-a folder that does not exist fails the run with the shell's exit code. `output()` is read 4 KiB at a time and each
-piece appended in place, so reading 50 MB takes as long as the child takes to write it.
+a folder that does not exist fails the run with the shell's exit code. The output is read 4 KiB at a time and each
+piece appended in place, so reading 50 MB takes as long as the child takes to write it. It is kept as bytes, and
+read as text only when asked, so a child that writes bytes is never forced through a `String`.
 
-`output()` includes the child process's own trailing newline, which is why the example above calls `.trim()`.
+The output includes the child process's own trailing newline, which is why the example above calls `.trim()`.
 What the child writes to its error stream is not captured: it goes to the program's own error stream. `run()`
 is not one of the library's waits: it blocks the thread that calls it, and other `Concurrent` work does not run
 meanwhile ([which calls wait](#read-and-write-a-file)).
@@ -700,31 +667,33 @@ and `spite connect` are written with it, and so is a game server. It is public l
 | `connect_locally(port)`, `connect(host, port)` | connects to `127.0.0.1`, or to a host name (`"example.com"`, `"localhost"`), an IPv4 address (`"192.168.1.20"`) or an IPv6 address (`"::1"`, `"2001:db8::7"`), trying each address a name resolves to in turn, its IPv4 ones first; `false` when the name does not resolve or nobody answers |
 | `accept_client(): Socket?` | waits for the next client |
 | `read_line(): String?` | waits for a whole line, without its line break |
-| `read_bytes(): Buffer?` | waits until at least one byte has arrived and answers what arrived; `null` once the connection is closed |
-| `write_line(text): Boolean`, `write_bytes(bytes): Boolean` | sends all of it, waiting while the system's buffer is full |
+| `read_as_buffer(): Buffer?` | waits until at least one byte has arrived and answers what arrived; `null` once the connection is closed |
+| `read_as_string(): String?` | the same read as text, finishing a character the network cut at its end; `null` once closed, or when the bytes are not UTF-8 |
+| `write_line(text): Boolean`, `write_string(text): Boolean`, `write_buffer(buffer): Boolean` | sends all of it, waiting while the system's buffer is full |
 | `accept_client_now(): Socket?` | the next client if one is already connecting, otherwise `null` at once |
 | `read_line_now(): String?` | a whole line if one has arrived, otherwise `null` at once |
-| `read_bytes_now(): Buffer` | what has already arrived: an empty buffer is nothing yet |
-| `write_bytes_now(bytes): Integer` | hands the system as much of `bytes` as it takes now and answers how many; the rest is the caller's to send later |
+| `read_as_buffer_now(): Buffer` | what has already arrived: an empty buffer is nothing yet |
+| `write_buffer_now(buffer): Integer` | hands the system as much of the buffer as it takes now and answers how many; the rest is the caller's to send later |
 | `closed: Boolean` | `true` once the other end has closed the connection (or it broke, or `close()` was called) |
 | `close()` | closes it |
 
 **Waiting and not waiting.** The calls without `_now` wait the way a program waits anywhere: inside a
-`Concurrent`, `accept_client`, `read_line` and `read_bytes` are points the state machine returns from, so other
+`Concurrent`, `accept_client`, `read_line`, `read_as_string` and `read_as_buffer` are points the state machine returns from, so other
 work runs meanwhile ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). The `_now` calls never
 wait and are plain calls, for a loop that polls every connection once a tick (a game server, which has its own
 frame to keep). Resolving a host name and connecting always wait in place.
 
 **A closed peer is an answer, not a failure.** `read_line()` answers `null` when the
 connection ended before a whole line; `read_line_now()` answers `null` for that and when no whole line has arrived
-yet, and `read_bytes_now` answers an empty buffer both for "nothing yet" and for "closed". `closed` is what tells
+yet, and `read_as_buffer_now` answers an empty buffer both for "nothing yet" and for "closed". `closed` is what tells
 them apart (rather than a count of `-1`), so a buffer of bytes stays a buffer of bytes:
 
 ```gdscript
 func poll(connection: Socket) {
-    var received = connection.read_bytes_now()
+    var received = connection.read_as_buffer_now()
     if not received.is_empty() {
-        inbound.append_bytes(received, 0, received.count())
+        var received_count = received.count()
+        inbound.append_buffer(received, 0, received_count)
     } else if connection.closed {
         forget(connection)
     }
@@ -737,15 +706,16 @@ Every read answers a buffer of its own, as `UdpSocket`'s does, and the numbers i
 
 ## `UdpSocket`
 
-`UdpSocket()` sends and receives UDP datagrams over IPv4 and IPv6, the same on Windows, Linux and macOS. A datagram is a `Buffer`, and one call is one datagram.
+`UdpSocket()` sends and receives UDP datagrams over IPv4 and IPv6, the same on Windows, Linux and macOS. A datagram is bytes, read as a `Buffer` or as text, and one call is one datagram.
 
 | Member | Does |
 |---|---|
 | `open()`, `open_locally(port)`, `open_everywhere(port)`, `open_at(host, port)` | opens on a port the system picks (a client), or on `port` of `127.0.0.1`, of every interface of both IPv4 and IPv6, or of the one interface a host name or address names (`"::1"`; a name with both kinds of address opens on its IPv4 one); port `0` is one the system picks; `false` when the port is taken or the name does not resolve |
 | `port: Integer` | get-only: the port the socket is open on, the one the system gave it after `open()` (asked of the system with `getsockname`), so a client can tell a server where to answer; reading it from a socket that is not open halts, since it has none, and a program that wants the number after `close()` keeps it in a `var` before closing, which says it means to |
-| `send_to(host, port, bytes): Boolean` | sends one datagram to a host name or an IPv4 or IPv6 address; a name with both kinds of address is sent to its IPv4 one; `false` when the name does not resolve to an address the socket can reach (an IPv6 one from `open_locally`) or the system refuses it |
-| `receive(): Buffer?` | waits for the next datagram; `null` when the socket is closed |
-| `receive_now(): Buffer?` | the next datagram if one has arrived, otherwise `null` at once |
+| `send_to(host, port, buffer): Boolean` | sends one datagram to a host name or an IPv4 or IPv6 address; a name with both kinds of address is sent to its IPv4 one; `false` when the name does not resolve to an address the socket can reach (an IPv6 one from `open_locally`) or the system refuses it |
+| `receive_as_buffer(): Buffer?` | waits for the next datagram; `null` when the socket is closed |
+| `receive_as_string(): String?` | the same, as text: `null` too when the datagram is not UTF-8 |
+| `receive_as_buffer_now(): Buffer?` | the next datagram if one has arrived, otherwise `null` at once |
 | `sender_host(): String`, `sender_port(): Integer` | who sent the datagram received last, to answer with `send_to`: an IPv4 address as `"127.0.0.1"`, an IPv6 one in its shortest form (`"::1"`, `"2001:db8::7"`) |
 | `close()` | closes it |
 
@@ -754,19 +724,21 @@ datagrams; reliable channels are the program's.
 
 ## HTTP
 
-`HttpServer` and `HttpClient` speak HTTP/1.1 over `Socket`, keeping a connection open for the next exchange. A client writes the requested host and includes a nonstandard port in the `host` header, with IPv6 addresses bracketed before the port.
-A message is an `HttpRequest` (`method`, `path`, `version`, `headers`, `body`) or an `HttpResponse` (`status`,
-`headers`, `body`); `header(name)` reads a header whatever its case and `set_header(name, value)` writes one, and
-`reason()` is the response's reason phrase. Bodies are text.
+`Http.Server` and `Http.Client` speak HTTP/1.1 over `Socket`, keeping a connection open for the next exchange. A client writes the requested host and includes a nonstandard port in the `host` header, with IPv6 addresses bracketed before the port.
+A message is an `Http.Request` (`method`, `path`, `version`, `headers`, a body) or an `Http.Response` (`status`,
+`headers`, a body); `header(name)` reads a header whatever its case and `set_header(name, value)` writes one, and
+`reason()` is the response's reason phrase. A body is bytes, one holder with two reads: `read_body_as_string()`
+(a `String?`, `null` when the body is not UTF-8) and `read_body_as_buffer()`, written with `write_body_string(text)`
+or `write_body_buffer(buffer)`, so an image or a compressed body is never forced through a `String`.
 
 | Member | Does |
 |---|---|
-| `HttpServer.listen_locally(port)`, `listen_everywhere(port)` | listens, like `Socket` |
-| `HttpServer.next_request(): HttpRequest?` | waits for the next well-formed request, on a new connection or on one kept open; a malformed one is answered `400 Bad Request` and its connection closed, and a body over `largest_body` (1 MiB) counts as malformed; `null` when the listener fails or is closed |
-| `HttpServer.respond(request, response)` | writes the response with its `content-length`, and keeps the connection open for the client's next request unless the client asked to close it |
-| `HttpServer.close()` | stops listening and closes every connection kept open |
-| `HttpClient.send(host, port, request): HttpResponse?` | sends the request with `host` and `content-length` over a connection kept open to that host and port, or a new one, and reads the response, whether its body is sized, chunked or ends when the connection closes; `null` when nobody answers or the response is malformed |
-| `HttpClient.close()` | closes the connections it keeps open |
+| `Http.Server.listen_locally(port)`, `listen_everywhere(port)` | listens, like `Socket` |
+| `Http.Server.next_request(): Http.Request?` | waits for the next well-formed request, on a new connection or on one kept open; a malformed one is answered `400 Bad Request` and its connection closed, and a body over `largest_body` (1 MiB) counts as malformed; `null` when the listener fails or is closed |
+| `Http.Server.respond(request, response)` | writes the response with its `content-length`, and keeps the connection open for the client's next request unless the client asked to close it |
+| `Http.Server.close()` | stops listening and closes every connection kept open |
+| `Http.Client.send(host, port, request): Http.Response?` | sends the request with `host` and `content-length` over a connection kept open to that host and port, or a new one, and reads the response, whether its body is sized, chunked or ends when the connection closes; `null` when nobody answers or the response is malformed |
+| `Http.Client.close()` | closes the connections it keeps open |
 
 **Connections are kept alive.** HTTP/1.1 keeps a connection open between exchanges, and both sides do: a server
 answers `connection: keep-alive` and waits on every open connection and on its listener at once, and a client
@@ -786,62 +758,83 @@ while a client is slow to send the rest of a request, the other connections wait
 
 ## WebSocket
 
-`WebSocket()` keeps one connection open in both directions and carries messages over it, text or bytes, from
+A WebSocket keeps one connection open in both directions and carries messages over it, text or bytes, from
 either side at any time: what a browser game or a chat speaks once its page has loaded. A connection starts as an
-HTTP request, so a server takes it from `HttpServer.next_request()`, and from there both ends are the same class.
+HTTP request, so the server is built on an `Http.Server`, the way an Express app serves both from one port:
+`WebSocket.Server(http)` takes the server the program already has. The program keeps its own HTTP loop, asks
+`asks_to_upgrade(request)`, and `accept(request)` answers a `WebSocket.Connection`; every other request is the
+program's to answer.
 
 ```gdscript
-var server = HttpServer()
+var http = Http.Server()
+var sockets = WebSocket.Server(http)
 
 func serve() {
-    var request = server.next_request()
+    var request = http.next_request()
     crash request
-    var socket = WebSocket()
-    assert socket.accept(request)
-    var message = socket.receive()
+    if not sockets.asks_to_upgrade(request) {
+        var page = Http.Response()
+        page.write_body_string("hello")
+        http.respond(request, page)
+        return
+    }
+    var connection = sockets.accept(request)
+    assert connection
+    var message = connection.receive()
     while message {
-        switch message {
-            WebSocketText: socket.send_text("you said {message.text}")
-            WebSocketBinary: socket.send_bytes(message.bytes)
+        if message.is_text() {
+            var text = message.read_as_string()
+            crash text
+            connection.send_string("you said {text}")
+        } else {
+            var bytes = message.read_as_buffer()
+            connection.send_buffer(bytes)
         }
-        message = socket.receive()
+        message = connection.receive()
     }
 }
 ```
 
-A client asks with an `HttpRequest`, whose `path` and headers (an `origin`, a cookie, the subprotocols it speaks
-in `sec-websocket-protocol`) go out with the handshake:
+`accept` answers `null` when the upgrade is malformed, after answering it itself (`400 Bad Request`, or `426 Upgrade
+Required` for a version other than 13), so a request is never answered twice. A client asks with an
+`Http.Request`, whose `path` and headers (an `origin`, a cookie, the subprotocols it speaks in
+`sec-websocket-protocol`) go out with the handshake:
 
 ```gdscript
 func talk() {
-    var socket = WebSocket()
-    var request = HttpRequest()
+    var socket = WebSocket.Client()
+    var request = Http.Request()
     request.path = "/chat"
     crash socket.connect("127.0.0.1", 8080, request)
-    socket.send_text("hello")
+    socket.send_string("hello")
     var answer = socket.receive()
     crash answer
-    switch answer {
-        WebSocketText: console.print(answer.text)
-        WebSocketBinary: console.print("{answer.bytes.count()} bytes")
-    }
+    var text = answer.read_as_string()
+    crash text
+    console.print(text)
     socket.close()
 }
 ```
 
+Both sides talk through the same members, the client's and a `WebSocket.Connection`'s, and every message
+received is a `WebSocket.Message`, one holder with two reads: `is_text()`, `read_as_string()` (a `String?`,
+`null` for a binary message) and `read_as_buffer()`.
+
 | Member | Does |
 |---|---|
-| `accept(request): Boolean` | answers a request from `HttpServer.next_request()` with `101 Switching Protocols` and keeps its connection; a request that is not a WebSocket handshake is answered `400 Bad Request` (or `426 Upgrade Required` for a version other than 13), its connection closed, and `false` |
-| `connect(host, port, request): Boolean` | connects like `Socket.connect`, sends the handshake with the request's path and headers, and checks the server's answer; `false` when nobody answers or the answer is not a WebSocket one |
-| `send_text(text): Boolean`, `send_bytes(bytes): Boolean` | sends one message, a text or a `Buffer`; `false`, sending nothing, once the connection has ended or `close()` was called |
+| `WebSocket.Server(http)` | the upgrades of requests `http.next_request()` hands out |
+| `asks_to_upgrade(request): Boolean` | whether the request asks for a WebSocket (its `upgrade` header is `websocket`) |
+| `accept(request): WebSocket.Connection?` | answers the request with `101 Switching Protocols` and keeps its connection; `null` after refusing a malformed upgrade; a request that does not ask to upgrade halts |
+| `WebSocket.Client().connect(host, port, request): Boolean` | connects like `Socket.connect`, sends the handshake with the request's path and headers, and checks the server's answer; `false` when nobody answers or the answer is not a WebSocket one |
+| `send_string(text): Boolean`, `send_buffer(buffer): Boolean` | sends one message, a text or a `Buffer`; `false`, sending nothing, once the connection has ended or `close()` was called |
 | `send_ping(bytes): Boolean` | sends a ping carrying up to 125 bytes |
-| `receive(): WebSocket.Message?` | waits for the next whole message, a `WebSocketText` (`text`) or a `WebSocketBinary` (`bytes`); `null` once the connection has ended |
+| `receive(): WebSocket.Message?` | waits for the next whole message, text or bytes; `null` once the connection has ended |
 | `close()` | starts the closing handshake with code 1000; messages already on their way still arrive through `receive()`, which answers `null` once the other side has answered the close |
-| `closed: Boolean` | `true` once the connection has ended, and before `accept` or `connect` has opened it |
+| `closed: Boolean` | `true` once the connection has ended, and on a client before `connect` has opened it |
 | `close_code: Integer?` | how it ended: the code of the closing handshake, `null` while it is open |
 | `close_reason: String` | the text the other side's close carried, often empty |
 | `last_pong: Buffer?` | what the latest pong carried, `null` until one arrives |
-| `largest_message: Integer` | the longest message `receive()` takes, 16 MiB unless set |
+| `largest_message: Integer` | on a `WebSocket.Connection`: the longest message `receive()` takes, 16 MiB unless set |
 
 **What arrives is checked, and a broken connection says so.** Pings are answered with a pong while `receive()`
 waits, and a message sent in pieces arrives whole. Anything the protocol forbids ends the connection instead of
@@ -851,7 +844,7 @@ answers `null` with `close_code` set to that code. The codes are the protocol's 
 | `close_code` | Means |
 |---|---|
 | `1000` | a normal close, by either side |
-| `1001` | the other side went away (a `WebSocket` dropped without `close()` sends it) |
+| `1001` | the other side went away (a connection dropped without `close()` sends it) |
 | `1002` | a frame the protocol forbids: one a client did not mask (or a server did), a reserved bit or opcode, a piece of a message that was never started, a ping or close too long or in pieces, a close code nobody may send |
 | `1005` | the other side closed without giving a code |
 | `1006` | the connection broke without a close at all |
@@ -866,14 +859,15 @@ one `Concurrent` each. `wss`, WebSocket over TLS, belongs here as well.
 ## Bytes are a `Buffer`
 
 Bytes a program reads or writes are a `Buffer`, whoever hands them over: a `File`, a `Socket`, a `UdpSocket`, a
-`WebSocket`, a `BinaryWriter`. A file format or a network message is numbers laid out in bytes, so a `Buffer` reads
-and writes those numbers, in the byte order the format uses, either front to back or at any position.
+`WebSocket.Message`, an HTTP body, a `Process`'s output, a `BinaryWriter`. A file format or a network message is
+numbers laid out in bytes, so a `Buffer` reads and writes those numbers, in the byte order the format uses, at the
+position the format puts them.
 
 A `Buffer` is still a run of bytes, and everything a list of bytes does it does the same way: `count()`,
 `is_empty()`, `buffer[index]` (a `Byte?`), `buffer[index] = byte`, `append(byte)`, `truncate(count)`, `clear()`,
 `copy()`, and the templates and passed functions a list is walked with
 ([collections.md](collections.md#listt)). It keeps the bytes themselves in one block, so a read is one load and there
-is no list hiding inside it. `reserve(count)` makes room before writing, when the size is known.
+is no list hiding inside it. How much room it keeps is the library's and the compiler's.
 
 **There is no list of bytes.** `List<Byte>` is a compile error wherever it is written, and wherever the compiler
 would make one: a run of bytes has one class, so there is one way to hold it, and it is the class that can read
@@ -886,27 +880,27 @@ binary format, or `_big_endian`, which puts the most significant byte first (PNG
 it reads, one buffer may hold both orders, each read where its format says, and the order of every read is known
 while compiling. A `byte` and a `tiny` are one byte and have no order. A buffer is made with a size,
 `Buffer(size)`, for the bytes the program knows it will write (`Buffer(0)` when nothing is known): the size is a
-suggestion for room, never a limit, and the buffer grows past it as always.
+suggestion for room, never a limit, and the buffer grows past it as always. The one place the room matters is a
+foreign function that writes into it: pass `Buffer(4096)`, then `take_written(count)` says how many bytes it
+wrote ([foreign_libraries.md](foreign_libraries.md)).
 
-**A buffer has a position.** `position` starts at `0`. A read without a position reads there and moves past what it
-read, so a message is read front to back without counting bytes by hand; a read with `_at` reads anywhere and moves
-nothing. `remaining()` is how many bytes are left after the position.
+**Every read says where.** A buffer has no reading position of its own: each read names its position, and a
+program walking a message keeps its own, `var at = 0`, moved past what it read. There is one way to read a number.
 
 | Member | Result | Notes |
 |---|---|---|
-| `read_<number>()` | `<number>?` | the number whose bytes start at `position`, then `position` moves past it; `null`, moving nothing, unless every byte is in the buffer |
-| `read_<number>_at(position)` | `<number>?` | the number whose bytes start at `position`, moving nothing; `null` unless every byte is in the buffer |
+| `read_<number>_at(position)` | `<number>?` | the number whose bytes start at `position`; `null` unless every byte is in the buffer |
 | `append_<number>(value)` | | adds the number's bytes at the end |
 | `write_<number>_at(position, value)` | | replaces the bytes at `position`; a position whose bytes are not all in the buffer halts |
-| `read_bytes(count)`, `read_bytes_at(position, count)` | `Buffer?` | a new buffer of `count` bytes, from `position` (and moving it) or from anywhere; `null` unless every byte is there |
-| `append_bytes(other, start, count)` | | copies `count` bytes of `other`, from `start`, to the end; a run not inside `other` halts |
-| `to_utf8_text()` | `String?` | the text the bytes spell, `null` when they are not valid UTF-8 ([below](#bytes-base64-compression-hashes-and-passwords)) |
+| `read_buffer_at(position, count)` | `Buffer?` | a new buffer of the `count` bytes at `position`; `null` unless every byte is there |
+| `append_buffer(other, start, count)` | | copies `count` bytes of `other`, from `start`, to the end; a run not inside `other` halts |
+| `read_string_at(position, count)` | `String?` | the text the `count` bytes at `position` spell, `null` when they are not valid UTF-8 |
+| `read_as_string()` | `String?` | the text all the bytes spell, `null` when they are not valid UTF-8 ([below](#bytes-base64-compression-hashes-and-passwords)) |
 
 `<number>` is `tiny`, or one of `short`, `unsigned_short`, `integer`, `unsigned_integer`, `long`, `unsigned_long`,
-`float` or `double` followed by `_little_endian` or `_big_endian`, so the functions are `read_integer_little_endian()`,
-`read_unsigned_short_big_endian_at(4)`, `append_double_little_endian(value)`, and so on;
-`read_byte()` reads one `Byte` at the position too, while one byte anywhere is `buffer[position]` and one more at the
-end is `append(byte)`. A `List` has none of these functions, whatever it holds: calling one on a list is a compile
+`float` or `double` followed by `_little_endian` or `_big_endian`, so the functions are `read_integer_little_endian_at(0)`,
+`read_unsigned_short_big_endian_at(4)`, `append_double_little_endian(value)`, and so on; one byte anywhere is
+`buffer[position]` and one more at the end is `append(byte)`. A `List` has none of these functions, whatever it holds: calling one on a list is a compile
 error that says to keep the bytes in a `Buffer`.
 
 A read answers a `T?` because the bytes came from outside: narrow it, or prove it. One bound proves every `_at` read
@@ -915,8 +909,7 @@ number, and in a loop over the buffer (`while position + 15 < records.count()`, 
 read inside the window is one load, with no test at all
 ([proofs.md](proofs.md#a-proven-count-or-bound-proves-a-read-of-a-width)). An index built from loop counters,
 `row * stride + column`, is proven by one `crash height * stride <= pixels.count()` before the loops
-([proofs.md](proofs.md#a-proven-count-or-bound-proves-a-read)). A read at the position is always
-checked, so use `_at` in a loop that must not test.
+([proofs.md](proofs.md#a-proven-count-or-bound-proves-a-read)).
 
 ```gdscript title=byte_numbers/byte_numbers.spite entry
 var console = Console()
@@ -934,11 +927,14 @@ func ByteNumbers() {
 }
 
 func read_records(message: Buffer): Integer {
-    var count = message.read_unsigned_short_big_endian()
+    var at = 0
+    var count = message.read_unsigned_short_big_endian_at(at)
     crash count
-    var first = message.read_integer_big_endian()
+    at = at + 2
+    var first = message.read_integer_big_endian_at(at)
     crash first
-    var second = message.read_integer_big_endian()
+    at = at + 4
+    var second = message.read_integer_big_endian_at(at)
     crash second
     console.print(count, "records:", first, second)
     return count
@@ -959,13 +955,13 @@ the buffer's numbers, as above. The rules, the edge cases and the error texts ar
 **Memory C hands out.** A foreign library sometimes answers an address and a size, such as a GPU buffer mapped for the
 program to fill. `ForeignBytes(address, count)` wraps it: `count()`, `foreign[position]` and `foreign[position] =
 value` for one byte, the same `read_<number>_at` and `write_<number>_at` functions, with their byte order in the name, as a `Buffer`
-(each read a `T?`, each write halting outside the memory), `read_bytes_at(position, count): Buffer?` and
-`write_bytes_at(position, bytes)`. It has no position of its own. The memory stays C's: `ForeignBytes` never frees
+(each read a `T?`, each write halting outside the memory), `read_buffer_at(position, count): Buffer?` and
+`write_buffer_at(position, buffer)`. It has no position of its own. The memory stays C's: `ForeignBytes` never frees
 it, and it is only as alive as the library says it is.
 
 ## Bytes: base64, compression, hashes and passwords
 
-These classes take and answer a `Buffer`, and `text.to_bytes()` gives a text's bytes as one. `bytes.to_utf8_text()`
+These classes take and answer a `Buffer`, and `text.to_buffer()` gives a text's bytes as one. `bytes.read_as_string()`
 turns bytes back into text: it answers a `String?`, `null` when the bytes are not valid UTF-8 (a stray continuation
 byte, a cut sequence, an overlong form, a surrogate or a value past U+10FFFF), so bytes from outside are never
 taken for text they do not spell (`conformance/stage6/utf8_text`). Each is written in Spite, so a program that uses none of them
@@ -979,7 +975,7 @@ carries none of them.
 | | `decompress(bytes): Buffer?` | the bytes back, with no length given in advance; `null` for a truncated or malformed stream, a checksum or size that does not match, or bytes after the end |
 | `Sha256` | `hash(bytes): Buffer` | the 32-byte SHA-256 digest (FIPS 180-4) |
 | | `hmac(key, message): Buffer` | HMAC-SHA256 (RFC 2104), a key longer than 64 bytes hashed first |
-| `SecureRandom` | `bytes(count): Buffer` | bytes from the operating system's secure source: `BCryptGenRandom` on Windows, `getrandom` on Linux, `getentropy` on macOS; a failure of the source crashes |
+| `SecureRandom` | `random_buffer(count): Buffer` | bytes from the operating system's secure source: `BCryptGenRandom` on Windows, `getrandom` on Linux, `getentropy` on macOS; a failure of the source crashes |
 | `Argon2` | `hash(password): String` | a new Argon2id (RFC 9106) hash as a PHC string, `$argon2id$v=19$m=65536,t=3,p=1$<salt>$<tag>`: 64 MiB, 3 passes, 1 lane, a 16-byte random salt and a 32-byte tag |
 | | `verify(password, stored): Boolean?` | whether the password is the one `stored` was made from, for `argon2id`, `argon2i` and `argon2d` PHC strings of version 19 with any cost; `null` when `stored` is not such a string, so a damaged record is not taken for a wrong password; the tags are compared in constant time |
 | | `derive(password, salt, time_cost, memory_cost, lanes, tag_length): Buffer` | the raw Argon2id tag, `memory_cost` in KiB |

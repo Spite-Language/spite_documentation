@@ -108,11 +108,11 @@ func ReadsInARow() {
     load "../spite_standard_library/windows"
     var settings_file = File(".spite/documentation_settings.txt")
     var scores_file = File(".spite/documentation_scores.txt")
-    settings_file.write("volume=7")
-    scores_file.write("ada=12")
-    var settings = settings_file.read()
-    var scores = scores_file.read()
-    settings_file.write("volume=8")
+    settings_file.write_string("volume=7")
+    scores_file.write_string("ada=12")
+    var settings = settings_file.read_as_string()
+    var scores = scores_file.read_as_string()
+    settings_file.write_string("volume=8")
     crash settings
     crash scores
     console.print(settings, scores)
@@ -142,7 +142,7 @@ the program's event loop runs it again from where it stopped. There is no stack 
 | The program writes | While it waits |
 |---|---|
 | `program.sleep(milliseconds)` | the state machine returns, and is run again once its time has come |
-| `Console.read_line()`, reading or writing a `File`, a `Socket`'s `accept_client`, `read_line` or `read_bytes` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
+| `Console.read_line()`, reading or writing a `File`, a `Socket`'s `accept_client`, `read_line`, `read_as_string` or `read_as_buffer` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
 | reading a `Concurrent`'s value, or dropping it | the state machine is run again once that one has finished |
 | reading a `Parallel`'s value, or dropping it | the thread running it is joined, then anything ready runs once |
 
@@ -153,7 +153,7 @@ Spite code runs on the program's thread at a time, and a state machine only stop
 two pieces of Spite code touch the program's state at the same time. The helper thread runs the system call and
 nothing else.
 
-**What waits inside a state machine.** A wait written as a call (`program.sleep(5)`, `file.read()`,
+**What waits inside a state machine.** A wait written as a call (`program.sleep(5)`, `file.read_as_string()`,
 `reading.length()` on a `Concurrent`, a function of your own that waits) is a point the state machine returns
 from, wherever the call is written: in a `var`, an argument, a `{...}` inside text, a `while` condition (which
 waits again on every pass), the right side of `and` or `or`, a call through a function value, a union or a `type`,
@@ -190,8 +190,8 @@ read before the wait: 3 read after it: 100
 `count` is read before `bump()` runs, as written, so the sum is `1 + 2`. A local or a parameter is not copied
 for this, since nothing else can change it while the `Concurrent` waits.
 
-**A call that never waits is not a wait.** A `Socket`'s `accept_client_now`, `read_line_now`, `read_bytes_now`
-and `write_bytes_now` answer at once with what is there ([standard_library.md](standard_library.md#socket)), so
+**A call that never waits is not a wait.** A `Socket`'s `accept_client_now`, `read_line_now`, `read_as_buffer_now`
+and `write_buffer_now` answer at once with what is there ([standard_library.md](standard_library.md#socket)), so
 they are ordinary calls: a game loop that polls its connections every frame has no state machine and no helper
 thread for them, and it waits only where it sleeps until the next frame.
 
@@ -296,7 +296,7 @@ of a stage sees the world half updated. So an engine says where they resume:
 - Reading a `Concurrent`'s value, or dropping it, still runs them all until that one is done. The program asked for
   that one, and it may be waiting on another, so a join never waits for something only the loop could finish.
 
-The IO itself goes on meanwhile: a blocking read inside a `Concurrent` (a file, or a `Socket`'s `read_bytes`)
+The IO itself goes on meanwhile: a blocking read inside a `Concurrent` (a file, or a `Socket`'s `read_as_buffer`)
 runs on its helper thread, and the state machine continues on the program's thread at the next `run_ready()`.
 
 ```gdscript title=frame_io/save_game.spite
@@ -306,7 +306,7 @@ var save = File(".spite/documentation_save.txt")
 func update_each() {
     var loads = 0
     while loads < 3 {
-        var text = save.read()
+        var text = save.read_as_string()
         crash text
         loads = loads + 1
         console.print("load", loads, "read", text)
@@ -322,7 +322,7 @@ func FrameIo() {
     load "../spite_standard_library/windows"
     scheduler.resume_only_when_asked()
     var save_file = File(".spite/documentation_save.txt")
-    save_file.write("level 3")
+    save_file.write_string("level 3")
     var game = SaveGame()
     var loading = Concurrent(game.update_each)
     var frames = 0
@@ -364,7 +364,7 @@ var text = ""
 func fetch() {
     program.sleep(100)
     var file = File(".spite/documentation_report.txt")
-    var read = file.read()
+    var read = file.read_as_string()
     crash read
     text = read
 }
@@ -378,7 +378,7 @@ var frames = 0
 func FrameWaits() {
     load "../spite_standard_library/windows"
     var file = File(".spite/documentation_report.txt")
-    file.write("sales are up")
+    file.write_string("sales are up")
     while report.text.is_empty() {
         frames = frames + 1
         if frames == 1 {

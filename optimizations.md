@@ -651,8 +651,8 @@ a list slot. What you can observe: the time, and a text's room, which can be up 
 
 ### Bytes are copied in one block
 
-The library's text and bytes functions (`slice`, `sum`, `replace`, `split`, `trim`, `upper_case`, `to_bytes`,
-`Buffer.append_bytes` and the rest) copy runs of bytes as one block copy, not a call per byte. `equals`,
+The library's text and bytes functions (`slice`, `sum`, `replace`, `split`, `trim`, `upper_case`, `to_buffer`,
+`Buffer.append_buffer` and the rest) copy runs of bytes as one block copy, not a call per byte. `equals`,
 `starts_with`, `contains`, `index_of`, `split` and `replace` compare eight bytes at a time and look for a match only
 where the first byte matches. A number's `to_string()` counts its digits, makes room once and writes them from the
 last.
@@ -918,8 +918,8 @@ callers as before.
 ### A call that returns at once on a test is tested in place
 
 A call inside a loop to a function too large to inline, whose first block only reads and compares and then returns
-nothing on one side, makes that test in the caller: the call runs only on the other side. A list's `reserve()` called
-by every `append` is a compare with the capacity, and the call is made only when the list grows.
+nothing on one side, makes that test in the caller: the call runs only on the other side. A list's private `_reserve()` called
+by every `append` is a compare with its room, and the call is made only when the list grows.
 
 ### The class of an object made in the function is known
 

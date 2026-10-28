@@ -77,8 +77,6 @@ Ada "the" first shipped tea 2
 - `JsonReader<T>()` names the type it makes and takes nothing, and `read(text: String): T?` answers `null` when the
   text is not JSON, or not this class's JSON; one reader reads any number of texts. Narrow it like any other `T?`: `crash` when bad input is a bug, `assert` when the program should carry on,
   `if` when absence is a case.
-- `read_or_crash(text: String): T` halts on bad input instead, at the point the reader finds it, and the crash line shows what
-  was wanted there, the position and the text: `wanted=a number	text={"count": three}	position=10`.
 
 ## Write and read bytes
 
@@ -86,7 +84,7 @@ Ada "the" first shipped tea 2
 value into bytes and back. Each names its type, is made once and is reused, and each call carries its own input.
 The bytes are a `Buffer`, the bytes themselves in one block
 ([standard_library.md](standard_library.md#bytes-are-a-buffer)). Reading or writing a single number at a position is
-not a serializer's job but the buffer's own (`buffer.read_integer_little_endian()`, `buffer.append_long_little_endian(value)`, and the `_big_endian` twins); the pair is for
+not a serializer's job but the buffer's own (`buffer.read_integer_little_endian_at(position)`, `buffer.append_long_little_endian(value)`, and the `_big_endian` twins); the pair is for
 values of your classes:
 
 ```gdscript title=binary_basics/order.spite
@@ -144,21 +142,15 @@ The same `Order` is 23 bytes here and 104 as JSON: `id` and `total` (a `Float`) 
 `"Ada"` a length byte and three, the empty `note` one, and there are no keys, quotes or commas at all. [The binary format](#the-binary-format)
 says exactly what each type becomes.
 
-- `write(value): Buffer` answers a new buffer holding the value. `append_to(value, bytes)` writes it at the
-  end of a buffer the program already has instead, so many values (a network frame's worth of messages, a file's
-  records) go into one buffer with no copying.
+- `write(value): Buffer` answers a new buffer holding the value.
 - `read(bytes): T?` reads one value that fills the bytes exactly. It answers `null` when the bytes run out in the
   middle of the value, when they are not a `T` (a `Boolean` byte that is neither 0 nor 1, an enum index the enum
   does not have, a count larger than the bytes left), and when bytes are left over after it, as JSON's `read`
   does with text after the value.
-- `read_from(bytes, start): T?` reads one value starting `start` bytes in and leaves the bytes after it alone:
-  `position` (an attribute) is then where the value ended, so values written one after another are read one
-  after another by starting each read at the last one's `position`. It answers `null` for the same bad bytes and
-  when `start` is at or past the end, and a failed read leaves `position` where it was; a negative `start` halts.
 Bytes from a `Socket` or a `File` are already a `Buffer`, so they are read the same way:
 
 ```gdscript
-var received = connection.read_bytes_now()
+var received = connection.read_as_buffer_now()
 var reader = BinaryReader<Move>()
 var move = reader.read(received)
 ```
@@ -167,37 +159,39 @@ Infinity and not-a-number are ordinary bytes: only JSON cannot hold them, so `Bi
 
 ### Several values in one buffer
 
+Many values are one value: a list of them, or a class that holds them, which a writer writes in one call and a
+reader reads back in one. A network frame's worth of messages is a `List<Message>`, and a header with what follows
+it is a class with both, so nothing counts bytes by hand:
+
+```gdscript title=binary_stream/turn.spite
+var names = List<String>()
+var turn = 0
+```
 ```gdscript title=binary_stream/binary_stream.spite entry
 var console = Console()
 
 func BinaryStream() {
     load "../spite_standard_library/windows"
-    var bytes = Buffer(0)
-    var names = ["ada", "bo", "cy"]
-    var name_writer = BinaryWriter<List<String>>()
-    name_writer.append_to(names, bytes)
-    var turn_writer = BinaryWriter<Integer>()
-    turn_writer.append_to(12, bytes)
+    var played = Turn()
+    played.names = ["ada", "bo", "cy"]
+    played.turn = 12
+    var writer = BinaryWriter<Turn>()
+    var bytes = writer.write(played)
     var size = bytes.count()
     console.print("bytes:", size)
-    var name_reader = BinaryReader<List<String>>()
-    var read_names = name_reader.read_from(bytes, 0)
-    crash read_names
-    var turn_reader = BinaryReader<Integer>()
-    var read_turn = turn_reader.read_from(bytes, name_reader.position)
-    crash read_turn
-    var left = size - turn_reader.position
-    var joined = read_names.join(" ")
-    console.print(joined, read_turn, left)
+    var reader = BinaryReader<Turn>()
+    var read = reader.read(bytes)
+    crash read
+    var joined = read.names.join(" ")
+    console.print(joined, read.turn)
 }
 ```
 ```output
 bytes: 15
-ada bo cy 12 0
+ada bo cy 12
 ```
 
-A reader reads one type; to read a different one from the same bytes, a second reader starts at the first one's
-`position`. A header is written the same way, with a writer of its own ahead of the value.
+A part of a buffer someone else laid out is taken first with `read_buffer_at(position, count)` and read from that.
 
 ## What each type becomes
 

@@ -162,7 +162,7 @@ var loaded = List<String>()
 
 func load_each(path: String, into: List<String>) {
     var file = File(path)
-    var text = file.read()
+    var text = file.read_as_string()
     assert text
     into.append(path)
     loaded.append(text)

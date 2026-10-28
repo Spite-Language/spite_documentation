@@ -139,7 +139,7 @@ is a single letter: give it a name that says what it holds
 ### The words of a name
 
 An abbreviation is a name you have to translate, so there are none: `DLL` became `DynamicLibrary`. The exceptions are
-small and exact. A well-known acronym followed by a full word that carries the meaning, as in `HttpClient`, because
+small and exact. A well-known acronym followed by a full word that carries the meaning, as in `Http.Client`, because
 most people know HTTP and few know what it stands for; the acronym is written as a word, `Http`, not `HTTP`. And the
 axis names `x`, `y`, `z` and `w`, which are the names of what they hold.
 

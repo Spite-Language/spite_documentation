@@ -34,13 +34,12 @@ var empty = List<String>()
 | `remove_where(test)` / `remove_where_<member>()` | | removes every element the test is true for, in one pass, keeping the rest in order ([below](#removing-many-at-once)) |
 | `truncate(count)` | | keeps the first `count` elements and releases the rest; nothing happens when `count` is out of range |
 | `swap(first, second)` | | exchanges two elements; nothing happens when either is out of range |
-| `reserve(count)` | | makes room for `count` elements in all without adding any, so appending up to there never grows the buffer |
 | `remove_first()` / `remove_last()` | `T?` | removes and returns it; `null` when empty, like `first()` |
 | `first()` / `last()` | `T?` | `null` when empty, like `[]`: narrow it, `crash first` or `if first { }` |
 | `count()` / `is_empty()` | `Integer` / `Boolean` | `count()` is only ever the list's size |
 | `contains(value)` | `Boolean` | elements that are numbers, `Boolean`, `String` or an enum only |
 | `index_of(value)` | `Integer?` | the place of the first element equal to `value`, or `null` when none is; the same elements as `contains` |
-| `clear()` / `reverse()` | | in place; `clear()` keeps the buffer's capacity |
+| `clear()` / `reverse()` | | in place; `clear()` keeps the room the list had |
 | `join(separator)` | `String` | every element becomes text: a `String`, a number, a `Boolean`, an enum value |
 | `copy()` / `deep_copy()` | `List<T>` | one level, or all the way down ([memory.md](memory.md)) |
 

@@ -227,7 +227,7 @@ takes them: `Color(0.2, 0.5, 0.9, 1.0)`. Text becomes a colour through `to_color
 writes for one: `"#ff6347".to_color()`, and the same for `#rgb`, `#rgba`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()`
 and `hsla()` with commas or spaces and an alpha after a `/`, and the 148 CSS colour names. It answers a `Color?`,
 `null` for text that names no colour, so `crash` it when the text is your own and a mistake would be a bug.
-A colour writes itself back as `to_hex()`, `to_rgb_text()` and `to_hsl_text()`, and
+A colour writes itself back as `to_hexadecimal_string()`, `to_rgb_string()` and `to_hsl_string()`, and
 `to_linear()` and `to_standard_rgb()` convert between the sRGB a picker or a texture holds and the linear light a
 shader adds up.
 
@@ -237,10 +237,10 @@ var console = Console()
 func GameColorsBasics() {
     var tomato = "tomato".to_color()
     crash tomato
-    console.print("{tomato} {tomato.to_rgb_text()} {tomato.to_hsl_text()}")
+    console.print("{tomato} {tomato.to_rgb_string()} {tomato.to_hsl_string()}")
     var faded = "hsl(210, 50%, 40%, 0.25)".to_color()
     crash faded
-    console.print("{faded} {faded.to_rgb_text()}")
+    console.print("{faded} {faded.to_rgb_string()}")
     var wrong = "#12".to_color()
     if wrong {
         console.print("read")

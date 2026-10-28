@@ -78,7 +78,7 @@ func WrappingByName() {
     var text = "spite"
     var index = 0
     while index < text.length() {
-        var code = text.code_at(index)
+        var code = text.byte_at(index)
         var mixed = hash.bits_exclusive_or(code)
         hash = mixed.wrapping_multiply(1099511628211)
         index = index + 1

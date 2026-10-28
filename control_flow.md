@@ -132,8 +132,8 @@ compiler refuses it:
 ```gdscript
 func stamp_of(path: String): String {
     var file = File(path)
-    var modified = file.modified()
-    var size = file.size()
+    var modified = file.last_written()
+    var size = file.byte_count()
     if modified and size {
         return "{modified}-{size}"
     }
