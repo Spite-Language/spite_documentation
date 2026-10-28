@@ -297,7 +297,7 @@ Each path is relative to the folder of the file it is written in, and only relat
 `load "D:/projects/engine/core"` would build only on a machine that has that folder, so it is an error that names
 the relative path to write instead, like `load "../../engine/core"`. A package from another repository is loaded
 by where it sits beside yours, or pinned to a commit (below). A condition the compiler cannot decide, such as
-one that reads `Arguments()`, is an error rather than a folder that is quietly left out.
+one that reads `program.arguments()`, is an error rather than a folder that is quietly left out.
 
 Each loaded root can become a separate dynamic library, tree shaking is computed per bundle, and a `load` inside an
 `if` is loaded lazily when that line runs ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).

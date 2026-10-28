@@ -37,7 +37,7 @@ func test_split_keeps_empty_pieces() {
 ```
 ```gdscript title=test_package/test_package.spite entry
 var console = Console()
-var arguments = Arguments()
+var program = Program()
 var ran = 0
 
 func TestPackage() {
@@ -69,10 +69,11 @@ func run(class_name: String, functions: List<Spite.Function>) {
 }
 
 func chosen(class_name: String, function_name: String): Boolean {
+    var arguments = program.arguments()
     if arguments.count() == 0 {
         return true
     }
-    var wanted = arguments.get(0)
+    var wanted = arguments[0]
     return wanted == class_name or wanted == function_name
 }
 ```

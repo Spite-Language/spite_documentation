@@ -26,7 +26,7 @@ work anywhere:
 |---|---|
 | `Environment()` | the program's run-time settings, which it declares ([below](#run-time-settings-environment)) |
 | `Build()` | what was decided when the program was compiled ([below](#compile-time-settings-build)) |
-| `Arguments()` | the raw command line the program was given |
+| `Program()` | what the program was started with: `program.arguments()` is the raw command line ([below](#programarguments-the-raw-command-line)) |
 
 So an entry constructor with parameters is an error that names all three:
 
@@ -46,27 +46,29 @@ A constructor is setup, not logic, and the entry constructor is no exception: `a
 constructor ([failure.md](failure.md#assert-is-not-allowed-in-a-constructor)). A program whose constructor grows
 complicated splits it into functions it calls, and then reads as a table of contents.
 
-## `Arguments()`: the raw command line
+## `program.arguments()`: the raw command line
 
-`Arguments()` answers the arguments the program was given. When the compiler runs it, those are the settings
-its `Environment` declares and every argument after the folder that is not a flag (`spite game ada knight`).
-`count()` and `get(index)` read them by position, and `.player_name` reads the value of `--player-name=...` as a
-`String?`: `null` when the flag was not given.
+`Program()` is the one class for what the program was started with. `program.arguments()` answers the arguments
+it was given, as a `List<String>`, in order and verbatim. When the compiler runs the program, those are the
+settings its `Environment` declares and every argument after the folder that is not a flag
+(`spite game ada knight`).
 
 ```gdscript title=raw_arguments/raw_arguments.spite entry arguments=ada,knight
 var console = Console()
+var program = Program()
 
 func RawArguments() {
     load "../spite_standard_library/windows"
-    var arguments = Arguments()
+    var arguments = program.arguments()
     var arguments_count = arguments.count()
     console.print("arguments", arguments_count)
     announce(arguments)
 }
 
-func announce(arguments: Arguments) {
-    var first = arguments.get(0)
-    var second = arguments.get(1)
+func announce(arguments: List<String>) {
+    crash arguments.count() == 2
+    var first = arguments[0]
+    var second = arguments[1]
     console.print("player", first, "class", second)
 }
 ```
@@ -75,8 +77,42 @@ arguments 2
 player ada class knight
 ```
 
-That run is `spite raw_arguments ada knight`. A setting the program always wants is better declared in
-`Environment`, which gives it a type, a default and a name the compiler checks.
+That run is `spite raw_arguments ada knight`.
+
+Two reads tell a setting from a flag. `program.argument_named("level")` answers the value of `--level=3` as a
+`String?`, `null` when no `--level=...` was given; `program.has_flag("verbose")` answers whether a bare
+`--verbose` was given. Neither stands in for the other: a bare `--level` has no value, so `argument_named` answers
+`null` for it, and a `--verbose=yes` is a setting, so `has_flag` answers `false`. A program that takes either form
+asks both and decides. The name is written as on the command line, kebab-case.
+
+```gdscript title=flags_and_settings/flags_and_settings.spite entry arguments=--verbose,--level=3
+var console = Console()
+var program = Program()
+
+func FlagsAndSettings() {
+    load "../spite_standard_library/windows"
+    var verbose = program.has_flag("verbose")
+    console.print("verbose", verbose)
+    var level = program.argument_named("level")
+    if level {
+        console.print("level", level)
+    }
+    var level_flag = program.has_flag("level")
+    console.print("level as a flag", level_flag)
+}
+```
+```output
+verbose true
+level 3
+level as a flag false
+```
+
+That run is the built program started directly, `.spite/build/flags_and_settings/flags_and_settings.exe --verbose
+--level=3`: given to the compiler, a flag that names no `Environment` setting is an error
+([compiler.md](compiler.md)), so a program that takes its flags through the compiler declares them there.
+
+A setting the program always wants is better declared in `Environment`, which gives it a type, a default and a
+name the compiler checks.
 
 ## Run-time settings: `Environment`
 

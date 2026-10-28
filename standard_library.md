@@ -36,11 +36,11 @@ REPL can look at any of it.
 | `File`, `Directory` | files and folders | [below](#read-and-write-a-file) |
 | `FileSystemWatcher` | the paths that changed under a file or a folder, told by the operating system | [below](#watch-files-and-folders) |
 | `Process` | run another program | [below](#run-a-process) |
-| `Program` | this program: exit, sleep, environment variables, its own path | [below](#program) |
+| `Program` | this program: what it was started with, exit, sleep, environment variables, its own path | [below](#program) |
 | `Clock` | elapsed time for measuring, and the wall clock | [below](#clock) |
 | `Benchmark<T>` | one timed run of a function: what it answered and how long it took | [time.md](time.md#measuring-a-piece-of-work) |
 | `Instant`, `Duration`, `Date`, `Time`, `DateTime`, `Period`, `TimeZone`, `TimeZones` | exact time, the calendar, time zones as presentation, ISO 8601 text (read with `text.to_instant()` and the rest) | [time.md](time.md) |
-| `Environment`, `Build`, `Arguments` | settings and the command line | [programs.md](programs.md) |
+| `Environment`, `Build` | run-time and compile-time settings | [programs.md](programs.md) |
 | `Reload` | how many reloads a `--hot-reload` program has swapped in, and which classes they rebuilt | [repl.md](repl.md#knowing-what-a-reload-rebuilt) |
 | `JsonWriter<T>`, `JsonReader<T>` | any value to JSON text and back | [json.md](json.md) |
 | `Buffer` | bytes, and the numbers and text laid out in them, in either byte order, read at a position | [below](#bytes-are-a-buffer) |
@@ -589,6 +589,9 @@ name? no input
 |---|---|
 | `exit(code)` | flushes what was printed and ends the process with `code` |
 | `sleep(milliseconds)` | waits; other `Concurrent` work runs meanwhile ([concurrency.md](concurrency.md)) |
+| `arguments()` | what the program was started with, as a `List<String>`, the executable left out ([programs.md](programs.md#programarguments-the-raw-command-line)) |
+| `argument_named(name)` | the value of `--name=...`, as a `String?`: `null` when none was given, a bare `--name` included |
+| `has_flag(name)` | whether a bare `--name` was given (`false` for a `--name=...`) |
 | `environment(name)` | the process environment variable, as a `String?` |
 | `executable_path()` | the path of the running executable, as the operating system gives it |
 | `live_allocations()` | how many allocations are alive |

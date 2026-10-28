@@ -45,7 +45,7 @@ spite game/
 
 The folder supplies the program's other classes, and the entry class's constructor takes no arguments: the
 program reads its command line through `Environment()`, what its build decided through `Build()`, and the raw
-arguments through `Arguments()`. A program is named only by its folder: `spite game/game.spite` is an
+arguments through `Program().arguments()`. A program is named only by its folder: `spite game/game.spite` is an
 error that answers with the folder form, `spite game`, and a folder with no entry file named after it is an error
 naming the file it looked for ([the texts](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program)). The compiler compiles itself the same way,
 `spite compiler`, whose entry is `compiler/compiler.spite`.
@@ -192,7 +192,7 @@ spite game --debug-memory --player-name=Bob --volume=7
 `build.spite`) and is written into the build as a constant; `--player-name=Bob` and `--volume=7` set
 `Environment.player_name` and `Environment.volume`, so the compiler passes them to the program when it runs it.
 Every other argument after the folder that is not a flag (`spite game ada`) is passed to the program too, for
-`Arguments` to read. There is no `--` separator: a bare `--` is an error showing the form above.
+`program.arguments()` to read. There is no `--` separator: a bare `--` is an error showing the form above.
 
 Compiler flags and program settings share one set of names, so an `Environment` field named like a `Build` field
 is a compile error naming both. A flag naming no field of either is an error listing the fields `Build` has, a

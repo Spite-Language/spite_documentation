@@ -75,7 +75,7 @@ Read the pages in this order the first time; each page assumes the ones before i
 
 3. [classes_and_files.md](classes_and_files.md): the lexical rules; a file is a class; what a file holds and in
    what order; constructors, singletons, `this`, references.
-4. [programs.md](programs.md): the entry file, how a program loads the standard library, `Arguments`, run-time settings
+4. [programs.md](programs.md): the entry file, how a program loads the standard library, `program.arguments()`, run-time settings
    (`Environment`) and compile-time settings (`Build`, `target_operating_system`).
 5. [values_and_types.md](values_and_types.md): variables, numbers and the casting rule, numbers as classes,
    `String`, enums, unions, `type` shapes and duck typing.
