@@ -327,7 +327,7 @@ What a zone costs when it runs: on Windows, `icu.dll` is loaded only by a progra
 ICU; on Linux and macOS, `find` reads and parses the zone's file once, and each answer looks through the
 transitions it read. UTC and fixed offsets need neither.
 
-`zones.read_tzif(name, data)` reads a TZif file you bring, which is the answer for a machine with no database (a
+`zones.read_tzif(name, data)` reads a TZif file you bring, its bytes as `File.read_as_buffer()` gives them, which is the answer for a machine with no database (a
 bare container) or a program that must pin one version of the rules. It is the same reader Linux and macOS use,
 so it runs on Windows too.
 

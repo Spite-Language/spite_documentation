@@ -553,12 +553,14 @@ member has is templated as on any list:
 
 ```gdscript
 var entries = Directory("levels").entries()
+crash entries
 var files = entries.filter_files()
-var sources = entries.filter_name_ends_with(".spite")
-var names = entries.map_names()
+var sources = entries.filter_path_ends_with(".spite")
+var paths = entries.map_paths()
 ```
 
-`entries()` is a `List<Directory.Entry>`, a union of `Directory` and `File`; `filter_files()` answers a `List<File>`.
+`entries()` is a `List<Directory.Entry>?`, a union of `Directory` and `File` (`null` when the folder cannot be
+opened); `filter_files()` answers a `List<File>`, and `path` is the member both classes have.
 The other templates take a member class the same way: `entries.count_files()`, `any_directories()`,
 `all_files()` and `remove_where_directories()`. A name that matches both a member class and an attribute is a
 compile error naming the fix.

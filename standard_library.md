@@ -288,7 +288,9 @@ func DirectoryTasks() {
     var target_exists = target.exists()
     console.print("exists", target_exists)
     var examples = Directory("examples")
-    var has_hello = examples.entries().filter_directories().map_folder_names().contains("hello")
+    var listed = examples.entries()
+    crash listed
+    var has_hello = listed.filter_directories().map_folder_names().contains("hello")
     console.print("has hello", has_hello)
 }
 ```
@@ -297,7 +299,8 @@ exists true
 has hello true
 ```
 
-`entries()` answers values you can walk, and its member templates keep one kind:
+`entries()` answers a `List<Directory.Entry>?`: `null` when the folder does not exist or cannot be opened, so a
+missing folder is never read as an empty one. Its member templates keep one kind:
 `folder.entries().filter_files()` is a `List<File>` and `filter_directories()` a `List<Directory>`
 ([a list of a union](metaprogramming.md#member-templates)).
 
@@ -322,7 +325,8 @@ func DirectoryWalk() {
 }
 
 func walk(folder: Directory) {
-    var entries: List<Directory.Entry> = folder.entries()
+    var entries = folder.entries()
+    crash entries
     var index = 0
     while index < entries.count() {
         var entry = entries[index]
@@ -415,6 +419,7 @@ func ProcessTasks() {
     load "../spite_standard_library/windows"
     var listing = Process("echo", ["build", "finished"])
     var code = listing.run()
+    crash code
     console.print("exit code", code)
     var output = listing.read_output_as_string()
     crash output
@@ -432,9 +437,9 @@ output build finished
 | `Process(command, arguments)` | | `arguments` is a `List<String>`, each one argument of the child, quoted for you (below) |
 | `working_directory` | `String` | the folder the child runs in; `""`, the default, is the program's own |
 | `environment_variables` | `Dictionary<String, String>` | variables set for the child alone, on top of the program's own: `process.environment_variables["LOG"] = "1"` |
-| `run()` | `Integer` | runs it through the system's shell, waits for it and answers its exit code (`-1` when it could not start; on Linux and macOS, a child a signal ended answers 128 plus the signal's number, as a shell reports it); captures standard output as bytes on Windows, where byte `0x1A` does not end the output |
-| `read_output_as_string()` | `String?` | what it wrote to its standard output, valid after `run()`; `null` when those bytes are not UTF-8 |
-| `read_output_as_buffer()` | `Buffer` | the same output as the bytes it wrote, for a child that writes bytes |
+| `run()` | `Integer?` | runs it through the system's shell, waits for it and answers its exit code (`null` when it could not start, so no exit code is made up for it; on Linux and macOS, a child a signal ended answers 128 plus the signal's number, as a shell reports it); captures standard output as bytes on Windows, where byte `0x1A` does not end the output |
+| `read_output_as_string()` | `String?` | what it wrote to its standard output; `null` before `run()`, after a run that could not start, or when those bytes are not UTF-8 |
+| `read_output_as_buffer()` | `Buffer?` | the same output as the bytes it wrote, for a child that writes bytes; `null` before `run()` or after a run that could not start |
 | `run_attached()` | `Integer` | runs it with the program's own terminal, so what it writes and reads is the user's, and answers its exit code, read as `run()` reads it |
 
 Each argument reaches the child whole, as one argument, whatever it holds. On Linux and macOS each is put in single
