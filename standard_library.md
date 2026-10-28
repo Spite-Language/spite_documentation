@@ -692,25 +692,29 @@ func IpAddressForms() {
     var same = mapped == plain
     console.print("{mapped} {same}")
     var name = "localhost".to_ip_address()
-    if not name {
-        console.print("a host name is not an address")
+    crash name
+    console.print("localhost is first {name}")
+    var nowhere = "no-such-host.invalid".to_ip_address()
+    if not nowhere {
+        console.print("a name that resolves to nothing is null")
     }
     var resolved = "localhost".resolve_ip_addresses()
     var first = resolved[0]
     crash first
-    console.print("localhost is {first}")
+    console.print("localhost resolves first to {first}")
 }
 ```
 ```output
 2001:db8::7 true
 10.0.0.1 true
-a host name is not an address
-localhost is 127.0.0.1
+localhost is first 127.0.0.1
+a name that resolves to nothing is null
+localhost resolves first to 127.0.0.1
 ```
 
 | Member | Does |
 |---|---|
-| `"text".to_ip_address(): IpAddress?` | reads dotted IPv4 (`"192.168.1.20"`) or IPv6 (`"::1"`, `"2001:db8::7"`, `"::ffff:10.0.0.1"`, `"fe80::1%4"`); `null` for anything else, a host name included |
+| `"text".to_ip_address(): IpAddress?` | reads dotted IPv4 (`"192.168.1.20"`) or IPv6 (`"::1"`, `"2001:db8::7"`, `"::ffff:10.0.0.1"`, `"fe80::1%4"`), or resolves a host name (`"localhost"`, `"example.com"`) to its first address, IPv4 first, waiting in place; `null` when the text is neither, or names nothing. An address from a name keeps the name, which `Http.Client` writes as the `host` header and `WebSocket.Client` in its handshake |
 | `"host".resolve_ip_addresses(): List<IpAddress>` | asks the system for every address a host name (or an address written as text) names, the IPv4 ones first; empty when it names none. It waits in place |
 | `is_ipv4(): Boolean`, `is_ipv6(): Boolean` | which kind it is |
 | `==`, `!=` | the same address or not (its `equals(other)`) |
@@ -718,8 +722,8 @@ localhost is 127.0.0.1
 | `IpAddress()` | `0.0.0.0` |
 
 An IPv4 address inside `::ffff:` is that IPv4 address, so a datagram a dual-stack server receives from `127.0.0.1`
-comes from `127.0.0.1`. There is no constructor that takes text: text becomes an address through
-`to_ip_address()`, which can answer `null`. Once the compiler casts text where an `IpAddress` is wanted and folds a
+comes from `127.0.0.1`. There is no constructor that takes text, and no network call takes text: text becomes an address through
+`to_ip_address()`, which can answer `null`, and every call that says where to go takes an `IpAddress`. Once the compiler casts text where an `IpAddress` is wanted and folds a
 literal it can read (spite_compiler#228, #229), `client.connect("127.0.0.1", 8080)` needs nothing written; until
 then a program narrows `"127.0.0.1".to_ip_address()` first.
 
@@ -765,14 +769,13 @@ the client left: true
 | `Tcp.Server` | Does |
 |---|---|
 | `listen_locally(port)`, `listen_everywhere(port)` | listens on `127.0.0.1`, or on every interface of both IPv4 and IPv6; `false` when it cannot |
-| `listen_at(address: IpAddress, port)`, `listen_at_host(host, port)` | listens on the one interface an address names, or a host name does (a name with both kinds of address, like `"localhost"`, listens on its IPv4 one); `false` when it cannot or the name names nothing |
+| `listen_at(address: IpAddress, port)` | listens on the one interface an address names (a host name's, through `"localhost".to_ip_address()`, its first address, IPv4 first); `false` when it cannot |
 | `accept(): Tcp.Connection?` | waits for the next client; `null` when the server is not listening |
 | `close()` | stops listening |
 
 | `Tcp.Client` | Does |
 |---|---|
-| `connect(address: IpAddress, port)` | connects to an address; `false` when nobody answers |
-| `connect_to_host(host, port)` | connects to a host name (`"example.com"`, `"localhost"`) or an address written as text, trying each address the name resolves to in turn, its IPv4 ones first; `false` when the name does not resolve or nobody answers |
+| `connect(address: IpAddress, port)` | connects to an address (a host name's through `"example.com".to_ip_address()`); `false` when nobody answers |
 | `connect_locally(port)` | connects to `127.0.0.1` |
 
 | A `Tcp.Client` and a `Tcp.Connection` | Do |
@@ -813,7 +816,9 @@ func UdpPing() {
     var client = Udp.Client()
     crash client.open()
     var ping = "ping".to_buffer()
-    crash client.send_to_host("127.0.0.1", 47402, ping)
+    var server_address = "127.0.0.1".to_ip_address()
+    crash server_address
+    crash client.send_to(server_address, 47402, ping)
     var arrived = server.receive()
     crash arrived
     var text = arrived.read_as_string()
@@ -838,7 +843,7 @@ pong
 | `Udp.Server` | Does |
 |---|---|
 | `open_locally(port)`, `open_everywhere(port)` | opens on `port` of `127.0.0.1`, or of every interface of both IPv4 and IPv6; port `0` is one the system picks; `false` when the port is taken |
-| `open_at(address: IpAddress, port)`, `open_at_host(host, port)` | opens on the one interface an address or a host name names (a name with both kinds of address opens on its IPv4 one); `false` when the port is taken or the name names nothing |
+| `open_at(address: IpAddress, port)` | opens on the one interface an address names; `false` when the port is taken |
 
 | `Udp.Client` | Does |
 |---|---|
@@ -848,7 +853,6 @@ pong
 |---|---|
 | `port: Integer` | get-only: the port it is open on, the one the system gave it after `open()` (asked of the system with `getsockname`), so a client can tell a server where to answer; reading it when it is not open halts, since it has none, and a program that wants the number after `close()` keeps it in a `var` before closing, which says it means to |
 | `send_to(address: IpAddress, port, buffer): Boolean` | sends one datagram; `false` when the socket cannot reach the address (an IPv6 one from `open_locally`) or the system refuses it |
-| `send_to_host(host, port, buffer): Boolean` | the same to a host name or an address written as text; a name with both kinds of address is sent to its IPv4 one; `false` when the name does not resolve to an address the socket can reach |
 | `receive(): Udp.Datagram?` | waits for the next datagram; `null` when it is closed |
 | `close()` | closes it |
 
@@ -876,7 +880,7 @@ or `write_body_buffer(buffer)`, so an image or a compressed body is never forced
 | `Http.Server.next_request(): Http.Request?` | waits for the next well-formed request, on a new connection or on one kept open; a malformed one is answered `400 Bad Request` and its connection closed, and a body over `largest_body` (1 MiB) counts as malformed; `null` when the listener fails or is closed |
 | `Http.Server.respond(request, response): Boolean` | writes the response with its `content-length`, and keeps the connection open for the client's next request unless the client asked to close it; `false` when the response could not be written whole |
 | `Http.Server.close()` | stops listening and closes every connection kept open |
-| `Http.Client.send(host, port, request): Http.Response?` | sends the request with `host` and `content-length` over a connection kept open to that host and port, or a new one, and reads the response, whether its body is sized, chunked or ends when the connection closes; `null` when nobody answers or the response is malformed |
+| `Http.Client.send(address: IpAddress, port, request): Http.Response?` | sends the request with `host` (the name the address was resolved from, or the address itself) and `content-length` over a connection kept open to that host and port, or a new one, and reads the response, whether its body is sized, chunked or ends when the connection closes; `null` when nobody answers or the response is malformed |
 | `Http.Client.close()` | closes the connections it keeps open |
 
 **Connections are kept alive.** HTTP/1.1 keeps a connection open between exchanges, and both sides do: a server
@@ -944,7 +948,9 @@ func talk() {
     var socket = WebSocket.Client()
     var request = Http.Request()
     request.path = "/chat"
-    crash socket.connect("127.0.0.1", 8080, request)
+    var server_address = "127.0.0.1".to_ip_address()
+    crash server_address
+    crash socket.connect(server_address, 8080, request)
     socket.send_string("hello")
     var answer = socket.receive()
     crash answer
@@ -964,7 +970,7 @@ received is a `WebSocket.Message`, one holder with two reads: `is_text()`, `read
 | `WebSocket.Server(http)` | the upgrades of requests `http.next_request()` hands out |
 | `asks_to_upgrade(request): Boolean` | whether the request asks for a WebSocket (its `upgrade` header is `websocket`) |
 | `accept(request): WebSocket.Connection?` | answers the request with `101 Switching Protocols` and keeps its connection; `null` after refusing a malformed upgrade; a request that does not ask to upgrade halts |
-| `WebSocket.Client().connect(host, port, request): Boolean` | connects like `Tcp.Client.connect_to_host`, sends the handshake with the request's path and headers, and checks the server's answer; `false` when nobody answers or the answer is not a WebSocket one |
+| `WebSocket.Client().connect(address: IpAddress, port, request): Boolean` | connects like `Tcp.Client.connect`, writing the name the address was resolved from (or the address) as the `host`, sends the handshake with the request's path and headers, and checks the server's answer; `false` when nobody answers or the answer is not a WebSocket one |
 | `send_string(text): Boolean`, `send_buffer(buffer): Boolean` | sends one message, a text or a `Buffer`; `false`, sending nothing, once the connection has ended or `close()` was called |
 | `send_ping(bytes): Boolean` | sends a ping carrying up to 125 bytes |
 | `receive(): WebSocket.Message?` | waits for the next whole message, text or bytes; `null` once the connection has ended |

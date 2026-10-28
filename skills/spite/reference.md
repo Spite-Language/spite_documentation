@@ -560,11 +560,12 @@ as `var console = Console()`.
 happens; `write` waits for the next line end, the next `read_line()` or the exit. There is no `flush()`: lines from
 two threads never split each other, and everything is out before an exit, a crash report or a read.
 An address is an `IpAddress` (IPv4 or IPv6 only, the port a number beside it): `"::1".to_ip_address(): IpAddress?`
-reads one from text (`null` for a host name), `"example.com".resolve_ip_addresses(): List<IpAddress>` resolves a
-name (IPv4 first), `to_string()` writes it as RFC 5952 does, `==` compares; no constructor takes text.
+reads one from text or resolves a host name (`"example.com".to_ip_address()`, its first address, IPv4 first, keeping
+the name for HTTP's `host`; `null` when neither), `"example.com".resolve_ip_addresses(): List<IpAddress>` gives every
+address (IPv4 first), `to_string()` writes it as RFC 5952 does, `==` compares; no constructor and no network call
+takes text, so a program narrows `"127.0.0.1".to_ip_address()` and passes the `IpAddress`.
 TCP is `Tcp.Server()` (`listen_locally(port)`, `listen_everywhere(port)`, `listen_at(address, port)`,
-`listen_at_host(host, port)`, `accept(): Tcp.Connection?`) and `Tcp.Client()` (`connect(address, port)`,
-`connect_to_host(host, port)`, `connect_locally(port)`); a client and a `Tcp.Connection` talk alike: lines
+`accept(): Tcp.Connection?`) and `Tcp.Client()` (`connect(address, port)`, `connect_locally(port)`); a client and a `Tcp.Connection` talk alike: lines
 (`read_line(): String?`, `write_line(text)`), text (`read_as_string(): String?`, `write_string(text)`) or bytes as a
 `Buffer` (`read_as_buffer(): Buffer?`, a fresh buffer of what arrived, `write_buffer(buffer)`). Every read waits:
 there is no `_now` read. A peer that hung up is not an error: `closed` turns `true`, reads answer `null` and
@@ -589,11 +590,11 @@ a `Tcp.Connection` and a `BinaryReader` take and answer a `Buffer`.
 **Bytes that may be text are one holder with two reads**: `read_as_string(): String?` (`null` when not UTF-8) and
 `read_as_buffer()`, on a `File`, a `Tcp.Connection`, a `WebSocket.Message`, a datagram, an HTTP body and a `Process`'s
 output, so nothing that carries bytes forces them through a `String`.
-`Udp.Server()` opens on a known port with `open_locally(port)`, `open_everywhere(port)`, `open_at(address, port)` or `open_at_host(host, port)`, and `Udp.Client()` on a port the system picks with `open()`; both send one `Buffer` datagram per `send_to(address, port, buffer)` or `send_to_host(host, port, buffer)` and receive one `Udp.Datagram?` per `receive()` (`read_as_string()`, `read_as_buffer()`, `sender_address: IpAddress`, `sender_port`); `Http.Server` (`next_request(): Http.Request?`, `respond(request, response)`) and `Http.Client` (`send(host, port, request): Http.Response?`) speak HTTP/1.1 and keep connections alive on their own; a body is bytes, `read_body_as_string(): String?`, `read_body_as_buffer()`, `write_body_string(text)`, `write_body_buffer(buffer)`.
+`Udp.Server()` opens on a known port with `open_locally(port)`, `open_everywhere(port)`, or `open_at(address, port)`, and `Udp.Client()` on a port the system picks with `open()`; both send one `Buffer` datagram per `send_to(address, port, buffer)` and receive one `Udp.Datagram?` per `receive()` (`read_as_string()`, `read_as_buffer()`, `sender_address: IpAddress`, `sender_port`); `Http.Server` (`next_request(): Http.Request?`, `respond(request, response)`) and `Http.Client` (`send(address, port, request): Http.Response?`) speak HTTP/1.1 and keep connections alive on their own; a body is bytes, `read_body_as_string(): String?`, `read_body_as_buffer()`, `write_body_string(text)`, `write_body_buffer(buffer)`.
 WebSocket (RFC 6455, `ws`) is a namespace: a server is `var sockets = WebSocket.Server(http)` over the program's own
 `Http.Server`, like an Express app; in the program's HTTP loop, `if sockets.asks_to_upgrade(request)` then
 `sockets.accept(request): WebSocket.Connection?` (`null` after it refused a malformed upgrade itself), and every other
-request is answered with `http.respond`. A client is `WebSocket.Client()` with `connect(host, port, request): Boolean`.
+request is answered with `http.respond`. A client is `WebSocket.Client()` with `connect(address, port, request): Boolean`.
 Both sides have `send_string(text)`, `send_buffer(buffer)`, `send_ping(buffer)` and `receive(): WebSocket.Message?`,
 whose `is_text()`, `read_as_string(): String?` and `read_as_buffer()` read it. Pings are answered by itself and the latest pong is `last_pong`. `null` from `receive()`
 means the connection ended: `close_code` says how (`1000` a normal close, `1002` a broken frame, `1006` no close at
