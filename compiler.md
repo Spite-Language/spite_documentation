@@ -300,7 +300,7 @@ The report has one section per optimisation, with how many places it lists:
 
 - **Lists that hold references**: each `List<T>` whose items are kept as references, at the line that first made
   it, and why `T` cannot be laid inline (an attribute that is a list or another object, a `drop()`, a function
-  using `this` as a value), or that it would fit and a `Vector<T>` holds it inline.
+  using `this` as a value), or that it would fit inline.
 - **Lists not in the frame**: a local list that could have lived in the function's frame
   ([optimizations.md](optimizations.md#a-local-list-of-known-size-lives-in-the-frame)) and did not: appended to in
   a loop, more items than the frame holds, or the line that does more than read it.

@@ -18,7 +18,7 @@ value is never an object.
 Some languages keep memory safe by making you describe who owns what and for how long, and the compiler checks the
 description: a great deal of annotation that has nothing to do with what the program is for. Spite gets the same
 safety from a smaller set of tools: reference counting, a value that may be missing is a `Monster?` that must be
-narrowed with `assert` or `crash` before it is used, and a check at compile time on the few places an item is lent.
+narrowed with `assert` or `crash` before it is used.
 Where the safe form needs a rule, the compiler has it. You do not write lifetimes.
 
 Some languages also ask you to decide, for each type, whether it is a value or a reference. In Spite that is the
@@ -119,35 +119,29 @@ independent label b
 once, so a child's `parent` in the copy is the copied parent, and a back reference in the copy holds the copy of its
 object when the same `deep_copy()` copied it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
 
-## A `Vector` lends its items
+## Components in lists, handed to a system
 
-A `Vector<T>` is the one place a value is not a counted reference: it holds its items inline, one block of their
-attributes with no header ([collections.md](collections.md#vectort-items-inline)), and `velocities[index]` is the
-item inside that block, **borrowed**. Writing its attributes writes the vector's item; taking it and letting it go
-costs nothing. In exchange the compiler never lets it be kept (in an attribute, a list, a returned value, a
-function value, or past a line that may grow or shrink the vector), and each of those errors names `copy()`,
-which makes an independent object ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)).
+An engine keeps each component in its own `List` and hands a system one entity's components at a time. A list
+holds its items like any other reference, so `positions[0]` is the position itself: a system that writes it writes
+the list's item, and the item may be kept, passed on or read after the list grows. How a list stores its items is
+the compiler's choice, never yours: a list whose items are never held anywhere else may keep them inline, one block
+of their attributes, and nothing the program can see changes ([collections.md](collections.md#one-list)).
 
-Only a class is lent: numbers, `Boolean`s and enums are kept in a `List`, never a `Vector`, and reading one gives
-a number of its own. `velocities[index]`, like every `[]`, answers a `T?`, so an item is lent once the read is
-narrowed, by `crash velocities[index]` or by a proof such as the loop bound `index < velocities.count()`.
+### A row of items, for one call
 
-### A row of borrowed items, for one call
+The row is an object literal of items, and the system takes it as a `type`:
 
-An engine keeps each component in its own `Vector` and hands a system one entity's components at a time. The
-row is an object literal of borrowed items, and the system takes it as a `type`:
-
-```gdscript title=vector_row_doc/position.spite
+```gdscript title=row_doc/position.spite
 var left = 0.0
 ```
-```gdscript title=vector_row_doc/velocity.spite
+```gdscript title=row_doc/velocity.spite
 var across = 0.0
 
 func Velocity(new_across: Float) {
     across = new_across
 }
 ```
-```gdscript title=vector_row_doc/mover.spite
+```gdscript title=row_doc/mover.spite
 type Moving {
     position: Position
     velocity: Velocity
@@ -157,13 +151,13 @@ func update_each(moving: Moving) {
     moving.position.left = moving.position.left + moving.velocity.across
 }
 ```
-```gdscript title=vector_row_doc/vector_row_doc.spite entry
+```gdscript title=row_doc/row_doc.spite entry
 var console = Console()
-var positions = Vector<Position>()
-var velocities = Vector<Velocity>()
+var positions = List<Position>()
+var velocities = List<Velocity>()
 var mover = Mover()
 
-func VectorRowDoc() {
+func RowDoc() {
     load "../spite_standard_library/windows"
     var position = Position()
     positions.append(position)
@@ -182,12 +176,6 @@ func VectorRowDoc() {
 ```output
 10
 ```
-
-The row is made in the function's frame, not on the heap, and nothing in it is counted: `update_each` writes the
-vectors' own items. In exchange the row lives for exactly the call it is passed to. It is never kept, returned,
-put in a list or given a second name, by the function that makes it or the one it is passed to, and the call may
-not append to or remove from a vector the row borrows from, directly or through anything it calls
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)).
 
 A generic runner does not know the attributes of the `type` it is given, so it cannot write the literal. It fills
 the row with a walk over its attributes instead, and a local of the `type` declared `= null` and filled by the walk on the
@@ -216,8 +204,8 @@ func update_each(moving: Moving) {
 ```gdscript title=walked_row_doc/columns.spite
 singleton
 
-var position = Vector<Position>()
-var velocity = Vector<Velocity>()
+var position = List<Position>()
+var velocity = List<Velocity>()
 
 func size(): Integer {
     return position.count()
@@ -270,20 +258,18 @@ read with a `crash` line before the fill: nothing the walk knows proves that `in
 compiler writes the walk out where it is called: for `Runner<Moving>` the two lines become `crash
 columns.position[index]`, `crash columns.velocity[index]` and `var row: Moving = {position:
 columns.position[index], velocity: columns.velocity[index]}`, where each `crash` line's read is made once and
-the literal uses it, so the row costs what the literal costs, follows the same rules, and `fill_attribute` is
-never called.
+the literal uses it, so the row costs what the literal costs and `fill_attribute` is never called.
 
 An engine that adds and removes components all the time keeps each one in a **sparse set**: a generic singleton
-`Column<Position>` whose `Vector` is packed, so each entity sits at a different place in each column. The runner
+`Column<Position>` whose list is packed, so each entity sits at a different place in each column. The runner
 works out those places first, one per attribute, and the walk's line reads each attribute from its own column at
 its own place: `Column<attribute.class>().values[stored_row]`, after `var stored_row = found[attribute.index]`,
 where `attribute.index` is the attribute's place in the `type`, with one `crash` line for the
 place and one for the item (an index never holds another `[]` read).
 A generic singleton made with no arguments is the same object every time, so `Column<Position>()` starts a path
 that `crash` narrows like a name. The places are numbers in a `List`, so they may come from any `List<Integer>`:
-the runner's own, or another object's, `fill_attributes(row, matcher.rows)`. A class that cannot be a `Vector`
-item stays a reference in a `List`, `attribute.class.fits_vector()` choosing while compiling, and the row may hold
-it beside the borrowed items, as it may hold an `Entity` made from the id:
+the runner's own, or another object's, `fill_attributes(row, matcher.rows)`. The row may also hold a value made
+from the id, such as an `Entity`, chosen per attribute while compiling:
 
 ```gdscript title=sparse_row_doc/position.spite
 var left = 0.0
@@ -328,27 +314,6 @@ singleton
 generic $component_type
 
 var dense_of = List<Integer>()
-var values = Vector<$component_type>()
-
-func insert(entity: Integer, value: $component_type) {
-    while dense_of.count() <= entity {
-        dense_of.append(-1)
-    }
-    dense_of[entity] = values.count()
-    values.append(value)
-}
-
-func dense_index(entity: Integer): Integer {
-    crash dense_of[entity]
-    return dense_of[entity]
-}
-```
-```gdscript title=sparse_row_doc/reference_column.spite
-singleton
-
-generic $component_type
-
-var dense_of = List<Integer>()
 var values = List<$component_type>()
 
 func insert(entity: Integer, value: $component_type) {
@@ -362,11 +327,6 @@ func insert(entity: Integer, value: $component_type) {
 func dense_index(entity: Integer): Integer {
     crash dense_of[entity]
     return dense_of[entity]
-}
-
-func at(dense: Integer): $component_type {
-    crash values[dense]
-    return values[dense]
 }
 ```
 ```gdscript title=sparse_row_doc/runner.spite
@@ -389,12 +349,8 @@ func run(mover: Mover, entity_count: Integer) {
 func find_attribute(attribute: Spite.AttributeDeclaration, _row: $row_type, entity: Integer) {
     if attribute.class == Entity {
         found.append(entity)
-    } else if attribute.class.fits_vector() {
-        var column = Column<attribute.class>()
-        var dense = column.dense_index(entity)
-        found.append(dense)
     } else {
-        var column = ReferenceColumn<attribute.class>()
+        var column = Column<attribute.class>()
         var dense = column.dense_index(entity)
         found.append(dense)
     }
@@ -403,14 +359,11 @@ func find_attribute(attribute: Spite.AttributeDeclaration, _row: $row_type, enti
 func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, rows: List<Integer>, entity: Integer) {
     if attribute.class == Entity {
         row.attributes[attribute] = Entity(entity)
-    } else if attribute.class.fits_vector() {
+    } else {
         crash rows[attribute.index]
         var stored_row = rows[attribute.index]
         crash Column<attribute.class>().values[stored_row]
         row.attributes[attribute] = Column<attribute.class>().values[stored_row]
-    } else {
-        crash rows[attribute.index]
-        row.attributes[attribute] = ReferenceColumn<attribute.class>().at(rows[attribute.index])
     }
 }
 ```
@@ -420,7 +373,7 @@ var runner = Runner<Moving>()
 var mover = Mover()
 var positions = Column<Position>()
 var velocities = Column<Velocity>()
-var trails = ReferenceColumn<Trail>()
+var trails = Column<Trail>()
 
 func SparseRowDoc() {
     load "../spite_standard_library/windows"
@@ -453,69 +406,44 @@ func SparseRowDoc() {
 (`_row`): that is how its body says the template walks the attributes of `$row_type`, and the underscore says the
 parameter is there on purpose.
 
-For `Runner<Moving>` the walk is written out as `{entity: <an Entity in the frame>, position:
+For `Runner<Moving>` the walk is written out as `{entity: Entity(entity), position:
 Column<Position>().values[found[1]], velocity: Column<Velocity>().values[found[2]], trail:
-ReferenceColumn<Trail>().at(found[3])}`: the `Entity` is made in the frame, since `Entity` could be a `Vector`
-item, and the `Trail` is counted once for the row and let go after the call, unless nothing the call runs can
-let go of it, when `at` lends it to the row uncounted ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)). Only `Position`
-and `Velocity` are borrowed, so only their vectors are checked for a resize during the call.
+Column<Trail>().values[found[3]]}`. Each item is counted once for the row and let go at the end of the row's block,
+so a call that removes an entity from its column cannot free a component under the row
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#rows-walked-from-lists)).
 
-Two column classes, and a choice in every line that reaches them, are only there because a `Vector<Trail>` cannot
-be made. An [`Items<T>`](collections.md#itemst-the-storage-chosen-for-you) makes that choice itself, inline when
-the class fits and by reference when it does not, so one `Column<$component_type>` holding
-`var values = Items<$component_type>()` serves every component, and the fill template needs no `fits_vector()`:
-
-```gdscript
-func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, rows: List<Integer>, entity: Integer) {
-    if attribute.class == Entity {
-        row.attributes[attribute] = Entity(entity)
-    } else {
-        crash rows[attribute.index]
-        var stored_row = rows[attribute.index]
-        crash Column<attribute.class>().values[stored_row]
-        row.attributes[attribute] = Column<attribute.class>().values[stored_row]
-    }
-}
-```
-
-For `Moving` the row borrows `Column<Position>().values[found[1]]` and `Column<Velocity>().values[found[2]]` and
-counts `Column<Trail>().values[found[3]]` for the call, exactly as above, and a column removes an entity with
-`values.remove_swapping(dense)`, which a system handed the row may not reach for a column it borrows from
-(`conformance/stage6/items_columns`).
-
-### Borrowed arguments, for one call
+### Arguments filled for one call
 
 A system may take its components as arguments instead of a row, `update_each(position: Position, velocity:
 Velocity)`, and a generic runner fills them with a template over the function's arguments whose plural is the
 call's whole argument list ([metaprogramming.md](metaprogramming.md#walking-a-programs-structure)).
 The template's line is the walked row's line, read per argument: `argument.index` is the argument's place, so
 `Column<argument.class>().values[stored_row]`, after `var stored_row = rows[argument.index]`, is that component's
-item. The plural stands for exactly
-one call the compiler writes, so its results may be borrowed items for that call and no longer:
+item. The plural stands for exactly one call the compiler writes:
 
-```gdscript title=lent_arguments_doc/position.spite
+```gdscript title=filled_arguments_doc/position.spite
 var left = 0.0
 ```
-```gdscript title=lent_arguments_doc/velocity.spite
+```gdscript title=filled_arguments_doc/velocity.spite
 var across = 0.0
 
 func Velocity(new_across: Float) {
     across = new_across
 }
 ```
-```gdscript title=lent_arguments_doc/mover.spite
+```gdscript title=filled_arguments_doc/mover.spite
 func update_each(position: Position, velocity: Velocity) {
     position.left = position.left + velocity.across
 }
 ```
-```gdscript title=lent_arguments_doc/column.spite
+```gdscript title=filled_arguments_doc/column.spite
 singleton
 
 generic $component_type
 
-var values = Items<$component_type>()
+var values = List<$component_type>()
 ```
-```gdscript title=lent_arguments_doc/runner.spite
+```gdscript title=filled_arguments_doc/runner.spite
 generic $system_type
 
 enum Phase {
@@ -543,13 +471,13 @@ func made_argument(argument: Spite.Argument, rows: List<Integer>): argument.clas
     return Column<argument.class>().values[stored_row]
 }
 ```
-```gdscript title=lent_arguments_doc/lent_arguments_doc.spite entry
+```gdscript title=filled_arguments_doc/filled_arguments_doc.spite entry
 var console = Console()
 var positions = Column<Position>()
 var velocities = Column<Velocity>()
 var runner = Runner<Mover>()
 
-func LentArgumentsDoc() {
+func FilledArgumentsDoc() {
     load "../spite_standard_library/windows"
     var position = Position()
     positions.values.append(position)
@@ -566,117 +494,10 @@ func LentArgumentsDoc() {
 ```
 
 For `Runner<Mover>` the call is written out as `system.update_each(Column<Position>().values[found[0]],
-Column<Velocity>().values[found[1]])`: `update_each` writes the columns' own items, and nothing is copied, counted
-or allocated. Every rule for a borrowed item holds for the call: `update_each` may not keep `position` or return
-it, it may lend it on to a call of its own ([below](#an-item-lent-to-a-call)), and nothing it reaches may append
-to or remove from a column it borrows from. `made_position`
-called anywhere else is an ordinary function, and returning a borrowed item from it is the error for returning one.
-The template may also fill a whole walked row for an argument that is a `type`
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort)).
-
-### An item lent to the caller
-
-A singleton lives until the program ends, so an item of its `Items` or `Vector` can be handed to a caller: a
-function that returns `column.values[row]`, read straight from a singleton's storage, **lends** the stored item,
-and the caller writes it in place:
-
-```gdscript title=lent_result_doc/column.spite
-singleton
-
-generic $component_type
-
-var values = Items<$component_type>()
-```
-```gdscript title=lent_result_doc/lookup.spite
-generic $component_type
-
-var column = Column<$component_type>()
-
-func of(row: Integer): $component_type? {
-    assert row < column.values.count()
-    return column.values[row]
-}
-```
-```gdscript title=lent_result_doc/layout.spite
-var order = 0
-```
-```gdscript title=lent_result_doc/lent_result_doc.spite entry
-var console = Console()
-var layouts = Column<Layout>()
-var lookup = Lookup<Layout>()
-
-func LentResultDoc() {
-    load "../spite_standard_library/windows"
-    var made = Layout()
-    layouts.values.append(made)
-    var layout = lookup.of(0)
-    crash layout
-    layout.order = 3
-    crash layouts.values[0]
-    console.print(layouts.values[0].order)
-}
-```
-```output
-3
-```
-
-Nothing is copied or counted, so `layout.order = 3` is never a write to a copy that is then thrown away. The
-borrow now belongs to the caller, and every rule for a borrowed item holds there: `layout` is not kept, put in a
-list, returned further or given a second name, and it is not read past a line that may append to or remove from
-`Column<Layout>().values`. It may be lent on to a call, as the next section shows, and `if layout { ... }`
-narrows it without ending the borrow. A function that lends gives back only such items, or `null`, and it is
-called by name: it is never made a function value or called through a `type`, whose caller could not know the
-item is not its own. In a generic class the choice is made per instance, with the conditions on its generic
-parameters folded first, so one `of` may lend a fitting class's item and hand back an owned value for the rest.
-
-### An item lent to a call
-
-A borrowed item (a name read from a `Vector` or `Items`, `velocities[index]` itself, a row's attribute, an item
-lent to the caller) may be passed as an ordinary argument. It is **lent for the call**: the function reads and
-writes the caller's own item and may lend it on to the functions it calls, and when the call returns the borrow is
-the caller's again:
-
-```gdscript title=lent_call_doc/mouse.spite
-var left = 0
-var pressed = false
-```
-```gdscript title=lent_call_doc/input.spite
-func apply(step: Integer, mouse: Mouse) {
-    mouse.left = mouse.left + step
-    press(mouse)
-}
-
-func press(mouse: Mouse) {
-    mouse.pressed = true
-}
-```
-```gdscript title=lent_call_doc/lent_call_doc.spite entry
-var console = Console()
-var mice = Vector<Mouse>()
-var input = Input()
-
-func LentCallDoc() {
-    load "../spite_standard_library/windows"
-    var made = Mouse()
-    mice.append(made)
-    crash mice[0]
-    var mouse = mice[0]
-    input.apply(3, mouse)
-    input.apply(4, mice[0])
-    console.print(mice[0].left, mice[0].pressed)
-}
-```
-```output
-7 true
-```
-
-`apply` and `press` write the vector's item: nothing is copied, counted or allocated, so no write can land on a
-copy and vanish. What the function may not do is keep the item past the call: store it in an attribute or a
-list, return it, or make a function value of it. Each of those is an error in the function, naming the call
-that lent it: `'mouse' is lent to 'keep' for one call, by the call on line 9 of 'LentToCalls': it is the
-caller's item, read and written in place, so 'keep' does not keep it in the attribute 'last': keep the values it
-needs, ...`. Nothing the call reaches may append to or remove from the collection the item is borrowed from,
-since that could move it while the function holds it.
+Column<Velocity>().values[found[1]])`, after the `crash` lines that narrow those reads: `update_each` writes the
+columns' own items, and `made_argument` is not called for it. Called anywhere else, `made_argument` is an
+ordinary function. The template may also fill a whole walked row for an argument that is a `type`
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#rows-walked-from-lists)).
 
 ## `drop()` runs once, right before the object is freed
 

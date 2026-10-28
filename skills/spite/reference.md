@@ -213,9 +213,8 @@ func is_alive(): Boolean {
   `var names = ["a", "b", "c"]`, `crash not names.is_empty()` proves `names[0]` (a list's, never a dictionary's),
   and `while index < names.count()` proves `names[index]` in the loop body, so a `crash names[index]` inside that
   loop is an error saying so: delete it). `[]` calls `get_at(index)`, which is only ever called through `[]`:
-  `names.get_at(0)` is an error naming `names[0]` (passing `counts.get_at` as a value is fine). Every `[]` answers a `T?`; a `Vector`'s and an `Items`' too. A
-  list of numbers, `Boolean`, enums or `Memory.Address` is always a `List` (`Vector<Integer>` is an error naming
-  `List<Integer>`); it has `remove_swapping(index)` and `reserve(count)` too.
+  `names.get_at(0)` is an error naming `names[0]` (passing `counts.get_at` as a value is fine). Every `[]` answers a `T?`. A
+  list also has `remove_swapping(index)` and `reserve(count)`.
   `Dictionary<Key, Value>` (insertion order) names its key type, then its value type:
   `Dictionary<String, Integer>()`, `Dictionary<Integer, Monster>()`, `Dictionary<Player, Party>()`; one type
   argument is an error. `dictionary["key"] = value`, `has`, `remove`, `count`, `keys` (a `List<Key>`),
@@ -230,45 +229,20 @@ func is_alive(): Boolean {
 - A chain of templates, `teams.filter_active().map_leads().sum_age()`, runs as one loop with no list in between.
 - To remove many elements, never call `remove_at` or `remove_swapping` in a loop: `creatures.remove_where_dead()`
   or `numbers.remove_where(is_odd)` removes every one the test is true for in one pass and keeps the rest in
-  order (`List`, `Vector`, `Items`; the passed-function form on a `List` only, never on a chain or a
-  `Dictionary`). `truncate(count)` drops the tail. When the test is not a function of the element (a mask of
+  order (never on a chain or a `Dictionary`). `truncate(count)` drops the tail. When the test is not a function of the element (a mask of
   rows), walk the rows, `swap(row, kept)` each one that stays, then `truncate(kept)`.
-- `Vector<T>` holds objects inline for fast walks (`append`, `vector[index]`, `set_at` and `remove_at` (both halt out of range), `count`,
-  `clear`, `copy`, and `each_`, `map_`, `filter_`, `count_`, `any_`, `all_`, `sum_`, `find_by_`, `sort_by_`,
-  `parallel_each_` templates; `find_by_` answers the item, borrowed, and `sort_by_` a new `Vector` of copies).
-  An item is a `String` or a class whose attributes are only numbers, `Boolean`, enums and `String` (a `List`
-  attribute is an error naming it). `velocities[index]` is a `Velocity?`: after `crash velocities[index]` (or
-  inside `while index < velocities.count()`), `var velocity = velocities[index]` is the item itself, borrowed:
-  `velocity.across = 3.0` writes the vector.
-  A borrowed item is never kept: storing it in an attribute or a list, returning it, `velocity.integrate` as a
-  function value, `var alias = velocity`, and reading it after a line that may resize the vector (`append`,
-  `remove_at`, `clear`, or a call that may do one) are errors, each naming the fix: `velocity.copy()`, an
-  independent object, or reading `velocities[index]` again. Borrowing from a collection nothing keeps
-  (`var found = velocities.copy().find_by_name("x")`) is an error: keep the collection in a `var` first.
-- Pass a borrowed item (a name read from a vector, `velocities[index]`, a row's attribute, an item a lookup lent
-  you) to your own functions freely: it is lent for the call. `apply(event, mouse, keyboard)` writes the
-  stored items in place and may pass them on to `press(mouse)`; nothing is copied. The function may not keep it
-  (attribute, list, return, function value) or reach a call that appends to or removes from its collection;
-  each is an error naming the parameter and the call that lent it. Never pass `.copy()` to a function that
-  writes the item: the writes would land on the copy and vanish. A library function or a union parameter
-  is not lent an item: pass the attributes it needs.
-  A class kept in a `Vector` may not use `this` as a value, nor have a `drop()`.
-- A `Vector` or an `Items` takes no passed function (`each(f)`, `filter(f)`, ...): its items are borrowed, or text.
-  Numbers go in a `List`, which takes them all: `numbers.each(found.append)`, `weights.filter(is_heavy).sum(double_of)`.
-- A row of borrowed items for a system: `var row: Moving = {position: positions[index], velocity:
-  velocities[index]}` (`Moving` a `type`), then `mover.update_each(row)`. The row costs nothing (it lives in the
-  frame) and may be passed only to a function called by name whose parameter is a `type`; inside it,
-  `moving.position.left = 3.0` writes the vector's item. Keeping the row (`'moving' holds items borrowed from
-  'positions' and 'velocities' for this call and cannot be kept in the attribute 'kept'`), returning it, putting
-  it in a list, `var alias = row`, assigning `moving.position = ...`, or a called function that may append to or
-  remove from those vectors (`... may move the items of 'positions': a function that is handed a row may not
-  append to or remove from the vectors it borrows from`) are errors. Build a row only of borrowed items and plain
-  values.
+- `List<T>` is the only list: there is no `Vector` and no `Items`. Whether a list keeps its items inline is the
+  compiler's choice, never yours (spite_compiler#205): an item read from a list is the item itself, so
+  `var velocity = velocities[index]` then `velocity.across = 3.0` writes the item every other name sees, and the
+  item may be kept, passed, returned and read after the list grows.
+- A row of list items for a system: `var row: Moving = {position: positions[index], velocity:
+  velocities[index]}` (`Moving` a `type`), then `mover.update_each(row)`. Its attributes are the items themselves, so
+  `moving.position.left = 3.0` writes the list's item.
 - A generic runner builds the same row with a walk: `var row: $row_type = null`, then on the next line
   `fill_attributes(row, index)` whose template is `crash columns.attributes[attribute][index]` and then the line
   `row.attributes[attribute] = columns.attributes[attribute][index]`: a `[]` read answers a `T?` and a row holds
   items, so the template states each read with a `crash` line before the fill. The compiler writes those checks
-  and the literal in its place, with the same rules.
+  and the literal in its place.
 - Over sparse sets (each entity at a different place in each column), the runner first walks the attributes to
   fill `found: List<Integer>` with each one's place, then the fill template reads each attribute from its own
   generic singleton, after a `crash` line for each read (the places arrive as the parameter `rows`): `crash
@@ -276,7 +250,7 @@ func is_alive(): Boolean {
   Column<attribute.class>().values[stored_row]`, then `row.attributes[attribute] =
   Column<attribute.class>().values[stored_row]`. An index never holds another `[]` read. Choose
   per attribute with an `if` on `attribute.class == Entity` or `attribute.class.is_fixed_size` (both decided while
-  compiling), each branch one such line: `Entity(entity)` is made in the frame, a reference column's value
+  compiling), each branch one such line: `Entity(entity)`, or a reference column's value
   (`ReferenceColumn<attribute.class>().at(rows[attribute.index])`, after `crash rows[attribute.index]`) is counted
   for the row. Keep the index
   expression to parameters, `attribute.index` and whole numbers; work anything else out before the walk. The
@@ -284,23 +258,14 @@ func is_alive(): Boolean {
   `matcher.rows[attribute.index]` into the line's `var` (its items are numbers in a `List`), and never copy them into a
   list of the runner's first.
 - In a generic class that keeps values of a type it does not know (an engine's `Column<$component_type>`), use
-  `Items<$component_type>()` (name provisional): inline and borrowed like a `Vector` when the type fits
-  one, references like a `List` when not, with one set of members (`append`, `items[index]` (a `T?`, `null` out
-  of range, narrowed like a list's), `set_at`, `remove_at`, `remove_swapping(index)` (the last item moves into `index`; all three halt out of range), `count`, `is_empty`,
-  `clear`, `copy`, `deep_copy`, and the `each_`/`map_`/`filter_`/`count_`/`any_`/`all_`/`sum_`/`find_by_`/
-  `sort_by_`/`parallel_each_` templates; no `each(f)` forms). Then one column class serves every component,
-  and the walked row's line is
-  `Column<attribute.class>().values[stored_row]` (after `var stored_row = found[attribute.index]`) for all of them, with no `fits_vector()` branch. The
-  borrow rules above apply only to a type that fits; the error then starts `'Velocity' fits a Vector, so the
-  items of 'velocities' are borrowed: ...`.
+  `List<$component_type>()`: one column class serves every component, and the walked row's line is
+  `Column<attribute.class>().values[stored_row]` (after `var stored_row = found[attribute.index]`) for all of them.
 - A system may take components as arguments (`update_each(position: Position, velocity: Velocity)`); the runner
   passes them with `system.phase_each(made_arguments(found))` on a line of its own, where `made_argument(argument:
   Symbol<$system_type.phase_each>, rows: List<Integer>): argument.class` is `crash rows[argument.index]`, `var
   stored_row = rows[argument.index]`, `crash Column<argument.class>().values[stored_row]` and `return
   Column<argument.class>().values[stored_row]` (an `if` on `argument.class == Entity` may choose another
-  line, such as `return Entity(entity)`). The items are borrowed for that one call only: the system may not
-  keep them or resize their columns (it may lend them on to its own helpers), and calling `made_position(...)` anywhere else is the error for returning a
-  borrowed item. The template's `Spite.Argument` parameter must be a word of its name (`made_argument(argument: ...)`), or
+  line, such as `return Entity(entity)`). The template's `Spite.Argument` parameter must be a word of its name (`made_argument(argument: ...)`), or
   it has no plural.
 - `null` is only for `T?`: `var target: Monster = null` is an error; write `var target: Monster? = null`
   for none yet, or `var target = Monster()` for a default. In a generic class write `var system = $system_type()`,
@@ -308,10 +273,7 @@ func is_alive(): Boolean {
   a local a walk over its attributes fills (`var row: $row_type = null` then `fill_attributes(row, ...)`).
 - To hand one stored component to a caller, return it straight from the singleton's storage: `func of(entity:
   Integer): $component_type?` ending `return column.values[row]`. The caller gets the stored item, so
-  `layout.order = 3` writes the column; never return `.copy()` for this, since writes to a copy are lost. The
-  caller follows every borrow rule (no keeping, second name, reading after a line that may grow or shrink the
-  column; lending it to a call is fine), may not return it further, and gives it a name not used before in the block. A function that lends
-  returns only such items or `null`.
+  `layout.order = 3` writes the column; never return `.copy()` for this, since writes to a copy are lost.
 - A runner that treats systems of one row and of several differently asks `if phase.arguments.count() == 1 { }`
   of each `phase: Spite.Function` it walks (`var phases = $system_type.functions.filter_name_ends_with("_each")`,
   then `phases.each(run_phase)`),
@@ -338,7 +300,7 @@ func is_alive(): Boolean {
 - The yes-or-no ones (`filter_`, `count_`, `any_`, `all_`, `remove_where_`) also take a value of the enum of the
   one member typed with it: `posts.filter_published()` keeps the posts whose `stage == 'published'`. Two members
   whose enums list the value, or a member of that name, is an error.
-- A `while` that only walks a list, a `Vector` or an `Items` doing what one of these does (`var index = 0`, `while index <
+- A `while` that only walks a list doing what one of these does (`var index = 0`, `while index <
   items.count()`, `total = total + items[index].price`, `index = index + 1`) is an error naming
   `items.sum_price()`: `this 'while' walks every element of 'items' only to add up 'price': write 'var total =
   items.sum_price()'`. The same goes for a `while` that only passes each element to one function of yours:
@@ -410,7 +372,7 @@ func is_alive(): Boolean {
   an attribute the proof reads or shrink a list it reads; prove it again after such a call, or read what you need
   before it. A call that cannot change it keeps the proof. Calling a function value keeps no proof about
   attributes or lists.
-- Every proof the compiler makes (narrowing, proven `[]` reads, a proven divisor, frame objects, borrowed items,
+- Every proof the compiler makes (narrowing, proven `[]` reads, a proven divisor, frame objects,
   singleton locks) is listed in [proofs.md](https://github.com/Spite-Language/spite_documentation/blob/master/proofs.md), with when it does **not** apply. Read its "Which proofs
   apply to my code" first: where a proof does not hold, you write the check yourself.
 - A `switch` is over a union or a `T?` and covers every member; `_:` as the last case answers for the rest, and
@@ -433,7 +395,7 @@ func is_alive(): Boolean {
 - There are no exceptions and no error values. Three outcomes only:
   - the compiler can know it: a compile error;
   - absence is fine: `assert condition` stops the function and answers "nothing": it returns, answers `null`
-    from a `T?`, or an empty `List`/`Dictionary`/`Vector`/`Items`. It is allowed only there, never in a
+    from a `T?`, or an empty `List`/`Dictionary`. It is allowed only there, never in a
     constructor (`'assert' is not allowed in a constructor`: take resolved values, or `crash`). In a function
     returning a number, `Boolean`, `String`, enum or object it is an error, since its default would pass for a real
     answer (`this 'assert' would answer a default Integer (0) that a caller cannot tell from a real one: return a
@@ -580,7 +542,7 @@ func is_alive(): Boolean {
   error. A number or a `String` gets none.
 - `spark.memory.allocator` reads it back, and inside a class `memory.allocator` is the object's own: one of the
   program's allocators (`Memory.Heap` unless the compiler chose another), so `== Memory.Arena` asks which, and `allocate`/`free` call
-  it. A `List`'s buffer, a `Vector`'s and an `Items`' block follow their object's allocator. An allocator is a
+  it. A `List`'s buffer follows its object's allocator. An allocator is a
   class that is not generic with `allocate(bytes: Long): Memory.Address` and `free(address: Memory.Address)`.
 
 ## Built in classes

@@ -552,7 +552,7 @@ watcher has swapped the save in.
 | a function's parameters or return type | it becomes a new function: the rebuilt class and every class that calls it are rebuilt too |
 | a function you deleted | whatever still holds it (a function value, the REPL) keeps its last code; the answer says `removed Monster.roar` |
 | an attribute's default value | instances made after the reload get the new default |
-| a class's attributes: added, removed, renamed or retyped | every live object of the class moves to the new attributes, components in an `Items`' own memory too ([below](#changing-a-classs-attributes)); the answer says what each class's objects kept |
+| a class's attributes: added, removed, renamed or retyped | every live object of the class moves to the new attributes ([below](#changing-a-classs-attributes)); the answer says what each class's objects kept |
 | an enum's values: added, removed or reordered | the whole program is compiled again, and every value a running object holds keeps its meaning; a `switch` that meets a value the reload removed halts naming it |
 | a file that does not compile | refused with the compiler's error, and the program keeps all of its code |
 | a function of a class the program reopens, a class of the standard library or a number (`func doubled(): Integer` in `integer.spite`) | the whole program is compiled again and every function whose code changed is swapped in, the standard library's and the compiler's helpers included |
@@ -596,7 +596,7 @@ func Step(new_distance: Float) {
 ```gdscript title=live_party/live_party.spite entry
 var console = Console()
 var hero = Hero("Ann")
-var steps = Items<Step>()
+var steps = List<Step>()
 
 func LiveParty() {
     load "../spite_standard_library/windows"
@@ -626,8 +626,8 @@ func walked(): Float {
 Ann at level 1, walked 4
 ```
 
-This session runs against a copy of the program, built with `--hot-reload --repl-port`. `Step` fits in
-an `Items`' own memory, so its objects are not separate objects at all, and they move too:
+This session runs against a copy of the program, built with `--hot-reload --repl-port`. The `Step`s the list holds
+move too, wherever the compiler chose to keep them:
 
 ```text
 $ spite connect 4000 --command="program.hero.level = 7"
@@ -664,17 +664,6 @@ What it costs: a change to a class's attributes compiles the whole program, sinc
 compiled again: about 40 seconds for a large game's server, against a few for a change to function bodies alone.
 The saves after it are fast again: a reload that compiled the whole program becomes what the next one is compared
 with ([How it works](#how-it-works)).
-
-**A class that starts or stops fitting an `Items`' own memory moves too.** Give `Step` an attribute an item kept
-inline cannot hold, `var notes = List<String>()`, and save: each `Step` the `Items` kept in its own memory becomes an
-object of its own, and the `Items` keeps references to them, as it does for any class that does not fit. Remove it
-again and the objects move back into the `Items`' own memory, unless one of them is also held somewhere else, since
-an item kept inline is never shared; the reload is then refused, naming the class, and swaps in nothing:
-
-```text
-$ spite connect 4000 --command="wait_reload"
-{"ok":true,"value":"rebuilt Step, ...\nmoved every Step to its new attributes: notes is new and holds its default; its objects moved out of an Items' own memory into objects of their own","type":""}
-```
 
 ### Knowing what a reload rebuilt
 
@@ -733,7 +722,7 @@ worked out while compiling, so the check folds away with the branch it guards.
   nothing answers in under a second.
 - **A reload is compiled against what the running program was compiled with, and compiles the whole program when
   that changes.** Compiling one class depends on the rest: which functions can wait, which classes fit a shape,
-  which attributes something reads, the call effects that decide whether a borrowed value must be counted, how a
+  which attributes something reads, the call effects that decide whether a value must be counted, how a
   dictionary is keyed, which functions the program made for a class (a setter, a template instance, a `to_debug`).
   The build records these in the manifest and a reload starts from them. When the changed code changes one of
   them (or a parameter list, or the layout of a class), code in other classes compiled against the old one would
@@ -764,11 +753,9 @@ worked out while compiling, so the check folds away with the branch it guards.
   class's attributes, the new code reads through a function instead (the moved attributes when there are some,
   the object otherwise), and the reload lays each live object's attributes out anew in a block of their own and
   points the object at it: the object stays where it was, so every reference to it (a local of a function
-  running now, a list, another object) still holds it. An `Items` that keeps a class's objects (in its own memory
-  or as references) is in a list of its own, and moves every item in place of its old block; when the class starts
-  or stops fitting its own memory, every item moves between the two kinds of storage. The functions that read a class's
+  running now, a list, another object) still holds it. The functions that read a class's
   attributes without being its own (its allocation, release and copy, the REPL's reflection, a union's dispatch,
-  a template of the standard library made for it, `Items<Step>`) are called through slots too, so they move
+  a template of the standard library made for it, `List<Step>`) are called through slots too, so they move
   with it. A reload moves nothing until it has installed every slot, and releases nothing a removed attribute held
   until every object has moved. All of it is in a `--hot-reload` build only.
 - **The swap happens where the program waits**, or at the end of a pass of one of its

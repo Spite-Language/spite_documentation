@@ -75,19 +75,18 @@ writes the scheduler and the join for this program, and nothing for a program th
 A condition the compiler can answer while compiling is answered then, and only the branch taken is built: a `Build`
 field, a question about a class (`$type.is_fixed_size`, whether a function waits, how many arguments it takes), a
 class test the value's type answers, and `not`, `and` and `or` over them. The branch not taken is not in the program,
-and in a generic class it is not even required to compile for that class: in `Store<List<Integer>>` the
-`Vector<$component_type>` below is never made, so it is never refused.
+and in a generic class it is not even required to compile for that class: in `Store<String>` the
+`value * 2` below is never built, so it is never refused.
 
 ```spite
-generic $component_type
+generic $value_type
 
-func describe(): String {
-    if $component_type.is_fixed_size {
-        var packed = Vector<$component_type>()
-        return "inline, {packed.count()} so far"
+func doubled(value: $value_type): String {
+    if $value_type == Integer {
+        var twice = value * 2
+        return "twice {twice}"
     }
-    var listed = List<$component_type>()
-    return "as references, {listed.count()} so far"
+    return "{value}{value}"
 }
 ```
 
@@ -260,7 +259,7 @@ index, or after something that may write the list is made as written.
 
 ### A list item read only to test it is not counted
 
-`list[index] is present` on a `List`, `Vector` or `Items` of items that cannot be null is the test
+`list[index] is present` on a `List` of items that cannot be null is the test
 `index < count`: the item is never read, so it is never counted and let go. `crash velocities[entity] and
 healths[entity]` is two such tests. It does not apply to a list of nullable items (an item there can be missing
 inside the bounds) or to a `Dictionary`.
@@ -398,7 +397,7 @@ func simulate(steps: Integer): Offset {
 ```
 
 `scaled` and `+` are inlined, `moved` and every `position` but the answer live in registers, and the one object made
-is the answer, at the `return`. A row of borrowed items passed to an inlined function is registers too.
+is the answer, at the `return`.
 
 It does not apply to an object whose class has a `drop`, is held by back references, to one of more than 32
 attributes, or to anything in a function that waits. What you can observe: `--debug-memory` counts fewer allocations
@@ -465,9 +464,7 @@ func sum_points(): Long {
 
 When nothing ever needs one of the items whole, the storage goes one step further and holds **one array per
 attribute**: `points[position].down` is a load from the `down` array, so a loop that reads one attribute reads only
-that array. This is also how an `Items<T>` chooses: attribute after attribute when each walk reads one or two of them
-(as an entity system's systems do), item after item when the uses read most of each item's attributes. The program's
-code is the same either way.
+that array. The program's code is the same either way.
 
 What you can observe: time and memory only; the list's storage is larger by the objects it now holds, and an object
 appended that is not made for the append is made, copied into its slot and let go of, so `--debug-memory` counts it.
@@ -700,7 +697,7 @@ one machine instruction. The proof is a range for each operand
 
 - a literal is its own range; a local or parameter of a whole-number type of at most four bytes has its type's range
   until a `var` or an assignment gives it its value's; a `Long` has no range until one is given to it;
-- `count()` of a list, dictionary, `Vector` or `Items`, and `length()` of a `String`, run from 0 to 2147483647;
+- `count()` of a list or a dictionary, and `length()` of a `String`, run from 0 to 2147483647;
   `%`, `/`, `minimum`, `maximum`, `clamp`, `to_long` and `to_integer` are bound by their operands;
 - a comparison narrows the local it compares inside a `while` or an `if` whose condition says so, on each side of an
   `and`, after an `assert` or a `crash` of it, and after an `if` that leaves;
@@ -769,7 +766,7 @@ product by 1, and a sum, difference, or, exclusive or or shift by 0, are the oth
 
 `values[index]` where a bound proves the read (`while index < values.count()`) is written in place for a list whose
 items are not nullable: one unsigned comparison of the index with the list's length, which halts the same way when
-the index is below 0 or the list changed, and one load of the item. `count()` of a list, `Vector` or `Items`, and
+the index is below 0 or the list changed, and one load of the item. `count()` of a list, and
 `length()` of a `String`, is one load. A list of `T?` items, of unions or of function values still calls `get_at`,
 and so does a list whose `get_at` or `count` a program replaces by reopening the class. What you can observe:
 nothing but time; the message of a read outside its list is the same.
@@ -1023,8 +1020,7 @@ else touching the list leaves the loop as written, testing each item's class.
 body with its loop wrapped in an `if` per `filter_`, and calls that. The last step may be `filter_`, `count_`, `any_`,
 `all_`, `sum_`, `each_`, `map_` or `find_by_`, and a `map_` may stand in the middle too:
 `items.filter_is_active().map_owners().filter_is_adult().sum_age()` is one loop over `items` that names each item's
-owner in the loop, with no list of owners made. A chain on a `Vector` is fused the same way, so `each_` after
-`filter_` writes into the vector's own items.
+owner in the loop, with no list of owners made.
 
 ```spite
 var total = lamps.filter_is_lit().sum_brightness()
@@ -1032,7 +1028,7 @@ var total = lamps.filter_is_lit().sum_brightness()
 
 calls `is_lit` then `brightness` on the first lamp, then on the second, and allocates no list for the filtered lamps.
 What you can observe: the order. Each element's members run before the next element's. A passed function
-(`filter(f)`) and a chain on a `Dictionary`'s values or on `Items` run step by step.
+(`filter(f)`) and a chain on a `Dictionary`'s values run step by step.
 
 ### Short loops on known counts are unrolled
 

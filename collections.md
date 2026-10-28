@@ -208,18 +208,18 @@ and the [specification](https://github.com/Spite-Language/spite_spec/blob/master
 The key and value types are what the program means, not how it is stored: the compiler keeps a dictionary however
 is fastest, as long as every lookup answers the same ([write it plainly](write_it_plainly.md#a-class-is-what-you-mean-not-how-it-is-stored)).
 
-## `Vector<T>`: items inline
+## One list
 
-A `List` of objects holds references: each element is an object somewhere on the heap, and walking the list
-follows one pointer per element. A `Vector<T>` (`library/vector.spite`) holds objects themselves, one after another
-in one block of memory, the way the processor's cache likes to read them. An item has no header and no reference count of its own; appending one copies its
-attributes into the block. Numbers, `Boolean`, enums and `Memory.Address` are already flat in a `List`, so a list
-of them is always a `List`: `Vector<Integer>` is an error naming `List<Integer>`.
+`List<T>` is the only list: there is no `Vector` and no `Items` to choose between. You say what you keep, and
+how it is stored is the compiler's business. Numbers, `Boolean`, enums and `Memory.Address` already sit flat in
+the list's buffer, and a list whose items are never held anywhere else may keep them inline, one after another
+the way the processor's cache likes to read them ([spite_compiler#205](https://github.com/Spite-Language/spite_compiler/issues/205)).
+Nothing a program can see changes with that choice: an item read from a list is the item itself, so a change
+made through one name shows through every other.
 
-```gdscript title=vector_basics/velocity.spite
+```gdscript title=one_list/velocity.spite
 var across = 0.0
 var down = 0.0
-var moving = false
 
 func Velocity(new_across: Float, new_down: Float) {
     across = new_across
@@ -228,200 +228,31 @@ func Velocity(new_across: Float, new_down: Float) {
 
 func integrate() {
     across = across + down
-    moving = true
 }
 ```
-```gdscript title=vector_basics/vector_basics.spite entry
+```gdscript title=one_list/one_list.spite entry
 var console = Console()
 
-func VectorBasics() {
+func OneList() {
     load "../spite_standard_library/windows"
-    var velocities = Vector<Velocity>()
-    var slow = Velocity(1.0, 0.5)
-    velocities.append(slow)
-    var fast = Velocity(2.0, 3.0)
-    velocities.append(fast)
-    crash velocities[0]
-    var first = velocities[0]
-    first.down = 2.0
+    var velocities = List<Velocity>()
+    var velocity = Velocity(1.0, 0.5)
+    velocities.append(velocity)
     velocities.each_integrate()
     var total = velocities.sum_across()
-    var moving_count = velocities.count_moving()
-    console.print(total, moving_count, slow.down)
+    console.print(total, velocity.across)
 }
 ```
 ```output
-8 2 0.5
+1.5 1.5
 ```
 
-`velocities[0]` answers a `Velocity?`, like every `[]`: `null` when there is no item
-there. `crash velocities[0]` narrows it, and then it is not a copy: it is the item inside the vector,
-**borrowed**, so `first.down = 2.0` writes the vector's own item. `slow` is still `0.5`, because `append` copied it
-in. The member
-templates run on the items in place the same way, and a chain of them is one loop, as on a list.
-
-| Member | Result | Notes |
-|---|---|---|
-| `append(value)` | | copies `value`'s attributes in as a new last item |
-| `vector[index]` (calls `get_at(index)`) | `T?` | the item itself, borrowed once narrowed; `null` out of range |
-| `vector[index] = value` (calls `set_at(index, value)`) | | copies `value` over the item; out of range halts |
-| `remove_at(index)` | | moves every later item down; an index out of range halts |
-| `remove_where_<member>()` / `truncate(count)` / `swap(first, second)` | | as on a list ([below](#removing-many-at-once)); `remove_where(f)` is a `List`'s only |
-| `count()` / `is_empty()` / `clear()` | | `clear()` keeps the block's capacity |
-| `reserve(count)` | | makes room for `count` items in all without making any, so appending up to there never grows the block |
-| `copy()` / `deep_copy()` | `Vector<T>` | a new vector with its own copy of every item |
-| `each_`, `map_`, `filter_`, `count_`, `any_`, `all_`, `sum_<member>()` | | as on a list; `filter_` gives a `Vector<T>` of copies |
-| `find_by_<member>(value)` | `T?` | the first item whose member equals `value`, borrowed once narrowed; `null` when none does |
-| `find_index_by_<member>(value)` | `Integer?` | the place of that item, or `null` when none matches |
-| `sort_by_<member>()` | `Vector<T>` | a new vector with a copy of every item, sorted ascending and stable, as on a list |
-| `parallel_each_<member>()` | | as on a list ([concurrency.md](concurrency.md#parallel_each_-a-member-on-every-element)) |
-
-An item is a class of known size: its attributes are only numbers, `Boolean`, enums and `String`s. A class with a
-`List`, a `Dictionary` or another object in an attribute is an error naming the attribute, and it belongs in a
-`List` ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#vectort)). A `String` may be an item too, held as a counted reference.
-
-A borrowed item is read and written through its members. It is never kept: not in an attribute, a list, a
-returned value or a function value, and not past anything that may change the vector's size or move its block,
-since growing the vector (`reserve(count)` too, which adds no item) may move its items. Each of those is an error
-that names `copy()`, which makes an independent object:
-
-```gdscript title=vector_borrow_mistake/velocity.spite
-var across = 0.0
-
-func Velocity(new_across: Float) {
-    across = new_across
-}
-```
-```gdscript title=vector_borrow_mistake/vector_borrow_mistake.spite entry error
-var console = Console()
-
-func VectorBorrowMistake() {
-    load "../spite_standard_library/windows"
-    var velocities = Vector<Velocity>()
-    var slow = Velocity(1.0)
-    velocities.append(slow)
-    var first = velocities[0]
-    velocities.append(slow)
-    console.print(first.across)
-}
-```
-```diagnostic
-may move the items of 'velocities', so 'first' is not read after it
-```
-
-The rules for what a borrowed item may do, and what they cost, are in
-[memory.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort). Items of several vectors can travel together as
-a **row**, an object literal a system takes as a `type` for one call, which is how an engine joins its component
-columns ([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)).
-
-## `Items<T>`: the storage chosen for you
-
-A generic class that keeps values of a type it does not know (an engine's `Column<$component_type>`) cannot
-say `Vector` or `List` without knowing whether the type fits a `Vector`. `Items<T>` (`library/items.spite`)
-answers that while compiling: when `T.is_fixed_size` its items are
-inline and borrowed, exactly as a `Vector`'s; otherwise they are references, as a `List`'s. The members are the
-same either way, so one class serves both:
-
-```gdscript title=items_basics/velocity.spite
-var across = 0.0
-
-func Velocity(new_across: Float) {
-    across = new_across
-}
-```
-```gdscript title=items_basics/trail.spite
-var lefts = List<Float>()
-var last = 0.0
-
-func mark(left: Float) {
-    lefts.append(left)
-    last = left
-}
-```
-```gdscript title=items_basics/items_basics.spite entry
-var console = Console()
-
-func ItemsBasics() {
-    load "../spite_standard_library/windows"
-    var velocities = Items<Velocity>()
-    var slow = Velocity(1.0)
-    velocities.append(slow)
-    var fast = Velocity(4.0)
-    velocities.append(fast)
-    crash velocities[0]
-    var first = velocities[0]
-    first.across = 2.0
-    var trails = Items<Trail>()
-    var trail = Trail()
-    trails.append(trail)
-    crash trails[0]
-    var kept = trails[0]
-    kept.mark(3.5)
-    velocities.remove_swapping(0)
-    var total = velocities.sum_across()
-    var marks = trail.lefts.count()
-    console.print(slow.across, total, trail.last, marks)
-}
-```
-```output
-1 4 3.5 1
-```
-
-`Velocity` fits a `Vector`, so `velocities[0]`, once `crash velocities[0]` has narrowed it, is the item inside
-the block, borrowed, and `slow` keeps its own `1.0`. `Trail` holds a `List`, so it does not fit, and `trails[0]` is `trail` itself, a counted reference like a
-list's element: writing through it writes `trail`. `remove_swapping(0)` moves the last item into the hole instead
-of moving every later one down, which is what a sparse set wants.
-
-| Member | Result | Notes |
-|---|---|---|
-| `append(value)` | | inline: copies `value`'s attributes in; references: keeps `value` |
-| `items[index]` (calls `get_at(index)`) | `T?` | inline: the item, borrowed once narrowed; references: the reference; `null` out of range, either way |
-| `items[index] = value` (calls `set_at(index, value)`) | | replaces the item; out of range halts |
-| `remove_at(index)` | | moves every later item down; an index out of range halts |
-| `remove_swapping(index)` | | moves the last item into `index`; an index out of range halts |
-| `remove_where_<member>()` / `truncate(count)` / `swap(first, second)` | | as on a list ([below](#removing-many-at-once)); `remove_where(f)` is a `List`'s only |
-| `count()` / `is_empty()` / `clear()` | | `clear()` keeps the block's capacity |
-| `copy()` / `deep_copy()` | `Items<T>` | inline: every item copied; references: one level, or all the way down |
-| `each_`, `map_`, `filter_`, `count_`, `any_`, `all_`, `sum_<member>()`, `parallel_each_<member>()` | | as on a vector; `filter_` gives an `Items<T>`, and a chain is one loop |
-| `find_by_<member>(value)` | `T?` | the first item whose member equals `value`: inline, borrowed once narrowed; references, the reference; `null` when none does |
-| `find_index_by_<member>(value)` | `Integer?` | the place of that item, or `null` when none matches |
-| `sort_by_<member>()` | `Items<T>` | sorted ascending and stable: inline, a copy of every item; references, the same references |
-
-Where the items are inline every rule of a borrowed item applies, and the error says why the item is borrowed,
-so a class that starts to fit a `Vector` shows where its old uses keep an item:
-
-```gdscript title=items_borrow_mistake/velocity.spite
-var across = 0.0
-
-func Velocity(new_across: Float) {
-    across = new_across
-}
-```
-```gdscript title=items_borrow_mistake/items_borrow_mistake.spite entry error
-var console = Console()
-
-func ItemsBorrowMistake() {
-    load "../spite_standard_library/windows"
-    var velocities = Items<Velocity>()
-    var slow = Velocity(1.0)
-    velocities.append(slow)
-    var first = velocities[0]
-    velocities.remove_swapping(0)
-    console.print(first.across)
-}
-```
-```diagnostic
-'Velocity' fits a Vector, so the items of 'velocities' are borrowed: 'first' is borrowed from 'velocities'
-```
-
-An engine's column holds its values in an `Items`, and the walked row reads them the same way for both kinds
-([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)). The rules are [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#itemst).
+The rules are [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#one-list).
 
 ## Removing many at once
 
 `remove_where(test)` removes every element a function is true for, and `remove_where_<member>()` every element
-whose member is true, in **one pass** that keeps the others in their order: a `List`, a `Vector` and an `Items`
-all have both (the passed-function form on a `List` only). `truncate(count)` keeps the first `count` and lets go of
+whose member is true, in **one pass** that keeps the others in their order. `truncate(count)` keeps the first `count` and lets go of
 the rest, and `swap(first, second)` exchanges two, which is what a pass of your own is written with when the test
 is not a function of the element, such as an engine removing a column's rows by a mask of despawned entities:
 
@@ -443,7 +274,7 @@ func BulkRemovalDoc() {
     var numbers = [4, 7, 10, 13, 16]
     numbers.remove_where(is_odd)
     numbers.truncate(2)
-    var velocities = Items<Velocity>()
+    var velocities = List<Velocity>()
     var entities = List<Integer>()
     var entity = 0
     while entity < 5 {
@@ -494,8 +325,8 @@ not. A test that is not a function of the element alone (a mask read by row) is 
 `swap` each row that stays down to the next free place, then `truncate`.
 
 `remove_where` changes the collection it is called on, so it ends no chain: `names.filter(is_short).remove_where(is_long)`
-is an error naming the fix, one test that says everything to remove. Like `remove_at`, all three may move items,
-so an item borrowed from a `Vector` or `Items` is not read after one ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#removing-many-at-once)).
+is an error naming the fix, one test that says everything to remove. Like `remove_at`, all three change which
+element an index names, so a proof about an element is made again after one ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#removing-many-at-once)).
 
 ## Member templates: loops you do not write
 
@@ -681,7 +512,7 @@ but 'count_' needs it to return Boolean (to add up a numeric member use 'sum_sta
 ```
 
 **A `while` that only does what a template does is an error naming the template**: a
-counter walking a list, a `Vector` or an `Items` from `0` to its `count()`, doing nothing with each element but what one template does
+counter walking a list from `0` to its `count()`, doing nothing with each element but what one template does
 with one of its members, or what `each`, `filter`, `count`, `sum`, `find`, `any` or `all` does with a
 function passed the element, on a list of anything, numbers and text included. Loops that need the index, pass
 more than the element, stop early for another reason, or walk state keep their `while`. The exact shape the
@@ -938,10 +769,6 @@ func double_of(weight: Float): Float {
 1.5, 2.5, 4 13 1.5
 ```
 
-A `Vector` and an `Items` take no passed function: their items are classes, borrowed and never passed on
-(`velocities.each(f)` is an error naming a member template instead), or text (`names.each(f)` on a
-`Vector<String>` says to keep the text in a `List<String>`).
-
 ## Chains run as one loop
 
 Every template takes what the one before it gives, so they chain: `map_<members>()` turns a list of teams into a
@@ -1086,11 +913,6 @@ func ListAverage() {
 ```output
 3.5
 ```
-
-A `Vector` and an `Items` are reopened the same way, by a `vector.spite` or an `items.spite` in the program's
-folder; their items are read with `values.item_at(items, index)` (an `Items`, with `inline.item_at` or
-`references.read_value` under `$element_type.fits_vector()`), and an item read so is borrowed, as everywhere
-in the program (`conformance/stage6/own_collection_templates`).
 
 What makes `average_member` a template over the element is its body: it reads `member` on an item, `item[member]`, and the item
 is a `$element_type`. A parameter read on the list's own attributes (`attributes[member]`) would range over `List`'s own

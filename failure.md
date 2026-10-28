@@ -333,7 +333,7 @@ error.
 ### Reading with `[]` answers `T?`
 
 An index or a key may not be there, so `names[index]` and `table["key"]` are `T?` and are narrowed like any other
-path. Every `[]` answers this way: a `List`, a `Dictionary`, a `Vector`, an `Items`, a `String`, and any
+path. Every `[]` answers this way: a `List`, a `Dictionary`, a `String`, and any
 class of your own, since `a[x]` is only a shortcut for `a.get_at(x)` and every `get_at` answers a `T?`
 ([functions_and_operators.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#operators)). The
 compiler also understands the usual proofs for the library's collections, so most reads need nothing extra:
@@ -528,7 +528,7 @@ allowed only where the function's result can say it:
 
 - a function that returns nothing just returns;
 - a function returning a `T?` answers `null`;
-- a function returning a `List`, `Dictionary`, `Vector` or `Items` answers an empty one.
+- a function returning a `List` or a `Dictionary` answers an empty one.
 
 ```gdscript title=assert_guard/assert_guard.spite entry
 var console = Console()
@@ -955,7 +955,7 @@ it, then the call chain, and exits with status 1. The first line is
 `spite: the program stopped at <path>:<line> in <Class>.<function> (name=value, ...)`: one field for each value. Each
 failed `assert` that came before is a `spite.assert` line, because those are usually the trail that explains how the
 program got there; each names what its function answered instead (`answered=nothing` for a function that returns
-nothing, `null` for a `T?`, `empty` for a list, a dictionary, a `Vector` or an `Items`). Last comes the call chain, a
+nothing, `null` for a `T?`, `empty` for a list or a dictionary). Last comes the call chain, a
 `spite.frame` line for each function of the program on the stack, innermost first, as a
 [native fault](#what-a-native-fault-reports) writes them:
 

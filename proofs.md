@@ -51,8 +51,8 @@ accepted or refused whatever the optimisation settings.
   [Compile-time questions](#compile-time-questions).
 - **Small objects of numbers**: they live in registers or the frame when they never leave their function.
   [Frame objects](#objects-that-never-leave-their-function-live-in-the-frame).
-- **`Vector` and `Items` items, rows**: a borrowed item is never kept and never read past a resize.
-  [Borrowing](#borrowing-and-lending).
+- **Items read from a list**: an item a name holds or a call is handed is not counted while the list keeps it.
+  [Items read from a list](#items-read-from-a-list).
 - **Singletons with `Parallel`**: write nothing; the compiler picks the lock. [Threads](#threads-and-locks).
 
 ## Presence and control flow
@@ -167,7 +167,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 
 - **Proves**: no default answer a caller cannot tell from a real one.
 - **Rule**: a guard `assert` is allowed only where the result says "nothing" (no result, a `T?`, a `List`, a
-  `Dictionary`, a `Vector`, an `Items`), and never in a constructor. An `if` that only returns the default, or a last
+  `Dictionary`), and never in a constructor. An `if` that only returns the default, or a last
   `if` with no `else` that only checks presence, is refused naming the `assert`.
 - **Falls back**: refused: `this 'assert' would answer a default ... that a caller cannot tell from a real one`.
   Answer a `T?`, or use `crash`.
@@ -356,15 +356,6 @@ func Ranged(): Long {
 - **Falls back**: refused: `'...' has no function named '...', so 'argument_count' has nothing to count ...`, or the
   functions that fit take different numbers of arguments; ask `phase.argument_count()` in a template over them.
 
-### Whether a class fits a `Vector`
-
-- **Proves**: a class can be stored inline.
-- **Rule**: every attribute is a number, a `Boolean`, a text, an enum, a symbol, a singleton or a `T?` of those;
-  no `drop()`; no function uses `this` as a value. `fits_vector()` and `is_fixed_size` fold, and an `Items<T>` stores
-  its items inline exactly when a `Vector<T>` could be made.
-- **Falls back**: a `Vector<T>` of such a class is refused: `'...' uses 'this' as a value, and an item of a Vector
-  is borrowed ...`. An `Items<T>` holds those items by reference.
-
 ### Whether a function writes a parameter
 
 - **Proves**: `function_writes_parameter(...)` and `.is_mutated` fold.
@@ -439,43 +430,7 @@ func Ranged(): Long {
 - **Buys**: a loop that calls through the list's `type` is a direct call per item.
 - **Falls back**: the loop as written.
 
-## Borrowing and lending
-
-### Borrowed items of a `Vector` or `Items`
-
-- **Proves**: a borrowed item cannot outlive its place.
-- **Rule**: `vector[index]` and a template's visited item are borrowed. They are never kept in an attribute, put in
-  a list, returned, made a function value, given a second name or assigned again.
-- **Falls back**: refused: `'...' is borrowed from '...' and cannot be kept in the attribute '...': keep
-  '....copy()', an independent object`.
-
-See [Borrowed items of a `Vector<T>`](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#borrowed-items-of-a-vectort).
-
-### No borrowed read past a resize
-
-- **Proves**: a borrowed name never points at moved items.
-- **Rule**: a borrowed name is not read after anything that may resize its collection, followed through calls; a
-  resize anywhere in a loop ends the borrow for the loop. Assigning the collection again is a resize.
-- **Falls back**: refused: `'...' is borrowed from '...', and '...' on line ... may move the items ...`. Take the
-  item again after the call.
-
-### Rows of borrowed items
-
-- **Proves**: a row built from borrowed items lives for exactly one call.
-- **Rule**: a row is passed only to a function called by name taking a `type`, never kept, returned, listed,
-  aliased or assigned, and the call may not resize its sources.
-- **Falls back**: refused for those cases.
-
-### An item lent to the caller, and to a call
-
-- **Proves**: lending an item is safe.
-- **Rule**: a `return` of an item read straight from a singleton's `Vector` or fitting `Items` lends it when every
-  return is such an item or null; the caller borrows it. A borrowed item passed to a program function called by name
-  is lent for the call, the callee obeying the borrow rules, through any depth of calls. Lending to a library
-  function, a union or an unnamed expression is an error. A borrowed item returned through a name is refused like
-  any borrowed item.
-- **Falls back**: refused: `'...' lends its caller an item of '...' ...`, or `'...' is borrowed from '...' and
-  lent to '...' for its call ...`.
+## Items read from a list
 
 ### An item a name holds from its list is not counted
 

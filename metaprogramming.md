@@ -905,12 +905,11 @@ func CodegenClassName() {
 a column of String
 ```
 
-### Asking whether a class fits a Vector
+### Asking whether a class is fixed size
 
-A `Vector` keeps its items inline, so only a class of known size can be one
-([collections.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#vectort)). `$component_type.is_fixed_size` asks that while
-compiling, so a generic keeps a class that fits in a `Vector` and any other as references in
-a `List`, and never makes the `Vector` it could not:
+`$component_type.is_fixed_size` asks, while compiling, whether a class's size is known: only numbers, `Boolean`s,
+enums and `String`s, nothing a list or another object makes grow. A generic can branch on it, and the branch not
+taken is never compiled:
 
 ```gdscript title=fits_vector_doc/store.spite
 generic $component_type
@@ -918,14 +917,12 @@ generic $component_type
 var inline = $component_type.is_fixed_size
 
 func describe(): String {
+    var kept = List<$component_type>()
+    var kept_count = kept.count()
     if $component_type.is_fixed_size {
-        var packed = Vector<$component_type>()
-        var packed_count = packed.count()
-        return "inline, {packed_count} so far"
+        return "fixed size, {kept_count} so far"
     }
-    var listed = List<$component_type>()
-    var listed_count = listed.count()
-    return "as references, {listed_count} so far"
+    return "grows, {kept_count} so far"
 }
 ```
 ```gdscript title=fits_vector_doc/fits_vector_doc.spite entry
@@ -942,18 +939,17 @@ func FitsVectorDoc() {
 }
 ```
 ```output
-true inline, 0 so far
-false as references, 0 so far
+true fixed size, 0 so far
+false grows, 0 so far
 ```
 
-The standard library makes this choice once, in `Items<T>`, a collection whose every body folds on it
-([collections.md](collections.md#itemst-the-storage-chosen-for-you)), so a generic that only needs to keep its
-values writes `Items<$component_type>()` and never asks.
+How a `List` of them is stored is not this question's to answer: the compiler chooses that
+([collections.md](collections.md#one-list)).
 
 Inside a walk of attributes, `attribute.class.is_fixed_size` asks the same of each attribute, and
 `attribute.index` is the attribute's place in the walk, 0 for the first: together they let a runner keep a
 sparse set per component and fill a row of borrowed items from it
-([memory.md](memory.md#a-row-of-borrowed-items-for-one-call)).
+([memory.md](memory.md#a-row-of-items-for-one-call)).
 
 ## Markup is metaprogramming too
 

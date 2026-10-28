@@ -4,7 +4,7 @@ The standard library has the maths a game engine is built on: `Vector2`, `Vector
 `Matrix4`, and `Quaternion`, with the boxes, planes, frustums and rays that culling and picking need,
 `Color` with the web's colour formats, and the curves, easings, noise and half-precision floats that animation and
 rendering need. They are plain classes in `library/` holding numbers and
-nothing else, so a list of them fits a [`Vector<T>`](collections.md) column and a binary writer, and a program that
+nothing else, so each is fixed size, which a [list](collections.md#one-list) and a binary writer can lay out flat, and a program that
 uses none of them carries none of their code. They are built on the number classes' own
 maths (`square_root()`, `sine()`, `arc_cosine()`, see [values_and_types.md](values_and_types.md#maths-functions))
 and every name is spelled out in full, except the type names themselves.
@@ -322,7 +322,7 @@ functions that keep nothing, given a new value, or returned) the compiler keeps 
 the function that made it writes it straight there
 ([optimizations.md](optimizations.md#objects-that-never-leave-their-function-live-in-registers-or-the-frame)), so
 `position = position + velocity.scaled(delta)` in a loop allocates nothing, and neither do `a + b + c` or
-`var offset = first - second` read only by `offset.length()`. An answer that is stored (in an attribute, a list, a `Vector<T>` column) or printed
+`var offset = first - second` read only by `offset.length()`. An answer that is stored (in an attribute or a list) or printed
 is an object on the heap, one allocation, as any object is.
 
 [Its benchmark](https://github.com/Spite-Language/spite_benchmarks/tree/master/game_maths) measures it against the same passes written in C with plain structs: a
