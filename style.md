@@ -321,6 +321,7 @@ func CallArgumentFixed() {
     load "../spite_standard_library/windows"
     var source = "spite is small"
     var first_word = source.slice(0, 5)
+    crash first_word
     console.print(first_word)
     var tokens = List<Token>()
     var token = Token(first_word)

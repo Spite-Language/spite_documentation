@@ -59,8 +59,8 @@ func ConcurrentTour() {
     log.append("both are asleep")
     log.append("{slow} and {fast} are back")
     var notes = File(".spite/concurrency_notes.txt")
-    notes.write("written before the read")
-    var reading = Concurrent(notes.read)
+    notes.write_string("written before the read")
+    var reading = Concurrent(notes.read_as_string)
     if reading {
         log.append("read: {reading}")
     }
