@@ -40,7 +40,8 @@ func Sleeper(starting_name: String, starting_milliseconds: Integer, shared_log: 
 
 func nap(): String {
     log.append("{name} falls asleep")
-    program.sleep(milliseconds)
+    var pause = Duration(milliseconds, 'milliseconds')
+    program.sleep(pause)
     log.append("{name} wakes up")
     return name
 }
@@ -141,7 +142,7 @@ the program's event loop runs it again from where it stopped. There is no stack 
 
 | The program writes | While it waits |
 |---|---|
-| `program.sleep(milliseconds)` | the state machine returns, and is run again once its time has come |
+| `program.sleep(duration)` | the state machine returns, and is run again once its time has come |
 | `Console.read_line()`, reading or writing a `File`, a `Socket`'s `accept_client`, `read_line`, `read_as_string` or `read_as_buffer` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
 | reading a `Concurrent`'s value, or dropping it | the state machine is run again once that one has finished |
 | reading a `Parallel`'s value, or dropping it | the thread running it is joined, then anything ready runs once |
@@ -153,7 +154,7 @@ Spite code runs on the program's thread at a time, and a state machine only stop
 two pieces of Spite code touch the program's state at the same time. The helper thread runs the system call and
 nothing else.
 
-**What waits inside a state machine.** A wait written as a call (`program.sleep(5)`, `file.read_as_string()`,
+**What waits inside a state machine.** A wait written as a call (`program.sleep(pause)`, `file.read_as_string()`,
 `reading.length()` on a `Concurrent`, a function of your own that waits) is a point the state machine returns
 from, wherever the call is written: in a `var`, an argument, a `{...}` inside text, a `while` condition (which
 waits again on every pass), the right side of `and` or `or`, a call through a function value, a union or a `type`,
@@ -178,8 +179,9 @@ func add_after_a_bump(): Integer {
 }
 
 func bump(): Integer {
+    var one_millisecond = Duration(1, 'milliseconds')
     count = 100
-    program.sleep(1)
+    program.sleep(one_millisecond)
     return 2
 }
 ```
@@ -224,7 +226,8 @@ func start_and_forget() {
 }
 
 func ring() {
-    program.sleep(10)
+    var ten_milliseconds = Duration(10, 'milliseconds')
+    program.sleep(ten_milliseconds)
     console.print("ring")
 }
 ```
@@ -252,12 +255,13 @@ var program = Program()
 
 func PolledLoading() {
     load "../spite_standard_library/windows"
+    var one_millisecond = Duration(1, 'milliseconds')
     var level = LevelFile("forest")
     var loading = Parallel(level.read_tiles)
     var frames = 0
     while not loading.finished {
         frames = frames + 1
-        program.sleep(1)
+        program.sleep(one_millisecond)
     }
     console.print("loaded", loading, "while frames kept running:", frames >= 0)
 }
@@ -320,6 +324,7 @@ var scheduler = Scheduler()
 
 func FrameIo() {
     load "../spite_standard_library/windows"
+    var one_millisecond = Duration(1, 'milliseconds')
     scheduler.resume_only_when_asked()
     var save_file = File(".spite/documentation_save.txt")
     save_file.write_string("level 3")
@@ -328,7 +333,7 @@ func FrameIo() {
     var frames = 0
     while not loading.finished {
         frames = frames + 1
-        program.sleep(1)
+        program.sleep(one_millisecond)
         scheduler.run_ready()
     }
     console.print("each load took a frame of its own:", frames >= 3)
@@ -341,7 +346,7 @@ load 3 read level 3
 each load took a frame of its own: true
 ```
 
-The `program.sleep(1)` in the frame never resumes the loads; only `run_ready()` does. That also means a loop that
+The `program.sleep(one_millisecond)` in the frame never resumes the loads; only `run_ready()` does. That also means a loop that
 polls `finished` and never calls `run_ready()` could never end, since nothing moves the `Concurrent` on, so it
 halts instead: a `Concurrent` found unfinished a million times in a row while no `Concurrent` was stepped stops the
 program with a crash report at the scheduler's count. Which systems to start this way is asked while compiling, with
@@ -362,7 +367,8 @@ var program = Program()
 var text = ""
 
 func fetch() {
-    program.sleep(100)
+    var a_hundred_milliseconds = Duration(100, 'milliseconds')
+    program.sleep(a_hundred_milliseconds)
     var file = File(".spite/documentation_report.txt")
     var read = file.read_as_string()
     crash read
@@ -377,6 +383,7 @@ var frames = 0
 
 func FrameWaits() {
     load "../spite_standard_library/windows"
+    var one_millisecond = Duration(1, 'milliseconds')
     var file = File(".spite/documentation_report.txt")
     file.write_string("sales are up")
     while report.text.is_empty() {
@@ -384,7 +391,7 @@ func FrameWaits() {
         if frames == 1 {
             report.fetch()
         }
-        program.sleep(1)
+        program.sleep(one_millisecond)
     }
     console.print("loaded '{report.text}' while frames kept running:", frames > 1)
 }
@@ -925,9 +932,10 @@ var running = true
 
 func FrameLoop() {
     load "../spite_standard_library/windows"
+    var ten_milliseconds = Duration(10, 'milliseconds')
     while running and frame < 200 {
         frame = frame + 1
-        program.sleep(10)
+        program.sleep(ten_milliseconds)
     }
     console.print("stopped")
 }

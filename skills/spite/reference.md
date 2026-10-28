@@ -553,7 +553,7 @@ a class prints once it declares `func to_string(): String`, and `debug` shows an
 `Name { attribute: value }`, through the `to_debug()` every value has), `File(path)` (`file_name`, `read_as_string(): String?`, `write_string(text)`,
 `append_string(text)`, `byte_count()`, `last_written()`, `exists`, `remove`, `move_to(path)`: renames or moves, `false` when something is already there; bytes are a `Buffer`: `read_as_buffer(): Buffer?` (the whole file; read or mapped is the compiler's choice), `read_buffer_at(position, count): Buffer?` for a file too big for one buffer, `write_buffer(buffer)`, `append_buffer(buffer): Long?` where they start), `Directory(path)` (`path`, `folder_name`, `entries(): List<Directory.Entry>?` (`null` when the folder cannot be opened; each entry a `Directory` or a `File`, switched on;
 one kind is `entries.filter_files()` or `filter_directories()`, never a helper of its own), `exists`, `create`, `move_to(path)`),
-`Process(command, arguments)` (`run(): Integer?`, `null` when the command could not start; `read_output_as_string(): String?` or `read_output_as_buffer(): Buffer?`, `null` before a run: standard output only; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(milliseconds)`,
+`Process(command, arguments)` (`run(): Integer?`, `null` when the command could not start; `read_output_as_string(): String?` or `read_output_as_buffer(): Buffer?`, `null` before a run: standard output only; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(duration)`,
 `arguments(): List<String>`, `argument_named(name): String?`, `has_flag(name): Boolean`, `environment(name): String?`). `Console` is a singleton: `Console()` is the same instance everywhere, bound once
 as `var console = Console()`.
 `print`, `error` and `debug` write their line out at once, so a log redirected to a file shows every line as it
@@ -643,7 +643,7 @@ given to the serializer, keyed by the attribute (`{MeshRecord.attributes['minimu
 a class never declares `json_key_<attribute>()`, which is an error. A union, a `type` (`Anything` included) or a function value anywhere in what they see is a compile error at
 the line that makes the writer or reader (`JsonWriter cannot write 'Owner': 'Owner.pet' is the union Pet, ...`):
 keep what they see to the kinds above ([json.md](https://github.com/Spite-Language/spite_documentation/blob/master/json.md)). `Json` no longer exists: it is the two classes above.
-Measure with `clock.elapsed_nanoseconds()`, the monotonic clock: a `Long`, no allocation, subtract two readings.
+Measure with `clock.elapsed()`, the monotonic clock: a `Duration`; subtract two readings (`clock.elapsed() - started`). Every wait is a `Duration` too: `var frame_time = Duration(16, 'milliseconds')`, then `program.sleep(frame_time)`.
 To time one function, `var benchmark = Benchmark(work)` calls `work` (no arguments, passed by name) once between two
 readings: `benchmark.answer` is what it answered (a `Benchmark<Nothing>` for one that answers nothing) and
 `benchmark.duration` a `Duration` (`benchmark.duration.total('microseconds')`). There is no `clock.benchmark(...)`.

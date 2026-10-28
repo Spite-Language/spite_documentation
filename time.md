@@ -93,10 +93,10 @@ PT1M30.5S 1 30 -PT0.5S PT3M1S
 true true
 ```
 
-`Clock()` keeps its monotonic readings, `elapsed_nanoseconds()` and `elapsed_milliseconds()`, for measuring a
-frame or a request: the wall clock can jump when the machine's time is corrected, and a monotonic clock cannot. A
-reading is a `Long` of nanoseconds and allocates nothing, so a profiler can take one around every system of every
-frame; a `Duration` reading would be an object made per read, so the monotonic clock answers the number.
+`Clock()` keeps its monotonic reading, `elapsed()`, for measuring a frame or a request: the wall clock can jump
+when the machine's time is corrected, and a monotonic clock cannot. A reading is a `Duration` from an arbitrary
+start, so two readings subtract into the time between them (`var taken = clock.elapsed() - started`), and every
+wait the library takes is a `Duration` too: `program.sleep(duration)`, an `Http.Server`'s `idle_limit`.
 `now()` is the wall clock, and each system reads it its own way (`GetSystemTimeAsFileTime` on Windows,
 `clock_gettime` on Linux and macOS).
 

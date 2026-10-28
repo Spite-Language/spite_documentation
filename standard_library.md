@@ -382,8 +382,9 @@ func WatchFolder() {
     File("{folder.path}/level.txt").write_string("three goblins")
     var changed = watcher.changes()
     var tries = 0
+    var twenty_milliseconds = Duration(20, 'milliseconds')
     while changed.is_empty() and tries < 250 {
-        program.sleep(20)
+        program.sleep(twenty_milliseconds)
         changed = watcher.changes()
         tries = tries + 1
     }
@@ -588,7 +589,7 @@ name? no input
 | Member | Does |
 |---|---|
 | `exit(code)` | flushes what was printed and ends the process with `code` |
-| `sleep(milliseconds)` | waits; other `Concurrent` work runs meanwhile ([concurrency.md](concurrency.md)) |
+| `sleep(duration)` | waits the `Duration`'s whole milliseconds; other `Concurrent` work runs meanwhile ([concurrency.md](concurrency.md)). A duration under a millisecond, zero or negative only lets other work have its turn |
 | `arguments()` | what the program was started with, as a `List<String>`, the executable left out ([programs.md](programs.md#programarguments-the-raw-command-line)) |
 | `argument_named(name)` | the value of `--name=...`, as a `String?`: `null` when none was given, a bare `--name` included |
 | `has_flag(name)` | whether a bare `--name` was given (`false` for a `--name=...`) |
@@ -614,7 +615,8 @@ func ProgramBasics() {
     } else {
         console.print("not set")
     }
-    program.sleep(1)
+    var one_millisecond = Duration(1, 'milliseconds')
+    program.sleep(one_millisecond)
     console.print("slept")
 }
 ```
@@ -629,18 +631,17 @@ slept
 
 | Member | Does |
 |---|---|
-| `elapsed_nanoseconds(): Long` | the monotonic clock, in nanoseconds from an arbitrary start: subtract two readings to measure |
-| `elapsed_milliseconds(): Long` | the same, in milliseconds |
+| `elapsed(): Duration` | the monotonic clock, a [`Duration`](time.md) from an arbitrary start: subtract two readings to measure |
 | `now(): Instant` | the wall clock, as an exact [`Instant`](time.md): show it through a time zone |
 
 Each system reads its own clock, in its own folder of the library (`QueryPerformanceCounter`,
 `GetSystemTimeAsFileTime` on Windows, `clock_gettime` with `CLOCK_MONOTONIC` and
-`CLOCK_REALTIME`), through `DynamicLibrary`. A reading allocates nothing: the operating system writes it into a slot
-in the calling function's frame ([placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)),
-and Windows' counter frequency, fixed at boot, is read once when `Clock()` is first made. The unit is the
-nanosecond on every system; the resolution is the hardware's (100 ns for Windows' usual 10 MHz counter, 1 ns on
-Linux and macOS). A profiler can read it twice per system per frame and measure nothing but the reads
-(`conformance/stage6/clock_reads` pins 1 000 readings at no allocation).
+`CLOCK_REALTIME`), through `DynamicLibrary`. The operating system writes a reading into a slot in the calling function's frame
+([placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)),
+and Windows' counter frequency, fixed at boot, is read once when `Clock()` is first made. A reading is a `Duration`,
+two `Long`s, exact to the nanosecond on every system; the resolution is the hardware's (100 ns for Windows' usual
+10 MHz counter, 1 ns on Linux and macOS). `clock.elapsed() - started` is the time since `started`, and
+`taken.total('microseconds')` is it in whole microseconds.
 
 ```gdscript title=clock_basics/clock_basics.spite entry
 var console = Console()
@@ -649,11 +650,12 @@ var program = Program()
 
 func ClockBasics() {
     load "../spite_standard_library/windows"
-    var started = clock.elapsed_nanoseconds()
-    program.sleep(5)
-    var finished = clock.elapsed_nanoseconds()
-    var waited = (finished - started) / 1000000
-    console.print("waited at least 4 ms:", waited >= 4)
+    var five_milliseconds = Duration(5, 'milliseconds')
+    var started = clock.elapsed()
+    program.sleep(five_milliseconds)
+    var waited = clock.elapsed() - started
+    var at_least = Duration(4, 'milliseconds')
+    console.print("waited at least 4 ms:", waited >= at_least)
 }
 ```
 ```output
@@ -759,7 +761,7 @@ answers `connection: keep-alive` and waits on every open connection and on its l
 keeps the connection after a response and sends its next request to the same host and port over it. A connection
 closes when either side says `connection: close` (a request that sets that header gets its answer and then the
 close), when an HTTP/1.0 client does not ask for `keep-alive`, when a response's body ends with the connection,
-and when it has been idle too long: a server closes one after `idle_limit` milliseconds (5000) without a request,
+and when it has been idle too long: a server closes one after `idle_limit`, a `Duration` (5 seconds), without a request,
 and keeps at most `largest_waiting` (64) open, closing each further one after its answer; a client keeps at most
 `largest_idle` (8). A kept connection the server has closed meanwhile is noticed when the client's next request
 gets no answer at all, and that request is sent once more over a new connection. Requests on one connection are
