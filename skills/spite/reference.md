@@ -677,9 +677,9 @@ parts `column_0_row_0` to `column_3_row_3`. Each answer is a new object, so one 
 `var moved = velocity.scaled(delta)` then `position = position + moved`. Culling and picking: `AxisAlignedBox(lowest,
 highest)`, `Plane()` with `set_point_normal`, `Frustum()` with `set_from_view_projection(matrix)` then
 `intersects_box`/`intersects_sphere`, and `Ray(origin, direction)` whose `hit_plane`, `hit_box` and `hit_triangle`
-answer a `Float?` distance, `null` for a miss. Colours: `Color("#ff6347")` holds `red`, `green`, `blue`, `alpha` from 0 to 1, made
-from text (also `rgb()`, `rgba()`, `hsl()`, `hsla()` and CSS names; text naming none stops the program, and
-`text.to_color()` answers a `Color?` instead), `color.hexadecimal` read and set as text, written with `to_hex()`, `to_rgb_text()`, `to_hsl_text()`, converted with
+answer a `Float?` distance, `null` for a miss. Colours: `Color(0.2, 0.5, 0.9, 1.0)` holds `red`, `green`, `blue`, `alpha` from 0 to 1, its one
+constructor; text becomes one only through `"#ff6347".to_color()`, a `Color?` (also `rgb()`, `rgba()`, `hsl()`,
+`hsla()` and CSS names; `null` for text naming none, so `crash` it), written with `to_hex()`, `to_rgb_text()`, `to_hsl_text()`, converted with
 `to_linear()` and `to_standard_rgb()`. Animation and shading: `CubicBezier(start, first_handle, second_handle, end)`
 with `y_at_x(x)`, `var easing = Easing()` then `easing.in_out_cubic(amount)` and the rest, `Noise(seed)` with
 `gradient_2d(x, y)` and `interleaved_gradient`, and `value.to_half_precision()` / `bits.half_precision_to_float()`

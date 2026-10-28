@@ -222,11 +222,11 @@ nothing behind
 
 ## Colours
 
-A `Color` holds four `Float`s from 0 to 1, `red`, `green`, `blue` and `alpha`, and it is made from the text the web
-writes for a colour: `Color("#ff6347")`, and the same for `#rgb`, `#rgba`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()`
-and `hsla()` with commas or spaces and an alpha after a `/`, and the 148 CSS colour names. `color.hexadecimal`
-reads a colour as text and takes any of those forms when set. Text that names no colour stops the program and
-names the text; `text.to_color()` answers `null` for it instead, for text a program did not write.
+A `Color` holds four `Float`s from 0 to 1, `red`, `green`, `blue` and `alpha`, and it has one constructor that
+takes them: `Color(0.2, 0.5, 0.9, 1.0)`. Text becomes a colour through `to_color()`, which reads what the web
+writes for one: `"#ff6347".to_color()`, and the same for `#rgb`, `#rgba`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()`
+and `hsla()` with commas or spaces and an alpha after a `/`, and the 148 CSS colour names. It answers a `Color?`,
+`null` for text that names no colour, so `crash` it when the text is your own and a mistake would be a bug.
 A colour writes itself back as `to_hex()`, `to_rgb_text()` and `to_hsl_text()`, and
 `to_linear()` and `to_standard_rgb()` convert between the sRGB a picker or a texture holds and the linear light a
 shader adds up.
@@ -235,9 +235,11 @@ shader adds up.
 var console = Console()
 
 func GameColorsBasics() {
-    var tomato = Color("tomato")
+    var tomato = "tomato".to_color()
+    crash tomato
     console.print("{tomato} {tomato.to_rgb_text()} {tomato.to_hsl_text()}")
-    var faded = Color("hsl(210, 50%, 40%, 0.25)")
+    var faded = "hsl(210, 50%, 40%, 0.25)".to_color()
+    crash faded
     console.print("{faded} {faded.to_rgb_text()}")
     var wrong = "#12".to_color()
     if wrong {
