@@ -191,7 +191,7 @@ are equal when their years, months and days are.
 `"America/New_York"`, or `null` when the database has none by that identifier; `utc()` is UTC;
 `fixed_offset(offset)` is a zone that is
 always the same distance from UTC; `system()` is the zone the machine is set to, for showing times to the person
-at it. Nothing uses it unless it is asked for by name, so a program never depends on the machine's zone by
+at it, or `null` when the system cannot name or open it. Nothing uses it unless it is asked for by name, so a program never depends on the machine's zone by
 accident.
 
 A zone is one class, `TimeZone`, and all it answers is its own: `offset_at(instant)`, its distance from UTC at
@@ -319,7 +319,9 @@ with the system's own updates, and a program carries no copy of the database:
 
 - **Windows** reads them through `icu.dll`, the ICU library Windows 10 (version 1903 and later) and Windows 11
   ship and update, which holds the IANA database under its IANA identifiers (`windows/time_zone.spite`, over
-  `DynamicLibrary`). Windows' own registry zones are not used: they have Windows names, and less history.
+  `DynamicLibrary`). Windows' own registry zones are not used: they have Windows names, and less history. ICU
+  refusing a zone is an answer, `null` from `find` or `system()`; an offset for an instant outside the years ICU
+  reckons, about 5.8 million either side of 1970, crashes, since only a program's own arithmetic makes one.
 - **Linux and macOS** read the compiled database in `/usr/share/zoneinfo`, one TZif file per zone (RFC 8536),
   through `File` and parsed in Spite (`TimeZone`'s TZif reading, in `common/time_zone.spite`); `system()` follows `TZ`, then the
   `/etc/localtime` link.

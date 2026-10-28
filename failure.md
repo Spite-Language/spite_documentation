@@ -25,6 +25,11 @@ What that already means in practice:
   a `crash` that fails, a native fault ([below](#what-a-native-fault-reports)).
 - A failed `crash` names what is missing instead of printing a default that reads like a real zero
   ([what a crash reports](#what-a-crash-reports)).
+- The library halts only on the program's own mistakes (an index outside a text, a negative count), never on
+  what the outside world does: a file that cannot be read whole, a lock or a random source the system refuses, a
+  line of input that is not UTF-8, a path the system cannot give, the machine's time zone ICU cannot open, each is
+  an answer, a `T?` that is `null` or a `Boolean`, and the program decides what it means with `assert` (carry on)
+  or `crash` (a bug) ([standard_library.md](standard_library.md)).
 - Text that is not a number reads as `null`, never as a `0`: `"forty two".to_integer()` is an `Integer?`
   ([standard_library.md](standard_library.md#string)).
 - An operand that would be cut to fit is a compile error, in arithmetic and in comparisons

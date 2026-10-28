@@ -213,8 +213,8 @@ the second record starts at 8 and holds 2222 of 16 bytes
 
 `file.lock()` waits until no other process holds a lock on the file, and answers a `LockedFile` you hold until you
 call `unlock()` or let it go. It is how two programs take turns on one file, such as a cache both write. If the
-program ends or crashes the system releases the lock, so it is never left held. `lock()` answers `null` only when
-the path cannot be opened. There is nothing to write for the operating system: the same call works on Windows,
+program ends or crashes the system releases the lock, so it is never left held. `lock()` answers `null` when
+the path cannot be opened or the system refuses the lock. There is nothing to write for the operating system: the same call works on Windows,
 Linux and macOS. The rules are in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes).
 
 ### Rename or move a file or folder
@@ -478,7 +478,7 @@ meanwhile ([which calls wait](#read-and-write-a-file)).
 | `write(...values)` | the same without the line break |
 | `error(...values)` | like `print`, to the error stream |
 | `debug(...values)` | each value's `to_debug()`, separated by a space, then a line break |
-| `read_line()` | one line of input without its line break, as a `String?`: `null` only at the end of the input |
+| `read_line()` | one line of input without its line break, however long, as a `String?`: `null` at the end of the input, and for a line whose bytes are not UTF-8 (the next call reads the line after it) |
 
 **You never flush.** The compiler chooses how printed output reaches its destination, and whatever it chooses,
 three things hold: a line is never split, nor mixed with a line another thread prints at the same time; everything
@@ -597,8 +597,9 @@ name? no input
 | `arguments()` | what the program was started with, as a `List<String>`, the executable left out ([programs.md](programs.md#programarguments-the-raw-command-line)) |
 | `argument_named(name)` | the value of `--name=...`, as a `String?`: `null` when none was given, a bare `--name` included |
 | `has_flag(name)` | whether a bare `--name` was given (`false` for a `--name=...`) |
-| `environment(name)` | the process environment variable, as a `String?` |
-| `executable_path()` | the path of the running executable, as the operating system gives it |
+| `environment(name)` | the process environment variable, as a `String?`: `null` when it is not set |
+| `executable_path()` | the path of the running executable, as the operating system gives it, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
+| `working_directory()` | the folder the program runs in, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
 | `live_allocations()` | how many allocations are alive |
 | `live_bytes()` | how many bytes the live allocations asked for |
 
@@ -1112,8 +1113,8 @@ carries none of them.
 | | `decompress(bytes): Buffer?` | the bytes back, with no length given in advance; `null` for a truncated or malformed stream, a checksum or size that does not match, or bytes after the end |
 | `Sha256` | `hash(bytes): Buffer` | the 32-byte SHA-256 digest (FIPS 180-4) |
 | | `hmac(key, message): Buffer` | HMAC-SHA256 (RFC 2104), a key longer than 64 bytes hashed first |
-| `SecureRandom` | `random_buffer(count): Buffer` | bytes from the operating system's secure source: `BCryptGenRandom` on Windows, `getrandom` on Linux, `getentropy` on macOS; a failure of the source crashes |
-| `Argon2` | `hash(password): String` | a new Argon2id (RFC 9106) hash as a PHC string, `$argon2id$v=19$m=65536,t=3,p=1$<salt>$<tag>`: 64 MiB, 3 passes, 1 lane, a 16-byte random salt and a 32-byte tag |
+| `SecureRandom` | `random_buffer(count): Buffer?` | bytes from the operating system's secure source: `BCryptGenRandom` on Windows, `getrandom` on Linux, `getentropy` on macOS; `null` when the source gives none, and a negative `count` crashes |
+| `Argon2` | `hash(password): String?` | `null` when no random bytes came for the salt; otherwise a new Argon2id (RFC 9106) hash as a PHC string, `$argon2id$v=19$m=65536,t=3,p=1$<salt>$<tag>`: 64 MiB, 3 passes, 1 lane, a 16-byte random salt and a 32-byte tag |
 | | `verify(password, stored): Boolean?` | whether the password is the one `stored` was made from, for `argon2id`, `argon2i` and `argon2d` PHC strings of version 19 with any cost; `null` when `stored` is not such a string, so a damaged record is not taken for a wrong password; the tags are compared in constant time |
 | | `derive(password, salt, time_cost, memory_cost, lanes, tag_length): Buffer` | the raw Argon2id tag, `memory_cost` in KiB |
 
