@@ -1,69 +1,98 @@
-# Spite documentation
+# Spite
 
-**Start here.** [WHY.md](WHY.md) says why to use Spite, what it refuses and what it does instead, and why to help build it. For a language model writing Spite,
-[skills/spite/SKILL.md](skills/spite/SKILL.md) is the skill and [skills/spite/reference.md](skills/spite/reference.md)
-the whole language on one page. The pages below are the tutorial, in reading order.
+> **Spite: you write your intention, the compiler reminds you that you are a moron, and emits the fastest
+> possible code.**
 
-The code lives in the [Spite-Language](https://github.com/Spite-Language) organisation:
-[spite_compiler](https://github.com/Spite-Language/spite_compiler) (the compiler, written in Spite and built by
-itself; it writes machine code directly),
-[spite_standard_library](https://github.com/Spite-Language/spite_standard_library),
-[spite_spec](https://github.com/Spite-Language/spite_spec) (the specification, as programs every compiler must pass),
-[spite_benchmarks](https://github.com/Spite-Language/spite_benchmarks) and
-[mortaros_spite](https://github.com/Spite-Language/mortaros_spite) (every decision and why).
-The compiler writes machine code directly. How it works inside is in its own
-[OPTIMIZATIONS.md](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md) and
-[ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md).
+Spite is a small, opinionated language meant to be written mostly by AI and skimmed by humans: one way to do each
+thing, no macros, and metaprogramming and a real standard library instead of loops. Its compiler is written in Spite,
+builds itself and writes machine code directly.
 
-Spite is a small, opinionated language meant to be written mostly by AI and skimmed by humans. There is one way
-to do each thing, no macros, and metaprogramming instead of loops wherever it reads better. Its compiler is written
-in Spite and writes machine code itself.
+A file is a class named after it, and a program is a folder: `battle/battle.spite` is the entry, and its constructor
+runs the program.
 
-**These pages are the tutorial.** Each page teaches its part of the language, with programs that run, and ends with
-a link to the next page. The formal definition of the language is [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md): one page
-for each page here, holding every rule, edge case and exact error text. The specification is normative: where a
-page here and the specification disagree, the specification decides and the page is the bug.
+```gdscript title=battle/monster.spite
+var name = ""
+var health = 0
 
-Every titled Spite program on these pages is real: each one is compiled and run, and what it prints is compared with
-the output written under it (or it must fail with the error written under it), and its memory must balance. If it is on
-these pages, it works.
+func Monster(new_name: String, new_health: Integer) {
+    name = new_name
+    health = new_health
+}
 
-The code blocks are fenced as `gdscript` because GitHub cannot highlight Spite yet and GDScript's highlighter
-reads it best (`func`, `var`, `name: Type`, `#` comments). The code is Spite throughout.
+func alive(): Boolean {
+    return health > 0
+}
+```
+```gdscript title=battle/battle.spite entry
+var console = Console()
 
-## Philosophy
+func Battle() {
+    load "../spite_standard_library/windows"
+    var monsters = [Monster("slime", 12), Monster("ghost", 0), Monster("troll", 30)]
+    var standing = monsters.filter_alive().sum_health()
+    console.print("health still standing:", standing)
+    var troll = monsters.last()
+    crash troll
+    show_name(troll)
+    show_health(troll)
+}
 
-- **The moron writes the plain program; Spite decides how it runs.** You write lists, loops and classes that say
-  what the program means. Threads, waiting, memory layout, alignment and where every value lives are chosen by the
-  compiler from what it proves about your code, and none of it is your job:
-  [Write it plainly](write_it_plainly.md). A plain program that is slower than the same program tuned by hand is a
-  bug in the compiler.
-- Everything that can be decided while compiling is decided while compiling. Nothing runs beside a program to
-  make it fast, so the same language builds an operating system, firmware for a small chip, a WebAssembly module
-  for a web page, a server or a game.
-- Spite is written mostly by AI and skimmed by humans. Code must read easily; it does not need to be pleasant to type.
-- The language is extremely opinionated and small. There is one way to do each thing. There are no macros and no clever features.
-- Readability comes from metaprogramming and the standard library: prefer `repositories.filter_active().count_stars()` over loops and ifs.
-- No abbreviations, anywhere, except the language keywords themselves (`var`, `func`, `enum`).
-- Compilation speed and live reload matter more than anything else in the toolchain.
-- The compiler is written in Spite, compiles itself and writes machine code directly, and so is the standard library:
-  [Pure Spite](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#pure-spite-dissolving-the-runtime).
+func show_attribute(attribute: Spite.AttributeDeclaration, monster: Monster) {
+    console.print(attribute.name, "=", monster[attribute])
+}
+```
+```output
+health still standing: 42
+name = troll
+health = 30
+```
 
-## Writing these pages
+Nobody wrote `filter_alive` or `sum_health`. `List` has templates, `filter_<member>()` and `sum_<member>()`, and the
+compiler writes the two this program calls for `Monster`, then fuses the chain into one loop with no list in between.
+`show_name` and `show_health` are the same idea turned on your own code: `show_attribute` takes a
+`Spite.AttributeDeclaration`, so naming an attribute in its place makes the compiler write a typed function for it,
+one for `name` and one for `health`. `monsters.last()` may find nothing, so it is a `Monster?`, and `crash troll`
+says an empty list here is a bug: after it, `troll` is a `Monster`. Nothing is looked up while the program runs, and
+whatever it does not call is not in the executable ([collections.md](collections.md),
+[metaprogramming.md](metaprogramming.md)).
 
-For whoever writes or changes the documentation:
+Rust has Rustaceans; Spite has morons. A moron is anyone who writes Spite (people, AI agents and the language's own
+author), said with affection, and the language is built so a moron's code still comes out right and fast:
 
-- **The pages talk to people learning Spite.** No notes to agents, no implementation status ("not built", "planned"),
-  no decision numbers or open-question bookkeeping in the middle of a page. Agent guidance, decisions, proposals and
-  status live outside these pages. Each page ends with a link to the next thing to learn.
-- **Never name a third-party package.** Packages built on Spite are third-party, even the ones the author maintains.
-  Write examples in Spite's own terms, and record a need found through a package as the language need it is.
-- **No em dashes**, and no two hyphens between spaces standing in for one. A table has one set of columns, so write
-  one row per item rather than two tables side by side.
+- **You write the plain program; the compiler decides how it runs.** Threads, waiting, memory layout and where every
+  value lives are the compiler's choice, proven while compiling, with no runtime shipped beside the program. A plain
+  program slower than the same program tuned by hand is a compiler bug: [Write it plainly](write_it_plainly.md).
+- **The compiler refuses mistakes instead of guessing.** An error names the problem and the fix (a race, a value
+  that may be null, a misspelt or abbreviated name), and there is no warning to ignore. The compiler is also the
+  formatter and the linter: it rewrites your file to the one style.
+- **Nothing fails silently.** Every failure is a compile error or a crash that names its cause, never a wrong value,
+  a leak or a hang ([failure.md](failure.md#nothing-fails-silently)).
+- **Built mostly by AI, decided by a person.** Every mistake an agent makes is a guardrail the language is missing,
+  and it becomes a rule the compiler enforces ([WHY.md](WHY.md#written-by-ai-decided-by-a-person)).
+
+[WHY.md](WHY.md) says more: why to use Spite, what it refuses, and how to help build it.
+
+## Try it
+
+Clone the compiler and the standard library side by side and build the compiler (Windows x64 for now, no C
+toolchain needed):
+
+```bash
+gh repo clone Spite-Language/spite_compiler
+gh repo clone Spite-Language/spite_standard_library
+bash spite_compiler/scripts/bootstrap.sh --install
+```
+
+Then put the two files above in a `battle` folder beside the clones and run `spite battle`.
+[Getting started](getting_started.md) walks through it.
+
+Writing Spite with an AI? Give it the skill in [skills/spite/](skills/spite/SKILL.md), with the whole language on one
+page in [reference.md](skills/spite/reference.md).
 
 ## Reading order
 
-Read the pages in this order the first time; each page assumes the ones before it and ends with a link to the next.
+These pages are the tutorial. Read them in this order the first time; each page assumes the ones before it and ends
+with a link to the next.
 
 **Getting started**
 
@@ -75,7 +104,7 @@ Read the pages in this order the first time; each page assumes the ones before i
 
 3. [classes_and_files.md](classes_and_files.md): the lexical rules; a file is a class; what a file holds and in
    what order; constructors, singletons, `this`, references.
-4. [programs.md](programs.md): the entry file, how a program loads the standard library, `program.arguments()`, run-time settings
+4. [programs.md](programs.md): the entry file, how a program loads the standard library, `Arguments`, run-time settings
    (`Environment`) and compile-time settings (`Build`, `target_operating_system`).
 5. [values_and_types.md](values_and_types.md): variables, numbers and the casting rule, numbers as classes,
    `String`, enums, unions, `type` shapes and duck typing.
@@ -121,6 +150,38 @@ Read the pages in this order the first time; each page assumes the ones before i
     anything) you could notice.
 26. [proofs.md](proofs.md): every fact the compiler proves while compiling, what each one buys, and when it does
     not apply, so you know when to write the check yourself.
+
+## About these pages
+
+Every titled Spite program on these pages is compiled and run, what it prints is compared with the output written
+under it (or it must fail with the error written under it), and its memory must balance. The formal definition of the
+language is [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md), one page
+for each page here with every rule, edge case and exact error text; where the two disagree, the specification decides
+and the page is the bug. The code blocks are fenced as `gdscript` because GitHub cannot highlight Spite yet; the code
+is Spite throughout.
+
+For whoever writes or changes these pages:
+
+- **The pages talk to people learning Spite.** No notes to agents, no implementation status ("not built", "planned"),
+  no decision numbers or open-question bookkeeping in the middle of a page. Each page ends with a link to the next
+  thing to learn.
+- **Never name a third-party package.** Packages built on Spite are third-party, even the ones the author maintains.
+  Write examples in Spite's own terms, and record a need found through a package as the language need it is.
+- **No em dashes**, and no two hyphens between spaces standing in for one. A table has one set of columns, so write
+  one row per item rather than two tables side by side.
+
+## The repositories
+
+Spite lives in the [Spite-Language](https://github.com/Spite-Language) organisation:
+
+| Repository | What it holds |
+| --- | --- |
+| [spite_documentation](https://github.com/Spite-Language/spite_documentation) | this tutorial, [WHY.md](WHY.md) and the skill for language models |
+| [spite_compiler](https://github.com/Spite-Language/spite_compiler) | the compiler, written in Spite and built by itself; how it works inside is in its [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md) and [OPTIMIZATIONS.md](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md) |
+| [spite_standard_library](https://github.com/Spite-Language/spite_standard_library) | the standard library |
+| [spite_spec](https://github.com/Spite-Language/spite_spec) | the specification, as programs every compiler must pass |
+| [spite_benchmarks](https://github.com/Spite-Language/spite_benchmarks) | plain Spite programs measured against hand-tuned C |
+| [mortaros_spite](https://github.com/Spite-Language/mortaros_spite) | every decision and why |
 
 ---
 
