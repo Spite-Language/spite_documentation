@@ -49,7 +49,7 @@ REPL can look at any of it.
 | `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
 | `Concurrent`, `Parallel` | run a function while waiting, or on another thread; the handle is the value | [concurrency.md](concurrency.md) |
 | `Socket` | TCP over IPv4 and IPv6: listen, connect, lines and bytes, waiting or not | [below](#socket) |
-| `UdpSocket` | UDP datagrams over IPv4 and IPv6 | [below](#udpsocket) |
+| `Udp.Socket`, `Udp.Datagram` | UDP datagrams over IPv4 and IPv6 | [below](#udp) |
 | `Http.Server`, `Http.Client`, `Http.Request`, `Http.Response` | HTTP/1.1, connections kept alive | [below](#http) |
 | `WebSocket.Client`, `WebSocket.Server`, `WebSocket.Connection`, `WebSocket.Message` | WebSocket (RFC 6455) over an HTTP upgrade: text and binary messages both ways, ping and close | [below](#websocket) |
 | `Base64`, `Deflate`, `Zlib`, `Gzip` | bytes as base64 and base64url text; bytes compressed as raw DEFLATE, zlib and gzip | [below](#bytes-base64-compression-hashes-and-passwords) |
@@ -701,23 +701,29 @@ func poll(connection: Socket) {
 ```
 
 A write to a closed connection sends nothing, answers `false` or `0`, and sets `closed` too; nothing crashes.
-Every read answers a buffer of its own, as `UdpSocket`'s does, and the numbers in it are read from it
-([below](#bytes-are-a-buffer)). `UdpSocket`, HTTP and WebSocket are [below](#udpsocket).
+Every read answers a buffer of its own, as a `Udp.Datagram`'s does, and the numbers in it are read from it
+([below](#bytes-are-a-buffer)). UDP, HTTP and WebSocket are [below](#udp).
 
-## `UdpSocket`
+## UDP
 
-`UdpSocket()` sends and receives UDP datagrams over IPv4 and IPv6, the same on Windows, Linux and macOS. A datagram is bytes, read as a `Buffer` or as text, and one call is one datagram.
+`Udp.Socket()` sends and receives UDP datagrams over IPv4 and IPv6, the same on Windows, Linux and macOS. One
+`receive()` is one datagram, a `Udp.Datagram` that holds its bytes and who sent them, read as text or as a
+`Buffer` once it is in hand, so nothing received is lost by asking for the wrong one.
 
 | Member | Does |
 |---|---|
 | `open()`, `open_locally(port)`, `open_everywhere(port)`, `open_at(host, port)` | opens on a port the system picks (a client), or on `port` of `127.0.0.1`, of every interface of both IPv4 and IPv6, or of the one interface a host name or address names (`"::1"`; a name with both kinds of address opens on its IPv4 one); port `0` is one the system picks; `false` when the port is taken or the name does not resolve |
 | `port: Integer` | get-only: the port the socket is open on, the one the system gave it after `open()` (asked of the system with `getsockname`), so a client can tell a server where to answer; reading it from a socket that is not open halts, since it has none, and a program that wants the number after `close()` keeps it in a `var` before closing, which says it means to |
 | `send_to(host, port, buffer): Boolean` | sends one datagram to a host name or an IPv4 or IPv6 address; a name with both kinds of address is sent to its IPv4 one; `false` when the name does not resolve to an address the socket can reach (an IPv6 one from `open_locally`) or the system refuses it |
-| `receive_as_buffer(): Buffer?` | waits for the next datagram; `null` when the socket is closed |
-| `receive_as_string(): String?` | the same, as text: `null` too when the datagram is not UTF-8 |
-| `receive_as_buffer_now(): Buffer?` | the next datagram if one has arrived, otherwise `null` at once |
-| `sender_host(): String`, `sender_port(): Integer` | who sent the datagram received last, to answer with `send_to`: an IPv4 address as `"127.0.0.1"`, an IPv6 one in its shortest form (`"::1"`, `"2001:db8::7"`) |
+| `receive(): Udp.Datagram?` | waits for the next datagram; `null` when the socket is closed |
+| `receive_now(): Udp.Datagram?` | the next datagram if one has arrived, otherwise `null` at once |
 | `close()` | closes it |
+
+| `Udp.Datagram` | Does |
+|---|---|
+| `read_as_string(): String?` | the bytes as text, `null` when they are not UTF-8 |
+| `read_as_buffer(): Buffer` | the bytes as they are |
+| `sender_host: String`, `sender_port: Integer` | get-only: who sent it, to answer with `send_to`: an IPv4 address as `"127.0.0.1"`, an IPv6 one in its shortest form (`"::1"`, `"2001:db8::7"`); it travels with the datagram, so two threads receiving on one socket never see each other's sender |
 
 A datagram can arrive empty, which is a list of no bytes, not `null`. UDP itself neither orders nor repeats lost
 datagrams; reliable channels are the program's.
@@ -858,7 +864,7 @@ one `Concurrent` each. `wss`, WebSocket over TLS, belongs here as well.
 
 ## Bytes are a `Buffer`
 
-Bytes a program reads or writes are a `Buffer`, whoever hands them over: a `File`, a `Socket`, a `UdpSocket`, a
+Bytes a program reads or writes are a `Buffer`, whoever hands them over: a `File`, a `Socket`, a `Udp.Datagram`, a
 `WebSocket.Message`, an HTTP body, a `Process`'s output, a `BinaryWriter`. A file format or a network message is
 numbers laid out in bytes, so a `Buffer` reads and writes those numbers, in the byte order the format uses, at the
 position the format puts them.
