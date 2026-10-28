@@ -97,7 +97,7 @@ becomes its value is listed in [the rules](https://github.com/Spite-Language/spi
 
 Outside a `Concurrent`, a read waits where it is written, one after another. The one exception the IO classes make
 on their own is reads side by side: when two or more declarations in a
-row each read a `File` (`read()`) or a `Socket` (`read_line()`), the compiler starts every read but the last as a
+row each read a `File` (`read()`) or a `Tcp.Connection` (`read_line()`), the compiler starts every read but the last as a
 `Concurrent`, runs the last one, and waits for all of them before the next statement. The program waits for the
 slowest file rather than for each in turn, and nothing it does afterwards can tell: the values are the same, and a
 file written by the next statement is written after the reads.
@@ -143,7 +143,7 @@ the program's event loop runs it again from where it stopped. There is no stack 
 | The program writes | While it waits |
 |---|---|
 | `program.sleep(duration)` | the state machine returns, and is run again once its time has come |
-| `Console.read_line()`, reading or writing a `File`, a `Socket`'s `accept_client`, `read_line`, `read_as_string` or `read_as_buffer` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
+| `Console.read_line()`, reading or writing a `File`, a `Tcp.Server`'s `accept`, a TCP connection's `read_line`, `read_as_string` or `read_as_buffer` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
 | reading a `Concurrent`'s value, or dropping it | the state machine is run again once that one has finished |
 | reading a `Parallel`'s value, or dropping it | the thread running it is joined, then anything ready runs once |
 
@@ -192,10 +192,10 @@ read before the wait: 3 read after it: 100
 `count` is read before `bump()` runs, as written, so the sum is `1 + 2`. A local or a parameter is not copied
 for this, since nothing else can change it while the `Concurrent` waits.
 
-**A call that never waits is not a wait.** A `Socket`'s `accept_client_now`, `read_line_now`, `read_as_buffer_now`
-and `write_buffer_now` answer at once with what is there ([standard_library.md](standard_library.md#socket)), so
-they are ordinary calls: a game loop that polls its connections every frame has no state machine and no helper
-thread for them, and it waits only where it sleeps until the next frame.
+**A network read always waits.** A TCP or UDP read has one form, and it waits for what it answers
+([standard_library.md](standard_library.md#tcp)): there is no "nothing yet" for a game loop to poll every frame.
+A frame loop keeps running because the compiler parks the wait and runs other ready work meanwhile
+(spite_compiler#218, #219).
 
 **When blocking is faster, the compiler blocks.** A program that never makes a `Concurrent` has no state machines,
 no event loop and no helper threads: every wait is the plain blocking call. Inside a program that has them, a wait
@@ -300,7 +300,7 @@ of a stage sees the world half updated. So an engine says where they resume:
 - Reading a `Concurrent`'s value, or dropping it, still runs them all until that one is done. The program asked for
   that one, and it may be waiting on another, so a join never waits for something only the loop could finish.
 
-The IO itself goes on meanwhile: a blocking read inside a `Concurrent` (a file, or a `Socket`'s `read_as_buffer`)
+The IO itself goes on meanwhile: a blocking read inside a `Concurrent` (a file, or a TCP connection's `read_as_buffer`)
 runs on its helper thread, and the state machine continues on the program's thread at the next `run_ready()`.
 
 ```gdscript title=frame_io/save_game.spite

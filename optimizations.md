@@ -46,7 +46,7 @@ The page is grouped by what the compiler is working on.
 
 After the program is built, the compiler keeps only what the entry can reach: every function nothing calls, from your
 classes or the standard library, is dropped. So is every class nothing reachable uses, with its singleton slot, its
-free and copy functions and its text literals. A program that never makes a `Socket`, a `Process` or a
+free and copy functions and its text literals. A program that never makes a `Tcp.Server`, a `Process` or a
 `FileSystemWatcher` has none of their code, and a native symbol is looked up only when a function that calls it
 survived.
 

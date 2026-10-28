@@ -256,7 +256,7 @@ file. The folder holds a `.final-classes` file, which is what lets a comment the
 What is written is what the program **ends up with**, not what was written down: the classes come from the
 generator after it has run, so a class the generator never made is not there, and a generic template the program
 instantiates is printed from its merged file, so the printed program can instantiate it again. Tree shaking of a production build runs after that, so a library class
-the program never uses (`FileSystemWatcher`, `Socket`) may still be printed although it was dropped from the executable.
+the program never uses (`FileSystemWatcher`, `Tcp.Server`) may still be printed although it was dropped from the executable.
 The classes the compiler writes for itself (the copy table, the REPL's prompt, the fault report) are not printed:
 compiling the printed program writes them again.
 

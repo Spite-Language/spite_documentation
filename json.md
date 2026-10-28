@@ -147,10 +147,11 @@ says exactly what each type becomes.
   middle of the value, when they are not a `T` (a `Boolean` byte that is neither 0 nor 1, an enum index the enum
   does not have, a count larger than the bytes left), and when bytes are left over after it, as JSON's `read`
   does with text after the value.
-Bytes from a `Socket` or a `File` are already a `Buffer`, so they are read the same way:
+Bytes from a `Tcp.Connection` or a `File` are already a `Buffer`, so they are read the same way:
 
 ```gdscript
-var received = connection.read_as_buffer_now()
+var received = connection.read_as_buffer()
+crash received
 var reader = BinaryReader<Move>()
 var move = reader.read(received)
 ```

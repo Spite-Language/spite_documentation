@@ -17,7 +17,7 @@ is added by reopening it ([A class name means one class](classes_and_files.md#a-
 
 **A program carries only the classes it uses.** The library is part of every program's
 source, but a production build keeps only what `main` can reach: a program that never makes a `FileSystemWatcher`,
-a `Socket` or a `Process` has none of their code, and none of the operating-system functions only
+a `Tcp.Client` or a `Process` has none of their code, and none of the operating-system functions only
 they call is looked up when the program starts ([optimizations.md](optimizations.md#tree-shaking)).
 What a class costs when it is used is what its Spite does, and each section below says where that is more than a
 call. An inspectable build (`--repl`, `--repl-port`, `--hot-reload`, `--development`) keeps everything, so the
@@ -48,8 +48,9 @@ REPL can look at any of it.
 | `BinaryWriter<T>`, `BinaryReader<T>` | any value to compact bytes (a `Buffer`) and back, for Spite programs talking to each other and for files | [json.md](json.md#write-and-read-bytes) |
 | `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
 | `Concurrent`, `Parallel` | run a function while waiting, or on another thread; the handle is the value | [concurrency.md](concurrency.md) |
-| `Socket` | TCP over IPv4 and IPv6: listen, connect, lines and bytes, waiting or not | [below](#socket) |
-| `Udp.Socket`, `Udp.Datagram` | UDP datagrams over IPv4 and IPv6 | [below](#udp) |
+| `IpAddress` | an IPv4 or IPv6 address, read from text, resolved from a host name, written back as text | [below](#ipaddress) |
+| `Tcp.Server`, `Tcp.Client`, `Tcp.Connection` | TCP over IPv4 and IPv6: listen, accept, connect, lines and bytes | [below](#tcp) |
+| `Udp.Server`, `Udp.Client`, `Udp.Datagram` | UDP datagrams over IPv4 and IPv6 | [below](#udp) |
 | `Http.Server`, `Http.Client`, `Http.Request`, `Http.Response` | HTTP/1.1, connections kept alive | [below](#http) |
 | `WebSocket.Client`, `WebSocket.Server`, `WebSocket.Connection`, `WebSocket.Message` | WebSocket (RFC 6455) over an HTTP upgrade: text and binary messages both ways, ping and close | [below](#websocket) |
 | `Base64`, `Deflate`, `Zlib`, `Gzip` | bytes as base64 and base64url text; bytes compressed as raw DEFLATE, zlib and gzip | [below](#bytes-base64-compression-hashes-and-passwords) |
@@ -72,7 +73,7 @@ other repository
 `mac` folders of the library are not brand packages: they are how a standard class is written for one system.
 
 The library has TCP and UDP over IPv4 and IPv6, HTTP/1.1 with kept-alive connections and WebSocket over it
-([below](#socket)), SHA-256 and HMAC, Argon2id, secure random bytes, base64 and base64url, and DEFLATE, zlib and
+([below](#tcp)), SHA-256 and HMAC, Argon2id, secure random bytes, base64 and base64url, and DEFLATE, zlib and
 gzip ([below](#bytes-base64-compression-hashes-and-passwords)). TLS belongs to it as well.
 
 ## `String`
@@ -264,9 +265,9 @@ a file written by the next statement is written after every read has finished
 ([concurrency.md](concurrency.md#reads-in-a-row-overlap)). What it costs is what a `Concurrent` costs, a frame on
 the heap for each read but the last and the event loop that finishes them, and only in a program that reads this
 way ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-used)). A read or write of a
-`File`, `console.read_line()`, a `Socket`'s `accept_client()`, `read_line()`, `read_as_string()` and `read_as_buffer()`, and
-`program.sleep()` are the library's waits: inside a `Concurrent` each lets other work run. Everything else,
-`Process.run()` included, blocks the thread that calls it, except a `Socket`'s `_now` calls, which never wait.
+`File`, `console.read_line()`, a `Tcp.Server`'s `accept()`, a connection's `read_line()`, `read_as_string()` and
+`read_as_buffer()`, and `program.sleep()` are the library's waits: inside a `Concurrent` each lets other work run.
+Everything else, `Process.run()` included, blocks the thread that calls it.
 
 ## List a directory
 
@@ -666,81 +667,198 @@ To time one function rather than a stretch of code, `Benchmark(work)` reads the 
 call and keeps what the function answered beside the `Duration` it took
 ([Measuring a piece of work](time.md#measuring-a-piece-of-work)).
 
-## `Socket`
+## `IpAddress`
 
-`Socket()` is a TCP connection over IPv4 or IPv6, the same on Windows (winsock), Linux and macOS. `--repl-port`
-and `spite connect` are written with it, and so is a game server. It is public library surface.
+An `IpAddress` is an IPv4 or an IPv6 address and nothing else: a port is always a number beside it. TCP and UDP
+take one, and a datagram says who sent it with one.
+
+```gdscript title=ip_address_forms/ip_address_forms.spite entry
+var console = Console()
+
+func IpAddressForms() {
+    load "../spite_standard_library/windows"
+    var read = "2001:DB8:0:0:0:0:0:7".to_ip_address()
+    crash read
+    var is_ipv6 = read.is_ipv6()
+    console.print("{read} {is_ipv6}")
+    var mapped = "::ffff:10.0.0.1".to_ip_address()
+    var plain = "10.0.0.1".to_ip_address()
+    crash mapped
+    crash plain
+    var same = mapped == plain
+    console.print("{mapped} {same}")
+    var name = "localhost".to_ip_address()
+    if not name {
+        console.print("a host name is not an address")
+    }
+    var resolved = "localhost".resolve_ip_addresses()
+    var first = resolved[0]
+    crash first
+    console.print("localhost is {first}")
+}
+```
+```output
+2001:db8::7 true
+10.0.0.1 true
+a host name is not an address
+localhost is 127.0.0.1
+```
 
 | Member | Does |
 |---|---|
-| `listen_locally(port)`, `listen_everywhere(port)`, `listen_at(host, port)` | listens on `127.0.0.1`, on every interface of both IPv4 and IPv6, or on the one interface a host name or address names (a name with both kinds of address, like `"localhost"`, listens on its IPv4 one); `false` when it cannot |
-| `connect_locally(port)`, `connect(host, port)` | connects to `127.0.0.1`, or to a host name (`"example.com"`, `"localhost"`), an IPv4 address (`"192.168.1.20"`) or an IPv6 address (`"::1"`, `"2001:db8::7"`), trying each address a name resolves to in turn, its IPv4 ones first; `false` when the name does not resolve or nobody answers |
-| `accept_client(): Socket?` | waits for the next client |
-| `read_line(): String?` | waits for a whole line, without its line break |
+| `"text".to_ip_address(): IpAddress?` | reads dotted IPv4 (`"192.168.1.20"`) or IPv6 (`"::1"`, `"2001:db8::7"`, `"::ffff:10.0.0.1"`, `"fe80::1%4"`); `null` for anything else, a host name included |
+| `"host".resolve_ip_addresses(): List<IpAddress>` | asks the system for every address a host name (or an address written as text) names, the IPv4 ones first; empty when it names none. It waits in place |
+| `is_ipv4(): Boolean`, `is_ipv6(): Boolean` | which kind it is |
+| `==`, `!=` | the same address or not (its `equals(other)`) |
+| `to_string(): String` | the address as RFC 5952 writes it: lowercase, the longest run of zero groups as `::`, an IPv6 zone after a `%` |
+| `IpAddress()` | `0.0.0.0` |
+
+An IPv4 address inside `::ffff:` is that IPv4 address, so a datagram a dual-stack server receives from `127.0.0.1`
+comes from `127.0.0.1`. There is no constructor that takes text: text becomes an address through
+`to_ip_address()`, which can answer `null`. Once the compiler casts text where an `IpAddress` is wanted and folds a
+literal it can read (spite_compiler#228, #229), `client.connect("127.0.0.1", 8080)` needs nothing written; until
+then a program narrows `"127.0.0.1".to_ip_address()` first.
+
+## TCP
+
+TCP is three classes over IPv4 and IPv6, the same on Windows (winsock), Linux and macOS: a `Tcp.Server` listens
+and accepts, a `Tcp.Client` connects, and each end of a connection talks the same way. What a server accepts is a
+`Tcp.Connection`; a client holds one and talks through it. `--repl-port` and `spite connect` are written with them,
+and so is a game server.
+
+```gdscript title=tcp_echo/tcp_echo.spite entry
+var console = Console()
+var server = Tcp.Server()
+
+func TcpEcho() {
+    load "../spite_standard_library/windows"
+    crash server.listen_locally(47401)
+    var client = Tcp.Client()
+    crash client.connect_locally(47401)
+    var peer = server.accept()
+    crash peer
+    crash client.write_line("ping")
+    var heard = peer.read_line()
+    crash heard
+    crash peer.write_line("{heard} pong")
+    var answer = client.read_line()
+    crash answer
+    console.print(answer)
+    client.close()
+    var after = peer.read_line()
+    if not after {
+        console.print("the client left:", peer.closed)
+    }
+    peer.close()
+    server.close()
+}
+```
+```output
+ping pong
+the client left: true
+```
+
+| `Tcp.Server` | Does |
+|---|---|
+| `listen_locally(port)`, `listen_everywhere(port)` | listens on `127.0.0.1`, or on every interface of both IPv4 and IPv6; `false` when it cannot |
+| `listen_at(address: IpAddress, port)`, `listen_at_host(host, port)` | listens on the one interface an address names, or a host name does (a name with both kinds of address, like `"localhost"`, listens on its IPv4 one); `false` when it cannot or the name names nothing |
+| `accept(): Tcp.Connection?` | waits for the next client; `null` when the server is not listening |
+| `close()` | stops listening |
+
+| `Tcp.Client` | Does |
+|---|---|
+| `connect(address: IpAddress, port)` | connects to an address; `false` when nobody answers |
+| `connect_to_host(host, port)` | connects to a host name (`"example.com"`, `"localhost"`) or an address written as text, trying each address the name resolves to in turn, its IPv4 ones first; `false` when the name does not resolve or nobody answers |
+| `connect_locally(port)` | connects to `127.0.0.1` |
+
+| A `Tcp.Client` and a `Tcp.Connection` | Do |
+|---|---|
+| `read_line(): String?` | waits for a whole line, without its line break; `null` when the connection ended first |
 | `read_as_buffer(): Buffer?` | waits until at least one byte has arrived and answers what arrived; `null` once the connection is closed |
 | `read_as_string(): String?` | the same read as text, finishing a character the network cut at its end; `null` once closed, or when the bytes are not UTF-8 |
 | `write_line(text): Boolean`, `write_string(text): Boolean`, `write_buffer(buffer): Boolean` | sends all of it, waiting while the system's buffer is full |
-| `accept_client_now(): Socket?` | the next client if one is already connecting, otherwise `null` at once |
-| `read_line_now(): String?` | a whole line if one has arrived, otherwise `null` at once |
-| `read_as_buffer_now(): Buffer` | what has already arrived: an empty buffer is nothing yet |
-| `write_buffer_now(buffer): Integer` | hands the system as much of the buffer as it takes now and answers how many; the rest is the caller's to send later |
 | `closed: Boolean` | `true` once the other end has closed the connection (or it broke, or `close()` was called) |
 | `close()` | closes it |
 
-**Waiting and not waiting.** The calls without `_now` wait the way a program waits anywhere: inside a
-`Concurrent`, `accept_client`, `read_line`, `read_as_string` and `read_as_buffer` are points the state machine returns from, so other
-work runs meanwhile ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). The `_now` calls never
-wait and are plain calls, for a loop that polls every connection once a tick (a game server, which has its own
-frame to keep). Resolving a host name and connecting always wait in place.
+**Every read waits.** There is one read per kind, and it waits for what it answers or for the end: inside a
+`Concurrent`, `accept`, `read_line`, `read_as_string` and `read_as_buffer` are points the state machine returns
+from, so other work runs meanwhile ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). A frame
+loop that serves connections keeps running because the compiler parks the wait (spite_compiler#218, #219), not
+because the program asks whether anything has arrived. Resolving a host name and connecting always wait in place.
 
-**A closed peer is an answer, not a failure.** `read_line()` answers `null` when the
-connection ended before a whole line; `read_line_now()` answers `null` for that and when no whole line has arrived
-yet, and `read_as_buffer_now` answers an empty buffer both for "nothing yet" and for "closed". `closed` is what tells
-them apart (rather than a count of `-1`), so a buffer of bytes stays a buffer of bytes:
-
-```gdscript
-func poll(connection: Socket) {
-    var received = connection.read_as_buffer_now()
-    if not received.is_empty() {
-        var received_count = received.count()
-        inbound.append_buffer(received, 0, received_count)
-    } else if connection.closed {
-        forget(connection)
-    }
-}
-```
-
-A write to a closed connection sends nothing, answers `false` or `0`, and sets `closed` too; nothing crashes.
+**A closed peer is an answer, not a failure.** A read answers `null` when the connection has ended, and sets
+`closed`. A write to a closed connection sends nothing, answers `false`, and sets `closed` too; nothing crashes.
 Every read answers a buffer of its own, as a `Udp.Datagram`'s does, and the numbers in it are read from it
 ([below](#bytes-are-a-buffer)). UDP, HTTP and WebSocket are [below](#udp).
 
 ## UDP
 
-`Udp.Socket()` sends and receives UDP datagrams over IPv4 and IPv6, the same on Windows, Linux and macOS. One
-`receive()` is one datagram, a `Udp.Datagram` that holds its bytes and who sent them, read as text or as a
-`Buffer` once it is in hand, so nothing received is lost by asking for the wrong one.
+UDP is a `Udp.Server`, open on a port a client knows, and a `Udp.Client`, open on a port the system picks, both
+over IPv4 and IPv6, the same on Windows, Linux and macOS. One `receive()` is one datagram, a `Udp.Datagram` that
+holds its bytes and who sent them, read as text or as a `Buffer` once it is in hand, so nothing received is lost
+by asking for the wrong one.
 
-| Member | Does |
+```gdscript title=udp_ping/udp_ping.spite entry
+var console = Console()
+
+func UdpPing() {
+    load "../spite_standard_library/windows"
+    var server = Udp.Server()
+    crash server.open_locally(47402)
+    var client = Udp.Client()
+    crash client.open()
+    var ping = "ping".to_buffer()
+    crash client.send_to_host("127.0.0.1", 47402, ping)
+    var arrived = server.receive()
+    crash arrived
+    var text = arrived.read_as_string()
+    crash text
+    var sender = arrived.sender_address
+    var sender_port = arrived.sender_port
+    console.print("{text} from {sender}")
+    var pong = "pong".to_buffer()
+    crash server.send_to(sender, sender_port, pong)
+    var answer = client.receive()
+    crash answer
+    var answer_text = answer.read_as_string()
+    crash answer_text
+    console.print(answer_text)
+}
+```
+```output
+ping from 127.0.0.1
+pong
+```
+
+| `Udp.Server` | Does |
 |---|---|
-| `open()`, `open_locally(port)`, `open_everywhere(port)`, `open_at(host, port)` | opens on a port the system picks (a client), or on `port` of `127.0.0.1`, of every interface of both IPv4 and IPv6, or of the one interface a host name or address names (`"::1"`; a name with both kinds of address opens on its IPv4 one); port `0` is one the system picks; `false` when the port is taken or the name does not resolve |
-| `port: Integer` | get-only: the port the socket is open on, the one the system gave it after `open()` (asked of the system with `getsockname`), so a client can tell a server where to answer; reading it from a socket that is not open halts, since it has none, and a program that wants the number after `close()` keeps it in a `var` before closing, which says it means to |
-| `send_to(host, port, buffer): Boolean` | sends one datagram to a host name or an IPv4 or IPv6 address; a name with both kinds of address is sent to its IPv4 one; `false` when the name does not resolve to an address the socket can reach (an IPv6 one from `open_locally`) or the system refuses it |
-| `receive(): Udp.Datagram?` | waits for the next datagram; `null` when the socket is closed |
-| `receive_now(): Udp.Datagram?` | the next datagram if one has arrived, otherwise `null` at once |
+| `open_locally(port)`, `open_everywhere(port)` | opens on `port` of `127.0.0.1`, or of every interface of both IPv4 and IPv6; port `0` is one the system picks; `false` when the port is taken |
+| `open_at(address: IpAddress, port)`, `open_at_host(host, port)` | opens on the one interface an address or a host name names (a name with both kinds of address opens on its IPv4 one); `false` when the port is taken or the name names nothing |
+
+| `Udp.Client` | Does |
+|---|---|
+| `open()` | opens on a port the system picks, on every interface of both IPv4 and IPv6 |
+
+| A `Udp.Server` and a `Udp.Client` | Do |
+|---|---|
+| `port: Integer` | get-only: the port it is open on, the one the system gave it after `open()` (asked of the system with `getsockname`), so a client can tell a server where to answer; reading it when it is not open halts, since it has none, and a program that wants the number after `close()` keeps it in a `var` before closing, which says it means to |
+| `send_to(address: IpAddress, port, buffer): Boolean` | sends one datagram; `false` when the socket cannot reach the address (an IPv6 one from `open_locally`) or the system refuses it |
+| `send_to_host(host, port, buffer): Boolean` | the same to a host name or an address written as text; a name with both kinds of address is sent to its IPv4 one; `false` when the name does not resolve to an address the socket can reach |
+| `receive(): Udp.Datagram?` | waits for the next datagram; `null` when it is closed |
 | `close()` | closes it |
 
 | `Udp.Datagram` | Does |
 |---|---|
 | `read_as_string(): String?` | the bytes as text, `null` when they are not UTF-8 |
 | `read_as_buffer(): Buffer` | the bytes as they are |
-| `sender_host: String`, `sender_port: Integer` | get-only: who sent it, to answer with `send_to`: an IPv4 address as `"127.0.0.1"`, an IPv6 one in its shortest form (`"::1"`, `"2001:db8::7"`); it travels with the datagram, so two threads receiving on one socket never see each other's sender |
+| `sender_address: IpAddress`, `sender_port: Integer` | get-only: who sent it, to answer with `send_to`; it travels with the datagram, so two threads receiving on one socket never see each other's sender |
 
 A datagram can arrive empty, which is a list of no bytes, not `null`. UDP itself neither orders nor repeats lost
 datagrams; reliable channels are the program's.
 
 ## HTTP
 
-`Http.Server` and `Http.Client` speak HTTP/1.1 over `Socket`, keeping a connection open for the next exchange. A client writes the requested host and includes a nonstandard port in the `host` header, with IPv6 addresses bracketed before the port.
+`Http.Server` and `Http.Client` speak HTTP/1.1 over `Tcp.Client` and `Tcp.Connection`, keeping a connection open for the next exchange. A client writes the requested host and includes a nonstandard port in the `host` header, with IPv6 addresses bracketed before the port.
 A message is an `Http.Request` (`method`, `path`, `version`, `headers`, a body) or an `Http.Response` (`status`,
 `headers`, a body); `header(name)` reads a header whatever its case and `set_header(name, value)` writes one, and
 `reason()` is the response's reason phrase. A body is bytes, one holder with two reads: `read_body_as_string()`
@@ -749,7 +867,7 @@ or `write_body_buffer(buffer)`, so an image or a compressed body is never forced
 
 | Member | Does |
 |---|---|
-| `Http.Server.listen_locally(port)`, `listen_everywhere(port)` | listens, like `Socket` |
+| `Http.Server.listen_locally(port)`, `listen_everywhere(port)` | listens, like `Tcp.Server` |
 | `Http.Server.next_request(): Http.Request?` | waits for the next well-formed request, on a new connection or on one kept open; a malformed one is answered `400 Bad Request` and its connection closed, and a body over `largest_body` (1 MiB) counts as malformed; `null` when the listener fails or is closed |
 | `Http.Server.respond(request, response)` | writes the response with its `content-length`, and keeps the connection open for the client's next request unless the client asked to close it |
 | `Http.Server.close()` | stops listening and closes every connection kept open |
@@ -768,7 +886,7 @@ gets no answer at all, and that request is sent once more over a new connection.
 answered in order, and requests a client sent before reading the answers (pipelining) are read one at a time.
 A response to `HEAD`, and a `204` or `304`, carries no body. A server still refuses a request with a chunked body.
 
-Inside a `Concurrent`, `next_request` and `send` wait the way `Socket` does, so a server serves while its program
+Inside a `Concurrent`, `next_request` and `send` wait the way a `Tcp.Connection` does, so a server serves while its program
 runs ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). A server reads one request at a time:
 while a client is slow to send the rest of a request, the other connections wait for it.
 
@@ -841,7 +959,7 @@ received is a `WebSocket.Message`, one holder with two reads: `is_text()`, `read
 | `WebSocket.Server(http)` | the upgrades of requests `http.next_request()` hands out |
 | `asks_to_upgrade(request): Boolean` | whether the request asks for a WebSocket (its `upgrade` header is `websocket`) |
 | `accept(request): WebSocket.Connection?` | answers the request with `101 Switching Protocols` and keeps its connection; `null` after refusing a malformed upgrade; a request that does not ask to upgrade halts |
-| `WebSocket.Client().connect(host, port, request): Boolean` | connects like `Socket.connect`, sends the handshake with the request's path and headers, and checks the server's answer; `false` when nobody answers or the answer is not a WebSocket one |
+| `WebSocket.Client().connect(host, port, request): Boolean` | connects like `Tcp.Client.connect_to_host`, sends the handshake with the request's path and headers, and checks the server's answer; `false` when nobody answers or the answer is not a WebSocket one |
 | `send_string(text): Boolean`, `send_buffer(buffer): Boolean` | sends one message, a text or a `Buffer`; `false`, sending nothing, once the connection has ended or `close()` was called |
 | `send_ping(bytes): Boolean` | sends a ping carrying up to 125 bytes |
 | `receive(): WebSocket.Message?` | waits for the next whole message, text or bytes; `null` once the connection has ended |
@@ -868,13 +986,13 @@ answers `null` with `close_code` set to that code. The codes are the protocol's 
 | `1009` | a message longer than `largest_message` |
 | `1003`, `1008`, `1010` to `1014`, `3000` to `4999` | whatever the other side closed with |
 
-Inside a `Concurrent`, `receive()`, `accept` and `connect` wait the way `Socket` does
+Inside a `Concurrent`, `receive()`, `accept` and `connect` wait the way a `Tcp.Connection` does
 ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)), so one server talks to many sockets at once,
 one `Concurrent` each. `wss`, WebSocket over TLS, belongs here as well.
 
 ## Bytes are a `Buffer`
 
-Bytes a program reads or writes are a `Buffer`, whoever hands them over: a `File`, a `Socket`, a `Udp.Datagram`, a
+Bytes a program reads or writes are a `Buffer`, whoever hands them over: a `File`, a `Tcp.Connection`, a `Udp.Datagram`, a
 `WebSocket.Message`, an HTTP body, a `Process`'s output, a `BinaryWriter`. A file format or a network message is
 numbers laid out in bytes, so a `Buffer` reads and writes those numbers, in the byte order the format uses, at the
 position the format puts them.

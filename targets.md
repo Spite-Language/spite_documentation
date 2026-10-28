@@ -136,7 +136,7 @@ nothing has to be turned into strings to cross into JavaScript: the DOM command 
 are both opaque byte buffers.
 
 The packing is this form exactly: `BinaryWriter` and `BinaryReader` write and read any value in it, and a program
-can send their bytes over a `Socket` ([json.md](json.md#the-binary-format)). Isomorphic classes send them on their
+can send their bytes over a `Tcp.Connection` ([json.md](json.md#the-binary-format)). Isomorphic classes send them on their
 own.
 
 ---
