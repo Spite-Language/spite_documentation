@@ -333,7 +333,7 @@ error.
 ### Reading with `[]` answers `T?`
 
 An index or a key may not be there, so `names[index]` and `table["key"]` are `T?` and are narrowed like any other
-path. Every `[]` answers this way: a `List`, a `Dictionary`, a `Vector`, an `Items`, and any
+path. Every `[]` answers this way: a `List`, a `Dictionary`, a `Vector`, an `Items`, a `String`, and any
 class of your own, since `a[x]` is only a shortcut for `a.get_at(x)` and every `get_at` answers a `T?`
 ([functions_and_operators.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#operators)). The
 compiler also understands the usual proofs for the library's collections, so most reads need nothing extra:
