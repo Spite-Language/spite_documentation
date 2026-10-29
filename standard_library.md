@@ -145,7 +145,10 @@ ADA 3 null da d
 | `append_buffer(buffer)` | `Long?` | adds the buffer's bytes to the end; answers the position they start at, `null` when they could not all be written |
 
 A file is one holder with two reads: `read_as_string()` when it is text and `read_as_buffer()` when it is bytes,
-and the two writes match them.
+and the two writes match them. Nothing about a file halts the program: every write, `remove()` and `move_to(path)`
+answers whether it happened, and the answer must be used, so the shortest write is one line that says what a
+failure means: `assert file.write_string(text)` to carry on without it, `crash file.write_string(text)` when it is a
+bug ([failure.md](failure.md#an-answer-is-used)).
 
 ```gdscript title=file_tasks/file_tasks.spite entry
 var console = Console()
