@@ -212,6 +212,15 @@ other type is expected; it compiles to the one machine conversion. A conversion 
 its function is the source's `to_<type>()`, so `count.to_float()` is the call form, and a function named
 `from_...` is an error ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numbers-are-classes-and-this)).
 
+The same rule casts between any two classes. Where a value meets a place that wants another class (an argument, a
+`return`, an assignment, a `var` with a written type), the compiler calls the value's `to_<type>()`, the wanted
+class's name in `snake_case`: `var paint: Color? = "#ff8000"` is `"#ff8000".to_color()`, and a `Meters` passed where
+a `Feet` is wanted is `meters.to_feet()` when `Meters` declares `func to_feet(): Feet`. The cast answers what the
+conversion answers, so text read as an `IpAddress` is an `IpAddress?`, narrowed like any other `T?` before it goes
+where a plain `IpAddress` is wanted. A class with no such conversion is an error naming the call it would need:
+`a Point cannot be used where an IpAddress is needed: ... there is no 'Point.to_ip_address()' to call`
+([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#casting)).
+
 `this` works in every class, not only numbers, to hand the object itself to something:
 `registry.append(this)`. Reading your own members through it is an error, because a class already reads them by
 name: write `name`, not `this.name`.

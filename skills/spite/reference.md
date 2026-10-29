@@ -166,8 +166,11 @@ func is_alive(): Boolean {
   `UnsignedLong`, `Float` (the default for decimals), `Double`. `Boolean`. `String` (double quotes only; escapes
   `\n`, `\t`, `\r`, `\\`, `\"` and `\{` for a literal brace, in any order: `"\\\{"` is a backslash and a brace; a
   text inside a hole keeps its own escapes and holes).
-- No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer = "12"` parses
-  it. Anything with a `to_string()` (numbers, `Boolean`, enums, a class that declares one) casts to text wherever a
+- No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer? = "12"` reads
+  it (`"12".to_integer()`). A value meeting another class is cast through its `to_<type>()`, the wanted class in
+  `snake_case`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = "#ff8000"` calls
+  `to_color()`, and the cast answers what the conversion answers (a `T?` is narrowed before a plain `T`); a class
+  with no such conversion is an error naming it (`there is no 'Point.to_ip_address()' to call`). Anything with a `to_string()` (numbers, `Boolean`, enums, a class that declares one) casts to text wherever a
   `String` is wanted: `label.text = clicks`, `show(clicks)`, `return clicks`, `names[badge]` on a `Dictionary` (a whole number there keys it by numbers instead). So a
   text of one hole and nothing else, `"{clicks}"`, is an error naming the direct form; elsewhere write
   `clicks.to_string()`. Arithmetic is done in the left side's type, so write the wider operand first: `total * count` with a `Long`
