@@ -156,7 +156,7 @@ func is_alive(): Boolean {
   `max` are still errors, as abbreviations.)
 - A function body holds no empty lines: the blank line is where a second function wants to be, so name the part
   below it and call it. The formatter (and so every compile) deletes one you write. An `if` whose only statement is a bare `return`
-  is an error too: that is a precondition, and a precondition is written `assert condition`.
+  is an error too: that is a precondition, and a precondition is written `fallback condition`.
 - A comment is one line, outside functions, and nothing but a link to a markdown heading:
   `# notes.md#why-this-exists` (relative to the folder of the file it is in, like `load`; the file and the heading must exist).
   Anything else, including `//` and `/* */`, is an error. If the code already says it, do not write it.
@@ -182,7 +182,7 @@ func is_alive(): Boolean {
   and unsigned alike (the check is left out where the ranges of local numbers prove the answer fits: a `Long` total
   of `Integer` terms over a list, a remainder, a clamped value), and so does a value assigned, passed or returned into a narrower type it does not fit (a
   number written there that does not fit is a compile error). Where wrapping is the point (a hash), call
-  `a.wrapping_sum(b)`, `a.wrapping_subtract(b)` or `a.wrapping_multiply(b)`, which keep the low bits. A whole number divided by zero (`/` or `%`) halts naming the line, and a divisor written as zero is an error; after `assert divisor != 0` the check is gone. Floats keep infinity and not-a-number.
+  `a.wrapping_sum(b)`, `a.wrapping_subtract(b)` or `a.wrapping_multiply(b)`, which keep the low bits. A whole number divided by zero (`/` or `%`) halts naming the line, and a divisor written as zero is an error; after `fallback divisor != 0` the check is gone. Floats keep infinity and not-a-number.
 - Bits are functions on the whole numbers, never symbols: `value.shifted_left(count)`, `shifted_right(count)`
   (arithmetic on a signed type, logical on an unsigned one), `bits_and(mask)`, `bits_or(mask)`,
   `bits_exclusive_or(mask)`, `bits_inverted()`, `set_bit_count()`, `leading_zero_count()`, `trailing_zero_count()`.
@@ -285,7 +285,7 @@ func is_alive(): Boolean {
   or of one function, `$system_type.functions['update_each']` narrowed first. It is decided while compiling, so the branch for the other arity is
   never compiled: a `Stream<$system_type, argument.class>` that calls `system.phase_each(row)` is made only for
   one-row systems. With a pattern whose functions take different counts, ask inside the walk instead.
-- `assert` and `crash` on a compile-time question fold like `if`: `assert $slot_type == Entity` then `return
+- `fallback` and `crash` on a compile-time question fold like `if`: `fallback $slot_type == Entity` then `return
   value.id`, in a function returning `Integer?`, compiles for every `Slot<T>`, answering `null` where `T` is not
   `Entity`, with no run-time test (in one returning `Integer`, write `if $slot_type != Entity { return 0 }`);
   `crash $component_type.is_fixed_size` halts every call in an instance whose type does not fit.
@@ -370,14 +370,14 @@ func is_alive(): Boolean {
   so (`T?`, or an empty list), or it returns a value you chose on purpose, or it crashes because a caller broke the
   rule ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#nothing-fails-silently)).
 - A call that answers a value is never a line of its own: use the answer (keep, pass, return or compare it), or at
-  least `assert file.write_string(text)` to carry on without it or `crash file.write_string(text)` when its absence
+  least `fallback file.write_string(text)` to carry on without it or `crash file.write_string(text)` when its absence
   is a bug (`answers a 'Boolean' and drops it`). Only a function that answers nothing is called as a statement.
-- `crash` and `assert` take a condition and never a message: the report names the file and line and shows
+- `crash` and `fallback` take a condition and never a message: the report names the file and line and shows
   the values there. Never add a clause only to get text printed (`crash found or name == ""`).
 - `Monster?` is a value that may be `null`. It must be narrowed before use: `if target { }` (with `else`),
-  `assert target`, `crash target`, `while target { }`, or `switch target { Monster: ... Null: ... }`. One
-  `assert a.b.c` narrows the whole path. `null` is never compared against: `value == null` is an error. Two `T?` values compare without narrowing, and two missing ones are equal.
-  Narrow the name or the path itself (`assert target`, `assert target.weapon`), never a local copied from it,
+  `fallback target`, `crash target`, `while target { }`, or `switch target { Monster: ... Null: ... }`. One
+  `fallback a.b.c` narrows the whole path. `null` is never compared against: `value == null` is an error. Two `T?` values compare without narrowing, and two missing ones are equal.
+  Narrow the name or the path itself (`fallback target`, `fallback target.weapon`), never a local copied from it,
   which is an error. Comparing needs no narrowing: `target.name == "rat"` needs `target` narrowed, but
   `maybe_name == "rat"` is simply false when it is null.
 - A call between a proof and a read undoes the proof when the called code (followed all the way down) may assign
@@ -399,46 +399,46 @@ func is_alive(): Boolean {
   In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every
-  `return` of which cannot be null. Read it with nothing written; an `assert`, `crash` or `if` on it is `is already
+  `return` of which cannot be null. Read it with nothing written; a `fallback`, `crash` or `if` on it is `is already
   narrowed by the proof that every value it can hold is present`. A `T?` parameter and what the library answers are
   narrowed as usual.
-- Proving what is already proven is an error too: `assert` on a value that cannot be null here (`so 'assert' on it
+- Proving what is already proven is an error too: `fallback` on a value that cannot be null here (`so 'fallback' on it
   proves nothing: remove the check`, any local that cannot be null, a copy included), and `crash list[index]` inside `while index < list.count()` (`'list[index]'
   is already proven by the loop condition`). Delete the line.
 - A `Boolean?` is not a condition (`which would only test that it is there, not that it is true`): narrow it
-  first, or compare it `== true`. The exceptions are `assert flag` and `crash flag`, which mean the flag is there
+  first, or compare it `== true`. The exceptions are `fallback flag` and `crash flag`, which mean the flag is there
   and `true` (as on a `Boolean`); there is no `flag != null`. A `Concurrent` or `Parallel` handle of a `Boolean?` is refused
   as a condition too: `if ready == true`.
 - There are no exceptions and no error values. Three outcomes only:
   - the compiler can know it: a compile error;
-  - absence is fine: `assert condition` stops the function and answers "nothing": it returns, answers `null`
+  - absence is fine: `fallback condition` stops the function and answers "nothing": it returns, answers `null`
     from a `T?`, or an empty `List`/`Dictionary`. It is allowed only there, never in a
-    constructor (`'assert' is not allowed in a constructor`: take resolved values, or `crash`). In a function
+    constructor (`'fallback' is not allowed in a constructor`: take resolved values, or `crash`). In a function
     returning a number, `Boolean`, `String`, enum or object it is an error, since its default would pass for a real
-    answer (`this 'assert' would answer a default Integer (0) that a caller cannot tell from a real one: return a
+    answer (`this 'fallback' would answer a default Integer (0) that a caller cannot tell from a real one: return a
     value ('if not found { return -1 }'), make the result 'Integer?', or 'crash found' if this is a developer
     mistake`): write the answer (`if handle == -1 { return false }`), make the result a `T?`, or `crash`. Where
-    `assert` is allowed, `if x { return null }`, `if x { return List<T>() }` (any empty collection made there) or a bare `if x { return }` is an error naming the `assert` to write
-    (`write 'assert not x'`), and so is a last `if` with no `else` that only checks a value is there (`write
-    'assert maybe_name'`). An `if` with no `else` that ends in `return` proves the opposite of its condition after
+    `fallback` is allowed, `if x { return null }`, `if x { return List<T>() }` (any empty collection made there) or a bare `if x { return }` is an error naming the `fallback` to write
+    (`write 'fallback not x'`), and so is a last `if` with no `else` that only checks a value is there (`write
+    'fallback maybe_name'`). An `if` with no `else` that ends in `return` proves the opposite of its condition after
     it: `if not found { return -1 }` narrows `found`, `if index >= names.count() { return "" }` proves
     `names[index]`;
   - absence is a bug: `crash condition` halts with
     `spite: the program stopped at path:line in Class.function (name=value, ...)`, followed by the
-    asserts that failed before it (each with `answered=nothing`, `null` or `empty`, what its function gave back)
+    fallbacks that failed before it (each with `returned=nothing`, `null` or `empty`, what its function gave back)
     and the call chain as `spite.frame` lines, innermost first. Every name and call the condition read is there with its value, whatever its
     shape: `crash record or cooked.count() > 2` reports `record is null, cooked.count()=1`; a part an `and` or `or`
     skipped is left out. Then come the other texts, numbers and enums in scope (parameters, locals, the object's
     attributes). The condition is not on the line: open the line it names; the position identifies each value, and
-    `grep <id> program.crashes` finds an assert's condition. A bare `crash` marks a branch that cannot happen (`crash false` is formatted to it).
+    `grep <id> program.crashes` finds a fallback's condition. A bare `crash` marks a branch that cannot happen (`crash false` is formatted to it).
     A failed narrowing names what is absent instead of a value: `clip.keys[start + 9] is missing: index 11990,
     count 11500`, `scores[key] is missing: key "bea"`, `rig.skeleton is null`. Read it as an index past the end or
-    a key never set, not as a zero. A failed `assert` prints nothing as it fails; it shows up only in a crash's
-    trace, unless the program is built with `--trace-asserts`, which prints each one as it fails.
+    a key never set, not as a zero. A `fallback` taken prints nothing as it fails; it shows up only in a crash's
+    trace, unless the program is built with `--trace-fallbacks`, which prints each one as it fails.
 - Narrowing tests presence, never the value: `crash keys[index]` passes on an element holding `0.0`, and `if count`
   runs on an `Integer?` holding `0`.
 - Reading a number from text answers a `T?`: `"42".to_integer()` is an `Integer?`, `null` for `"forty two"`,
-  `"12abc"`, `""` or a number the type cannot hold, so narrow it (`crash count` where the text is yours, `if`/`assert`
+  `"12abc"`, `""` or a number the type cannot hold, so narrow it (`crash count` where the text is yours, `if`/`fallback`
   where it came from outside). `var age: Integer = "42"` is an error; `var age: Integer? = "42"` reads it.
 - Text is read as an enum value the same way: `"calm".to_cat_mood()` is a `Cat.Mood?` (`to_`, the declaring class and
   the enum's name in `snake_case`), `null` when no value is spelled that way; `var mood: Mood = text` is an error naming `to_cat_mood()`,
@@ -503,7 +503,7 @@ func is_alive(): Boolean {
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
   so keep one generic class with a helper per kind, not one class per kind.
-- `assert`/`crash` on such a condition folds too, and a `crash` that folds to false in a function the program calls
+- `fallback`/`crash` on such a condition folds too, and a `crash` that folds to false in a function the program calls
   is a compile error naming the instance (`Slot<List<String>>`): write a library's rules as `crash $row_type.functions['update_each']`
   and a class that breaks one fails the build.
 - A getter with no setter makes a read-only attribute: `get_fahrenheit()` answers `.fahrenheit`, and assigning
@@ -537,7 +537,7 @@ func is_alive(): Boolean {
   `build.target_operating_system` are `Build` fields too. A flag is kebab-case (`--debug-memory`) and sets the
   snake_case field; an unknown flag is an error. There is no `format` option: every compile formats.
 - Reflection: `value.class` (a `Spite.Class`: `.name`, `.namespace` (a `Spite.Namespace?`; narrow it before
-  reading its members: `assert value.class.namespace` narrows the path itself and its prefixes for the rest of
+  reading its members: `fallback value.class.namespace` narrows the path itself and its prefixes for the rest of
   the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
   `.namespaces`), `.functions`), `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`), `value.functions` (`.name`, `.arguments`, `.returns`, `call_function()` for
@@ -576,7 +576,7 @@ a class prints once it declares `func to_string(): String`, and `debug` shows an
 `append_string(text)`, `byte_count()`, `last_written()`, `exists`, `remove`, `move_to(path)`: renames or moves, `false` when something is already there; bytes are a `Buffer`: `read_as_buffer(): Buffer?` (the whole file; read or mapped is the compiler's choice), `read_buffer_at(position, count): Buffer?` for a file too big for one buffer, `write_buffer(buffer)`, `append_buffer(buffer): Long?` where they start), `Directory(path)` (`path`, `folder_name`, `entries(): List<Directory.Entry>?` (`null` when the folder cannot be opened; each entry a `Directory` or a `File`, switched on;
 one kind is `entries.filter_files()` or `filter_directories()`, never a helper of its own), `exists`, `create`, `move_to(path)`),
 `Process(command, arguments)` (`run(): Integer?`, `null` when the command could not start; `read_output_as_string(): String?` or `read_output_as_buffer(): Buffer?`, `null` before a run: standard output only; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(duration)`,
-`arguments(): List<String>`, `argument_named(name): String?`, `has_flag(name): Boolean`, `environment(name): String?`, `executable_path(): String?`, `working_directory(): String?`). The library halts only on the program's own mistakes (an index outside a text, a negative count); what the outside world does is an answer (`T?` or `Boolean`): a file, a folder, a lock, a process, a line of input that is not UTF-8, the system refusing a call, random bytes not given (`SecureRandom().random_buffer(count): Buffer?`), the machine's zone (`zones.system(): TimeZone?`), and the program decides with `assert` or `crash`. `Console` is a singleton: `Console()` is the same instance everywhere, bound once
+`arguments(): List<String>`, `argument_named(name): String?`, `has_flag(name): Boolean`, `environment(name): String?`, `executable_path(): String?`, `working_directory(): String?`). The library halts only on the program's own mistakes (an index outside a text, a negative count); what the outside world does is an answer (`T?` or `Boolean`): a file, a folder, a lock, a process, a line of input that is not UTF-8, the system refusing a call, random bytes not given (`SecureRandom().random_buffer(count): Buffer?`), the machine's zone (`zones.system(): TimeZone?`), and the program decides with `fallback` or `crash`. `Console` is a singleton: `Console()` is the same instance everywhere, bound once
 as `var console = Console()`.
 `print`, `error` and `debug` write their line out at once, so a log redirected to a file shows every line as it
 happens; `write` waits for the next line end, the next `read_line()` or the exit. There is no `flush()`: lines from
@@ -813,7 +813,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `Heap<Node>`, `&Node` | `there is no 'Heap<T>'`, `Spite has no '&Type'` | `Node`: every class is a reference already |
 | `if value do name { }` | `Spite has no 'do'` | `if value { }`: the name itself is narrowed inside |
 | `items.map(item => item * 2)` | `expected ')' to close the argument list` | no lambdas and no `map(function)`: give the element's class a read-only attribute, `get_double()`, and write `items.map_doubles()` (the member in the plural) |
-| `value == null`, `value != null` | `'null' is not a value to compare against or pass around` | `if value { } else { }`, `assert value`, `crash value`, or `switch` |
+| `value == null`, `value != null` | `'null' is not a value to compare against or pass around` | `if value { } else { }`, `fallback value`, `crash value`, or `switch` |
 | `task.wait()`, `await task` | `an Integer has no function 'wait'` | read the handle: it is the result, and reading it waits |
 | `new Date()`, `DateTime.Now`, `datetime.now()` | | `clock.now()`, an `Instant`; shown through a zone from `TimeZones()`, never stored as a local reading |
 | `timestamp + 86400000` for tomorrow | *silent*: wrong across a daylight-saving change | `instant.to_date_time_in(zone) + Period(1, 'days')`, then `tomorrow.to_instant_in(zone, 'compatible')` |

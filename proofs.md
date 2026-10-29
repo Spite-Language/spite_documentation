@@ -29,7 +29,7 @@ accepted or refused whatever the optimisation settings.
 ## Which proofs apply to my code
 
 - **Reading a `T?`** (a `Monster?`, a `[]` read, `first()`): narrow the name or the path itself with `if`,
-  `assert`, `crash`, `while` or `switch`, or leave early with `if not value { return ... }`. A condition with a call
+  `fallback`, `crash`, `while` or `switch`, or leave early with `if not value { return ... }`. A condition with a call
   in it narrows nothing: put the result in a `var` and narrow that.
   [Narrowing](#narrowing-a-t), [an `if` that leaves](#an-if-that-leaves-proves-the-rest).
 - **A call between your check and your read**: the proof survives unless the call may assign what you read or
@@ -61,13 +61,13 @@ accepted or refused whatever the optimisation settings.
 
 - **Proves**: a `T?` name or path holds a value, so inside the block it is a plain `T` under the same name.
 - **Rule**: the condition must be exactly a name or a path: names, `.member` and `[index]` links with no call in
-  them. `if value { }` narrows its block and its `else` nothing; `assert value` and `crash value` narrow the rest of
+  them. `if value { }` narrows its block and its `else` nothing; `fallback value` and `crash value` narrow the rest of
   the block; `while value { }` narrows the body; a `switch` case `T:` narrows its case. One check narrows every link
   of a path, never a sibling path. Narrowing tests presence, never the value: a `0`, `false` or `""` that is there is
   present.
 - **Buys**: member reads, calls and stores through the value are accepted, with no further test.
 - **Falls back**: reading through an unproven `T?` is refused: `this value may be null (it is a Monster?), so
-  'name' cannot be read from it yet: narrow it first with 'if value { }', 'assert value' or 'crash value'`. A
+  'name' cannot be read from it yet: narrow it first with 'if value { }', 'fallback value' or 'crash value'`. A
   condition with a call (`if find(name) { }`) is not a path: keep the result in a `var` and narrow the `var`.
 
 ```spite title=proofs/narrowing.spite entry
@@ -134,7 +134,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 - **Proves**: nothing is checked twice.
 - **Rule**: a check of a `T?` already narrowed, a `[]` read already proven (by a bound, a count or an earlier
   check), a divisor already proven, a class test the type already answers, the same call-free condition on the next
-  line, or an `assert` or `crash` that folds true is refused, naming where it was proven.
+  line, or a `fallback` or `crash` that folds true is refused, naming where it was proven.
 - **Buys**: no dead checks in the source.
 - **Falls back**: delete the repeated check.
 
@@ -155,7 +155,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 
 - **Proves**: every condition written can go either way.
 - **Rule**: outside a generic class and a walk, an `if` or `while` the compiler decides while compiling, and an
-  `assert` that folds false, are refused, `while true` among them. A condition on a `Build` field is kept.
+  `fallback` that folds false, are refused, `while true` among them. A condition on a `Build` field is kept.
 - **Falls back**: remove the condition, keeping the code that runs.
 
 ### A copy made to narrow is an error
@@ -183,13 +183,14 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 - **Falls back**: refused: `'...' answers ..., but ... it reaches its end without a 'return' ...: end that path
   with 'return <value>', or with 'crash' if it cannot happen`.
 
-### A guard `assert` answers only "nothing"
+### A fallback answers what its answer type builds with no arguments
 
-- **Proves**: no default answer a caller cannot tell from a real one.
-- **Rule**: a guard `assert` is allowed only where the result says "nothing" (no result, a `T?`, a `List`, a
-  `Dictionary`), and never in a constructor. An `if` that only returns the default, or a last
-  `if` with no `else` that only checks presence, is refused naming the `assert`.
-- **Falls back**: refused: `this 'assert' would answer a default ... that a caller cannot tell from a real one`.
+- **Proves**: a guard is written once, and its answer is stated by the answer type.
+- **Rule**: a `fallback` returns what the function's answer type builds with no arguments: nothing, `null`, an empty
+  collection, `0`, `false`, `""`, or the object of a class made with no arguments. It is refused where the answer
+  type has no such value (an enum, a class made with arguments, a singleton) and in a constructor. An `if` that only
+  returns that value, or a last `if` with no `else` that only checks presence, is refused naming the `fallback`.
+- **Falls back**: refused: `'fallback' returns what the answer type builds with no arguments, and a ... has none`.
   Answer a `T?`, or use `crash`.
 
 ### A switch covers every case
@@ -209,7 +210,7 @@ See [Switch over values](https://github.com/Spite-Language/spite_spec/blob/maste
 - **Proves**: `list[index]` is there, so it answers `T`, not `T?`.
 - **Rule**: `index < list.count()` (also `- k`, `count() > index`, a count kept in a `var`) with any call-free
   index, `base + k < list.count()` for small `k`, and the count facts `== k`, `>= k`, `> k`, `!= 0` and
-  `not is_empty()` prove the reads they cover, in `assert`, `crash`, `if`, `while`, the right of an `and`, and after
+  `not is_empty()` prove the reads they cover, in `fallback`, `crash`, `if`, `while`, the right of an `and`, and after
   an `if` that leaves. A bound written with `<=` (`crash p + k <= list.count()`) proves `list[p]` to
   `list[p + k - 1]`. A proof is undone as in [assigning undoes a proof](#assigning-undoes-a-proof).
 - **Buys**: a proven read is a `T`.
@@ -253,7 +254,7 @@ func Proven(): Integer {
 ### An index offset by a base is proven by one guard
 
 - **Proves**: a slice of a list is readable.
-- **Rule**: the guard `base + width <= list.count()` (an `assert` or `crash`, or the `if` that leaves on the
+- **Rule**: the guard `base + width <= list.count()` (a `fallback` or `crash`, or the `if` that leaves on the
   opposite) with `while counter < width` proves `list[base + counter]` inside the loop, base, width and counter being
   names. Assigning `base` or `width`, or a call that shrinks the list, forgets the guard.
 - **Falls back**: the read is a `T?`. The guard proves only the top, so a negative base or counter halts at the read.
@@ -355,8 +356,8 @@ func Ranged(): Long {
 ### A `crash` that folds false is a compile error
 
 - **Proves**: generic code that cannot work for a class is refused for it.
-- **Rule**: an `assert` or `crash` that asks only compile-time questions folds. A `crash` that folds false in a
-  function the program reaches is refused, naming the instance; an `assert` that folds false answers its default
+- **Rule**: a `fallback` or `crash` that asks only compile-time questions folds. A `crash` that folds false in a
+  function the program reaches is refused, naming the instance; a `fallback` that folds false answers its default
   and the rest of its block is not compiled.
 - **Falls back**: refused: `'crash ...' always halts in ...: its condition is decided while compiling and is false`.
 

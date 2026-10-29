@@ -331,7 +331,7 @@ library is later written in Spite, the binding is the only thing that changes.
   [values_and_types.md](values_and_types.md#numbering-an-enums-values)). A number the enum does
   not list crashes at the boundary, so a library that grows a new value is caught where it enters, never carried
   along as a wrong answer.
-- **Absence is a `T?`.** A null handle or a "not found" code becomes `null` through an `assert` in the binding, never
+- **Absence is a `T?`.** A null handle or a "not found" code becomes `null` through a `fallback` in the binding, never
   a `0` the caller has to know to compare with.
 - **A handle is an object.** The binding's class holds the handle, and its `drop()` gives it back to the library, so
   the library's memory is released when the last reference goes, like every other object's.

@@ -143,7 +143,7 @@ Every option is a `Build` field with a literal default, declared by the standard
 | `repl_port` | `0` (off) | serves the remote REPL on `127.0.0.1` at this port while the program runs ([repl.md](repl.md)) |
 | `hot_reload` | `false` | swaps changed classes into the running program; implies `development` ([repl.md](repl.md#live-reload---hot-reload)) |
 | `debug_memory` | `false` | counts allocations and frees and prints them when the program ends ([below](#counting-memory---debug-memory)) |
-| `trace_asserts` | `false` | writes each failed `assert` of the program to the error stream as it fails, not only in a crash's report ([failure.md](failure.md#what-a-crash-reports)) |
+| `trace_fallbacks` | `false` | writes each `fallback` taken of the program to the error stream as it fails, not only in a crash's report ([failure.md](failure.md#what-a-crash-reports)) |
 | `program` | the folder named | cannot be given: it is the folder on the command line |
 
 ```bash
@@ -163,8 +163,8 @@ keeps one branch.
 None of this is in the program that is built: choosing, building and writing outputs is the compiler's own
 work, and `Build` is a folded singleton that holds nothing at run time. Only four options add code to the program,
 and only to a build that asks for them: `--debug-memory` its allocation table, `--repl` and `--repl-port` the REPL
-and the reflection it walks, `--hot-reload` a slot per function and a file watcher, and `--trace-asserts` a write
-in each failed `assert`. Each one's cost is on its
+and the reflection it walks, `--hot-reload` a slot per function and a file watcher, and `--trace-fallbacks` a write
+in each `fallback` taken. Each one's cost is on its
 page.
 
 ### Measure only a production build

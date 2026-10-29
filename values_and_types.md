@@ -580,9 +580,9 @@ method table.
 ## `T?`: values that may be null
 
 `Monster?` is a `Monster` or `null`, and `null` exists for nothing else. A `T?` is narrowed before it is used
-(`if value { } else { }`, `assert value`, `crash value`, `while value`, or a `switch` with a `Null:` case), and
+(`if value { } else { }`, `fallback value`, `crash value`, `while value`, or a `switch` with a `Null:` case), and
 reading with `[]` answers one. A `Boolean?` is the one `T?` that is no condition, since its `false` would read as
-missing; `assert flag` alone takes one, and asks that it is there and `true`. All of it is in
+missing; `fallback flag` alone takes one, and asks that it is there and `true`. All of it is in
 [failure.md](failure.md), with the three outcomes a failure can have. Since `null` belongs to `T?` alone, `var target: Monster = null` is an error that asks for `Monster?` (none
 yet) or `Monster()` (a default), and a generic class makes the default of what it is bound to with `$name()`
 ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#variables-and-values)).
@@ -969,7 +969,7 @@ func ShapeValuesDoc() {
 }
 
 func finish_first(jobs: List<Work>) {
-    assert jobs[0]
+    fallback jobs[0]
     jobs[0].finish()
 }
 ```

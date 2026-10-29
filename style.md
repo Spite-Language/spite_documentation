@@ -55,9 +55,9 @@ short form is made the only form the compiler accepts. In the same spirit:
   ([functions_and_operators.md](functions_and_operators.md)).
 - **No overloading.** One name means one function, and an argument is cast to the parameter's type, so a reader
   never works out which of several meanings was chosen.
-- **No copying a value into a local only to narrow it.** `var watcher = tracker` then `assert watcher` is a habit
-  from languages that cannot narrow a path. Narrow the name or the path itself: `assert tracker`,
-  `assert tracker.target` ([failure.md](failure.md#narrowing-a-path)).
+- **No copying a value into a local only to narrow it.** `var watcher = tracker` then `fallback watcher` is a habit
+  from languages that cannot narrow a path. Narrow the name or the path itself: `fallback tracker`,
+  `fallback tracker.target` ([failure.md](failure.md#narrowing-a-path)).
 - **No em dashes, anywhere**: not the character, and not two hyphens between spaces standing in for one, in code,
   comments, documentation, diagnostics or commit messages. End the sentence, or use a colon, a comma or
   parentheses. Command-line flags such as `--optimized` are not dashes.
@@ -427,10 +427,10 @@ page:
 
 | Written | Is an error naming | Page |
 |---|---|---|
-| `if not ready { return }`, `if names.is_empty() { return null }` | `assert ready`, `assert not names.is_empty()` | [failure.md](failure.md#an-if-that-only-returns-the-default-is-an-assert) |
-| a last `if value { ... }` with no `else` | `assert value` | [failure.md](failure.md#the-last-if-of-a-function) |
-| `var watcher = tracker` then `assert watcher` | `assert tracker` | [failure.md](failure.md#narrowing-a-path) |
-| `assert tracker` on a value that cannot be null | removing it | [failure.md](failure.md#narrowing-a-path) |
+| `if not ready { return }`, `if names.is_empty() { return null }` | `fallback ready`, `fallback not names.is_empty()` | [failure.md](failure.md#an-if-that-only-returns-the-default-is-an-fallback) |
+| a last `if value { ... }` with no `else` | `fallback value` | [failure.md](failure.md#the-last-if-of-a-function) |
+| `var watcher = tracker` then `fallback watcher` | `fallback tracker` | [failure.md](failure.md#narrowing-a-path) |
+| `fallback tracker` on a value that cannot be null | removing it | [failure.md](failure.md#narrowing-a-path) |
 | a switch that is one class case and `_:`, each a `return` | `if value == Class` or `return value == Class` | [control_flow.md](control_flow.md#value--class) |
 | two switch cases with the same body | `_:` | [control_flow.md](control_flow.md#switch-over-a-union) |
 | three `if`s comparing one value with a constant, each only returning | the `switch` it spells | [control_flow.md](control_flow.md#switch-over-values) |

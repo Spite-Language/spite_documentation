@@ -1,7 +1,7 @@
 # Nullable values and failure
 
 Spite has no exceptions, no error values and no `Result` types. Something that may not be there is a `T?`, and
-something that went wrong has exactly three outcomes: a compile error, an `assert`, or a `crash`.
+something that went wrong has exactly three outcomes: a compile error, a `fallback`, or a `crash`.
 
 ## Nothing fails silently
 
@@ -17,8 +17,8 @@ What that already means in practice:
   and `first()` answer a `T?` instead of a made-up element ([below](#reading-with--answers-t)).
 - A check that stops proving something (after an assignment, or a call that may change what it read) has to be
   made again ([a call may undo a proof](#a-call-may-undo-a-proof)).
-- A guard `assert` stops a function only where its result can say "nothing"; a function answering a number, a
-  `Boolean`, a text or an object writes its answer down ([below](#a-default-that-looks-like-an-answer-is-an-error)).
+- A `fallback` stops a function and returns what its answer type builds with no arguments: nothing, `null`, an
+  empty collection, `0`, `false`, `""` or a fresh object ([below](#a-fallback-returns-what-its-answer-type-builds-with-no-arguments)).
 - A developer's mistake halts naming the line: a whole number divided by zero, arithmetic that does not fit,
   signed or unsigned, and a value too big for the narrower name it is put into, in every build
   ([values_and_types.md](values_and_types.md#arithmetic-that-does-not-fit-halts)),
@@ -28,7 +28,7 @@ What that already means in practice:
 - The library halts only on the program's own mistakes (an index outside a text, a negative count), never on
   what the outside world does: a file that cannot be read whole, a lock or a random source the system refuses, a
   line of input that is not UTF-8, a path the system cannot give, the machine's time zone ICU cannot open, each is
-  an answer, a `T?` that is `null` or a `Boolean`, and the program decides what it means with `assert` (carry on)
+  an answer, a `T?` that is `null` or a `Boolean`, and the program decides what it means with `fallback` (carry on)
   or `crash` (a bug) ([standard_library.md](standard_library.md)).
 - Text that is not a number reads as `null`, never as a `0`: `"forty two".to_integer()` is an `Integer?`
   ([standard_library.md](standard_library.md#string)).
@@ -82,7 +82,7 @@ There is one rule, and every form below follows it.
 | Written | When it is null |
 |---|---|
 | `if value { } else { }` | runs the `else`; inside the `{ }`, `value` is a `T` |
-| `assert value` | the function answers "nothing" (below); after it, `value` is a `T` for the rest of the block |
+| `fallback value` | the function answers "nothing" (below); after it, `value` is a `T` for the rest of the block |
 | `if not value { return ... }` | the block runs and leaves; after it, `value` is a `T` for the rest of the block |
 | `crash value` | the program halts; after it, `value` is a `T` |
 | `while value { }` | the loop ends; inside the body, `value` is a `T` |
@@ -91,11 +91,11 @@ There is one rule, and every form below follows it.
 **Narrowing tests presence, never the value.** A `0`, a `0.0`, a `false` or a `""` that is there is present:
 `crash keys[index]` passes on an element holding `0.0`, and `if count` on an `Integer?` holding `0` runs its
 block. A plain `Boolean` condition is the only test of a value, which is why a `Boolean?` cannot be one
-([below](#reading-with--answers-t)), with one exception: `assert flag` and `crash flag` on a `Boolean?` mean the
+([below](#reading-with--answers-t)), with one exception: `fallback flag` and `crash flag` on a `Boolean?` mean the
 flag is true, so they pass only when the flag is there and not `false`, exactly as they do on a `Boolean`.
 
-`assert value and other_condition` narrows too, and `other_condition` already sees the narrowed type. Each side of
-an `and` narrows on its own, for `assert`, `crash` and `if` alike, since each is known true when the whole is:
+`fallback value and other_condition` narrows too, and `other_condition` already sees the narrowed type. Each side of
+an `and` narrows on its own, for `fallback`, `crash` and `if` alike, since each is known true when the whole is:
 `crash names[position] and ages[position]` proves both elements, exactly as two `crash` lines would.
 
 ```gdscript title=nullable_narrowing/monster.spite
@@ -120,18 +120,18 @@ func NullableNarrowing() {
 }
 
 func find_monster(missing: Boolean): Monster? {
-    assert not missing
+    fallback not missing
     return Monster(30)
 }
 
 func find_name(missing: Boolean): String? {
-    assert not missing
+    fallback not missing
     return "kal"
 }
 
 func report_health() {
     var target = find_monster(false)
-    assert target
+    fallback target
     console.print("health", target.health)
     var missing_target = find_monster(true)
     if missing_target {
@@ -148,7 +148,7 @@ found kal
 
 ### Narrowing a path
 
-One `assert` proves a whole chain of nullable links, not only the last one: after `assert start.next.next`,
+One `fallback` proves a whole chain of nullable links, not only the last one: after `fallback start.next.next`,
 both `start.next` and `start.next.next` are plain values for the rest of the block. It narrows the path and its
 prefixes and nothing else: a sibling path stays a `T?`. `while current` narrows its body the same way, and is how a
 linked chain is walked:
@@ -183,7 +183,7 @@ func walk(start: Node) {
 }
 
 func third_of(start: Node) {
-    assert start.next.next
+    fallback start.next.next
     console.print("third", start.next.next.name, "after", start.next.name)
 }
 ```
@@ -221,7 +221,7 @@ func CopyToNarrowError() {
 
 func record() {
     var watcher = tracker
-    assert watcher
+    fallback watcher
     watcher.note_a_drop()
 }
 ```
@@ -229,9 +229,9 @@ func record() {
 'watcher' only copies 'tracker' so it can be narrowed: narrow 'tracker' itself
 ```
 
-A check on something that cannot be null proves nothing, and is an error too: `assert tracker` written twice,
-or an `assert` on a plain `Tracker`. The error names the check that already proved it ("'tracker' is already
-narrowed by 'assert tracker' on line 8: remove this check"), whatever the type, text and numbers included.
+A check on something that cannot be null proves nothing, and is an error too: `fallback tracker` written twice,
+or a `fallback` on a plain `Tracker`. The error names the check that already proved it ("'tracker' is already
+narrowed by 'fallback tracker' on line 8: remove this check"), whatever the type, text and numbers included.
 
 ### A call may undo a proof
 
@@ -257,7 +257,7 @@ func CallUndoesProofError() {
 }
 
 func show() {
-    assert target
+    fallback target
     forget()
     console.print(target.name)
 }
@@ -287,7 +287,7 @@ func CallKeepsProof() {
 }
 
 func show() {
-    assert target
+    fallback target
     count_shown()
     console.print(target.name, shown)
 }
@@ -321,7 +321,7 @@ func ShadowingDoc() {
 }
 
 func read_first_line(text: String?): String? {
-    assert text
+    fallback text
     var text = text.trim()
     var lines = text.lines()
     return lines.first()
@@ -382,7 +382,7 @@ built for how fast you iterate, not for the last check.
 
 ### A condition known while compiling is an error
 
-An `if` or `while` whose condition the compiler already knows, and an `assert` that can never hold, are errors:
+An `if` or `while` whose condition the compiler already knows, and a `fallback` that can never hold, are errors:
 `if 2 > 1` is "'if 2 > 1' is decided while compiling and is always true here, so it tells a reader nothing: remove
 the 'if' and keep the code it runs". Two are kept, since choosing at compile time is their purpose: a condition on
 a field of `Build`, which the command line sets ([programs.md](programs.md#compile-time-settings-build)), and a
@@ -425,17 +425,17 @@ compiler also understands the usual proofs for the library's collections, so mos
 - **Checking a proven read again is an error** whose message names what already proved it, so the line can
   simply go.
 - A `Boolean?` cannot be a condition: `if flags[index]` would test that the element is there, not that it is true.
-  Prove it is there first, or compare it: `flags[index] == true`. Only `assert flags[index]` and `crash flags[index]`
+  Prove it is there first, or compare it: `flags[index] == true`. Only `fallback flags[index]` and `crash flags[index]`
   take one, and they pass when the element is there and `true`.
 - **An unproven read names how to prove it.** `names[0].upper_case()` with nothing proving `names[0]` is
   `'names[0]' may be missing, since every '[ ]' answers a 'T?' (this one is a String?), so 'upper_case' cannot be
-  called on it yet: narrow it first with 'crash names[0]', 'assert names[0]' or 'if names[0] { }', or prove the
+  called on it yet: narrow it first with 'crash names[0]', 'fallback names[0]' or 'if names[0] { }', or prove the
   count first, 'crash names.count() > 0'`; a read by a counter names the loop bound instead (`... or read it where a
   bound proves it, inside 'while index < names.count()'`), and a `Dictionary` or a class of your own names the
   three narrowing lines only (`diagnostics/index_reads`).
 - **A class of your own is proven by what you write.** The compiler knows what `count()` and `get_at` mean for the
   library's collections only, so `while index < shelf.count()` proves nothing about `shelf[index]` when `Shelf`
-  is yours: narrow the read with `crash`, `assert` or `if` (`conformance/stage6/indexable_class`).
+  is yours: narrow the read with `crash`, `fallback` or `if` (`conformance/stage6/indexable_class`).
 
 Every case, with its exact messages, is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule). A proven
 read still checks its bounds at run time and halts naming the read when its index was outside the list, so a
@@ -471,7 +471,7 @@ ada is 36
 ```
 
 A read kept in a local is narrowed like any other value, so a `Dictionary` is looked up once: `var age =
-ages[name]` reads the key, and `if age` or `assert age` narrows the local. This is not a copy made only to narrow
+ages[name]` reads the key, and `if age` or `fallback age` narrows the local. This is not a copy made only to narrow
 it, since the local holds what the read answered, not a second name for the path:
 
 ```gdscript title=kept_read/kept_read.spite entry
@@ -527,7 +527,7 @@ whole test, and is `false` when there is no name, while two values that are both
 something changed never answers "changed" when neither is there.
 
 The same goes for a chain read through a `T?` inside a comparison: `made.kind == "make"` is `false` when there is
-no `made`, so you write the comparison you mean and nothing in front of it, in an `if`, an `assert`, a `crash` or a
+no `made`, so you write the comparison you mean and nothing in front of it, in an `if`, a `fallback`, a `crash` or a
 `return` alike:
 
 ```gdscript
@@ -558,7 +558,7 @@ false true true true
 
 1. **A compile error**, for anything the compiler can know: a type that does not fit, a member a template
    cannot use, a symbol outside its enum, an unfilled codegen value, a missing foreign symbol.
-2. **`assert`**, when something is absent and the program should keep running: there is nothing more to do
+2. **`fallback`**, when something is absent and the program should keep running: there is nothing more to do
    here, and everything else carries on.
 3. **`crash`**, when something is absent and that is a bug: everything stops so the code gets rewritten.
 
@@ -566,23 +566,23 @@ false true true true
 timeout from a refusal), that is data, not an error: return an enum or a union that models exactly those cases,
 and handle it like any other value.
 
-Absence is fine: `assert`. Absence is a bug: `crash`. Absence is a case: `if value { } else { }`.
+Absence is fine: `fallback`. Absence is a bug: `crash`. Absence is a case: `if value { } else { }`.
 
 ### Why there are no exceptions
 
 An error that bubbles up tells the code above it a message it has no action to take about. The handler can log it,
 wrap it and pass it on, and each layer of that is code written only to be defensive: it does not make the program
 more correct, it makes it longer. So Spite does not offer a way to carry a reason upward at all. Either the
-compiler can know (a compile error), or something is simply not there and the program carries on (`assert`), or it
+compiler can know (a compile error), or something is simply not there and the program carries on (`fallback`), or it
 is a bug and the program stops where it happened (`crash`). When the caller really can do something different for
 each cause, the cause is a value the function returns, an enum or a union that names exactly those cases, and the
 caller handles it like any other value.
 
-## `assert` is a guard
+## `fallback` is a guard
 
-`assert condition` is a production feature, not a debug one: when the condition is false, the function stops
+`fallback condition` is a production feature, not a debug one: when the condition is false, the function stops
 there and answers "nothing", and no code after it runs. A failed one is remembered for the crash report
-([below](#what-a-crash-reports)). "Nothing" has to be something the caller can see, so a guard `assert` is
+([below](#what-a-crash-reports)). "Nothing" has to be something the caller can see, so a guard `fallback` is
 allowed only where the function's result can say it:
 
 - a function that returns nothing just returns;
@@ -606,17 +606,17 @@ func AssertGuard() {
 
 func report(index: Integer) {
     var name = name_at(index)
-    assert name
+    fallback name
     console.print(index, name)
 }
 
 func name_at(index: Integer): String? {
-    assert index >= 0 and index < names.count()
+    fallback index >= 0 and index < names.count()
     return names[index]
 }
 
 func short_names(longest: Integer): List<String> {
-    assert longest > 0
+    fallback longest > 0
     return names.filter(is_short)
 }
 
@@ -629,84 +629,84 @@ func is_short(name: String): Boolean {
 1 0
 ```
 
-### A default that looks like an answer is an error
+### A fallback returns what its answer type builds with no arguments
 
-A number, a `Boolean`, a `String`, an enum value or an object cannot say "nothing": its default (`0`, `false`,
-`""`, the first value, an object with every attribute at its default) looks exactly like a real answer. A guard
-`assert` in a function returning one is a compile error, since the caller would carry on with a value nobody
-meant (a `row_of(entity)` answering row 0, a real row, would make the caller remove the wrong one):
+When its condition fails, a `fallback` returns at once with what the function's answer type builds with no
+arguments, so the answer type alone says what comes back:
 
-```gdscript title=default_answer_error/default_answer_error.spite entry error
+| Answer type | A `fallback` returns |
+|---|---|
+| nothing | nothing |
+| `T?` | `null` |
+| `List`, `Dictionary` | an empty one |
+| a number | `0` |
+| `Boolean` | `false` |
+| `String` | `""` |
+| a class with no constructor, or one without parameters | the object its constructor makes |
+
+```gdscript title=fallback_answers/fallback_answers.spite entry
 var console = Console()
-var rows = [10, 20, 30]
 
-func DefaultAnswerError() {
+func FallbackAnswers() {
     load "../spite_standard_library/windows"
-    var row = row_of(7)
-    console.print(row)
+    var empty = first_name("")
+    var found = first_name("Ada Lovelace")
+    var none = word_count("")
+    console.print("[{empty}]", found, none)
 }
 
-func row_of(entity: Integer): Integer {
-    assert entity < rows.count()
-    return rows[entity]
-}
-```
-```diagnostic
-this 'assert' would answer a default Integer (0) that a caller cannot tell from a real one: return a value ('if entity >= rows.count() { return -1 }'), make the result 'Integer?', or 'crash entity < rows.count()' if this is a developer mistake
-```
-
-The message names the three ways out, and which one is right is a decision about the caller:
-
-- **the result says "nothing"**: `Integer?`, and every caller narrows it, when a missing row is a case the
-  program meets in normal use;
-- **an answer you chose**: an `if` that returns it, when a value outside the real ones already means "none",
-  as `-1` does for an index;
-- **`crash`**: when asking for a row that is not there is the caller's bug.
-
-```gdscript title=default_answer_fixed/default_answer_fixed.spite entry
-var console = Console()
-var rows = [10, 20, 30]
-
-func DefaultAnswerFixed() {
-    load "../spite_standard_library/windows"
-    var found = row_of(2)
-    crash found
-    var missing = row_or_minus_one(7)
-    var second = row_or_halt(1)
-    console.print(found, missing, second)
+func first_name(name: String): String {
+    fallback not name.is_empty()
+    var words = name.split(" ")
+    var first = words.first()
+    crash first
+    return first
 }
 
-func row_of(entity: Integer): Integer? {
-    assert entity < rows.count()
-    return rows[entity]
-}
-
-func row_or_minus_one(entity: Integer): Integer {
-    if entity >= rows.count() {
-        return -1
-    }
-    return rows[entity]
-}
-
-func row_or_halt(entity: Integer): Integer {
-    crash entity < rows.count()
-    return rows[entity]
+func word_count(text: String): Integer {
+    fallback not text.is_empty()
+    var words = text.split(" ")
+    return words.count()
 }
 ```
 ```output
-30 -1 20
+[] Ada 0
 ```
 
-An `if` that returns a value in such a function is an answer written down, whatever the value, so
-`if text.is_empty() { return 0 }` is how an empty text is zero bytes long, and `if handle == -1 { return false }`
-is how a closed file says it is not open.
+A caller that must tell "missing" from a real `0` or `""` gets a function answering a `T?`, whose `fallback`
+returns `null` and must be narrowed. Where the answer type has nothing to build with no arguments, an enum, a
+class whose constructor takes arguments, or a singleton, a `fallback` is a compile error naming the two ways out:
+
+```gdscript title=fallback_enum_error/fallback_enum_error.spite entry error
+enum Day {
+    'monday'
+    'tuesday'
+}
+
+var console = Console()
+var rows = [10, 20, 30]
+
+func FallbackEnumError() {
+    load "../spite_standard_library/windows"
+    var day = day_of(7)
+    console.print(day)
+}
+
+func day_of(entity: Integer): Day {
+    fallback entity < rows.count()
+    return 'tuesday'
+}
+```
+```diagnostic
+'fallback' returns what the answer type builds with no arguments, and a Day has none (an enum is never built, so it has no value to fall back to): make the result 'Day?' so the fallback returns null, or write 'crash entity < rows.count()' if this is a developer mistake
+```
 
 ### An `if` that leaves proves the rest
 
 An `if` with no `else` whose block ends by leaving the function (a `return`, a bare `crash`, or a `switch` whose
-every case ends so) proves the opposite of its condition for the rest of the block, the way an `assert` does. So `if not found { return -1 }`
-narrows `found`, `if not left or not right { return 0 }` narrows both, and `if index >= names.count() { return
-"" }` proves `names[index]`:
+every case ends so) proves the opposite of its condition for the rest of the block, the way a `fallback` does. So `if not found { return -1 }`
+narrows `found`, `if not left or not right { return -1 }` narrows both, and `if index >= names.count() { return
+"none" }` proves `names[index]`:
 
 ```gdscript title=leaving_if/leaving_if.spite entry
 var console = Console()
@@ -721,9 +721,7 @@ func LeavingIf() {
 }
 
 func price_or_zero(name: String): Integer {
-    if not prices[name] {
-        return 0
-    }
+    fallback prices[name]
     return prices[name] * 100
 }
 ```
@@ -797,12 +795,13 @@ func wait_for(light: Light): Integer {
 zero 20
 ```
 
-### An `if` that only returns the default is an `assert`
+### An `if` that only returns what a `fallback` returns is a `fallback`
 
-Where a guard `assert` is allowed, it is the only way to write a guard. An `if` with no `else` whose whole body
-returns the function's default (`null` from a function returning a `T?`, an empty collection made on the spot
-from one returning a collection, or a bare `return` from one returning nothing) is a guard spelled the long way. It is a compile error wherever it stands, inside a loop or a nested
-`if` included, and the message names the `assert` of the opposite condition:
+A `fallback` is the only way to write a guard. An `if` with no `else` whose whole body returns what a `fallback`
+would (`null` from a function returning a `T?`, an empty collection made on the spot from one returning a
+collection, `0`, `false`, `""`, an object made with no arguments, or a bare `return` from one returning nothing) is a
+guard spelled the long way. It is a compile error wherever it stands, inside a loop or a nested
+`if` included, and the message names the `fallback` of the opposite condition:
 
 ```gdscript title=default_guard_error/default_guard_error.spite entry error
 var console = Console()
@@ -822,7 +821,7 @@ func first_name(): String? {
 }
 ```
 ```diagnostic
-this 'if' only returns the default 'null', which is how a guard is written: write 'assert not names.is_empty()' and let the rest run unindented
+this 'if' only returns 'null', which is what 'fallback' returns when its condition fails: write 'fallback not names.is_empty()' and let the rest run unindented
 ```
 
 The fix reads top to bottom:
@@ -838,7 +837,7 @@ func DefaultGuardFixed() {
 }
 
 func first_name(): String? {
-    assert not names.is_empty()
+    fallback not names.is_empty()
     return names.first()
 }
 ```
@@ -847,11 +846,10 @@ false
 ```
 
 The message turns the condition around for you: `if count < 0 or count > limit` becomes
-`assert count >= 0 and count <= limit`.
+`fallback count >= 0 and count <= limit`.
 
-In a function returning a number, a `Boolean`, a `String`, an enum or an object, nothing of this applies: `assert`
-is not allowed there ([above](#a-default-that-looks-like-an-answer-is-an-error)), and an `if` returning `0` or
-`false` is the answer written down:
+The rule covers every answer type a `fallback` can return, so an `if` that only returns `0`, `false` or `""` is
+refused the same way and named as the `fallback` it is:
 
 ```gdscript title=default_answer/default_answer.spite entry
 var console = Console()
@@ -864,9 +862,7 @@ func DefaultAnswer() {
 }
 
 func size(): Integer {
-    if text.is_empty() {
-        return 0
-    }
+    fallback not text.is_empty()
     return text.length() + 1
 }
 ```
@@ -877,7 +873,7 @@ func size(): Integer {
 ### The last `if` of a function
 
 A function whose *last* statement is `if value { ... }` with no `else` (wrapping the rest of the function only
-to check that something exists) is a compile error too, naming the `assert` that lets the rest run unindented:
+to check that something exists) is a compile error too, naming the `fallback` that lets the rest run unindented:
 
 ```gdscript title=terminal_if_error/terminal_if_error.spite entry error
 var console = Console()
@@ -899,7 +895,7 @@ func announce() {
 }
 ```
 ```diagnostic
-write 'assert maybe_name' and let the rest of the function run unindented
+write 'fallback maybe_name' and let the rest of the function run unindented
 ```
 
 ```gdscript title=terminal_if_fixed/terminal_if_fixed.spite entry
@@ -916,7 +912,7 @@ func try_get_name(): String? {
 
 func announce() {
     var name = try_get_name()
-    assert name
+    fallback name
     console.print(name)
 }
 ```
@@ -926,11 +922,11 @@ Aria
 
 A narrowing `if` with an `else`, or one that is not the function's last statement, is ordinary code.
 
-### `assert` is not allowed in a constructor
+### `fallback` is not allowed in a constructor
 
 A constructor is setup, not logic. If something can be invalid inside one, logic has been put where only setup
 belongs, and the caller would receive an object with every field at its default that it cannot tell from a
-properly built one. So `assert` in a constructor is an error, and so is an `if` that only leaves it; the message
+properly built one. So `fallback` in a constructor is an error, and so is an `if` that only leaves it; the message
 names `crash` for when absence there is a bug:
 
 ```gdscript title=constructor_assert_error/constructor_assert_error.spite entry error
@@ -939,17 +935,17 @@ var ready = false
 
 func ConstructorAssertError() {
     load "../spite_standard_library/windows"
-    assert ready
+    fallback ready
     console.print("ready")
 }
 ```
 ```diagnostic
-'assert' is not allowed in a constructor: a constructor is setup, not logic
+'fallback' is not allowed in a constructor: a constructor is setup, not logic
 ```
 
 ## `crash`
 
-`crash condition` mirrors `assert` exactly (same polarity, same narrowing) with the other severity: when the
+`crash condition` mirrors `fallback` exactly (same polarity, same narrowing) with the other severity: when the
 condition is false, the program halts. The report names the line and shows the values of the condition's
 operands and of the other names in scope, so nothing has to be written and nothing can drift out of date. A bare
 `crash` marks a branch that cannot happen (`crash false` is formatted to it).
@@ -990,7 +986,7 @@ positive
 
 `crash` is allowed in a constructor, which is where a program that cannot start says so.
 
-**`crash` never takes a message, and neither does `assert`.** There is no text to write
+**`crash` never takes a message, and neither does `fallback`.** There is no text to write
 after the condition: the report points at the line of code and shows the values there, and the reader opens
 that line and reads the data, which says more than a sentence about them would and cannot drift from the code. Do
 not smuggle text into a condition to have it printed (`crash found or bone_name == ""`): the report shows the
@@ -1006,7 +1002,7 @@ is a compile error at the `crash`, since the program would halt there every time
 A function that answers a value says something the caller must hear, so calling it on a line of its own, where
 the answer goes nowhere, is a compile error. The library answers what the outside world did (a write that did
 not land is `false`, a file that is not there is `null`) and leaves the decision to the program, which uses the
-answer: keeps it, passes it, returns it, compares it, or at least writes `assert` to carry on without it or
+answer: keeps it, passes it, returns it, compares it, or at least writes `fallback` to carry on without it or
 `crash` when its absence is a bug.
 
 ```gdscript title=dropped_answer_error/dropped_answer_error.spite entry error
@@ -1020,13 +1016,13 @@ func DroppedAnswerError() {
 }
 ```
 ```diagnostic
-'names.contains("Ada")' answers a 'Boolean' and drops it: an answer must be used, at least with 'assert names.contains("Ada")' to carry on without it or 'crash names.contains("Ada")' when that is a bug
+'names.contains("Ada")' answers a 'Boolean' and drops it: an answer must be used, at least with 'fallback names.contains("Ada")' to carry on without it or 'crash names.contains("Ada")' when that is a bug
 ```
 
 A write to a file is one line, and the line says what happens when it does not land:
 
 ```gdscript
-assert file.write_string(text)     # a lost write ends this function; the program carries on
+fallback file.write_string(text)     # a lost write ends this function; the program carries on
 crash  file.write_string(text)     # a lost write is a bug: halt here, with the report
 ```
 
@@ -1041,18 +1037,18 @@ condition read, each tied to the position it was read at. It does not repeat the
 names, and it is written for a person and for an AI alike, so it holds whatever is needed to fix the problem without
 running the program again.
 
-A crash flushes what the program printed, writes one line to the error stream, then the failed asserts that came before
+A crash flushes what the program printed, writes one line to the error stream, then the fallbacks taken that came before
 it, then the call chain, and exits with status 1. The first line is
 `spite: the program stopped at <path>:<line> in <Class>.<function> (name=value, ...)`: one field for each value. Each
-failed `assert` that came before is a `spite.assert` line, because those are usually the trail that explains how the
-program got there; each names what its function answered instead (`answered=nothing` for a function that returns
+failed `fallback` that came before is a `spite.fallback` line, because those are usually the trail that explains how the
+program got there; each names what its function answered instead (`returned=nothing` for a function that returns
 nothing, `null` for a `T?`, `empty` for a list or a dictionary). Last comes the call chain, a
 `spite.frame` line for each function of the program on the stack, innermost first, as a
 [native fault](#what-a-native-fault-reports) writes them:
 
 ```
 spite: the program stopped at crash_report/crash_report.spite:17 in CrashReport.check (value=-9, limit=0, scale=2)
-spite.assert	6d183761	crash_report/crash_report.spite:11	CrashReport	announce	answered=nothing
+spite.fallback	6d183761	crash_report/crash_report.spite:11	CrashReport	announce	returned=nothing
 spite.frame	crash_report/crash_report.spite:17	CrashReport	check
 spite.frame	crash_report/crash_report.spite:7	CrashReport	CrashReport
 ```
@@ -1087,44 +1083,44 @@ spite: the program stopped at crash_missing_link/crash_missing_link.spite:10 in 
 ```
 
 The call chain is always written, even when it is one line. Only the functions of the program and of the packages it
-loads are listed; a frame inside the standard library is left out, as the failed asserts of the library are. Consecutive
+loads are listed; a frame inside the standard library is left out, as the fallbacks taken of the library are. Consecutive
 equal lines are one line ending in `repeated=<count>`, at most 16 lines are written, and `spite.frame	more` says the stack
 goes deeper. An inlined function keeps its own frame. The chain is read from the saved frame pointers and a table of
 the program's calls that sits in the executable beside its code, so nothing runs for it until a crash.
 
-The id of a `spite.assert` line is derived from the site's content, so it stays the same when unrelated lines move.
+The id of a `spite.fallback` line is derived from the site's content, so it stays the same when unrelated lines move.
 Each build also writes a `.crashes` file beside the executable it builds: one line per `crash` site of every function
-compiled and per `assert` site outside the library, sorted by id, with its file, line, column, class, function, kind,
+compiled and per `fallback` site outside the library, sorted by id, with its file, line, column, class, function, kind,
 condition and the type of every part of the condition (`value:Integer limit:Integer`), in the order the report shows
-them, receivers whose value the report leaves out included. `grep 6d183761 program.crashes` finds an assert from its
+them, receivers whose value the report leaves out included. `grep 6d183761 program.crashes` finds a fallback from its
 line and the condition it checked.
 
-A failed `assert` prints nothing when it fails, in every build: it is the program answering "nothing" and
+A `fallback` taken prints nothing when it fails, in every build: it is the program answering "nothing" and
 carrying on, and a long run fails thousands of them, which would bury the one line that matters. It is kept for the
-report instead. To watch them as they fail, build with `--trace-asserts` (a `Build` field, `trace_asserts`): each
-failed `assert` of the program then also writes its `spite.assert` line to the error stream at once, after flushing
+report instead. To watch them as they fail, build with `--trace-fallbacks` (a `Build` field, `trace_fallbacks`): each
+failed `fallback` of the program then also writes its `spite.fallback` line to the error stream at once, after flushing
 what the program printed, and still enters the ring.
-The trace keeps only the latest failed asserts, in a fixed-size ring, so it never allocates and never grows. An
-`assert` that fails again right after itself adds to its last line instead of taking a new one, which then ends in
+The trace keeps only the latest fallbacks taken, in a fixed-size ring, so it never allocates and never grows. An
+`fallback` that fails again right after itself adds to its last line instead of taking a new one, which then ends in
 `repeated=<count>`: a guard that fails every frame is one line, and the 32 lines are 32 steps of the trail, not one
 step 32 times.
 
 ```
-spite.assert	4b7a8666	assert_runs/assert_runs.spite:17	AssertRuns	name_at	answered=null	repeated=1000
-spite.assert	3a356b09	assert_runs/assert_runs.spite:22	AssertRuns	title_of	answered=null
+spite.fallback	4b7a8666	assert_runs/assert_runs.spite:17	AssertRuns	name_at	returned=null	repeated=1000
+spite.fallback	3a356b09	assert_runs/assert_runs.spite:22	AssertRuns	title_of	returned=null
 ```
 
-A `spite.assert` line carries no values. The assert's place, the `.crashes` map and its condition are what it says: a
+A `spite.fallback` line carries no values. The fallback's place, the `.crashes` map and its condition are what it says: a
 guard that narrows failed because something was not there, and one that tests a condition names its operands on that
 line, while the crash that ends the run prints every value at its own site.
-It holds the asserts of the program and of every package it `load`s, never those of the standard library: an
-`assert` in `library/` is how the library answers routine questions (a key that is not there, text that does not
+It holds the fallbacks of the program and of every package it `load`s, never those of the standard library: an
+`fallback` in `library/` is how the library answers routine questions (a key that is not there, text that does not
 match, a read past the end), and those would push the program's own entries out of the ring. The compiler leaves
-the record out of a library `assert` altogether, so it costs what an `if` costs. A crash inside the library still
+the record out of a library `fallback` altogether, so it costs what an `if` costs. A crash inside the library still
 reports its own site.
-A crash reports the ring as it stood when the crash began. Other threads may still be failing asserts while it
+A crash reports the ring as it stood when the crash began. Other threads may still be failing fallbacks while it
 prints, such as a game's pool threads running their guards, and those never lengthen the report: it is the crash line,
-at most 32 `spite.assert` lines and the `earlier=` count of the lines before them, then the call chain of the thread that crashed, and then
+at most 32 `spite.fallback` lines and the `earlier=` count of the lines before them, then the call chain of the thread that crashed, and then
 the program exits. Only the first thread to crash
 reports; one that crashes while that report is being written waits for the program to end, so two reports never
 interleave.
@@ -1142,7 +1138,7 @@ compiler refuse the change: both stop the change, where a message only describes
 Some failures happen below Spite: a foreign library reads through a null pointer, a recursion runs out of stack, a
 driver runs an instruction the processor refuses. The program cannot survive them, but it never ends silently:
 every program installs a fault handler before its first line runs, and a fault writes a
-`spite.fault` line to the error stream, then the failed asserts as a crash does, then the Spite functions on the
+`spite.fault` line to the error stream, then the fallbacks taken as a crash does, then the Spite functions on the
 stack, and ends the program:
 
 ```
@@ -1179,12 +1175,12 @@ a core dump is still written where the system keeps them. What the program print
 
 ## What it costs at run time
 
-- **Narrowing costs nothing.** Every proof (`assert`, `crash`, `if`, `while`, a proven `[]` read, following a
+- **Narrowing costs nothing.** Every proof (`fallback`, `crash`, `if`, `while`, a proven `[]` read, following a
   call to see what it may change) is worked out while compiling, and nothing of it is emitted. A proven `[]`
   read still checks its bounds, as every `[]` read does.
 - **A `T?` of an object is just the pointer**; a `T?` of a number or a `Boolean` is the value with a flag beside
   it, passed by value, never allocated.
-- **A passing `assert` or `crash` is one branch.** A failed `assert` in the program or a loaded package also
+- **A passing `fallback` or `crash` is one branch.** A `fallback` taken in the program or a loaded package also
   stores one pointer into the 32-entry ring and counts it; one in `library/` does not.
 - **A crash's report is written only when it fires**: each site's place and condition are fixed text in the
   program, and the operand values are turned into text on the way out. A `crash` whose condition has a call inside

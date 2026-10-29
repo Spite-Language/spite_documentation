@@ -96,8 +96,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `Spite.FunctionDeclaration` (called as `system.phase_each(...)`) or `Spite.Argument` (spread as
   `system.update_each(made_arguments(row))`). There is no `Symbol<...>`, and the class is never written on the type: the
   body says it.
-- No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `assert`, `crash`, `switch`).
-  `assert condition` returns "nothing" where that is a fine answer; `crash condition` halts on a developer
+- No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `fallback`, `crash`, `switch`).
+  `fallback condition` returns "nothing" where that is a fine answer; `crash condition` halts on a developer
   mistake. Neither takes a message: the crash report shows the values.
 - Never write defensive code: no checks the compiler already proves (proving the proven is an error), no default
   that a caller could mistake for a real answer.

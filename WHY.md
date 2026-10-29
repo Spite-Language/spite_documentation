@@ -192,10 +192,10 @@ each with the Spite form in the message ([docs/style.md](style.md)).
 ## Nothing fails silently
 
 Anything that can go wrong silently is a bug in Spite. There are no exceptions, and a failure has three outcomes
-and no others: a compile error when the compiler can know, `assert` when a missing answer is fine, and `crash`
+and no others: a compile error when the compiler can know, `fallback` when a missing answer is fine, and `crash`
 when it is a developer mistake. A value that may be absent is a `T?`, and using it without checking is a compile
 error; the compiler tracks the proof, so a value it has proven is never checked again ([docs/proofs.md](proofs.md)).
-An `assert` that would answer a default a caller cannot tell from a real answer is an error too. A crash carries no
+A `fallback` that would answer a default a caller cannot tell from a real answer is an error too. A crash carries no
 prose message: it names the file and line, and shows the values there.
 
 ```
@@ -212,7 +212,7 @@ that teach each part of the language say why.
 
 | Spite refuses | Instead | Taught in |
 |---|---|---|
-| Exceptions, error values, and defensive code that passes errors upward | a compile error, `assert`, or `crash`; a distinction a caller can act on is data (an enum or a union) | [failure.md](failure.md#why-there-are-no-exceptions) |
+| Exceptions, error values, and defensive code that passes errors upward | a compile error, `fallback`, or `crash`; a distinction a caller can act on is data (an enum or a union) | [failure.md](failure.md#why-there-are-no-exceptions) |
 | A crash message written in prose | a crash that names the line and shows the values | [failure.md](failure.md#why-a-crash-carries-no-message) |
 | `async` and `await` colouring every caller | concurrency chosen at the call site, joined on first use | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
 | A runtime you bring, chosen by each library | one concurrency model in the language, no outside driver | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
@@ -351,7 +351,7 @@ habits from other languages the compiler rejects.
   since it says what to write.
 - **Re-read a file after compiling it.** Every compile formats the files first, so what is on disk may differ from
   what you wrote.
-- **Do not write guards the compiler enforces.** Narrow a `T?` once (`if`, `assert`, `crash`, `switch`); checking a
+- **Do not write guards the compiler enforces.** Narrow a `T?` once (`if`, `fallback`, `crash`, `switch`); checking a
   proven value again is an error.
 - **Do not add logging to find a crash.** The crash line names the file and line and shows every value in the
   condition and in scope: open that line.
@@ -405,7 +405,7 @@ there, which an AI reads directly. Whatever the compiler can prove is a compile 
 you must check, a read past the end of a list answers nothing instead of reading memory, borrowed items are checked
 at compile time, and a fault prints where it happened. Two objects holding each other, a parent and its children, are freed together. [docs/memory.md](memory.md)
 
-**How do errors work without exceptions?** A compile error, `assert` (the function answers "nothing"), or `crash`
+**How do errors work without exceptions?** A compile error, `fallback` (the function answers "nothing"), or `crash`
 (the program halts and shows the line and the values). [docs/failure.md](failure.md)
 
 **What does concurrency look like?** Usually nothing: the compiler runs independent calls at once, splits loops

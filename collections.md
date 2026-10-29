@@ -875,7 +875,7 @@ more template, exactly like the library's:
 ```gdscript title=list_average/list.spite
 func average_member(member: Spite.AttributeDeclaration): Float? {
     var item_count = count()
-    assert item_count != 0
+    fallback item_count != 0
     var total = 0.0
     var index = 0
     while index < item_count {

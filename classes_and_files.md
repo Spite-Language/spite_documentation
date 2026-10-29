@@ -161,8 +161,8 @@ func EmptyConstructorError() {
 
 Every `var` is written with its default, so an object made with no arguments is already complete: a fresh
 `Member()` has every field at its declared default. There is no `null` for anything but a `T?`
-([failure.md](failure.md)). A constructor is setup, not logic: `assert` is not allowed in one, and `crash` is how
-it says something is a bug ([failure.md](failure.md#assert-is-not-allowed-in-a-constructor)). There is no `new`:
+([failure.md](failure.md)). A constructor is setup, not logic: `fallback` is not allowed in one, and `crash` is how
+it says something is a bug ([failure.md](failure.md#fallback-is-not-allowed-in-a-constructor)). There is no `new`:
 `Person(30)` makes one.
 
 There is one function per name. A file declaring a name twice is an error, and there is no overloading: an

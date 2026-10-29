@@ -76,7 +76,7 @@ walk is `each`, a selection is a filter or a member template, and a member by na
 | every attribute of a class | `Monster.attributes.each(show)` |
 | every class of a folder | `Shop.Tools.classes.each(make)`, with `make(part: Spite.Class)` |
 | every value of an enum | `Phase.values.each(run)`, with `run(phase: Phase)` |
-| one function, if the class has it | `Runner.functions['run_each']`, a `Spite.FunctionDeclaration?` narrowed by `if` or `assert` |
+| one function, if the class has it | `Runner.functions['run_each']`, a `Spite.FunctionDeclaration?` narrowed by `if` or `fallback` |
 | the same function bound to an instance | `runner.functions['run_each']`, a `Spite.Function?` |
 | a call filled argument by argument | `Spite.Call(Runner.functions['run_each'], runner)`, then `call.arguments['name'] = value` and `call.call()` |
 | the functions whose names end in `_each` | `Runner.functions.filter(walks_each)`, or `Runner.functions.filter_name_ends_with("_each")` to count or to ask |
@@ -163,7 +163,7 @@ var loaded = List<String>()
 func load_each(path: String, into: List<String>) {
     var file = File(path)
     var text = file.read_as_string()
-    assert text
+    fallback text
     into.append(path)
     loaded.append(text)
 }
@@ -208,7 +208,7 @@ What a function does with each of its attributes and arguments is one dictionary
 
 ```gdscript
 var update = Movement.functions['update_each']
-assert update
+fallback update
 var written = update.accesses.filter_written()
 var only_read = update.accesses.count_read()
 ```

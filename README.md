@@ -108,7 +108,7 @@ with a link to the next.
    (`Environment`) and compile-time settings (`Build`, `target_operating_system`).
 5. [values_and_types.md](values_and_types.md): variables, numbers and the casting rule, numbers as classes,
    `String`, enums, unions, `type` shapes and duck typing.
-6. [failure.md](failure.md): `T?` and narrowing, reading with `[]`, the three failure outcomes, `assert`
+6. [failure.md](failure.md): `T?` and narrowing, reading with `[]`, the three failure outcomes, `fallback`
    guards, `crash` and its report.
 7. [functions_and_operators.md](functions_and_operators.md): functions, function values, variadic arguments,
    operators as functions, attribute interception.

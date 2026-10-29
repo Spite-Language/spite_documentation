@@ -42,8 +42,8 @@ func EntryArgumentsError(name: String) {
 is the entry constructor, and it takes no arguments
 ```
 
-A constructor is setup, not logic, and the entry constructor is no exception: `assert` is not allowed in any
-constructor ([failure.md](failure.md#assert-is-not-allowed-in-a-constructor)). A program whose constructor grows
+A constructor is setup, not logic, and the entry constructor is no exception: `fallback` is not allowed in any
+constructor ([failure.md](failure.md#fallback-is-not-allowed-in-a-constructor)). A program whose constructor grows
 complicated splits it into functions it calls, and then reads as a table of contents.
 
 ## `program.arguments()`: the raw command line

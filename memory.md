@@ -18,7 +18,7 @@ value is never an object.
 Some languages keep memory safe by making you describe who owns what and for how long, and the compiler checks the
 description: a great deal of annotation that has nothing to do with what the program is for. Spite gets the same
 safety from a smaller set of tools: reference counting, a value that may be missing is a `Monster?` that must be
-narrowed with `assert` or `crash` before it is used.
+narrowed with `fallback` or `crash` before it is used.
 Where the safe form needs a rule, the compiler has it. You do not write lifetimes.
 
 Some languages also ask you to decide, for each type, whether it is a value or a reference. In Spite that is the

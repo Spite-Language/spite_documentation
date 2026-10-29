@@ -75,7 +75,7 @@ Ada "the" first shipped tea 2
   the order the class declares them. The one thing it cannot write is a `Float` or `Double` that is infinity or
   not-a-number, which JSON cannot hold, and there it crashes naming the attribute and the value (see below).
 - `JsonReader<T>()` names the type it makes and takes nothing, and `read(text: String): T?` answers `null` when the
-  text is not JSON, or not this class's JSON; one reader reads any number of texts. Narrow it like any other `T?`: `crash` when bad input is a bug, `assert` when the program should carry on,
+  text is not JSON, or not this class's JSON; one reader reads any number of texts. Narrow it like any other `T?`: `crash` when bad input is a bug, `fallback` when the program should carry on,
   `if` when absence is a case.
 
 ## Write and read bytes

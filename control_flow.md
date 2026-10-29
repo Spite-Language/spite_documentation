@@ -11,7 +11,7 @@ switch enemy {
 ```
 
 That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum, a whole number or a text), plus
-`assert` and `crash` ([failure.md](failure.md)). There is no
+`fallback` and `crash` ([failure.md](failure.md)). There is no
 `for`, no `break` or `continue`, no ternary `? :`, and no `do`. Before reaching for a loop at all, check whether a
 [member template](collections.md#member-templates-loops-you-do-not-write) already says it:
 `items.filter_in_stock().sum_price()` reads better than the loop it replaces, and compiles to the same loop.
@@ -53,9 +53,9 @@ func letter_for(grade: Integer): String {
 ```
 
 An `if` that only returns `null` from a function returning a `T?`, or only returns from one returning nothing, is
-an `assert` spelled the long way, and is an error naming it
-([failure.md](failure.md#an-if-that-only-returns-the-default-is-an-assert)). In a function returning a number, a
-`Boolean`, a text or an object, `if handle == -1 { return false }` is the answer written down, since `assert` may
+a `fallback` spelled the long way, and is an error naming it
+([failure.md](failure.md#an-if-that-only-returns-the-default-is-an-fallback)). In a function returning a number, a
+`Boolean`, a text or an object, `if handle == -1 { return false }` is the answer written down, since `fallback` may
 not answer a default there. An `if` with no `else` that ends by returning proves the opposite of its condition
 for the rest of the block, so `if not found { return -1 }` narrows `found`
 ([failure.md](failure.md#an-if-that-leaves-proves-the-rest)).

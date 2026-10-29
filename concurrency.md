@@ -515,7 +515,7 @@ the list across the processors in one go.
 work that runs forever takes a thread away for good, and there is no `Thread(function)` for it: a loop tied to
 one thread (a window's messages) runs on the program's own thread as one step per frame, and whatever waits
 (accepting connections, reading a socket) waits through a call that gives its thread back. So a `while true` with
-no `return`, `assert` or `crash` inside it, in the function a `Parallel` runs or in any function that work
+no `return`, `fallback` or `crash` inside it, in the function a `Parallel` runs or in any function that work
 reaches, whose function never waits, is `'Parallel(counter.count_forever)' runs 'Counter.count_forever' on the
 thread pool, and this loop never ends and never waits, so the work never finishes and keeps its thread for good:
 return from the loop once the work is done, or run the loop on the program's own thread`

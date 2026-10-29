@@ -160,7 +160,7 @@ end is a bug, so every program installs a handler that reports it ([failure.md](
 It is fixed code, not a runtime system: nothing runs until a fault. Beside the executable the compiler writes a
 `.functions` file listing where each function starts and ends; nothing of it is in the executable. The report reads
 that file and names the function that faulted and its callers; without the file it prints only the fault line. A
-`crash` or `assert` site's condition text is not in the executable either.
+`crash` or `fallback` site's condition text is not in the executable either.
 
 ## Counting
 
@@ -700,7 +700,7 @@ one machine instruction. The proof is a range for each operand
 - `count()` of a list or a dictionary, and `length()` of a `String`, run from 0 to 2147483647;
   `%`, `/`, `minimum`, `maximum`, `clamp`, `to_long` and `to_integer` are bound by their operands;
 - a comparison narrows the local it compares inside a `while` or an `if` whose condition says so, on each side of an
-  `and`, after an `assert` or a `crash` of it, and after an `if` that leaves;
+  `and`, after a `fallback` or a `crash` of it, and after an `if` that leaves;
 - the two branches of an `if` join, and before a `while` every local its body assigns takes its type's range, except
   a counter only ever stepped up by constants, which keeps its floor and, under `counter < bound`, is at most the
   bound plus its steps;
@@ -1207,7 +1207,7 @@ When two or more declarations in a row each take the answer of a call that only 
 starts every one but the last on another thread, runs the last itself, and waits for each where its name is first
 read. A call only computes a number when its arguments and answer are numbers and, through every function it calls,
 it reads only its arguments and its own locals, writes only its own locals, prints and opens nothing, makes no
-object and records no assert. It may crash. The calls may be your entry class's own functions too. A later call whose
+object and records no fallback. It may crash. The calls may be your entry class's own functions too. A later call whose
 arguments read an earlier one's answer stays in order, and so does any call the compiler cannot prove. Each call must
 also weigh enough, the way a pass weighs for bands, or the row runs in order.
 

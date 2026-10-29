@@ -147,7 +147,7 @@ ADA 3 null da d
 A file is one holder with two reads: `read_as_string()` when it is text and `read_as_buffer()` when it is bytes,
 and the two writes match them. Nothing about a file halts the program: every write, `remove()` and `move_to(path)`
 answers whether it happened, and the answer must be used, so the shortest write is one line that says what a
-failure means: `assert file.write_string(text)` to carry on without it, `crash file.write_string(text)` when it is a
+failure means: `fallback file.write_string(text)` to carry on without it, `crash file.write_string(text)` when it is a
 bug ([failure.md](failure.md#an-answer-is-used)).
 
 ```gdscript title=file_tasks/file_tasks.spite entry
@@ -176,9 +176,9 @@ removed true
 exists after remove false
 ```
 
-`read_as_string()` is a `String?`: narrow it with `if content { }`, `assert content` (which returns the function's
+`read_as_string()` is a `String?`: narrow it with `if content { }`, `fallback content` (which returns the function's
 default) or `crash content` (which halts), exactly like any other `T?` ([failure.md](failure.md)). This entry
-constructor uses `crash`, because `assert` is not allowed in a constructor.
+constructor uses `crash`, because `fallback` is not allowed in a constructor.
 
 **Bytes.** A cache or an asset file is bytes, not text, and bytes are a `Buffer`: `read_as_buffer()` reads the
 whole file, `read_buffer_at(position, count)` reads from any position, which is what seeking is for, and
@@ -927,20 +927,20 @@ func serve() {
     if not sockets.asks_to_upgrade(request) {
         var page = Http.Response()
         page.write_body_string("hello")
-        assert http.respond(request, page)
+        fallback http.respond(request, page)
         return
     }
     var connection = sockets.accept(request)
-    assert connection
+    fallback connection
     var message = connection.receive()
     while message {
         if message.is_text() {
             var text = message.read_as_string()
             crash text
-            assert connection.send_string("you said {text}")
+            fallback connection.send_string("you said {text}")
         } else {
             var bytes = message.read_as_buffer()
-            assert connection.send_buffer(bytes)
+            fallback connection.send_buffer(bytes)
         }
         message = connection.receive()
     }
@@ -960,7 +960,7 @@ func talk() {
     var server_address = "127.0.0.1".to_ip_address()
     crash server_address
     crash socket.connect(server_address, 8080, request)
-    assert socket.send_string("hello")
+    fallback socket.send_string("hello")
     var answer = socket.receive()
     crash answer
     var text = answer.read_as_string()

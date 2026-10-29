@@ -270,7 +270,7 @@ func NamespaceWalk() {
 
 func describe(hammer: Shop.Tools.Hammer) {
     var described = hammer.class
-    assert described.namespace.parent
+    fallback described.namespace.parent
     console.print(described.name, described.namespace, described.namespace.name)
     console.print("parent", described.namespace.parent)
 }
@@ -280,8 +280,8 @@ Hammer Shop.Tools Tools
 parent Shop
 ```
 
-One `assert` proves the whole path it names and every prefix of it, so `described.namespace` is a plain value
-too after `assert described.namespace.parent` ([failure.md](failure.md#narrowing-a-path)).
+One `fallback` proves the whole path it names and every prefix of it, so `described.namespace` is a plain value
+too after `fallback described.namespace.parent` ([failure.md](failure.md#narrowing-a-path)).
 
 ## The `Spite` classes
 
@@ -631,7 +631,7 @@ func add_every_attribute(bundle: Anything) {
 }
 
 func add_value(attribute: Spite.Attribute) {
-    assert attribute.value
+    fallback attribute.value
     components.append(attribute.value)
 }
 ```
