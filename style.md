@@ -224,10 +224,14 @@ same in every program), and every private attribute wherever it lives, since its
 packages included: `var world = World()` offers nothing another class could not bind itself, so an unread
 one is the error above wherever it is.
 
+A read is a read of one class's attribute: `tag.label` reads `Tag.label`, so a `label` the entry declares and
+never reads is the error above even when another class's `label` is read everywhere.
+
 Unused means unread anywhere in the source, not unreachable. A function nobody calls is not an error, private or
 public: its callers may be code this compile cannot see, and the production build drops it anyway
 ([compiler.md](compiler.md#development-builds-and-tree-shaking)). It still reads what it names, so what it
-reads counts as used. A few attributes are never checked, because the compiler reads them itself: a number
+reads counts as used; since such a body is not compiled, its `x.name` counts for every class with a `name`, and
+so does one in a function a codegen or `Build` test cuts a branch from. A few attributes are never checked, because the compiler reads them itself: a number
 class's or `String`'s storage, and `Build` and `Environment` settings.
 
 ## Comments are links

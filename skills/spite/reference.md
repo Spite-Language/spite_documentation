@@ -134,7 +134,8 @@ func is_alive(): Boolean {
   an error too. A function nobody calls is never reported. A use inside a branch a codegen test rules out (`if $slot_type == Entity { ... }`) still counts, so
   a parameter only that branch reads is not unused in the other instantiations.
 - An attribute nothing reads is an error too (`the attribute 'world' is never read: remove it`). A private `_name` attribute is checked too.
-  Assigning it is not reading it. A public attribute of a folder the program `load`s is not checked, since
+  Assigning it is not reading it, and a read counts only for its own class: `tag.label` reads `Tag.label`, not
+  the entry's `label`. A public attribute of a folder the program `load`s is not checked, since
   code the program does not load may read it, except a singleton binding (`var world = World()`), which is an
   error unread anywhere: a class that needs the singleton binds it itself. A template over a `Spite.Attribute` counts only when it reads the value
   (`x.attributes[attribute]`). An attribute kept as a marker that a walk inspects through `attribute.name` or
@@ -519,7 +520,8 @@ func is_alive(): Boolean {
   `environment.player_name`; there is no `--` separator), else the `SERVE` environment variable, else the
   default. A setting named like a `Build` field is a compile error naming both.
 - Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite game --serve=true`, else its default) and is a constant in the program, so `if build.serve { }`
-  keeps only one branch. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and
+  keeps only one branch; in a `--hot-reload` build the program's own reads of a field are made while it runs, and
+  the standard library's stay constants. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and
   `build.target_operating_system` are `Build` fields too. A flag is kebab-case (`--debug-memory`) and sets the
   snake_case field; an unknown flag is an error. There is no `format` option: every compile formats.
 - Reflection: `value.class` (a `Spite.Class`: `.name`, `.namespace` (a `Spite.Namespace?`; narrow it before
