@@ -237,6 +237,11 @@ still alive, which is how a leaked cycle shows up ([memory.md](memory.md#cycles-
 lookup on every allocation and free, and exists only in a `--debug-memory` build: any other build
 keeps no table.
 
+The same build fills every byte of fresh memory the program has not written with `0xA5`, the room of a
+`Buffer(size)` and a buffer's grown tail included, so code that reads bytes nobody wrote reads the same wrong
+value on every run instead of passing by luck: a `Long` read from such room is `-6510615555426900571`. Any
+other build hands out memory as before.
+
 ## Inspect merged classes
 
 `--final-classes=folder` writes the discovered, merged classes as readable `.spite` files, one per class, under
