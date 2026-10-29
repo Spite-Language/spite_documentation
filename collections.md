@@ -590,14 +590,13 @@ templates that ask a yes-or-no question also take one of that enum's values as t
 the elements whose member is that value. A listing does not need one helper per kind of thing it lists; it is
 filtered by its kind:
 
-```gdscript title=post_stages/stage.spite
+```gdscript title=post_stages/post.spite
 enum Stage {
     'draft'
     'published'
     'archived'
 }
-```
-```gdscript title=post_stages/post.spite
+
 var title = ""
 var stage: Stage = 'draft'
 

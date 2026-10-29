@@ -550,14 +550,13 @@ var size = 3
 ```gdscript title=constant_namespaces/part/axle.spite
 var length = 7
 ```
-```gdscript title=constant_namespaces/phase.spite
+```gdscript title=constant_namespaces/constant_namespaces.spite entry
 enum Phase {
     'start'
     'update'
     'finish'
 }
-```
-```gdscript title=constant_namespaces/constant_namespaces.spite entry
+
 var console = Console()
 
 func ConstantNamespaces() {

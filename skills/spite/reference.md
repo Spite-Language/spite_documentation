@@ -340,7 +340,8 @@ func is_alive(): Boolean {
   enum again replaces it: its list is all the values the enum has, so adding one means restating the rest. An enum is a class, and `Course.values` lists its values
   in order, an ordinary list: `Course.values.each(list_course)` calls `list_course(course: Course)` once per value,
   unrolled while compiling (`$value_type.values` in a generic). Text becomes a value only as a `Course?`:
-  `name.to_course()`, or `var course: Course? = name`. A value may be given a number with `=` on its line
+  `name.to_menu_course()` for `Menu.Course` (`to_`, the declaring class, the enum), or `var course: Course? = name`.
+  An enum is always declared inside a class: a file holding only an enum of its own name is an error. A value may be given a number with `=` on its line
   (`'admin' = 99`; the next unnumbered value counts on, the first from 0; two values with one number are an
   error), only where a C library, a file format or the network fixes the numbers.
 - `union Enemy { Player Monster }`, written one member per line: `switch enemy { Player: ... Monster: { ... } }`
@@ -431,8 +432,8 @@ func is_alive(): Boolean {
 - Reading a number from text answers a `T?`: `"42".to_integer()` is an `Integer?`, `null` for `"forty two"`,
   `"12abc"`, `""` or a number the type cannot hold, so narrow it (`crash count` where the text is yours, `if`/`assert`
   where it came from outside). `var age: Integer = "42"` is an error; `var age: Integer? = "42"` reads it.
-- Text is read as an enum value the same way: `"calm".to_mood()` is a `Mood?` (`to_` and the enum's name in
-  `snake_case`), `null` when no value is spelled that way; `var mood: Mood = text` is an error naming `to_mood()`,
+- Text is read as an enum value the same way: `"calm".to_cat_mood()` is a `Cat.Mood?` (`to_`, the declaring class and
+  the enum's name in `snake_case`), `null` when no value is spelled that way; `var mood: Mood = text` is an error naming `to_cat_mood()`,
   and `var mood: Mood? = text` reads it.
 - A function that declares a result ends every path with a `return` (or a bare `crash`): a path that reaches the
   closing `}` is an error naming it (`'sign_of' answers a String, but when 'value < 0' is false (line 12, an 'if'

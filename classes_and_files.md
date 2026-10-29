@@ -13,7 +13,9 @@ A file contains only declarations, in this order:
 2. `generic $name` lines, one per codegen value a caller supplies, each optionally constrained by a `type`
    (`generic $name: Console.Printable`, [metaprogramming.md](metaprogramming.md#generics-and-codegen-values-));
 3. `enum`, `union` and `type` declarations, which belong to the class: plain `Job` inside it, `Player.Job`
-   everywhere else ([packages.md](packages.md));
+   everywhere else ([packages.md](packages.md)). An enum always lives inside the class that uses it: a file
+   holding nothing but an enum of its own name is an error. Other classes give its values by their short form
+   (`'mage'`) and write `Player.Job` only where a variable must hold one;
 4. `var` declarations: the attributes, each with a default value;
 5. the constructor;
 6. the other `func`s.

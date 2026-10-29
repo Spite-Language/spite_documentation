@@ -632,14 +632,15 @@ never plain `Job` ([how it resolves](https://github.com/Spite-Language/spite_spe
 An enum is a closed list of values, and `'knight'` is an **enum value literal**: a value the enum does not list
 is a compile error naming the ones it does, and `'orange'` where no enum is expected (`var choice = 'orange'`, with
 nothing to check it against) is an error too. Every enum is its own class with its conversions: `value.to_string()`
-is its name, `value.to_integer()` its number, `"tail".to_part()` and `7.to_part()` make a `Part?` from a name or a
+is its name, `value.to_integer()` its number, `"tail".to_bird_part()` and `7.to_bird_part()` make a `Bird.Part?` from a name or a
 number (`null` when no value has it), and `Part.values` lists the values. At run time an enum value is a small
 integer ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
 
-Text is read as an enum value the way it is read as a number: `"soup".to_course()` answers a `Course?`, the value
+Text is read as an enum value the way it is read as a number: `"soup".to_enum_from_text_course()` answers a `Course?`, the value
 spelled that way, or `null` when the enum has none, since any value of the enum there would read as a real one.
-The reading is named after the enum (`to_` and its name in `snake_case`, `to_course_kind()` for `CourseKind`), and
-assigning text to a `Course?` calls it too. Assigning text to a plain `Course` is an error naming `to_course()`:
+The reading is named after the class that declares the enum and the enum (`to_`, then both names in `snake_case`:
+`to_menu_course_kind()` for `Menu.CourseKind`), the same inside that class as outside it, and assigning text to a
+`Course?` calls it too. Assigning text to a plain `Course` is an error naming the reading:
 
 ```gdscript title=enum_from_text/enum_from_text.spite entry
 enum Course {
@@ -656,7 +657,7 @@ func EnumFromText() {
     var index = 0
     while index < names.count() {
         var name = names[index]
-        var course = name.to_course()
+        var course = name.to_enum_from_text_course()
         if course {
             console.print(name, "is a course:", course)
         } else {
