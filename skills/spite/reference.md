@@ -526,8 +526,10 @@ func is_alive(): Boolean {
   default (`var serve = false`), then bind `var environment = Environment()` and read `environment.serve`. The
   value comes from `--serve=true` (or bare `--serve` for a `Boolean`) on the command line, written beside the
   compiler's flags and kebab-case like them (`spite game --optimized --player-name=x` sets
-  `environment.player_name`; there is no `--` separator), else the `SERVE` environment variable, else the
-  default. A setting named like a `Build` field is a compile error naming both.
+  `environment.player_name`; there is no `--` separator), else the `SERVE` environment variable, else a `.env`
+  file loaded with `environment.load_from_file(".env")` (answers `false` when it cannot be read), else the
+  default. A value not of the setting's type stops the program with an error naming the setting and exit code 1.
+  A setting named like a `Build` field is a compile error naming both.
 - Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite game --serve=true`, else its default) and is a constant in the program, so `if build.serve { }`
   keeps only one branch; in a `--hot-reload` build the program's own reads of a field are made while it runs, and
   the standard library's stay constants. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and

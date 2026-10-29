@@ -151,13 +151,33 @@ a compiler flag, beside the compiler's own flags, kebab-case on the command line
 1. the program's own command line, `--endpoint=production` (given to the compiler, which passes it on, or to
    the built program run directly);
 2. the process environment variable named by the field in upper case, `ENDPOINT`;
-3. the declared default.
+3. a `.env` file the program loaded with `environment.load_from_file(".env")`;
+4. the declared default.
 
 Only declared fields are read, so nothing the program does not name is ever loaded. The default's literal is the
 setting's type: `false` is a `Boolean`, a whole number an `Integer`, `""` a `String`. Anything else, a type
 annotation included, is an error naming the three forms. A value that is not of the setting's type
-(`--verbose=maybe`) crashes when `Environment()` is first made: the program was started wrong, and there is
-nothing sensible to continue with. The values are read when the program runs, so `if environment.verbose` is an
+(`--verbose=maybe`, or `VERBOSE=maybe` in the environment or a `.env` file) stops the program with exit code 1
+and an error naming the setting, the value and the form it takes, since the program was started wrong and there
+is no line of it to point to.
+
+A `.env` file is read the way dotenv reads one, out of the box: `environment.load_from_file(".env")` takes its
+`NAME=value` lines (blank lines and `#` comments skipped), reads every setting again, and answers `false` if the
+file cannot be read. A setting the command line or the process environment already gives keeps that value, and a
+name in the file that no setting declares is reported on the error stream and skipped.
+
+```gdscript
+var console = Console()
+var environment = Environment()
+
+func Server() {
+    var loaded = environment.load_from_file(".env")
+    if not loaded {
+        console.print("no .env here, so the command line, the environment and the defaults decide")
+    }
+    console.print(environment.verbose)
+}
+``` The values are read when the program runs, so `if environment.verbose` is an
 ordinary `if`, with both branches compiled in.
 
 That reading is the whole run-time cost: one pass over the command line and one environment lookup per declared
