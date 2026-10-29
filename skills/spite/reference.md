@@ -641,7 +641,11 @@ to make a system that breaks its rule a compile error
 `read` skips unknown keys, keeps defaults for missing ones, reads a camelCase or PascalCase key (`buyPrice`,
 `BuyPrice`) into its snake_case attribute (`buy_price`) when no attribute has the key's exact name, so never
 rename attributes to match foreign JSON, and is `null` on a value of the wrong kind; an enum
-reads back only as one of its values' names. Writing a `Float` or `Double` that is infinity or not-a-number
+reads back only as one of its values' names. A key that is not an attribute's name goes in the serializer's
+`keys`, a map keyed by the attribute, set whole before its first use: a literal
+(`writer.keys = {Order.attributes['buy_price']: "price"}`) is folded into the code, and a map made at run time (in a
+loop, from a function) is copied when set and turned into a table by the compiler; one class's serializers take
+their maps one way, and a run-time map keying anything but a public attribute holding a value halts. Writing a `Float` or `Double` that is infinity or not-a-number
 to JSON crashes showing the value and the attribute (`shown=inf	path=Order.price`): check the number first
 if `null` is wanted. **Between Spite programs, and for files a Spite program reads back, use bytes instead**:
 `BinaryWriter<T>()` with `write(value): Buffer` and

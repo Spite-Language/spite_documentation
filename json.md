@@ -396,10 +396,28 @@ writer.keys = {MeshRecord.attributes['minimum_level_of_detail']: "min_lod", Mesh
 The key is the one way to write that attribute: `minimum_level_of_detail` and `minimumLevelOfDetail` are then
 unknown keys, skipped like any other. Every serializer takes the same kind of map. A map written as a literal
 costs nothing: its keys are literal text in the code the serializer is compiled to, and reading matches them as it
-matches an attribute's own name. A map made while the program runs is turned into a table once, when the
-`keys` is set, so each value then costs what the literal case costs. A serializer whose `keys` is never set has
-no map, and writes and reads every attribute under its own name. A map naming an attribute the class does
-not have, a private one or one holding a singleton is an error.
+matches an attribute's own name. A map made while the program runs (filled in a loop, or answered by a
+function) is copied when the `keys` is set, and the compiler turns the copy into a table of one key per attribute
+then, so each value costs what the literal case costs; the copy belongs to that serializer, and changing the map
+it came from afterwards changes nothing:
+
+```gdscript
+var keys = Dictionary<Spite.AttributeDeclaration, String>()
+var declarations = MeshRecord.attributes
+var index = 0
+while index < declarations.count() {
+    var described = declarations[index]
+    keys[described] = "{described.name}_key"
+    index = index + 1
+}
+var writer = JsonWriter<MeshRecord>()
+writer.keys = keys
+```
+
+A serializer whose `keys` is never set has no map, and writes and reads every attribute under its own name. A
+written-out map naming an attribute the class does not have, a private one or one holding a singleton is an
+error, and a map made while the program runs that does so halts where it is set. The serializers of one class
+take their maps one way: a literal for one and a map made while the program runs for another is an error.
 
 A class that still declares a function `json_key_<attribute>()`, the old way to name a key, is an error at that
 function naming the map, so a key it gave is never silently dropped:
