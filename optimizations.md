@@ -1207,12 +1207,14 @@ When two or more declarations in a row each take the answer of a call that only 
 starts every one but the last on another thread, runs the last itself, and waits for each where its name is first
 read. A call only computes a number when its arguments and answer are numbers and, through every function it calls,
 it reads only its arguments and its own locals, writes only its own locals, prints and opens nothing, makes no
-object, and holds nothing that could halt (no `crash`, no assert, no whole-number arithmetic whose overflow check the
-compiler keeps). A later call whose arguments read an earlier one's answer stays in order, and so does any call the
-compiler cannot prove. Each call must also weigh enough, the way a pass weighs for bands, or the row runs in order.
+object and records no assert. It may crash. The calls may be your entry class's own functions too. A later call whose
+arguments read an earlier one's answer stays in order, and so does any call the compiler cannot prove. Each call must
+also weigh enough, the way a pass weighs for bands, or the row runs in order.
 
-What you can observe: the time, and nothing else. Since such a call shows nothing and cannot fail, what the program
-prints, answers and reports is what running the calls one after another gives. Not in an inspectable build.
+What you can observe: the time, and which crash reports. Such a call shows nothing, so what the program prints and
+answers is what running the calls one after another gives. If one crashes, the first crash that happens stops the
+program at once with its report, listing the frames of the thread that crashed, and nothing after it runs; when two
+would crash, either report may be the one you see, and you see exactly one. Not in an inspectable build.
 
 ## Registers and the machine code
 
