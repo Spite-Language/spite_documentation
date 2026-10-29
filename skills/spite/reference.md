@@ -478,6 +478,8 @@ func is_alive(): Boolean {
   leaves the word out of its name (`describe_taken`). `Spite.Attribute` and `Spite.Function` (bound to an object, with
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
+  A `Spite.Class` known only at run time, called with no arguments (`part()`, an attribute `kind()`, `thing.class()`,
+  `argument.class()`), makes an object of it typed `Anything`.
 - A call built before it runs: `var call = Spite.Call(MoveSystem.functions['run_each'], system)` (a declaration and
   an instance of its class, the only way to build one), `call.arguments['position'] = value`, `call.call()`; known
   while compiling it is the direct call.

@@ -175,9 +175,10 @@ calling it. When the function is named in the code (`MoveSystem.functions['run_e
 never assigned again), the whole thing is the plain call `system.run_each(position, velocity)`, with no object made.
 An argument left unfilled is a compile error at `call.call()`; so is filling one twice, or naming one the function
 does not have. A call built from a function known only at run time is a real object, and `call()` halts when the
-instance is not of the class that declares the function, or when the function takes arguments, since a run-time call
-cannot be handed any yet. Calling a class known only at run time (`part()`, with `part: Spite.Class`) makes an object of
-it, typed `Anything`.
+instance is not of the class that declares the function, or when an argument is missing, of another type, or one the
+function does not have; a parameter that takes a function value still halts. Calling a class known only at run time
+makes an object of it, typed `Anything`, wherever the class object is held: `part()` with `part: Spite.Class`, an
+attribute `kind()`, or a member read, `thing.class()` or `argument.class()`.
 
 ## Reaching a reflection object
 
