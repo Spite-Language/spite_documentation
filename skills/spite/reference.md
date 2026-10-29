@@ -344,6 +344,8 @@ func is_alive(): Boolean {
   An enum is always declared inside a class: a file holding only an enum of its own name is an error. A value may be given a number with `=` on its line
   (`'admin' = 99`; the next unnumbered value counts on, the first from 0; two values with one number are an
   error), only where a C library, a file format or the network fixes the numbers.
+- A union is declared in each class that consumes it (two classes may each declare one); a union value fits another
+  union when all its members are members of it, and a caller passes the member value itself.
 - `union Enemy { Player Monster }`, written one member per line: `switch enemy { Player: ... Monster: { ... } }`
   must cover every member and narrows `enemy` inside each case; a function or attribute every member has can be
   used on the union directly. Every member is a class of objects: `String`, a number, `Boolean` or `List<Integer>` is
@@ -529,7 +531,7 @@ func is_alive(): Boolean {
 - Reflection: `value.class` (a `Spite.Class`: `.name`, `.namespace` (a `Spite.Namespace?`; narrow it before
   reading its members: `assert value.class.namespace` narrows the path itself and its prefixes for the rest of
   the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
-  `.namespaces`, `.enums`), `.functions`), `value.attributes`
+  `.namespaces`), `.functions`), `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`), `value.functions` (`.name`, `.arguments`, `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`), `Monster.instances` (live instances), and

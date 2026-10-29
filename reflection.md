@@ -319,7 +319,6 @@ list, and a question about a path is asked of those `File`s.
 | `.classes` | the classes declared directly in it | `Shop.Tools.classes.count()` |
 | `.namespaces` | the namespaces directly below it | `Shop.namespaces` |
 | `.every_class` | its classes and those of every namespace below it | `Shop.every_class` |
-| `.enums` | the enums declared in it | `Shop.enums` |
 | `.source_directories` | a `List<Directory>`: every directory its classes come from, in load order | `Shop.source_directories.first()` |
 
 There is no root namespace object: a namespace at the top has `null` as its `.parent`.

@@ -762,6 +762,10 @@ A tagged union. A `switch` must cover every member, and narrows the value inside
 shares a function/attribute of the same shape, it can be called directly on the union value without a
 `switch` at all (duck-typed, the same way a `type` is; see below).
 
+A union is declared in the class that consumes it, and two classes that both take one each declare their own: a
+`Shelter.Pet` passes where a `Groomer.Pet` is wanted when every member of it is a member of `Groomer.Pet`, at no cost.
+A caller that only hands a value on passes the member itself (`groomer.groom(cat)`) and declares nothing.
+
 ```gdscript title=union_basics/player.spite
 var health = 10
 
