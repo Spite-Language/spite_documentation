@@ -948,6 +948,39 @@ compiling (a codegen value, `functions['run_each']`, `is_fixed_size`, ...) and i
 is a compile error at the `crash`, since the program would halt there every time
 ([metaprogramming.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)).
 
+### An answer is used
+
+A function that answers a value says something the caller must hear, so calling it on a line of its own, where
+the answer goes nowhere, is a compile error. The library answers what the outside world did (a write that did
+not land is `false`, a file that is not there is `null`) and leaves the decision to the program, which uses the
+answer: keeps it, passes it, returns it, compares it, or at least writes `assert` to carry on without it or
+`crash` when its absence is a bug.
+
+```gdscript title=dropped_answer_error/dropped_answer_error.spite entry error
+var console = Console()
+var names = ["Ada", "Grace"]
+
+func DroppedAnswerError() {
+    load "../spite_standard_library/windows"
+    names.contains("Ada")
+    console.print(names.count())
+}
+```
+```diagnostic
+'names.contains("Ada")' answers a 'Boolean' and drops it: an answer must be used, at least with 'assert names.contains("Ada")' to carry on without it or 'crash names.contains("Ada")' when that is a bug
+```
+
+A write to a file is one line, and the line says what happens when it does not land:
+
+```gdscript
+assert file.write_string(text)     # a lost write ends this function; the program carries on
+crash  file.write_string(text)     # a lost write is a bug: halt here, with the report
+```
+
+An answer that is not a `Boolean` or a `T?` is kept, passed, returned or compared: `var score_count = scores.count()` is a
+name that must then be read. A function that answers nothing is untouched, and a constructor is covered by
+its own rule (a made object is kept and used).
+
 ### What a crash reports
 
 A report is the place of the crash and the memory that matters there: its file and line, and every value the failed

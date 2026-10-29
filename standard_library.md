@@ -153,8 +153,8 @@ var console = Console()
 func FileTasks() {
     load "../spite_standard_library/windows"
     var log_file = File(".spite/documentation_demo_log.txt")
-    log_file.write_string("first line")
-    log_file.append_string(", second line")
+    crash log_file.write_string("first line")
+    crash log_file.append_string(", second line")
     var log_exists = log_file.exists()
     console.print("exists", log_exists)
     var content = log_file.read_as_string()
@@ -191,7 +191,7 @@ func ByteRecords() {
     var store = File(".spite/documentation_byte_records.bin")
     var record = Buffer(8)
     record.append_long_little_endian(1111)
-    store.write_buffer(record)
+    crash store.write_buffer(record)
     var next = Buffer(8)
     next.append_long_little_endian(2222)
     var second_at = store.append_buffer(next)
@@ -231,19 +231,19 @@ var console = Console()
 func MovingFiles() {
     load "../spite_standard_library/windows"
     var folder = Directory(".spite/documentation_moving")
-    folder.create()
+    crash folder.create()
     var draft = File(".spite/documentation_moving/draft.txt")
-    draft.write_string("notes")
+    crash draft.write_string("notes")
     var renamed = draft.move_to(".spite/documentation_moving/final.txt")
     console.print(renamed, draft.file_name)
     var keeper = File(".spite/documentation_moving/keeper.txt")
-    keeper.write_string("keep me")
+    crash keeper.write_string("keep me")
     var replaced = draft.move_to(".spite/documentation_moving/keeper.txt")
     var kept = keeper.read_as_string()
     crash kept
     console.print(replaced, kept)
-    draft.remove()
-    keeper.remove()
+    crash draft.remove()
+    crash keeper.remove()
 }
 ```
 ```output
@@ -288,7 +288,7 @@ var console = Console()
 func DirectoryTasks() {
     load "../spite_standard_library/windows"
     var target = Directory(".spite/documentation_demo_dir")
-    target.create()
+    crash target.create()
     var target_exists = target.exists()
     console.print("exists", target_exists)
     var examples = Directory("examples")
@@ -321,10 +321,12 @@ func DirectoryWalk() {
     load "../spite_standard_library/windows"
     var root = Directory(".spite/documentation_walk")
     var inner = Directory("{root.path}/inner")
-    root.create()
-    inner.create()
-    File("{root.path}/top.txt").write_string("top")
-    File("{inner.path}/deep.txt").write_string("deep")
+    crash root.create()
+    crash inner.create()
+    var top = File("{root.path}/top.txt")
+    crash top.write_string("top")
+    var deep = File("{inner.path}/deep.txt")
+    crash deep.write_string("deep")
     walk(root)
 }
 
@@ -380,10 +382,10 @@ var program = Program()
 func WatchFolder() {
     load "../spite_standard_library/windows"
     var folder = Directory(".spite/documentation_watch")
-    folder.create()
+    crash folder.create()
     var watcher = FileSystemWatcher()
-    watcher.watch_for_changes(folder)
-    File("{folder.path}/level.txt").write_string("three goblins")
+    crash watcher.watch_for_changes(folder)
+    crash File("{folder.path}/level.txt").write_string("three goblins")
     var changed = watcher.changes()
     var tries = 0
     var twenty_milliseconds = Duration(20, 'milliseconds')
@@ -918,7 +920,7 @@ func serve() {
     if not sockets.asks_to_upgrade(request) {
         var page = Http.Response()
         page.write_body_string("hello")
-        http.respond(request, page)
+        assert http.respond(request, page)
         return
     }
     var connection = sockets.accept(request)
@@ -928,10 +930,10 @@ func serve() {
         if message.is_text() {
             var text = message.read_as_string()
             crash text
-            connection.send_string("you said {text}")
+            assert connection.send_string("you said {text}")
         } else {
             var bytes = message.read_as_buffer()
-            connection.send_buffer(bytes)
+            assert connection.send_buffer(bytes)
         }
         message = connection.receive()
     }
@@ -951,7 +953,7 @@ func talk() {
     var server_address = "127.0.0.1".to_ip_address()
     crash server_address
     crash socket.connect(server_address, 8080, request)
-    socket.send_string("hello")
+    assert socket.send_string("hello")
     var answer = socket.receive()
     crash answer
     var text = answer.read_as_string()

@@ -361,6 +361,9 @@ func is_alive(): Boolean {
   tell from a real answer, lose a write, skip a step, leak or hang. When a function cannot answer, its result says
   so (`T?`, or an empty list), or it returns a value you chose on purpose, or it crashes because a caller broke the
   rule ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#nothing-fails-silently)).
+- A call that answers a value is never a line of its own: use the answer (keep, pass, return or compare it), or at
+  least `assert file.write_string(text)` to carry on without it or `crash file.write_string(text)` when its absence
+  is a bug (`answers a 'Boolean' and drops it`). Only a function that answers nothing is called as a statement.
 - `crash` and `assert` take a condition and never a message: the report names the file and line and shows
   the values there. Never add a clause only to get text printed (`crash found or name == ""`).
 - `Monster?` is a value that may be `null`. It must be narrowed before use: `if target { }` (with `else`),

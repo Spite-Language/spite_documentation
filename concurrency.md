@@ -59,7 +59,7 @@ func ConcurrentTour() {
     log.append("both are asleep")
     log.append("{slow} and {fast} are back")
     var notes = File(".spite/concurrency_notes.txt")
-    notes.write_string("written before the read")
+    crash notes.write_string("written before the read")
     var reading = Concurrent(notes.read_as_string)
     if reading {
         log.append("read: {reading}")
@@ -109,11 +109,11 @@ func ReadsInARow() {
     load "../spite_standard_library/windows"
     var settings_file = File(".spite/documentation_settings.txt")
     var scores_file = File(".spite/documentation_scores.txt")
-    settings_file.write_string("volume=7")
-    scores_file.write_string("ada=12")
+    crash settings_file.write_string("volume=7")
+    crash scores_file.write_string("ada=12")
     var settings = settings_file.read_as_string()
     var scores = scores_file.read_as_string()
-    settings_file.write_string("volume=8")
+    crash settings_file.write_string("volume=8")
     crash settings
     crash scores
     console.print(settings, scores)
@@ -327,7 +327,7 @@ func FrameIo() {
     var one_millisecond = Duration(1, 'milliseconds')
     scheduler.resume_only_when_asked()
     var save_file = File(".spite/documentation_save.txt")
-    save_file.write_string("level 3")
+    crash save_file.write_string("level 3")
     var game = SaveGame()
     var loading = Concurrent(game.update_each)
     var frames = 0
@@ -385,7 +385,7 @@ func FrameWaits() {
     load "../spite_standard_library/windows"
     var one_millisecond = Duration(1, 'milliseconds')
     var file = File(".spite/documentation_report.txt")
-    file.write_string("sales are up")
+    crash file.write_string("sales are up")
     while report.text.is_empty() {
         frames = frames + 1
         if frames == 1 {
