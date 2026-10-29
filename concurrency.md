@@ -508,8 +508,8 @@ nothing for threads. Any code (an engine system, an asset loader, a library clas
 `Parallel(function)`, and there is nothing else to make or pass around. Reading a `Parallel` waits until its thread
 has returned, so a `Parallel` started from inside another one cannot wait for anything that is waiting for it. At
 exit every `Parallel` still running is finished first. Starting a thread costs time, so give a `Parallel` work that
-is worth it, and hand a long list to a `parallel_each_` pass or let the compiler run it in bands, which split the
-list across the processors in one go.
+is worth it. A long list's walk needs no `Parallel`: write `each_`, and the compiler runs it in bands, which split
+the list across the processors in one go.
 
 **Work that can never finish is a compile error.** A thread is lent to a piece of work until it returns, so
 work that runs forever takes a thread away for good, and there is no `Thread(function)` for it: a loop tied to
@@ -775,7 +775,7 @@ list, a dictionary or another object is an error naming it, since another thread
 'Tally' that hold values, its locals and singletons: 'marks' holds a List<Integer>, which another thread may
 share` (`diagnostics/parallel_function_reach`, where the maker kept `tally.marks` for itself). Make what the work
 needs a local, or give the work an object of its own whose attributes are values, as each `Summer` above is. The
-check is the one `parallel_each_` uses, and costs nothing at run time.
+check costs nothing at run time.
 
 An object made for the work and **handed over** may keep more: when it is made on its own
 line in the same block as the `Parallel(...)`, nothing else is given it before, and the code that made it never
@@ -825,95 +825,13 @@ Reading `crafter` after the `Parallel` line would be `'crafter' was handed to 'P
 keeps its 'recipe_ids', 'names' on another thread, so it is not used after that line: make another 'Crafter' for
 what follows, or read the task's result` (`diagnostics/parallel_handover`; [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting)).
 
-## `parallel_each_`: a member on every element
+## `each_` on a long list runs in bands
 
-`list.parallel_each_update()` calls `update()` on every element of the list, split across threads: the list is
-cut into pieces, the calling thread runs the first and one thread runs each of the others, and the call returns when
-every element is done. `filter_` steps before it run in the same pass, piece by
-piece, with no list in between: `entities.filter_alive().parallel_each_update()`.
-
-```gdscript title=parallel_pass/particle.spite
-var position: Long = 0
-var speed = 0
-var awake = false
-
-func Particle(starting_speed: Integer) {
-    speed = starting_speed
-    awake = starting_speed % 3 == 0
-}
-
-func step() {
-    position = position + speed
-}
-```
-```gdscript title=parallel_pass/parallel_pass.spite entry
-var console = Console()
-
-func ParallelPass() {
-    load "../spite_standard_library/windows"
-    var particles = List<Particle>()
-    var index = 0
-    while index < 3000 {
-        var particle = Particle(index)
-        particles.append(particle)
-        index = index + 1
-    }
-    particles.parallel_each_step()
-    particles.filter_awake().parallel_each_step()
-    var moved = particles.sum_position()
-    console.print("the particles moved", moved)
-}
-```
-```output
-the particles moved 5997000
-```
-
-**The member may reach only its own element.** Every element runs at the same time as the others, so the
-compiler reads the member (and every function of the element's class it calls) and allows only the element's
-own attributes that hold a value (a number, a `Boolean`, text, or an enum), any singleton and the
-member's locals. A singleton of the program's own that can change is made safe for you in a program that uses
-`Parallel`: nothing when it is read-only, atomics when it only counts or flags, a
-lock otherwise ([optimizations.md](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)). So a
-`Parallel` or a pass may call it while the program's thread does too, and you write nothing. An attribute holding another object
-may be shared by several elements, so reading it is an error that names it:
-
-```gdscript title=parallel_reach/boid.spite error
-var speed = 1
-var leader: Boid? = null
-
-func follow() {
-    assert leader
-    speed = leader.speed
-}
-```
-```gdscript title=parallel_reach/parallel_reach.spite error entry
-var console = Console()
-
-func ParallelReach() {
-    load "../spite_standard_library/windows"
-    var boids = List<Boid>()
-    var boid = Boid()
-    boids.append(boid)
-    boids.parallel_each_follow()
-    var count = boids.count()
-    console.print(count)
-}
-```
-```diagnostic
-'parallel_each_follow' runs 'follow' on many elements at once, so it may reach only its own 'Boid' attributes that hold values, and its locals: 'leader' holds a 'Boid?', which another element may share
-```
-
-For the same reason only `filter_` steps may come before it: a `map_` reaches another object. The check cannot
-see two elements that are the same object: a list holding one instance twice runs it on two threads at once.
-
-A pass costs one allocation per call and none per element, and a list of fewer than two elements runs on the
-calling thread, with no thread started.
-
-You rarely need to write it. A plain `particles.each_step()` runs in bands on its own when the compiler proves that
-each pass writes only its own element, reads nothing another pass writes and counts no reference, and when the
-list is long enough for the bands to pay; otherwise it runs in order
+Write `particles.each_step()` and nothing more; there is no parallel form of it. The compiler runs the walk in bands
+across the processors when it proves each pass touches only its own element and the list is long enough for the bands
+to pay, and in order otherwise, with the same output
 ([optimizations.md](optimizations.md#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)).
-`parallel_each_` remains for a pass you want on many threads whatever its length.
+`particles.parallel_each_step()` is an unknown member.
 
 ## The REPL answers at the waits
 
@@ -1004,7 +922,7 @@ carries none of it; the compiler's side of each is on
 |---|---|
 | uses none of it | nothing: no scheduler, no state machine, no helper thread, no lock, plain reference counts; every wait is the plain blocking call |
 | makes a `Concurrent`, or has two reads in a row | the scheduler and its event loop; a second, resumable copy of each function a `Concurrent` reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside a `Concurrent`; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count; one count the scheduler adds to at each read of `finished` that answers `false` and clears at each step |
-| makes a `Parallel` or runs a `parallel_each_` pass | one thread started per `Parallel` and a small, fixed number of allocations, and one allocation per `parallel_each_` pass; atomic reference counts for the classes another thread can count; for each program singleton a `Parallel` can reach and that changes, atomics or a lock per call (about 2 ns when one thread takes it, far more when several contend: [what it costs](#what-a-singletons-lock-costs)), or one per counted loop of calls |
+| makes a `Parallel`, or has a loop the compiler runs in bands | one thread started per `Parallel` or band and a small, fixed number of allocations; atomic reference counts for the classes another thread can count; for each program singleton a `Parallel` can reach and that changes, atomics or a lock per call (about 2 ns when one thread takes it, far more when several contend: [what it costs](#what-a-singletons-lock-costs)), or one per counted loop of calls |
 | calls `Scheduler().resume_only_when_asked()` or `run_ready()` | one `Boolean` the scheduler reads at each wait, and each function it calls; neither is there otherwise |
 | is built with `--repl-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
 

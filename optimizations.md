@@ -1154,8 +1154,8 @@ have.
 for each processor, when every pass writes only its own element: the compiler reads `advance` and every function of
 the class it calls and finds that it writes only number attributes of the element and its own locals, reads only
 number attributes of the element, its locals and literals, and calls only functions of the class that take and answer
-numbers. It is `parallel_each_` without writing it: the compiler proves what that form asks the programmer to keep
-true, and when it cannot, the loop is the loop as written.
+numbers. There is no parallel form to write: the program writes `each_advance()`, and when the compiler cannot prove
+the pass, the loop is the loop as written.
 
 ```spite
 var angle = 0.0

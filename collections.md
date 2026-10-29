@@ -391,8 +391,8 @@ func ComputedMember() {
 
 A template costs what the loop you would have written costs: each one is a `while` over the list's buffer,
 compiled into the program only when something calls it, with no function value or closure in between.
-`list.parallel_each_<member>()` is the same walk split across the thread pool
-([concurrency.md](concurrency.md#parallel_each_-a-member-on-every-element)).
+On a long list the compiler may split an `each_` walk across the thread pool
+([concurrency.md](concurrency.md#each_-on-a-long-list-runs-in-bands)).
 
 ```gdscript title=list_helpers/chore.spite
 var title = ""

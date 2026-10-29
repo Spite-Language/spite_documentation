@@ -473,12 +473,12 @@ The rules are on [Concurrency](concurrency.md) and in
 ### No other thread counts a class
 
 - **Proves**: the objects of a class are counted by one thread only, so their counts are plain arithmetic.
-- **Rule**: code that can run on another thread is every function a `Parallel` or a `Concurrent` starts (a
-  `parallel_each_` band included), every function those call, the constructors and attribute defaults of what they
-  make, and, where they call a function value, every function the program takes as a value. A class is counted by
-  another thread when that code names a value of it or of anything that holds it (an attribute, a list's or a
-  dictionary's items, a union's member, a shape's filler). A union or shape whose members are not known counts every
-  class. A program that makes a `ForeignCallback` counts every class atomically.
+- **Rule**: code that can run on another thread is every function a `Parallel` or a `Concurrent` starts (a band of
+  a banded loop among them: the compiler starts it with the same IR node), every function those call, the constructors and attribute defaults of what they make, and, where they call a function
+  value, every function the program takes as a value. A class is counted by another thread when that code names a
+  value of it or of anything that holds it (an attribute, a list's or a dictionary's items, a union's member, a
+  shape's filler). A union or shape whose members are not known counts every class. A program that makes a
+  `ForeignCallback` counts every class atomically.
 - **Buys**: plain counts for every other class whose objects' class is known where they are counted.
 - **Falls back**: an atomic count wherever the class is not known while compiling, or another thread may count it.
 
@@ -544,7 +544,7 @@ The rules are on [Concurrency](concurrency.md) and in
 ### What a `Parallel` may reach
 
 - **Proves**: work on another thread cannot race.
-- **Rule**: a `Parallel` work or a `parallel_each_` member reaches only its own value attributes, its locals and
+- **Rule**: a `Parallel` work reaches only its own value attributes, its locals and
   singletons. It writes a value attribute only of an object handed over to it, never of `this`, an attribute, a
   parameter or a local used again.
 - **Falls back**: refused: `'...' runs '...' on another thread, so it may reach only ...`, or `'Parallel(kept.bump)'
