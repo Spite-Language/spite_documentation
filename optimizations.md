@@ -1195,6 +1195,25 @@ What you can observe: the time and the same output. A pass whose checked arithme
 with the same message, but the frames it reports are those of its band, and when several passes would overflow, the
 one reported may be another than the first in the list's order. Not in an inspectable build.
 
+### Calls in a row that only compute a number run at once
+
+```spite
+var left = mixer.blend(3)
+var right = mixer.blend(5)
+console.print(left, right)
+```
+
+When two or more declarations in a row each take the answer of a call that only computes a number, the compiler
+starts every one but the last on another thread, runs the last itself, and waits for each where its name is first
+read. A call only computes a number when its arguments and answer are numbers and, through every function it calls,
+it reads only its arguments and its own locals, writes only its own locals, prints and opens nothing, makes no
+object, and holds nothing that could halt (no `crash`, no assert, no whole-number arithmetic whose overflow check the
+compiler keeps). A later call whose arguments read an earlier one's answer stays in order, and so does any call the
+compiler cannot prove. Each call must also weigh enough, the way a pass weighs for bands, or the row runs in order.
+
+What you can observe: the time, and nothing else. Since such a call shows nothing and cannot fail, what the program
+prints, answers and reports is what running the calls one after another gives. Not in an inspectable build.
+
 ## Registers and the machine code
 
 The compiler places values in registers and shapes the machine code. Nothing of this changes what a program computes;
