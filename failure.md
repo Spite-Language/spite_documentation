@@ -335,6 +335,60 @@ The new value is computed first, then the old one is released, then the name is 
 text.trim()` reads the binding it is about to replace. Shadowing a name that was never read is still the unused
 error.
 
+### A value proven present needs no narrowing
+
+A `T?` the compiler proves present while compiling is a `T` already, whatever made it, so it is read with nothing
+written: a local every assignment of which cannot be null, an attribute of your class whose default and every
+assignment cannot be null, and the answer of your function every `return` of which cannot be null.
+
+```gdscript title=proven_present/monster.spite
+var name = ""
+
+func Monster(starting_name: String) {
+    name = starting_name
+}
+```
+```gdscript title=proven_present/proven_present.spite entry
+var console = Console()
+var target: Monster? = Monster("ogre")
+
+func ProvenPresent() {
+    load "../spite_standard_library/windows"
+    console.print(target.name)
+    var found = strongest()
+    console.print(found.name)
+}
+
+func strongest(): Monster? {
+    return Monster("troll")
+}
+```
+```output
+ogre
+troll
+```
+
+Checking such a name again is the "already narrowed" error: `crash found` above is "'found' is already narrowed by
+the proof that every value it can hold is present: remove this check". The proof does not reach a `T?` parameter,
+an attribute with no default, or what the standard library answers: those are narrowed as usual. What the
+library answers is the type its signature gives, the same on every target, so a program that compiles on one
+target compiles on all. The same holds for a value that was never a `T?`: `crash` on any local that cannot be null,
+a copy of an attribute included, is "this value cannot be null here". A proven `Boolean?` is a condition, and a
+proven `Spite.Class` or function value is called, with nothing written.
+
+In a `--hot-reload` or `--repl` build only locals are proven, never attributes: a running object may still hold a
+null an older version of the program stored there, so `target` above is narrowed as usual in those builds. They are
+built for how fast you iterate, not for the last check.
+
+### A condition known while compiling is an error
+
+An `if` or `while` whose condition the compiler already knows, and an `assert` that can never hold, are errors:
+`if 2 > 1` is "'if 2 > 1' is decided while compiling and is always true here, so it tells a reader nothing: remove
+the 'if' and keep the code it runs". Two are kept, since choosing at compile time is their purpose: a condition on
+a field of `Build`, which the command line sets ([programs.md](programs.md#compile-time-settings-build)), and a
+codegen value in a generic class. `while true` is no exception: a loop states the condition it runs under, so it
+loops `while running`, `while not found` or on its real exit test.
+
 ### Reading with `[]` answers `T?`
 
 An index or a key may not be there, so `names[index]` and `table["key"]` are `T?` and are narrowed like any other
@@ -681,8 +735,7 @@ func price_or_zero(name: String): Integer {
 
 A function that declares a result answers it on every path. A path that reaches the end of the function without
 a `return` is a compile error at the function's last line, naming the path, since the caller would otherwise get
-a `0` or a `""` that nobody wrote. A bare `crash` ends a path as a `return` does, and so
-does a `while true`, which Spite leaves only by returning:
+a `0` or a `""` that nobody wrote. A bare `crash` ends a path as a `return` does:
 
 ```gdscript title=falling_end_error/falling_end_error.spite entry error
 var console = Console()

@@ -396,6 +396,11 @@ func is_alive(): Boolean {
 - `value == Monster` is a class test (false for `null`), and `if value == Monster { }` narrows `value` inside. A
   switch that is one class case and `_:`, each a `return`, is an error: write the `if`, or `return value == Monster`.
   In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
+- A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
+  attribute of your class whose default and every assignment cannot be null, the answer of your function every
+  `return` of which cannot be null. Read it with nothing written; an `assert`, `crash` or `if` on it is `is already
+  narrowed by the proof that every value it can hold is present`. A `T?` parameter and what the library answers are
+  narrowed as usual.
 - Proving what is already proven is an error too: `assert` on a value that cannot be null here (`so 'assert' on it
   proves nothing: remove the check`, any local that cannot be null, a copy included), and `crash list[index]` inside `while index < list.count()` (`'list[index]'
   is already proven by the loop condition`). Delete the line.

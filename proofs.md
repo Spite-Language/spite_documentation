@@ -96,7 +96,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 
 - **Proves**: after an `if` with no `else` whose block always leaves, the opposite of its condition holds.
 - **Rule**: a block leaves with a `return`, a bare `crash`, a `switch` whose every case leaves, an `if` and `else`
-  that both leave, or a `while true`. Each `or` side written `not path` then narrows that path, each side read with
+  that both leave. Each `or` side written `not path` then narrows that path, each side read with
   the sides before it narrowed (`if not holder or not holder.weapon { return }` proves both).
 - **Buys**: guards read as answers: after `if not monster { return }` the rest reads `monster`.
 - **Falls back**: the rest stays unproven and a read of it is refused. Narrow it again.
@@ -138,6 +138,26 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 - **Buys**: no dead checks in the source.
 - **Falls back**: delete the repeated check.
 
+### A value proven present is a `T`
+
+- **Proves**: a `T?` that can never be null holds a value wherever it is read.
+- **Rule**: a local every assignment of which cannot be null, an attribute of a program class whose default and
+  every assignment cannot be null, and a program function every `return` of which cannot be null. A value cannot be
+  null when its type is not a `T?` or when it is one of these, so the proofs feed each other.
+- **Buys**: the value is read, called on and passed as a `T` with nothing written; checking it again is the
+  "already narrowed" error.
+- **Falls back**: a `T?` parameter, an attribute with no default or assigned a `T?` anywhere, and what the standard
+  library answers stay `T?`: narrow them as usual. In a `--hot-reload` or `--repl` build no attribute is proven,
+  since a running object may hold a null an older version stored. The answer of a call worked out while compiling
+  is not proven yet.
+
+### A condition known while compiling is an error
+
+- **Proves**: every condition written can go either way.
+- **Rule**: outside a generic class and a walk, an `if` or `while` the compiler decides while compiling, and an
+  `assert` that folds false, are refused, `while true` among them. A condition on a `Build` field is kept.
+- **Falls back**: remove the condition, keeping the code that runs.
+
 ### A copy made to narrow is an error
 
 - **Proves**: one name per value.
@@ -158,7 +178,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 
 - **Proves**: no caller gets a value nobody wrote.
 - **Rule**: a path ends at a `return`, a bare `crash`, an `if` and `else` whose branches both end, a `switch` whose
-  every case ends, a `while true`, or a folded condition whose taken branch ends. A function that answers something
+  every case ends, or a folded condition whose taken branch ends. A function that answers something
   and has a path that reaches its end is refused.
 - **Falls back**: refused: `'...' answers ..., but ... it reaches its end without a 'return' ...: end that path
   with 'return <value>', or with 'crash' if it cannot happen`.
@@ -525,9 +545,9 @@ The rules are on [Concurrency](concurrency.md) and in
 ### A loop that can never end is an error
 
 - **Proves**: a loop can end.
-- **Rule**: a `while true` with no `return`, `assert` or `crash` that calls nothing is refused; in `Parallel` work
-  it is refused when nothing in it waits.
-- **Falls back**: refused: `this 'while true' never ends: ...`.
+- **Rule**: every `while true` is refused, since a loop states the condition it runs under; in `Parallel` work and
+  in a locked singleton function an endless one may be refused with the reason that is worse there.
+- **Falls back**: refused: `'while true' is decided while compiling and is always true here: ...`.
 
 ### A poll that nothing steps is an error
 

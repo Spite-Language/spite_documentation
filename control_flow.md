@@ -222,13 +222,11 @@ stopped at 2
 `while value` on a `T?` narrows the body the way `if value` does, which is how a linked chain is walked
 ([failure.md](failure.md#narrowing-a-path)).
 
-A `while true` is left only by a `return` (or an `assert` or `crash` that fails). One with none of them inside it,
-that calls nothing either, can only spin until the program is killed, so it is an error: `this 'while true' never
-ends: nothing inside it returns, asserts or crashes, and it calls nothing, so the program would spin here for good:
-leave it with a 'return' ('if done { return }'), or loop 'while' a condition` (`diagnostics/spinning_loop`). A
-`while true` that calls something may still be how a program runs until it exits, so it is left alone, except in
-work given to a `Parallel`, where a loop that never ends and never waits is an error
-([concurrency.md](concurrency.md#threads-for-parallel)).
+A loop states the condition it runs under, so `while true` is an error, like any condition the compiler knows
+([failure.md](failure.md#a-condition-known-while-compiling-is-an-error)): `'while true' is decided while compiling
+and is always true here: a loop ends by its condition, so loop 'while' what its leaving paths change, a 'running'
+local they set to false or the loop's real exit test`. A loop that waits for a value loops `while not found` and
+assigns it; one that runs until something happens loops `while running` and sets `running = false` where it ends.
 
 None of this costs anything at run time beyond the branches and loops it compiles to: every rule on this page
 is checked while compiling. Only a REPL build adds a check point to each loop
