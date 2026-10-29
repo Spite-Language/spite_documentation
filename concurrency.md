@@ -143,7 +143,7 @@ the program's event loop runs it again from where it stopped. There is no stack 
 | The program writes | While it waits |
 |---|---|
 | `program.sleep(duration)` | the state machine returns, and is run again once its time has come |
-| `Console.read_line()`, reading or writing a `File`, a `Tcp.Server`'s `accept`, a TCP connection's `read_line`, `read_as_string` or `read_as_buffer` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
+| `Console.read_line()`, reading or writing a `File`, a `Tcp.Server`'s `accept`, a TCP connection's `connect`, `read_line`, `read_as_string` or `read_as_buffer`, a UDP `receive` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
 | reading a `Concurrent`'s value, or dropping it | the state machine is run again once that one has finished |
 | reading a `Parallel`'s value, or dropping it | the thread running it is joined, then anything ready runs once |
 
