@@ -626,7 +626,8 @@ An enum declaration takes no `=` and lists one value per line, with no commas (a
 [below](#numbering-an-enums-values)). A value is written in single
 quotes (single quotes mean an enum value and nothing else), and `'mage'` alone resolves without writing
 `Player.Job`, because the parameter, the annotation, the assignment or the comparison it is used in says which
-enum it belongs to ([how it resolves](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
+enum it belongs to. The enum itself belongs to `Player`: inside it, plain `Job`; in any other class, `Player.Job`,
+never plain `Job` ([how it resolves](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
 
 An enum is a closed list of values, and `'knight'` is an **enum value literal**: a value the enum does not list
 is a compile error naming the ones it does, and `'orange'` where no enum is expected (`var choice = 'orange'`, with

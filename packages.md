@@ -27,22 +27,27 @@ func Game() {
   only the last one becomes a namespace, so only it is held to the rule: `load "../../Old Tools/render_vulkan"`
   is fine, and `load "../../plugins/RenderVulkan"` is refused for `RenderVulkan`
   ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
-- Resolving a bare `Name` from inside a class tries, in order: that class's own namespace, its folder, each
-  parent folder, then the whole program. A dotted `Component.Requested` is looked up the same way, and so is
+- Resolving a bare `Name` from inside a class tries, in order: what that class declares (its `enum`, `union`
+  and `type`), its folder, each parent folder, then the whole program. A dotted `Component.Requested` is looked up the same way, and so is
   every name wherever it is written: a constructor call, a parameter, a return type, an attribute or local
   annotation, a generic argument (`Remove<Component.Requested>`), a `type` or `union` member, a `==` class test
   and an enum inside a class (`Component.Requested.Size`), so from `window/system/` the name reaches
   `window/component/requested.spite` without writing `Window.` (`conformance/stage6/relative_namespaces`).
   A class's folder is where the walk starts, so `click_test/click_test.spite` (`ClickTest.ClickTest`) reaches
   `click_test/system/verify.spite` as `System.Verify()` (`conformance/stage6/folder_class_namespace`).
+- A namespace holds classes and namespaces, nothing else. An `enum`, a `union` and a `type` belong to the class
+  that declares them, like its attributes and functions: plain `Job` inside `player.spite`, and `Player.Job` (or
+  `Game.Player.Job` from outside `game/`) everywhere else. A plain `Job` in another class is an error naming
+  `Player.Job`, and so is `Game.Job`, which looks for it in the namespace `Game` instead of its class
+  ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
 - A generic class is found the same way, so it may live in any folder: `Asset.Pack<Asset.Texture>("textures")`
   and, from inside `game/`, `Pack<Rule>("rules")` for `game/pack.spite` both work
   (`conformance/stage6/namespaced_generics`). A generic name that finds nothing is one error, and the lines that
   use what it would have made are not reported again (`diagnostics/failed_constructor`).
-- A `type`, `union` or `enum` is part of the walk at the level of the class that declares it: one declared in
-  the using class wins over every class. So `type Healing` in `system/regenerate.spite` is what `Healing` means
-  there, even when the program's entry class is also `Healing` (`conformance/stage6/nearest_type`). The library is held to the same walk, so a
-  program's own class `Entry` does not hide the union `Entry` that `library/directory.spite` declares:
+- What the using class declares comes first, before every class. So `type Healing` in
+  `system/regenerate.spite` is what `Healing` means there, even when the program's entry class is also `Healing`
+  (`conformance/stage6/nearest_type`). The library is held to the same rule, so a program's own class `Entry` does
+  not hide the union `Entry` that `Directory` declares, which the program names `Directory.Entry`:
 
 ```gdscript title=own_entry_class/entry.spite
 var name = "mine"

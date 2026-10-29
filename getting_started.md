@@ -88,7 +88,7 @@ no runtime beneath it ([optimizations.md](optimizations.md#tree-shaking)).
 ## A second class
 
 Every other `.spite` file in the folder is another class. Classes hold `var` fields (their state, each with a
-default) and `func`s (their behaviour); an `enum` declared in a file is namespaced under it (`Person.Job`, though
+default) and `func`s (their behaviour); an `enum` declared in a file belongs to its class (`Person.Job` from any other class, though
 `'knight'` alone is usually enough). A `List<T>` holds them:
 
 ```gdscript title=tour_classes/person.spite

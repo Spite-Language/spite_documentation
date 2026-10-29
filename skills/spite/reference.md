@@ -511,8 +511,9 @@ func is_alive(): Boolean {
   arguments say them (through `$T`, `$T?`, `List<$T>`, `Dictionary<$K, $T>` or a function value). The constructor
   lists none: `func Weapon(damage: $damage_type)`. `$` is for generics only: a `$name` with no `generic` line is
   an error. A function never has codegen values of its own (`func pick<$value_type>(...)` is an error): a
-  function that takes any object takes `Anything` or a `type`. `if $is_magic { }` is decided at compile time. `generic $item_type: Printable` accepts only classes
-  that fit the `type` `Printable`; any other is an error where the class is named, not inside the generic.
+  function that takes any object takes `Anything` or a `type`. `if $is_magic { }` is decided at compile time. `generic $item_type: Console.Printable` accepts
+  only classes that fit `Console`'s `type` `Printable` (a class's `enum`, `union` and `type` are named through it
+  outside it, `Player.Job`); any other is an error where the class is named, not inside the generic.
 - Settings: reopen `Environment` in the program's `environment.spite` with one `var` per setting and a literal
   default (`var serve = false`), then bind `var environment = Environment()` and read `environment.serve`. The
   value comes from `--serve=true` (or bare `--serve` for a `Boolean`) on the command line, written beside the

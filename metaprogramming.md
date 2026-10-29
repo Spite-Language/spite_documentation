@@ -686,7 +686,7 @@ not is an error where it is named, saying which function or attribute is missing
 generic's body, the first time some function happens to call what the class lacks.
 
 ```gdscript title=generic_constraint/shelf.spite
-generic $item_type: Printable
+generic $item_type: Console.Printable
 
 var items = List<$item_type>()
 
@@ -756,8 +756,8 @@ var weight = 3
 'Rock' does not fit type 'Singer', which 'Chorus' requires of $singer_type: it has no function 'sing'
 ```
 
-The constraint is optional and names an existing `type` (`Printable` is `Console`'s, found like any type name,
-and a `type` of the generic's own file works too). What fits is what the `type` would accept anywhere, so
+The constraint is optional and names an existing `type`, found like any type name: `Console.Printable` is
+`Console`'s, named through the class that declares it, and a `type` of the generic's own file is named plainly. What fits is what the `type` would accept anywhere, so
 `Shelf<Integer>` above is fine, and so is a `T?` (`null` prints as `null`), while a `T?` against a `type` that needs
 more than printing, or a function value, is not. It is checked wherever a class is given,
 written out or read from the constructor's arguments, and it costs nothing at run time: the check is the

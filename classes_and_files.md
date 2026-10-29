@@ -11,8 +11,9 @@ A file contains only declarations, in this order:
 
 1. a `singleton` line, when the class has one instance ([below](#singletons));
 2. `generic $name` lines, one per codegen value a caller supplies, each optionally constrained by a `type`
-   (`generic $name: Printable`, [metaprogramming.md](metaprogramming.md#generics-and-codegen-values-));
-3. `enum`, `union` and `type` declarations, namespaced under the class (`Player.Job`);
+   (`generic $name: Console.Printable`, [metaprogramming.md](metaprogramming.md#generics-and-codegen-values-));
+3. `enum`, `union` and `type` declarations, which belong to the class: plain `Job` inside it, `Player.Job`
+   everywhere else ([packages.md](packages.md));
 4. `var` declarations: the attributes, each with a default value;
 5. the constructor;
 6. the other `func`s.
