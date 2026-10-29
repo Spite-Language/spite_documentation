@@ -65,12 +65,9 @@ func OwnEntryClass() {
 mine
 ```
 
-- From outside its class, a declared type is named through its owner, in every position, generic arguments
-  included: `List<Recipes.Cookbook.Buildable>` for the `type Buildable` a singleton `recipes/cookbook.spite`
-  declares (`conformance/stage6/nested_type_from_outside`). Two classes may each declare a `Buildable`, and they
-  are different types; when an error has to print two types that would read the same, it names both through
-  their owners: `a List<Recipes.CookTask.Buildable> cannot be used where a List<Recipes.Cookbook.Buildable> is
-  needed` (`diagnostics/same_named_types`).
+- From outside its class, an enum is named through its owner (`Player.Job`), but a union or a `type` never is: a
+  class that takes one declares its own copy. Two classes may each declare a `type Buildable`, and when their
+  members are the same they are one type, so a `List<Buildable>` of one goes where the other's is wanted.
 
 ## Monkey patching (mods)
 

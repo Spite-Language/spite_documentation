@@ -11,7 +11,7 @@ A file contains only declarations, in this order:
 
 1. a `singleton` line, when the class has one instance ([below](#singletons));
 2. `generic $name` lines, one per codegen value a caller supplies, each optionally constrained by a `type`
-   (`generic $name: Console.Printable`, [metaprogramming.md](metaprogramming.md#generics-and-codegen-values-));
+   (`generic $name: Printable`, [metaprogramming.md](metaprogramming.md#generics-and-codegen-values-));
 3. `enum`, `union` and `type` declarations, which belong to the class: plain `Job` inside it, `Player.Job`
    everywhere else ([packages.md](packages.md)). An enum always lives inside the class that uses it: a file
    holding nothing but an enum, a union or a type of its own name is an error; a union or a type is declared in
