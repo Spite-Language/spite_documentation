@@ -482,6 +482,10 @@ adds settings to `Environment`, a member template to `List`, a function to `Inte
 ([packages.md](packages.md#monkey-patching-mods)). The program's entry class is the one class nothing may
 reopen.
 
+An attribute replaced this way keeps its type: a reopening changes its default, never its type, however each file
+gives it (`var level: Integer = 1`, then `var level = "one"`, is `'level' is an Integer where the class first
+declares it, and this reopening makes it a String: ...`). Give a new attribute a name of its own.
+
 Reopening a class of the standard library adds what it lacks; it does not copy what it has. A function that
 rewrites the object from two values of its own class, beside the library's `*`, is an error that tells you to write
 `target = left * right`: the compiler builds that answer in `target`'s place

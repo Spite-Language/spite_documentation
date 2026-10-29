@@ -394,7 +394,7 @@ func is_alive(): Boolean {
   switch that is one class case and `_:`, each a `return`, is an error: write the `if`, or `return value == Monster`.
   In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
 - Proving what is already proven is an error too: `assert` on a value that cannot be null here (`so 'assert' on it
-  proves nothing: remove the check`), and `crash list[index]` inside `while index < list.count()` (`'list[index]'
+  proves nothing: remove the check`, any local that cannot be null, a copy included), and `crash list[index]` inside `while index < list.count()` (`'list[index]'
   is already proven by the loop condition`). Delete the line.
 - A `Boolean?` is not a condition (`which would only test that it is there, not that it is true`): narrow it
   first, or compare it `== true`. The exceptions are `assert flag` and `crash flag`, which mean the flag is there
