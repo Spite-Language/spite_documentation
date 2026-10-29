@@ -535,12 +535,6 @@ dropped first
 A tree, a linked list, or any other recursive structure needs nothing beyond an ordinary field, since a field of
 a class type already holds a reference:
 
-```gdscript title=tree_basics/tree_node.spite
-union TreeNode {
-    Leaf
-    Branch
-}
-```
 ```gdscript title=tree_basics/leaf.spite
 var held_value = 0
 
@@ -553,6 +547,11 @@ func total(): Integer {
 }
 ```
 ```gdscript title=tree_basics/branch.spite
+union TreeNode {
+    Leaf
+    Branch
+}
+
 var left: TreeNode? = null
 var right: TreeNode? = null
 
@@ -573,6 +572,11 @@ func total(): Integer {
 }
 ```
 ```gdscript title=tree_basics/tree_basics.spite entry
+union TreeNode {
+    Leaf
+    Branch
+}
+
 var console = Console()
 
 func TreeBasics() {
