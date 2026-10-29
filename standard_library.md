@@ -307,7 +307,8 @@ has hello true
 ```
 
 `entries()` answers a `List<Directory.Entry>?`: `null` when the folder does not exist or cannot be opened, so a
-missing folder is never read as an empty one. Its member templates keep one kind:
+missing folder is never read as an empty one. Names are text on every system: `café.txt` lists as `café.txt`, and a
+folder holding a name Windows stores as broken UTF-16 lists as `null` rather than as bytes that are not its name. Its member templates keep one kind:
 `folder.entries().filter_files()` is a `List<File>` and `filter_directories()` a `List<Directory>`
 ([a list of a union](metaprogramming.md#member-templates)).
 
@@ -450,7 +451,7 @@ output build finished
 | `run()` | `Integer?` | runs it through the system's shell, waits for it and answers its exit code (`null` when it could not start, so no exit code is made up for it; on Linux and macOS, a child a signal ended answers 128 plus the signal's number, as a shell reports it); captures standard output as bytes on Windows, where byte `0x1A` does not end the output |
 | `read_output_as_string()` | `String?` | what it wrote to its standard output; `null` before `run()`, after a run that could not start, or when those bytes are not UTF-8 |
 | `read_output_as_buffer()` | `Buffer?` | the same output as the bytes it wrote, for a child that writes bytes; `null` before `run()` or after a run that could not start |
-| `run_attached()` | `Integer` | runs it with the program's own terminal, so what it writes and reads is the user's, and answers its exit code, read as `run()` reads it |
+| `run_attached()` | `Integer?` | runs it with the program's own terminal, so what it writes and reads is the user's, and answers its exit code, read as `run()` reads it; `null` when the system could not start it |
 
 Each argument reaches the child whole, as one argument, whatever it holds. On Linux and macOS each is put in single
 quotes for the shell, so the child's `argv` holds exactly the text given. On Windows a program reads its own
@@ -493,6 +494,9 @@ system at once, whether the output is a terminal, a file or a pipe, so a server'
 each line when it happens rather than when the program ends. `write` leaves its text for the next line end, the
 next read of input or the end of the program
 ([the rule and its measurement](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes)). There is no `flush()` to call.
+
+A printed line is the one write that answers nothing: if the system refuses it (a closed pipe, a terminal that
+went away), the line is lost, since the place a failure would be reported is the output that just failed.
 
 `print`, `write` and `error` are ordinary functions of `Console`, taking
 `...values: List<Printable>`, where `Printable` is a `type` that requires `to_string(): String`. Every number,
