@@ -417,7 +417,10 @@ alone by a second package, which is an error naming both lines.
 
 A package that pins
 neither version and names a class that only the versions have is an error listing each version and the line that
-pinned it, and so is a package that reopens such a class: it loads the version it means.
+pinned it, and so is a package that reopens such a class: it loads the version it means. A game that loads only
+the minimap and writes `Renderer` is told "'Renderer' is a class only versions of a repository hold, and this
+package pins none of them", followed by each version as `../../engine@41c09e2, pinned by <file>:<line> ('load
+"../../engine@41c09e2/core"')`, where the file is the minimap's copy in `.spite/git/`.
 
 Messages, reflection and `--final-classes` spell a version's class with the version first, the repository's name
 and the commit (`engine_6c7dca9.Renderer`), and `--final-classes` prints each version into a folder of that
