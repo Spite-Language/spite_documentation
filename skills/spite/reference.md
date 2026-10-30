@@ -641,10 +641,7 @@ wait is written (an `and`, a function value, a constructor), keeping the written
 `count` is read before `bump()` waits, even if another `Concurrent` changes it meanwhile.
 `$system_type.functions['update_each'].is_resumable` is decided while compiling (and `phase.is_resumable` for each
 function a walk visits): `true` when the function can reach a wait, so an engine starts it as a `Concurrent` and
-polls `finished`, and calls it directly otherwise. A system never says that it does IO. `Scheduler().resume_only_when_asked()` keeps
-`Concurrent`s out of the stages: they then resume only at `Scheduler().run_ready()`, which the frame loop calls
-between frames, or where one's value is read or its handle dropped. A loop polling `finished` in that mode must call
-`run_ready()`, or it never ends. A wait in a frame does not hold the frame: in a `while` that sleeps on a
+polls `finished`, and calls it directly otherwise. A system never says that it does IO. A wait in a frame does not hold the frame: in a `while` that sleeps on a
 `Program` (itself or through its own class's functions), and in its own class's functions it calls, a statement
 `report.fetch()` or `systems[index].update()` (no arguments, answering nothing, on another object of the program)
 whose function can wait is started like a `Concurrent` and finishes in a later frame, eight per statement at most,

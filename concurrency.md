@@ -287,72 +287,6 @@ loaded forest with 100000 tiles while frames kept running: true
 
 It is the same on every system: it reads a flag the worker sets when the function returns, with no system call.
 
-### Choosing where `Concurrent`s resume
-
-A `Concurrent` moves on wherever the program waits: a `program.sleep` on the program's thread, a read outside any
-`Concurrent`, reading a `Parallel`. That suits a tool, and not a game: a state machine that resumes in the middle
-of a stage sees the world half updated. So an engine says where they resume:
-
-- `Scheduler().resume_only_when_asked()` makes every other wait on the program's thread leave the `Concurrent`s
-  alone from then on: a sleep only sleeps, a read only blocks, reading a `Parallel` only joins it.
-- `Scheduler().run_ready()` runs every `Concurrent` whose wait is over, once each, and returns at once; the
-  engine calls it between two frames.
-- Reading a `Concurrent`'s value, or dropping it, still runs them all until that one is done. The program asked for
-  that one, and it may be waiting on another, so a join never waits for something only the loop could finish.
-
-The IO itself goes on meanwhile: a blocking read inside a `Concurrent` (a file, or a TCP connection's `read_as_buffer`)
-runs on its helper thread, and the state machine continues on the program's thread at the next `run_ready()`.
-
-```gdscript title=frame_io/save_game.spite
-var console = Console()
-var save = File(".spite/documentation_save.txt")
-
-func update_each() {
-    var loads = 0
-    while loads < 3 {
-        var text = save.read_as_string()
-        crash text
-        loads = loads + 1
-        console.print("load", loads, "read", text)
-    }
-}
-```
-```gdscript title=frame_io/frame_io.spite entry
-var console = Console()
-var program = Program()
-var scheduler = Scheduler()
-
-func FrameIo() {
-    load "../spite_standard_library/windows"
-    var one_millisecond = Duration(1, 'milliseconds')
-    scheduler.resume_only_when_asked()
-    var save_file = File(".spite/documentation_save.txt")
-    crash save_file.write_string("level 3")
-    var game = SaveGame()
-    var loading = Concurrent(game.update_each)
-    var frames = 0
-    while not loading.finished {
-        frames = frames + 1
-        program.sleep(one_millisecond)
-        scheduler.run_ready()
-    }
-    console.print("each load took a frame of its own:", frames >= 3)
-}
-```
-```output
-load 1 read level 3
-load 2 read level 3
-load 3 read level 3
-each load took a frame of its own: true
-```
-
-The `program.sleep(one_millisecond)` in the frame never resumes the loads; only `run_ready()` does. That also means a loop that
-polls `finished` and never calls `run_ready()` could never end, since nothing moves the `Concurrent` on, so it
-halts instead: a `Concurrent` found unfinished a million times in a row while no `Concurrent` was stepped stops the
-program with a crash report at the scheduler's count. Which systems to start this way is asked while compiling, with
-`$system_type.functions['update_each'].is_resumable` ([metaprogramming.md](metaprogramming.md#asking-a-question-while-compiling)),
-so a system never says that it does IO.
-
 ### A wait in a frame does not hold the frame
 
 A **frame loop** is a `while` whose passes sleep until the next frame: it calls `program.sleep`, itself or through
@@ -923,7 +857,6 @@ carries none of it; the compiler's side of each is on
 | uses none of it | nothing: no scheduler, no state machine, no helper thread, no lock, plain reference counts; every wait is the plain blocking call |
 | makes a `Concurrent`, or has two reads in a row | the scheduler and its event loop; a second, resumable copy of each function a `Concurrent` reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside a `Concurrent`; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count; one count the scheduler adds to at each read of `finished` that answers `false` and clears at each step |
 | makes a `Parallel`, or has a loop the compiler runs in bands | one thread started per `Parallel` or band and a small, fixed number of allocations; atomic reference counts for the classes another thread can count; for each program singleton a `Parallel` can reach and that changes, atomics or a lock per call (about 2 ns when one thread takes it, far more when several contend: [what it costs](#what-a-singletons-lock-costs)), or one per counted loop of calls |
-| calls `Scheduler().resume_only_when_asked()` or `run_ready()` | one `Boolean` the scheduler reads at each wait, and each function it calls; neither is there otherwise |
 | is built with `--repl-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
 
 What is never there: a stack per `Concurrent`, a stack switch, a runtime that a WebAssembly build could not carry.
