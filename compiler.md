@@ -39,9 +39,12 @@ runs a first program.
 ## Name the program
 
 ```bash
-spite game
-spite game/
+cd game
+spite
 ```
+
+`spite` with no folder builds the folder it is run from, which is how a program is named (D1775): `cd game` and
+then `spite`. Naming the folder, `spite game`, still works while scripts move over to it.
 
 The folder supplies the program's other classes, and the entry class's constructor takes no arguments: the
 program reads its command line through `Environment()`, what its build decided through `Build()`, and the raw
