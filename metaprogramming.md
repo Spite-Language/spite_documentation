@@ -505,7 +505,8 @@ Walks over the classes of a namespace and the values of an enum are ordinary cod
 while compiling. `Shop.Tools.classes.each(make)` makes one copy of `make` for each class of the folder, in which
 `part` is the class itself: a type (`Column<part>()`), a constant for `part.name`, and the class object where a value
 is wanted. `Phase.values.each(run)` calls `run` once for each value. A walker takes one parameter, and state it needs
-goes in attributes. A parameter typed `Spite.Namespace` is an instance of one, so `class.namespace.classes` and
+goes in attributes. It may be a function of another object, `Shop.Tools.classes.each(registry.add)`: the copies are
+then made in that object's class and called on it. A parameter typed `Spite.Namespace` is an instance of one, so `class.namespace.classes` and
 `Spite.Namespace.instances` are the lists to walk ([reflection.md](reflection.md#known-while-compiling)).
 
 ### Member templates
