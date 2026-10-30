@@ -331,6 +331,9 @@ that would take an argument is a collection indexed or filtered instead, so ther
 | `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
 | `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes["health"]` |
 | `.functions` | a `Dictionary<String, Spite.Function>` keyed by name, in the order they were made | `Monster.functions["alive"]` |
+| `.enums` | a `Dictionary<String, Spite.Enum>` of the enums it declares, keyed by name, in declaration order | `Player.enums["Job"]` |
+| `.unions` | a `Dictionary<String, Spite.Union>` of the unions it declares | `Component.unions["Replication"].members` |
+| `.types` | a `Dictionary<String, Spite.Type>` of the types it declares | `Player.types["Named"].owner` |
 | `.is_singleton` | the class has a `singleton` line | `Console.is_singleton` is `true` |
 | `.is_stateful` | a function besides the constructor and `drop()` changes the object, or a singleton it binds does | `Counter.is_stateful` |
 | `.is_fixed_size` | its size is known while compiling: only numbers, `Boolean`s, enums and `String`s | `Vector3<Float>.is_fixed_size` is `true` |
@@ -409,6 +412,70 @@ The declaration of one value of an enum.
 | `.name` | the value's name | `tail.name` is `tail` |
 | `.number` | its whole number, the one `var number: Integer = value` gives | `tail.number` is `7` |
 | `.index` | its place in declaration order, 0 for the first | `tail.index` is `1` |
+
+### What a class declares
+
+An enum, a union and a `type` belong to the class that declares them, never to a namespace (D1745). A union or a
+`type` is never named outside its class (D1779), so another class reaches one only through reflection: the class's
+`.enums`, `.unions` and `.types`, each a dictionary of declarations keyed by name like `.attributes`.
+
+```gdscript title=class_declarations/component.spite
+union Replication {
+    Mirrored
+    Local
+}
+
+type Sized {
+    size: Integer
+}
+
+var replication: Replication = Mirrored()
+
+func measure(item: Sized): Integer {
+    return item.size
+}
+```
+```gdscript title=class_declarations/mirrored.spite
+var size = 3
+```
+```gdscript title=class_declarations/local.spite
+var size = 1
+```
+```gdscript title=class_declarations/class_declarations.spite entry
+var console = Console()
+
+func ClassDeclarations() {
+    load "../spite_standard_library/windows"
+    var replication = Component.unions["Replication"]
+    crash replication
+    var members = replication.members.keys().join(", ")
+    console.print(replication.name_with_namespaces, "holds", members)
+    var types = Component.types.keys().join(", ")
+    console.print("types:", types)
+    var component = Component()
+    var mirrored = Mirrored()
+    var size = component.measure(mirrored)
+    var local = Local()
+    var small = component.measure(local)
+    console.print(component.replication.class, size, small)
+}
+```
+```output
+Component.Replication holds Mirrored, Local
+types: Sized
+Mirrored 3 1
+```
+
+### `Spite.Union` and `Spite.Type`
+
+| Member | Answers | Example |
+|---|---|---|
+| `.name` | its own name | `replication.name` is `Replication` |
+| `.name_with_namespaces` | its name through the class that declares it | `Component.Replication` |
+| `.owner` | the `Spite.Class` that declares it | `replication.owner` is `Component` |
+| `.members` | a union's: a `Dictionary<String, Spite.Class>` of its member classes, keyed by their names with namespaces, in declaration order | `replication.members["Network.State"]` |
+
+A `Spite.Type` answers `.name`, `.name_with_namespaces` and `.owner`.
 
 ### `Spite.Function`
 

@@ -349,6 +349,8 @@ func is_alive(): Boolean {
   in order, an ordinary list: `Course.values.each(list_course)` calls `list_course(course: Course)` once per value,
   unrolled while compiling (`$value_type.values` in a generic). Text becomes a value only as a `Course?`:
   `var course: Menu.Course? = name`; a conversion is never called by name.
+  An enum named as a value, or `value.class` on one of its values, is its `Spite.Enum` (`.owner`, and `.values`, its
+  `Spite.EnumValue` declarations by name, each with `.name` and `.number`).
   An enum, a union and a type are always declared inside a class: a file holding only one of its own name is an error. A value may be given a number with `=` on its line
   (`'admin' = 99`; the next unnumbered value counts on, the first from 0; two values with one number are an
   error), only where a C library, a file format or the network fixes the numbers.
@@ -551,7 +553,8 @@ func is_alive(): Boolean {
 - Reflection: `value.class` (a `Spite.Class`: `.name`, `.namespace` (a `Spite.Namespace?`; narrow it before
   reading its members: `fallback value.class.namespace` narrows the path itself and its prefixes for the rest of
   the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
-  `.namespaces`), `.functions`), `value.attributes`
+  `.namespaces`), `.functions`, and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
+  `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`), `value.functions` (`.name`, `.arguments`, `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`), `Monster.instances` (live instances), and
