@@ -177,7 +177,8 @@ func is_alive(): Boolean {
   it. A value meeting another class is cast through that class's conversion, `func Color(from: String): Color?`
   declared in `Color`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = "#ff8000"` calls
   it, and the cast answers what the conversion answers (a `T?` is narrowed before a plain `T`); a conversion is never
-  called by name, and a class with no such conversion is an error naming it (`IpAddress declares no
+  called by name (`Color("#ff8000")`, `Integer(text)` and `Float(count)` are errors: write the value where the class is
+  wanted), and a class with no such conversion is an error naming it (`IpAddress declares no
   'IpAddress(from: Point)'`). A class is built three ways: its constructor, a conversion (`func X(from: Y): X?`) and a
   preset (`func Pi(): Float`, called `Float.Pi()`). Anything with a `to_string()` (numbers, `Boolean`, enums, a class that declares one) casts to text wherever a
   `String` is wanted: `label.text = clicks`, `show(clicks)`, `return clicks`, `names[badge]` on a `Dictionary` (a whole number there keys it by numbers instead). So a

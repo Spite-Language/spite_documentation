@@ -237,7 +237,11 @@ func Distances() {
 `?` says it can fail: `Meters(from: String): Meters?` answers `null` for text that isn't a number, and the caller
 narrows it. A conversion without `?` can't fail. A class has at most one conversion from each type. It is never
 called by name: where a `String` is given and a `Meters?` is wanted, the compiler calls it, and writing the call
-yourself is an error. An enum or a union declared in a class gets its conversions in that class, named by the type
+yourself is an error. `var walked: Meters? = Meters("1200")` is refused with "'Meters("1200")' is what writing
+'"1200"' here already does: the compiler casts a value to the class its place wants, so write '"1200"'", and
+`var walked = Meters("1200")`, where nothing wants a `Meters`, asks for a place that does, `var converted: Meters? =
+"1200"`. The same holds for numbers and enums: `Float(count)` and `Mood(text)` are written `count` and `text` where a
+`Float` or a `Mood?` is wanted. An enum or a union declared in a class gets its conversions in that class, named by the type
 alone (`func Job(from: String): Job?`). Text already converts to an enum by its values with nothing written.
 
 **A preset** names a special value of its class: `Float.Pi()`, `Color.Red()`, `Vector3.Up()`. It builds a fresh
