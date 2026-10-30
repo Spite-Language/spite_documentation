@@ -105,7 +105,7 @@ counts it and the program exits with status 1.
 ```
 pass Checks.TextTests.test_trim_removes_the_spaces_around_text
 fail Checks.TextTests.test_split_keeps_empty_pieces
-    spite: the program stopped at test_package/checks/text_tests.spite:8 in Checks.TextTests.test_split_keeps_empty_pieces (pieces.count()=3)
+    spite: the program stopped at test_package/checks/text_tests.spite:8 in Checks.TextTests.test_split_keeps_empty_pieces, site 4205b4ca (pieces.count()=3)
     spite.frame	test_package/checks/text_tests.spite:8	Checks.TextTests	test_split_keeps_empty_pieces
     spite.frame	test_package/test_package.spite:4	TestPackage	TestPackage
 2 tests, 1 passed, 1 failed

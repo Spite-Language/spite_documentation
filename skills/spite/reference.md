@@ -433,7 +433,7 @@ func is_alive(): Boolean {
     it: `if not found { return -1 }` narrows `found`, `if index >= names.count() { return "" }` proves
     `names[index]`;
   - absence is a bug: `crash condition` halts with
-    `spite: the program stopped at path:line in Class.function (name=value, ...)`, followed by the
+    `spite: the program stopped at path:line in Class.function, site <id> (name=value, ...)`, followed by the
     fallbacks that failed before it (each with `returned=nothing`, `null` or `empty`, what its function gave back)
     and the call chain as `spite.frame` lines, innermost first. Every name and call the condition read is there with its value, whatever its
     shape: `crash record or cooked.count() > 2` reports `record is null, cooked.count()=1`; a part an `and` or `or`

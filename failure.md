@@ -1039,7 +1039,8 @@ running the program again.
 
 A crash flushes what the program printed, writes one line to the error stream, then the fallbacks taken that came before
 it, then the call chain, and exits with status 1. The first line is
-`spite: the program stopped at <path>:<line> in <Class>.<function> (name=value, ...)`: one field for each value. Each
+`spite: the program stopped at <path>:<line> in <Class>.<function>, site <id> (name=value, ...)`: the site's id,
+which `grep` finds in the `.crashes` map beside the executable, then one field for each value. Each
 failed `fallback` that came before is a `spite.fallback` line, because those are usually the trail that explains how the
 program got there; each names what its function answered instead (`returned=nothing` for a function that returns
 nothing, `null` for a `T?`, `empty` for a list or a dictionary). Last comes the call chain, a
@@ -1047,7 +1048,7 @@ nothing, `null` for a `T?`, `empty` for a list or a dictionary). Last comes the 
 [native fault](#what-a-native-fault-reports) writes them:
 
 ```
-spite: the program stopped at crash_report/crash_report.spite:17 in CrashReport.check (value=-9, limit=0, scale=2)
+spite: the program stopped at crash_report/crash_report.spite:17 in CrashReport.check, site 8f08ef15 (value=-9, limit=0, scale=2)
 spite.fallback	6d183761	crash_report/crash_report.spite:11	CrashReport	announce	returned=nothing
 spite.frame	crash_report/crash_report.spite:17	CrashReport	check
 spite.frame	crash_report/crash_report.spite:7	CrashReport	CrashReport
@@ -1067,7 +1068,7 @@ the condition is never run twice: its answer is kept for the check and for the r
 skipped never ran, so it is left out:
 
 ```
-spite: the program stopped at crash_compound/crash_compound.spite:12 in CrashCompound.finish (cooked.count()=1, name=cake, batch=6, portions=2, notes is null)
+spite: the program stopped at crash_compound/crash_compound.spite:12 in CrashCompound.finish, site 8ee741b6 (cooked.count()=1, name=cake, batch=6, portions=2, notes is null)
 spite.frame	crash_compound/crash_compound.spite:12	CrashCompound	finish
 spite.frame	crash_compound/crash_compound.spite:7	CrashCompound	CrashCompound
 ```
@@ -1077,9 +1078,9 @@ read like a real `0`. It reports only the first link of the path that is missing
 for: the index and the count of a list, the key of a dictionary.
 
 ```
-spite: the program stopped at crash_missing_item/crash_missing_item.spite:10 in CrashMissingItem.read (keys[start + 1] is missing: index 3, count 2)
-spite: the program stopped at crash_missing_key/crash_missing_key.spite:10 in CrashMissingKey.show (scores[player] is missing: key "bea")
-spite: the program stopped at crash_missing_link/crash_missing_link.spite:10 in CrashMissingLink.show (title is null)
+spite: the program stopped at crash_missing_item/crash_missing_item.spite:10 in CrashMissingItem.read, site c10758fe (keys[start + 1] is missing: index 3, count 2)
+spite: the program stopped at crash_missing_key/crash_missing_key.spite:10 in CrashMissingKey.show, site d458f5d0 (scores[player] is missing: key "bea")
+spite: the program stopped at crash_missing_link/crash_missing_link.spite:10 in CrashMissingLink.show, site 5a300631 (title is null)
 ```
 
 The call chain is always written, even when it is one line. Only the functions of the program and of the packages it
@@ -1115,7 +1116,9 @@ spite.fallback	3a356b09	assert_runs/assert_runs.spite:22	AssertRuns	title_of	ret
 
 A `spite.fallback` line carries no values. The fallback's place, the `.crashes` map and its condition are what it says: a
 guard that narrows failed because something was not there, and one that tests a condition names its operands on that
-line, while the crash that ends the run prints every value at its own site.
+line, while the crash that ends the run prints every value at its own site. A `fallback` of several parts joined by `and`
+is a site per part, so its line names the part that failed; the map gives each part's column, and each value a
+report names the line and column it was read at.
 It holds the fallbacks of the program and of every package it `load`s, never those of the standard library: an
 `fallback` in `library/` is how the library answers routine questions (a key that is not there, text that does not
 match, a read past the end), and those would push the program's own entries out of the ring. The compiler leaves
@@ -1189,7 +1192,7 @@ a core dump is still written where the system keeps them. What the program print
   program, and the operand values are turned into text on the way out. A `crash` whose condition has a call inside
   a comparison, an `and` or an `or` keeps that call's answer and a flag in locals as it runs, so the report can name
   the answer without calling again: two stores only the failure branch reads. The `.crashes` map is a file beside the
-  executable, which nothing reads at run time.
+  executable, which nothing reads at run time. A crash then lets go of the call's answer right after its check.
 - The ring and the function that prints it are in every program, since the standard library has
   `crash` sites of its own; they are 32 pointers, a counter and one function. A crash's call chain is walked by
   the fault handler's own walker, which adds one small function and one pointer the handler sets when it is

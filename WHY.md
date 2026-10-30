@@ -199,7 +199,7 @@ A `fallback` that would answer a default a caller cannot tell from a real answer
 prose message: it names the file and line, and shows the values there.
 
 ```
-spite: the program stopped at crash_report/crash_report.spite:17 in CrashReport.check (value=-9, limit=0, scale=2)
+spite: the program stopped at crash_report/crash_report.spite:17 in CrashReport.check, site 8f08ef15 (value=-9, limit=0, scale=2)
 ```
 
 Even a fault inside a foreign C library prints where it happened and the Spite line that called it
