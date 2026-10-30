@@ -288,7 +288,7 @@ func is_alive(): Boolean {
   Integer): $component_type?` ending `return column.values[row]`. The caller gets the stored item, so
   `layout.order = 3` writes the column; never return `.copy()` for this, since writes to a copy are lost.
 - A runner that treats systems of one row and of several differently asks `if phase.arguments.count() == 1 { }`
-  of each `phase: Spite.Function` it walks (`var phases = $system_type.functions.filter_name_ends_with("_each")`,
+  of each `phase: Spite.FunctionDeclaration` it walks (`var phases = $system_type.functions.filter_name_ends_with("_each")`,
   then `phases.each(run_phase)`),
   or of one function, `$system_type.functions["update_each"]` narrowed first. It is decided while compiling, so the branch for the other arity is
   never compiled: a `Stream<$system_type, argument.class>` that calls `system.phase_each(row)` is made only for

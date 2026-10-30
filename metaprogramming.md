@@ -1,7 +1,7 @@
 # Metaprogramming
 
 There are no macros. **Every class is an instance of `Spite.Class`**, every namespace an instance of
-`Spite.Namespace` and every function an instance of `Spite.Function`, so "do this for every attribute" is ordinary
+`Spite.Namespace` and every function a `Spite.FunctionDeclaration`, so "do this for every attribute" is ordinary
 code over ordinary objects: `Monster.attributes.each(show)`. The compiler knows those objects while compiling, so
 it runs that code there: a walk is unrolled into one call per attribute, each call compiled for its own attribute
 and typed by it, and nothing is looked up when the program runs.
@@ -118,11 +118,11 @@ func WalkedArguments() {
     console.print(count, "functions start with re")
 }
 
-func walks_each(function: Spite.Function): Boolean {
+func walks_each(function: Spite.FunctionDeclaration): Boolean {
     return function.name.ends_with("_each")
 }
 
-func describe(function: Spite.Function) {
+func describe(function: Spite.FunctionDeclaration) {
     console.print(function.name)
     function.arguments.each(describe_taken)
 }

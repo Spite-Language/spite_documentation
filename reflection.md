@@ -2,7 +2,7 @@
 
 **Every class is an instance of `Spite.Class`.** A class is not a special thing beside the values of a program: it
 is an ordinary object, made from an ordinary class in `library/spite/`, and writing its name reads that object.
-Every namespace is an instance of `Spite.Namespace`, every function an instance of `Spite.Function`, and every
+Every namespace is an instance of `Spite.Namespace`, every function a `Spite.FunctionDeclaration` (a `Spite.Function` once bound to an object), and every
 attribute and argument an instance of `Spite.Attribute` and `Spite.Argument`. Reflection is not a second language
 beside Spite: it is Spite describing itself, with the same lists, the same member templates and the same `[]` the
 moron already uses everywhere else.
@@ -74,7 +74,7 @@ receiver says which one is meant: `Monster` is the class, `troll` an instance.
 | | The class, `Monster` | An instance, `troll` |
 |---|---|---|
 | `.attributes` | information: a `Spite.AttributeDeclaration` for each attribute, with its `.name`, `.class`, `.index`, and no value | data: a `Spite.Attribute` **bound to `troll`**, with everything the declaration has plus `.value`, read and written, typed as the attribute, and `.owner`, which is `troll` |
-| `.functions` | information: a `Spite.FunctionDeclaration` for each function, with its `.name`, `.arguments`, `.returns` and the class that declares it | a `Spite.Function` bound to `troll`, with everything the declaration has plus `.owner`: a function value you can pass on, call, or build a `Spite.Call` from |
+| `.functions` | information: a `Spite.FunctionDeclaration` for each function, with its `.name`, `.arguments`, `.returns` and the class that declares it | a `Spite.Function` bound to `troll`: its `.declaration`, read through for everything the declaration has, plus `.owner`, which is `troll`, and `call_function()` |
 | `.class` | `Spite.Class`, the class every class is an instance of | `Monster`, so `troll.class == Monster` |
 | What a read costs | nothing: it is known while compiling and folds | a read or write of `troll`'s own field, typed, the same as `troll.health` |
 
@@ -330,7 +330,7 @@ that would take an argument is a collection indexed or filtered instead, so ther
 | `.name` | the class's own name, a `String` | `Monster.name` is `Monster` |
 | `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
 | `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes["health"]` |
-| `.functions` | a `Dictionary<String, Spite.Function>` keyed by name, in the order they were made | `Monster.functions["alive"]` |
+| `.functions` | a `Dictionary<String, Spite.FunctionDeclaration>` keyed by name, in the order they were made | `Monster.functions["alive"]` |
 | `.enums` | a `Dictionary<String, Spite.Enum>` of the enums it declares, keyed by name, in declaration order | `Player.enums["Job"]` |
 | `.unions` | a `Dictionary<String, Spite.Union>` of the unions it declares | `Component.unions["Replication"].members` |
 | `.types` | a `Dictionary<String, Spite.Type>` of the types it declares | `Player.types["Named"].owner` |
@@ -477,23 +477,37 @@ Mirrored 3 1
 
 A `Spite.Type` answers `.name`, `.name_with_namespaces` and `.owner`.
 
-### `Spite.Function`
+### `Spite.FunctionDeclaration`
+
+A class's `.functions` is a `Dictionary<String, Spite.FunctionDeclaration>`: what each function is, bound to no
+object, so nothing in it can be called by itself.
 
 | Member | Answers | Example |
 |---|---|---|
 | `.name` | the function's name | `alive.name` is `alive` |
 | `.arguments` | a `List<Spite.Argument>`, in order | `hurt.arguments[0].name` is `amount` |
 | `.returns` | a `Spite.Class`, `Nothing` when none is declared | `alive.returns` is `Boolean` |
-| `.owner` | on a bound function: the instance it is bound to | `troll.functions["alive"].owner` is `troll` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
 | `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |
 | `.writes` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code writes | `update_each.writes.count()` |
+| `.hole`, `.index` | in a template over functions: the text that stands in the function's name for the template's word, and its place | `phase.hole` is `update` |
 
-A class's `.functions` holds `Spite.FunctionDeclaration`s: the members above, none bound to an instance, and in a
-template over functions `.hole` (the text that stands in the function's name for the template's word) and `.index`. An
-instance's `.functions` holds `Spite.Function`s bound to it, and `call_function()` calls one. A call built argument by argument is a `Spite.Call` of a declaration and an instance
-([above](#a-call-built-before-it-runs)).
+A declaration runs on an object through a `Spite.Call` ([above](#a-call-built-before-it-runs)), and a function value
+given where a `Spite.FunctionDeclaration` is wanted is its declaration (`describe(troll.alive)`).
+
+### `Spite.Function`
+
+An object's `.functions` is a `Dictionary<String, Spite.Function>`: each function bound to that object.
+
+| Member | Answers | Example |
+|---|---|---|
+| `.declaration` | its `Spite.FunctionDeclaration` | `troll.functions["alive"].declaration.returns` |
+| `.owner` | the object it is bound to | `troll.functions["alive"].owner` is `troll` |
+| `.name`, `.arguments`, `.returns`, `.is_resumable`, `.returned_literal`, `.reads`, `.writes` | read through its declaration | `troll.functions["hurt"].arguments.count()` |
+| `call_function()` | calls it on its owner when it takes no arguments, dropping what it answers; on one that takes arguments it halts | `troll.functions["roar"].call_function()` |
+
+A function named without calling it (`troll.alive`) given where a `Spite.Function` is wanted is the same bound function.
 
 ### `Spite.Call`
 
@@ -628,11 +642,11 @@ func ConstantSelection() {
     walked.each(describe)
 }
 
-func walks_each(function: Spite.Function): Boolean {
+func walks_each(function: Spite.FunctionDeclaration): Boolean {
     return function.name.ends_with("_each")
 }
 
-func describe(function: Spite.Function) {
+func describe(function: Spite.FunctionDeclaration) {
     var count = function.arguments.count()
     console.print(function.name, "takes", count)
     function.arguments.each(describe_taken)
