@@ -1085,7 +1085,10 @@ spite: the program stopped at crash_missing_link/crash_missing_link.spite:10 in 
 The call chain is always written, even when it is one line. Only the functions of the program and of the packages it
 loads are listed; a frame inside the standard library is left out, as the fallbacks taken of the library are. Consecutive
 equal lines are one line ending in `repeated=<count>`, at most 16 lines are written, and `spite.frame	more` says the stack
-goes deeper. An inlined function keeps its own frame. The chain is read from the saved frame pointers and a table of
+goes deeper. An inlined function keeps its own frame. Work the compiler ran apart from its caller
+([concurrency.md](concurrency.md)) lists its own frames down to its first function, then one line ending in
+`started`, the place the program wrote the call, since nothing in the program says it ran apart:
+`spite.frame	game/game.spite:40	Game	update	started`. The caller's further frames are not listed. The chain is read from the saved frame pointers and a table of
 the program's calls that sits in the executable beside its code, so nothing runs for it until a crash.
 
 The id of a `spite.fallback` line is derived from the site's content, so it stays the same when unrelated lines move.

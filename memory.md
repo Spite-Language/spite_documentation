@@ -346,8 +346,9 @@ func run(mover: Mover, entity_count: Integer) {
     }
 }
 
-func find_attribute(attribute: Spite.AttributeDeclaration, _row: $row_type, entity: Integer) {
+func find_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, entity: Integer) {
     if attribute.class == Entity {
+        row.attributes[attribute] = Entity(entity)
         found.append(entity)
     } else {
         var column = Column<attribute.class>()
@@ -402,9 +403,9 @@ func SparseRowDoc() {
 1 2 2
 ```
 
-`find_attribute` only asks about each attribute's class, so it takes the row as a parameter it never reads
-(`_row`): that is how its body says the template walks the attributes of `$row_type`, and the underscore says the
-parameter is there on purpose.
+`find_attribute` asks about each attribute's class, and fills the row's `Entity` while it is there: that read of
+`row.attributes[attribute]` is how its body says the template walks the attributes of `$row_type`. A template whose
+body reads its parameter on no value is an error, even when one of its parameters is of the class it would walk.
 
 For `Runner<Moving>` the walk is written out as `{entity: Entity(entity), position:
 Column<Position>().values[found[1]], velocity: Column<Velocity>().values[found[2]], trail:
