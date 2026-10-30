@@ -444,8 +444,9 @@ func OperatorByName() {
 **The one exception is the function used as a value**, where no operator can stand in: `run_callback(point.get_x)`
 hands over the function itself, so it is written by name. Declaring the function stays as it is: `func
 get_x()`, `func sum(other)`, `func get_at(index)` are how a class offers the operator. **After a `.`, a word is
-always a member name**, never a keyword, so a getter named after a keyword is read like any other: `get_type()` is
-read as `thing.type`.
+always a member name**, never a keyword, so a getter named after a keyword is read like any other: `get_return()`
+is read as `thing.return`. `type` and `singleton` are the exceptions: they are reserved and never a name, after a
+`.` or anywhere else.
 
 ## One name, one function
 

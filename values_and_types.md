@@ -18,6 +18,10 @@ assignment, a function argument (toward the parameter type), and `return` (towar
 | `Float` (default decimal) | `float` (32-bit) |
 | `Double` | `double` (64-bit) |
 
+A number is written in plain digits, and `_` may separate them for reading: `1_000_000` is a million and
+`0.000_01` a hundred-thousandth, a `_` standing only between two digits. There is no exponent (`2.5e3` is an
+error that writes `2_500` for you).
+
 An integer literal is `Integer`; one too big for `Integer` becomes `Long` automatically. **A number never
 silently wraps.** Arithmetic whose answer does not fit its type halts, unsigned exactly as signed, and so does a
 wider value put into a narrower name ([below](#arithmetic-that-does-not-fit-halts)). Where wrapping is the point,

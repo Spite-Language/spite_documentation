@@ -148,7 +148,10 @@ func is_alive(): Boolean {
   `new`, `import`, `require`, `elif`) are errors wherever they appear, naming the Spite form, so none of them
   can name a variable or a parameter either: `var none: Long = 0` says to write `null`. Pick another name
   (`no_handle`, `empty`). `load` is reserved too: it always loads a package, so a function that loads something
-  says what (`load_texture`).
+  says what (`load_texture`). So are `type` and `singleton`, never a name even after a `.`: a kind of thing
+  is `kind`, the one object is `instance`.
+- A number is plain digits with `_` between digits for reading (`1_000_000`, `0.000_01`); there is no exponent
+  (`2.5e3` is an error that writes `2_500`).
 - `class`, `attributes`, `functions`, `instances` and `memory` never name an attribute or a function (nor a
   `get_`/`set_` one): reflection gives every object those members, and `JsonReader` and every attribute walk read
   through `value.attributes`. The error suggests the class's name in front (`table_attributes`). A local may use
