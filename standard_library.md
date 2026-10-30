@@ -47,7 +47,6 @@ REPL can look at any of it.
 | `ForeignBytes` | memory a C library hands out, read and written by position with every access checked | [below](#bytes-are-a-buffer) |
 | `BinaryWriter<T>`, `BinaryReader<T>` | any value to compact bytes (a `Buffer`) and back, for Spite programs talking to each other and for files | [json.md](json.md#write-and-read-bytes) |
 | `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
-| `Concurrent`, `Parallel` | run a function while waiting, or on another thread; the handle is the value | [concurrency.md](concurrency.md) |
 | `IpAddress` | an IPv4 or IPv6 address, read from text, resolved from a host name, written back as text | [below](#ipaddress) |
 | `Tcp.Server`, `Tcp.Client`, `Tcp.Connection` | TCP over IPv4 and IPv6: listen, accept, connect, lines and bytes | [below](#tcp) |
 | `Udp.Server`, `Udp.Client`, `Udp.Datagram` | UDP datagrams over IPv4 and IPv6 | [below](#udp) |
@@ -59,7 +58,7 @@ REPL can look at any of it.
 | `Spite.Class`, `Spite.Function`, ... | reflection | [reflection.md](reflection.md) |
 
 The other files of the library are the machinery these are built from: `NumberText` and the time-zone readers. They are ordinary classes a program can read and the REPL can inspect, which a program
-has no reason to call. Memory, the event loop under `Concurrent` and the threads under `Parallel` are not classes of
+has no reason to call. Memory, the event loop and the threads the compiler runs work on are not classes of
 the library: the compiler writes them ([memory.md](memory.md#memory-belongs-to-the-compiler)).
 
 ## What belongs in the standard library
@@ -289,14 +288,14 @@ there is no separate reader to open and close.
 
 **Independent reads overlap.** Two or more untyped `var name = file.read_as_string()` in a row (or `socket.read_line()`),
 each on a name or an attribute and none naming an earlier one, are started together and all finished before the next
-statement: the compiler starts each but the last as a `Concurrent` of its own, so the program waits once for the
+statement: the compiler starts each but the last as a state machine of its own, so the program waits once for the
 slowest instead of once per file. Nothing is written for it, and nothing after the reads can see a difference:
 a file written by the next statement is written after every read has finished
-([concurrency.md](concurrency.md#reads-in-a-row-overlap)). What it costs is what a `Concurrent` costs, a frame on
+([concurrency.md](concurrency.md#reads-in-a-row-overlap)). What it costs is a frame on
 the heap for each read but the last and the event loop that finishes them, and only in a program that reads this
 way ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-used)). A read or write of a
 `File`, `console.read_line()`, a `Tcp.Server`'s `accept()`, a connection's `read_line()`, `read_as_string()` and
-`read_as_buffer()`, and `program.sleep()` are the library's waits: inside a `Concurrent` each lets other work run.
+`read_as_buffer()`, and `program.sleep()` are the library's waits: inside a state machine the compiler writes, each lets other work run.
 Everything else, `Process.run()` included, blocks the thread that calls it.
 
 ## List a directory
@@ -437,8 +436,8 @@ changed since: 0
 
 `changes()` suits a program that already runs a loop, a game once a frame, a tool between steps. A thread with
 nothing else to do calls `wait_for_changes()` and then `changes()`, which is what `--hot-reload` does
-([repl.md](repl.md#how-it-works)); on the program's main thread it would stop everything else, `Concurrent` work
-included, until something changes.
+([repl.md](repl.md#how-it-works)); on the program's main thread it would stop everything else, waiting work the
+compiler started included, until something changes.
 
 Each system's folder asks its own kernel: `ReadDirectoryChangesW` on the folder, with its sub-folders, on Windows;
 an `inotify` watch on each folder on Linux, adding one for each new folder; and a `kqueue` entry on each file and
@@ -495,7 +494,7 @@ read as text only when asked, so a child that writes bytes is never forced throu
 
 The output includes the child process's own trailing newline, which is why the example above calls `.trim()`.
 What the child writes to its error stream is not captured: it goes to the program's own error stream. `run()`
-is not one of the library's waits: it blocks the thread that calls it, and other `Concurrent` work does not run
+is not one of the library's waits: it blocks the thread that calls it, and other waiting work does not run
 meanwhile ([which calls wait](#read-and-write-a-file)).
 
 ## `Console`
@@ -627,7 +626,7 @@ name? no input
 | Member | Does |
 |---|---|
 | `exit(code)` | flushes what was printed and ends the process with `code` |
-| `sleep(duration)` | waits the `Duration`'s whole milliseconds; other `Concurrent` work runs meanwhile ([concurrency.md](concurrency.md)). A duration under a millisecond, zero or negative only lets other work have its turn |
+| `sleep(duration)` | waits the `Duration`'s whole milliseconds; other waiting work runs meanwhile ([concurrency.md](concurrency.md)). A duration under a millisecond, zero or negative only lets other work have its turn |
 | `arguments()` | what the program was started with, as a `List<String>`, the executable left out ([programs.md](programs.md#programarguments-the-raw-command-line)) |
 | `environment(name)` | the process environment variable, as a `String?`: `null` when it is not set |
 | `executable_path()` | the path of the running executable, as the operating system gives it, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
@@ -821,7 +820,7 @@ the client left: true
 | `close()` | closes it |
 
 **Every read waits.** There is one read per kind, and it waits for what it answers or for the end: inside a
-`Concurrent`, `accept`, `read_line`, `read_as_string` and `read_as_buffer` are points the state machine returns
+state machine the compiler writes, `accept`, `read_line`, `read_as_string` and `read_as_buffer` are points it returns
 from, so other work runs meanwhile ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). A frame
 loop that serves connections keeps running because the compiler parks the wait (spite_compiler#218, #219), not
 because the program asks whether anything has arrived. Resolving a host name and connecting always wait in place.
@@ -929,7 +928,7 @@ gets no answer at all, and that request is sent once more over a new connection.
 answered in order, and requests a client sent before reading the answers (pipelining) are read one at a time.
 A response to `HEAD`, and a `204` or `304`, carries no body. A server still refuses a request with a chunked body.
 
-Inside a `Concurrent`, `next_request` and `send` wait the way a `Tcp.Connection` does, so a server serves while its program
+Inside a state machine the compiler writes, `next_request` and `send` wait the way a `Tcp.Connection` does, so a server serves while its program
 runs ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). A server reads one request at a time:
 while a client is slow to send the rest of a request, the other connections wait for it.
 
@@ -1033,9 +1032,8 @@ answers `null` with `close_code` set to that code. The codes are the protocol's 
 | `1009` | a message longer than `largest_message` |
 | `1003`, `1008`, `1010` to `1014`, `3000` to `4999` | whatever the other side closed with |
 
-Inside a `Concurrent`, `receive()`, `accept` and `connect` wait the way a `Tcp.Connection` does
-([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)), so one server talks to many sockets at once,
-one `Concurrent` each. `wss`, WebSocket over TLS, belongs here as well.
+Inside a state machine the compiler writes, `receive()`, `accept` and `connect` wait the way a `Tcp.Connection` does
+([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). `wss`, WebSocket over TLS, belongs here as well.
 
 ## Bytes are a `Buffer`
 

@@ -214,7 +214,7 @@ that teach each part of the language say why.
 |---|---|---|
 | Exceptions, error values, and defensive code that passes errors upward | a compile error, `fallback`, or `crash`; a distinction a caller can act on is data (an enum or a union) | [failure.md](failure.md#why-there-are-no-exceptions) |
 | A crash message written in prose | a crash that names the line and shows the values | [failure.md](failure.md#why-a-crash-carries-no-message) |
-| `async` and `await` colouring every caller | concurrency chosen at the call site, joined on first use | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
+| `async` and `await` colouring every caller | no colour: the compiler decides what runs at once | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
 | A runtime you bring, chosen by each library | one concurrency model in the language, no outside driver | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
 | Markup with a grammar of its own and settings for what it becomes | ordinary calls, variadic children, components matched by shape | [metaprogramming.md](metaprogramming.md#markup-is-metaprogramming-too) |
 | JSON between programs that compile from the same source | compile-time-derived binary; JSON only for foreign systems | [json.md](json.md) |
@@ -290,9 +290,8 @@ where each value lives, what is counted, what runs at once and what is locked is
 Nothing is left to get wrong by hand either. Where the compiler lends you an item stored inline, it checks at
 compile time that you do not keep it past the call, and the error names the fix. Two objects that hold each other
 are freed together: a parent that owns its children and a child that knows its parent are plain references, and
-the compiler decides which one of the cycle holds no count. `Concurrent` and `Parallel` still exist for the library
-and for measuring the compiler against a hand-threaded form ([docs/concurrency.md](concurrency.md),
-[docs/memory.md](memory.md)); the moron is never expected to reach for them.
+the compiler decides which one of the cycle holds no count, and decides what runs at once
+([docs/concurrency.md](concurrency.md)): there is no form to ask for threads.
 
 ## Its own compiler, and fast builds
 
@@ -355,8 +354,8 @@ habits from other languages the compiler rejects.
   proven value again is an error.
 - **Do not add logging to find a crash.** The crash line names the file and line and shows every value in the
   condition and in scope: open that line.
-- **Do not reach for `Parallel`, `Concurrent` or `Memory`.** A plain program needs none of them; the compiler places
-  memory and finds the work that can run at once.
+- **Do not reach for `Memory`.** A plain program does not need it; the compiler places memory and finds the work
+  that can run at once.
 
 ## Optimisations belong to the compiler
 
@@ -408,9 +407,9 @@ at compile time, and a fault prints where it happened. Two objects holding each 
 **How do errors work without exceptions?** A compile error, `fallback` (the function answers "nothing"), or `crash`
 (the program halts and shows the line and the values). [docs/failure.md](failure.md)
 
-**What does concurrency look like?** Usually nothing: the compiler runs independent calls at once, splits loops
-across the cores and starts waits early. `Concurrent(f)` and `Parallel(f)` exist at the call site for the library
-and for measuring, with no `async`; reading the handle is the wait. Built on Windows.
+**What does concurrency look like?** Nothing: the compiler runs independent calls at once, splits loops across
+the cores and lets a frame go on while a call waits, with no `async`, no handle and no form to ask for it. Built on
+Windows.
 [docs/concurrency.md](concurrency.md)
 
 **What tooling is there?** The compiler is the formatter and linter; a REPL, live reload and breakpoints come

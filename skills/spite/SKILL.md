@@ -102,7 +102,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Never write defensive code: no checks the compiler already proves (proving the proven is an error), no default
   that a caller could mistake for a real answer.
 - No lambdas, no destructuring, no overloading, no `async`/`await`. Pass a named function; one name is one
-  function; a caller makes a call concurrent with `Concurrent(f)` or `Parallel(f)`, and reading the handle waits.
+  function; the compiler decides what runs at once, and `Parallel(...)` and `Concurrent(...)` are not part of Spite.
 - A call or a constructor is never an argument of another call: compute it into a named `var` first.
 - A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
   blank lines: name the part and call it.

@@ -53,7 +53,7 @@ accepted or refused whatever the optimisation settings.
   [Frame objects](#objects-that-never-leave-their-function-live-in-the-frame).
 - **Items read from a list**: an item a name holds or a call is handed is not counted while the list keeps it.
   [Items read from a list](#items-read-from-a-list).
-- **Singletons with `Parallel`**: write nothing; the compiler picks the lock. [Threads](#threads-and-locks).
+- **Work that runs at once**: write nothing; the compiler proves which work is independent. [Threads](#threads-and-locks).
 
 ## Presence and control flow
 
@@ -119,7 +119,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 - **Proves**: a narrowed attribute read is still valid after a call.
 - **Rule**: a narrowed attribute read is refused when a call between the check and the read may assign that
   attribute, followed through everything the call reaches. A constructor's writes to its own object do not count; a
-  wait writes nothing in a program that makes no `Concurrent` or `Parallel`, and anything in one that does; a call
+  wait writes nothing in a program in which the compiler starts no waiting work, and anything in one where it does; a call
   through a function value reaches every function taken as a value with its signature; a `drop()` that may run is
   followed too. Inside a loop, a call anywhere in the body undoes a narrowing made before the loop for the next pass.
   A `[]` or count proof is undone by a call that shrinks the list, and a proven read that finds its list changed
@@ -365,8 +365,8 @@ func Ranged(): Long {
 
 - **Proves**: `function_waits` and `is_resumable` fold.
 - **Rule**: waiting spreads from `sleep`, console, file and socket reads and joins, through calls, function values
-  (to every function taken as a value with the same signature) and `type` dispatch, until nothing changes. Letting
-  go of a `Concurrent` waits. Where it cannot tell, the answer is true.
+  (to every function taken as a value with the same signature) and `type` dispatch, until nothing changes. Where it
+  cannot tell, the answer is true.
 - **Falls back**: refused when an answer would decide itself: `whether '...' can wait was answered ... before the
   functions that ask 'function_waits' were compiled ...`.
 
@@ -493,8 +493,8 @@ The rules are on [Concurrency](concurrency.md) and in
 ### No other thread counts a class
 
 - **Proves**: the objects of a class are counted by one thread only, so their counts are plain arithmetic.
-- **Rule**: code that can run on another thread is every function a `Parallel` or a `Concurrent` starts (a band of
-  a banded loop among them: the compiler starts it with the same IR node), every function those call, the constructors and attribute defaults of what they make, and, where they call a function
+- **Rule**: code that can run on another thread is every function the compiler starts on another thread (a call
+  in a row, a band of a banded loop), every function those call, the constructors and attribute defaults of what they make, and, where they call a function
   value, every function the program takes as a value. A class is counted by another thread when that code names a
   value of it or of anything that holds it (an attribute, a list's or a dictionary's items, a union's member, a
   shape's filler). A union or shape whose members are not known counts every class. A program that makes a
@@ -502,11 +502,10 @@ The rules are on [Concurrency](concurrency.md) and in
 - **Buys**: plain counts for every other class whose objects' class is known where they are counted.
 - **Falls back**: an atomic count wherever the class is not known while compiling, or another thread may count it.
 
-### Which singletons a `Parallel` reaches
+### Which singletons a `ForeignCallback` reaches
 
 - **Proves**: which singletons need a lock.
-- **Rule**: walk the calls from every function a `Parallel` can run and from every function handed to C as a
-  `ForeignCallback`. A reached singleton is made safe for threads, an unreached one takes no lock. A reached function
+- **Rule**: walk the calls from every function handed to C as a `ForeignCallback`. A reached singleton is made safe for threads, an unreached one takes no lock. A reached function
   that reads or writes an attribute of a program singleton directly, from another class, reaches that singleton too.
 - **Falls back**: locked.
 
@@ -534,42 +533,17 @@ The rules are on [Concurrency](concurrency.md) and in
   around the read, or around the whole statement that assigns it, so `tally.total = tally.total + 1` adds once. An
   attribute nothing assigns after the singleton is made is read with no lock.
 
-### A lock that would wait forever is an error
-
-- **Proves**: no two functions wait for each other.
-- **Rule**: a locked function that waits for a `Parallel` whose work calls back into the same singleton, or a loop
-  that never ends inside a locked function, is refused. A handle passed or returned is not judged.
-- **Falls back**: refused: `'...' waits for '...' while it holds ...'s lock ...: each would wait for the other
-  forever ...`.
-
 ### A loop that can never end is an error
 
 - **Proves**: a loop can end.
-- **Rule**: every `while true` is refused, since a loop states the condition it runs under; in `Parallel` work and
-  in a locked singleton function an endless one may be refused with the reason that is worse there.
+- **Rule**: every `while true` is refused, since a loop states the condition it runs under.
 - **Falls back**: refused: `'while true' is decided while compiling and is always true here: ...`.
-
-### A poll that nothing steps is an error
-
-- **Proves**: a poll lets other work run.
-- **Rule**: a `while` that reads `handle.finished` and calls nothing is refused.
-- **Falls back**: a loop that calls something halts after 1,000,000 polls with no frame stepped.
 
 ### A write to an object only this function holds must be read
 
 - **Proves**: no lost write.
 - **Rule**: a write to a local only this function holds (a constructor's result, a copy, an always-new result),
   never read after it, is refused.
-
-### What a `Parallel` may reach
-
-- **Proves**: work on another thread cannot race.
-- **Rule**: a `Parallel` work reaches only its own value attributes, its locals and
-  singletons. It writes a value attribute only of an object handed over to it, never of `this`, an attribute, a
-  parameter or a local used again.
-- **Falls back**: refused: `'...' runs '...' on another thread, so it may reach only ...`, or `'Parallel(kept.bump)'
-  writes 'count' of this 'Counter' on another thread while this thread may write it too, so one write would be lost
-  ...`.
 
 ### Passes that write only their own item
 
@@ -579,18 +553,18 @@ The rules are on [Concurrency](concurrency.md) and in
 - **Buys**: the passes run in bands on several threads.
 - **Falls back**: the loop in order.
 
-### Which calls suspend a `Concurrent`
+### Which calls suspend started work
 
 - **Proves**: which functions need a resumable form.
-- **Rule**: a function given to a `Concurrent` that can wait, and every waiting function it calls, is compiled as a
-  resumable state machine.
+- **Rule**: a function of waiting work the compiler starts (a frame's call, a read in a row) that can wait, and
+  every waiting function it calls, is compiled as a resumable state machine.
 - **Falls back**: a wait the compiler does not see as such runs the event loop in place.
 
 ### A wait in a frame is started
 
 - **Proves**: waits in a loop overlap.
 - **Rule**: in a loop that sleeps, a call with no arguments and no answer that can wait is started as a
-  `Concurrent`, unless either side writes back a value read before a wait.
+  state machine of its own, unless either side writes back a value read before a wait.
 - **Falls back**: it waits where it is written. See
   [a wait in a frame](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame).
 

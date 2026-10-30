@@ -213,7 +213,7 @@ interface's order (`mixer.set_voice_started(started.address)`) and keeps them in
 `'no_context'` functions of one singleton, which tells the voices apart by the object C passes back as a `Long`.
 
 **Threads.** XAudio2 calls from its own thread, so a function handed over with `ForeignCallback` may run on a
-thread C made, and it is held to what a `Parallel`'s work is held to ([concurrency.md](concurrency.md)): a function
+thread C made: a function
 of an ordinary object may reach only the attributes of its own that hold values, its locals and singletons, and a
 singleton it reaches (the owner of a `'no_context'` function included) is made safe for threads by the compiler, a
 lock or atomics as its state needs. A program that makes a `ForeignCallback` counts references

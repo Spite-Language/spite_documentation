@@ -111,8 +111,7 @@ func is_alive(): Boolean {
   `'Bundle.CounterButton(screen.id)' is constructed inside an argument of 'world.create_entity_from_bundle': a
   constructor call is never an argument, so make it first on a line of its own, 'var counter_button =
   Bundle.CounterButton(screen.id)', and pass 'counter_button'`. That goes for `Label(Font())` and
-  `buffers.set(List<String>())` too. A constructor read at once is fine (`JsonWriter<Order>().write(order)`), and
-  `Parallel(worker.run)` passes a function, not an object.
+  `buffers.set(List<String>())` too. A constructor read at once is fine (`JsonWriter<Order>().write(order)`).
 - The two branches of an `if`/`else` never compute the same call (`'measure(2)' is computed in both branches`):
   compute it once before the `if`.
 - An `if`/`else` never sits directly inside a branch of another `if`/`else`: move the inner decision into a
@@ -416,8 +415,7 @@ func is_alive(): Boolean {
   is already proven by the loop condition`). Delete the line.
 - A `Boolean?` is not a condition (`which would only test that it is there, not that it is true`): narrow it
   first, or compare it `== true`. The exceptions are `fallback flag` and `crash flag`, which mean the flag is there
-  and `true` (as on a `Boolean`); there is no `flag != null`. A `Concurrent` or `Parallel` handle of a `Boolean?` is refused
-  as a condition too: `if ready == true`.
+  and `true` (as on a `Boolean`); there is no `flag != null`.
 - There are no exceptions and no error values. Three outcomes only:
   - the compiler can know it: a compile error;
   - absence is fine: `fallback condition` stops the function and answers "nothing": it returns, answers `null`
@@ -566,8 +564,8 @@ func is_alive(): Boolean {
   others) and used through the name. `Journal().record(entry)`, `Build().program`, `keep(Console())` and
   `return Console()` are errors (`'Console' is a singleton: bind it once beside the attributes`), and so are a
   binding nothing reads, even in a loaded package, and a binding inside a function (`'Build' is a singleton, bound
-  here as a local`). One of the program's own that a `Parallel` reaches is made thread-safe by the
-  compiler; write no lock for it. Singletons whose attributes make each other, even through an ordinary object
+  here as a local`). Write no lock for one: work the compiler runs at once never
+  shares a singleton one of them writes. Singletons whose attributes make each other, even through an ordinary object
   (`World` binds `Column<Entity>`, which makes an `Entity`, which binds `World`), are an error naming the circle
   (`singletons initialise each other in a circle`): bind one of them in the class that uses both instead.
 - `value.memory` is where a named value lives (`.address`, `.bytes`, `.section`: `'heap'` or `'constant'`); a
@@ -637,24 +635,22 @@ whose `is_text()`, `read_as_string(): String?` and `read_as_buffer()` read it. P
 means the connection ended: `close_code` says how (`1000` a normal close, `1002` a broken frame, `1006` no close at
 all), so a protocol violation is never silent. `close()` sends the close and `receive()` keeps answering until the
 peer's close arrives.
-`Concurrent(function)` runs a function as a compile-time state machine and `Parallel(function)` on the thread pool: the handle stands
-in for what the function returns and reading it is the wait (there is no `.wait()`: `an Integer has no function
-'wait'`), `finished` answers without waiting, `finished_value(): T?` is the value once finished and `null` before
-(never a wait, so a system that only collects finished work keeps `is_resumable` false: `var found =
-handle.finished_value()`, then `if found { }`), and dropping the handle waits for it. When the entry function returns, every `Concurrent` still running runs to its end before any singleton is destroyed, and two that wait for each other halt (`joins_a_concurrent_that_waits_for_this_one=true`). Walk a list with `each_<member>()`: there is no `parallel_each_`, and the compiler runs the walk in bands when it proves each pass touches only its own element. A `Parallel(f)`
-may read only its own instance's plain values, its locals, singletons, or a counter or flag shared by threads (a singleton attribute each function touches once, which the compiler makes one atomic instruction; `Atomic<T>`, `Lock` and `ThreadLocal` are internal and a program cannot name them: keep per-thread data in locals and shared data in singletons); anything else is an error naming the attribute. One exception: `var crafter = Crafter(first)` then `var run = Parallel(crafter.craft)` hands the object over, so its task may keep lists of values (`List<Integer>`, `List<String>`) and objects of its own that it made itself; touching `crafter` after that line is `'crafter' was handed to 'Parallel(crafter.craft)', which keeps its 'recipe_ids' on another thread, so it is not used after that line`. Keep a list of ids as a `List<Integer>`, never as comma-joined text. A `Parallel`'s work writes a number, `Boolean`, enum or text attribute only of an object handed over that way: writing one of `this` (`Parallel(own_function)`), a parameter or an attribute is `... is not handed over to it, so another thread may write it at the same time and one write would be lost`; answer the value from the work and read the task's result, or count it in a singleton or under a `Lock` attribute's `while_locked(...)`. A singleton a `Parallel` reaches locks each of its functions that touch its state, so never make and wait for a `Parallel` inside such a function when the work calls back into the same singleton: `'Columns.despawn_all' waits for 'Parallel(remover.run)' while it holds Columns's lock, ...`. Start and read the `Parallel` from a class that is not that singleton. Many calls to one singleton from a counted loop (`while index < count { columns.remove_row(index); index = index + 1 }`, nothing else locked or waited on in it) take its lock once for the whole loop, so such a loop is the cheap way to call a singleton many times; keep other singletons and waits out of it. A singleton's function that only reads (a lookup such as `at(row)`: locals, reads of lists, text and numbers, no calls out) runs beside other readers on other threads and waits only for writers, so keep lookups in small functions of their own, apart from the ones that change the singleton. There is no `async`/`await`: a function
+A program never says what runs at once: `Parallel(...)`, `Concurrent(...)` and `parallel_each_` are not part of Spite
+(writing one is a compile error), so call the function itself. The compiler runs independent calls in a row at once,
+a loop over a list of different classes at once, and an `each_<member>()` walk in bands when it proves each pass
+touches only its own element; what it runs at once prints what running in order prints, and the first crash stops
+the program. There is no lock, atomic or thread-local class to name: keep per-thread data in locals and shared data
+in singletons. There is no `async`/`await`: a function
 that reads, sleeps or waits is an ordinary function, and the compiler suspends it there when something else can
 run ([concurrency.md](https://github.com/Spite-Language/spite_documentation/blob/master/concurrency.md)), wherever the
 wait is written (an `and`, a function value, a constructor), keeping the written order: in `count + bump()`,
-`count` is read before `bump()` waits, even if another `Concurrent` changes it meanwhile.
+`count` is read before `bump()` waits.
 `$system_type.functions["update_each"].is_resumable` is decided while compiling (and `phase.is_resumable` for each
-function a walk visits): `true` when the function can reach a wait, so an engine starts it as a `Concurrent` and
-polls `finished`, and calls it directly otherwise. A system never says that it does IO. A wait in a frame does not hold the frame: in a `while` that sleeps on a
+function a walk visits): `true` when the function can reach a wait. A system never says that it does IO. A wait in a frame does not hold the frame: in a `while` that sleeps on a
 `Program` (itself or through its own class's functions), and in its own class's functions it calls, a statement
 `report.fetch()` or `systems[index].update()` (no arguments, answering nothing, on another object of the program)
-whose function can wait is started like a `Concurrent` and finishes in a later frame, eight per statement at most,
-all of them before the program ends. Write the IO plainly in the system's own class; never wrap it in `Concurrent`
-to keep a frame loop going.
+whose function can wait is started by the compiler as a state machine of its own and finishes in a later frame,
+eight per statement at most, all of them before the program ends. Write the IO plainly in the system's own class.
 `update.arguments[1].is_mutated` (with `var update = $system_type.functions["last_each"]` narrowed by `crash update`)
 is decided while compiling the same way: `true` when the function, or anything it calls, changes what its argument
 number 1 (from 0) is given or anything reached through it; an engine writes `crash not update.arguments[1].is_mutated`
@@ -713,8 +709,8 @@ of a singleton when C gives none (a window procedure; the singleton tells object
 callback takes and returns only numbers, `Boolean` (a 32-bit `BOOL`) and `Memory.Address`; text C passes is an
 address read with `terminated_text()`. Keep the `ForeignCallback` in an attribute of the object that owns the C
 registration and unregister in its `drop()`: C may call only while it is kept, and a call after the drop halts
-naming the function. A handed-over function follows a
-`Parallel`'s rules (its own value attributes, locals, singletons). A COM-style interface is a `Memory.Heap` block
+naming the function. A handed-over function of an ordinary object
+may reach only its own value attributes, its locals and singletons. A COM-style interface is a `Memory.Heap` block
 whose first word points at a table filled with `TypedMemory<Long>` and each `ForeignCallback`'s `address`.
 Game maths (docs/game_maths.md): `Vector2`, `Vector3`, `Vector4` are generic over a number class taken from their
 parts, `Vector3(1.0, 2.0, 3.0)` a `Vector3<Float>` and `Vector2(5, 1)` a `Vector2<Integer>` (never `Vector3i`), written
@@ -823,7 +819,6 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `'hello'` for text | `'hello' in single quotes is an enum value literal, and text is wanted here: text is always written in double quotes` | `"hello"`: single quotes are enum values only |
 | `flags.bits_and(mask)` with a wider `mask` | `'flags.bits_and(mask)' works in a Byte, since a bitwise function takes its receiver's type` | widen the receiver first: `var wide: Long = flags` |
 | `var held: $held_type = null` bound to a `type` that requires a function | `'held' is a Weapon, a type that requires the function 'strike', so '= null' has no default to make` | `$held_type?`, or set it in the constructor |
-| a `while true` frame loop in a singleton a `Parallel` reaches | `'Window.run' holds Window's lock for the whole call ... and this loop never ends` | put the loop in a plain object that calls the singleton each pass |
 | `for item in list` | `Spite only has 'while' loops; there is no 'for'` | `each_<member>()`, `map_`/`filter_<member>()`, or `list.each(function)` with a function of yours; `while index < list.count()` when the body needs more |
 | `break`, `continue` | `Spite has no 'break': a loop stops in its own condition` | the loop's own condition: `while index < count and not found` |
 | `list.add(x)`, `list.pop()` | `List has no method 'add', which does not say where` | `append`/`prepend`, `remove_last()`/`remove_first()` |

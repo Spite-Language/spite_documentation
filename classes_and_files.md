@@ -292,9 +292,8 @@ A singleton lives until the program ends, and its `drop()` runs then, newest sin
 use any singleton its class keeps in an attribute. What one costs at run time is a static slot, filled the first
 time it is asked for: fetching it is one load, it is never reference counted, and a program never pays for a
 singleton it does not reach ([optimizations.md](optimizations.md#a-singleton-is-made-on-first-use-by-a-function-of-its-own)).
-A singleton that a `Parallel` can reach is made safe for threads by the compiler, with nothing written in the
-source, and only in programs that use `Parallel`
-([optimizations.md](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)). The details are in
+Work the compiler runs at once never shares a singleton one of them writes, so a singleton needs nothing written
+for threads ([concurrency.md](concurrency.md#no-lock-to-write)). The details are in
 [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#singleton-rules).
 
 ### One instance per argument values

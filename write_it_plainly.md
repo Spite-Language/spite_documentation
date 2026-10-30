@@ -10,7 +10,7 @@ with a plain program, and how to write one it can make fast.
 Every hand optimisation is a decision a person makes once, with what they knew that day, and then has to keep
 true forever. A lock taken in the wrong order, a thread band sized for last year's machine, a structure of arrays
 kept in step by hand, a scratch pool someone forgot to clear: each is a place to be wrong, and most of them are
-wrong silently. They also hide the intention. Code full of `Parallel`, arenas and offsets says how it was made
+wrong silently. They also hide the intention. Code full of threads, arenas and offsets says how it was made
 fast, not what it does, so the next reader (often an AI) has to reverse it before changing it.
 
 The compiler sees the whole program at once. It knows every function a call reaches, every field a loop reads,
@@ -39,7 +39,7 @@ Each of these is decided while compiling, from proofs about your code. [Optimisa
 one with the proof that enables it, and [Proofs](proofs.md) lists every fact the compiler proves.
 
 - **Threads.** Calls in a row that share nothing written run at once. A loop whose passes are independent can run
-  on several cores. You write neither `Parallel` nor a lock.
+  on several cores. You write neither a thread nor a lock.
 - **Waiting.** A function that waits is known to wait; the waiting is arranged by the compiler, with no `async`,
   `await` or handle in your code.
 - **Layout.** How a class's fields sit in memory, how a list stores its items, and how both line up with the
@@ -125,9 +125,8 @@ Use what the standard library already has. Timing a loop with the clock where `B
 mistakes as it sees them made, and a program written the library's way is one the compiler can make fast with
 confidence.
 
-`Concurrent`, `Parallel` and the `Memory` classes are documented in [Concurrency](concurrency.md) and
-[Memory](memory.md). They exist for the standard library and for code that measures the compiler against a
-hand-written form. A plain program does not need them, and should not reach for them to go faster: if the plain
+The `Memory` classes are documented in [Memory](memory.md). They exist for the standard library and for code
+that measures the compiler against a hand-written form. A plain program does not need them, and should not reach for them to go faster: if the plain
 form is slower than the hand form, that is the compiler's bug to fix, not the program's.
 
 ---

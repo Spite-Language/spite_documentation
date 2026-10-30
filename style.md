@@ -382,7 +382,7 @@ func ConstructorArgumentError() {
 A constructor is a call whose last name starts with an upper-case letter, so this covers a constructor inside
 another constructor's arguments (`Label(Font())`) and a collection made for a call
 (`buffers.set(List<String>())`). An object made to be read at once is not an argument: `JsonWriter<Order>().write(order)` is
-fine, and so is `var label = Label("new")` itself. `Parallel(worker.run)` passes a function value, not an object.
+fine, and so is `var label = Label("new")` itself.
 
 **An `if` and its `else` do not repeat the same work.** When both branches compute the same call, it is
 computed once before the `if`:

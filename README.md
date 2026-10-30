@@ -122,7 +122,7 @@ with a link to the next.
 12. [reflection.md](reflection.md): every class an instance of `Spite.Class`, a class against an instance, the
     `Spite` classes and their members, what folds and what is known only at run time.
 13. [packages.md](packages.md): `load`, namespaces, reopening classes (mods), the reserved `Spite` namespace.
-14. [concurrency.md](concurrency.md): `Concurrent` and `Parallel`, and waiting without `async`/`await`.
+14. [concurrency.md](concurrency.md): what the compiler runs at once, and waiting without `async`/`await`.
 
 **The standard library**
 

@@ -199,8 +199,8 @@ a Loader has state: true
 ```
 
 `is_resumable` is true when a function can reach a wait (here the file read), so it is also compiled as a state
-machine that pauses there; an engine asks it to start such a system as a `Concurrent` it polls between frames and
-to call every other system directly ([concurrency.md](concurrency.md)). `is_mutated` follows every call, however deep:
+machine that pauses there; the compiler asks it to start such a call in a frame loop as a state machine of its own,
+so the frame goes on while it waits ([concurrency.md](concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame)). `is_mutated` follows every call, however deep:
 `into.append(path)` changes the list passed as `into`, and nothing changes `path`.
 
 The attributes of its class a function reads and writes are two lists of declarations, following every call it
@@ -620,8 +620,7 @@ One line declares one value, and the lines sit at the top of the file, so skimmi
 accepts. Every hole is filled at every call: there are no defaults, and the wrong number of values is an error
 that lists the class's values in order (the second program below). A generic class needs no constructor
 (`library/list.spite` is `generic $element_type` and its functions), and when the constructor's arguments say
-every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, Integer>` and `Concurrent(file.read)` a `Concurrent<String?>`
-([concurrency.md](concurrency.md)). `Pair` may declare `var left: $left_type = null` because its constructor
+every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, Integer>`. `Pair` may declare `var left: $left_type = null` because its constructor
 assigns `left` at once; anywhere else `null` belongs to `T?` alone, and `var left = $left_type()` makes
 the default of whatever `$left_type` is bound to.
 
@@ -993,9 +992,9 @@ at compile time:
   never reaches the function has no copy of it.
 - In a production build, a **function or class** nothing reachable uses is not emitted
   ([optimizations.md](optimizations.md#tree-shaking)).
-- The **concurrency machinery** (the state machines of a `Concurrent` and the loop that runs them, the thread pool,
-  atomic reference counts) exists only in a program that makes a `Concurrent` or a `Parallel`, or is built with
-  `--repl-port` or `--hot-reload`
+- The **concurrency machinery** (the state machines of waiting work and the loop that runs them, the thread pool,
+  atomic reference counts) exists only in a program in which the compiler finds work to run at once, or that is
+  built with `--repl-port` or `--hot-reload`
   ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-used)).
 
 This is tree shaking over the program's own model.

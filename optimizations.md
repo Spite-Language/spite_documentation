@@ -35,7 +35,7 @@ shrunk layouts, ranges that drop checks) are not applied, because code added lat
 else on this page changes how fast the program runs, not what it is made of.
 
 What you can observe at all is short: the counts `--debug-memory` prints, when a singleton's constructor runs, the
-order in which a fused chain calls your member functions, the point inside a statement where a `Concurrent` waits,
+order in which a fused chain calls your member functions, the frame in which a call a frame loop started finishes,
 the size of the executable, and speed. Apart from those, no optimisation changes what a program prints or computes.
 
 The page is grouped by what the compiler is working on.
@@ -56,19 +56,12 @@ to swap and the REPL can reach every class ([compiler.md](compiler.md#developmen
 
 ### Concurrency machinery only where it is used
 
-The scheduler, the handle of a `Concurrent` or `Parallel` and the table that bounds calls in a row are written for a
-program only when it makes such a handle; a program that makes neither carries none of them, not even an import of a
-thread function. A thread is started only where a `Parallel` is made (or where a loop runs
-[in bands](#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)): there is no pool made at the start and no
-worker waiting for work. A program that makes no `Parallel` starts no thread. A `Parallel` pays for starting its
-thread each time it is made.
-
-```spite
-var first = Concurrent(slow_read)
-var answer: Integer = first
-```
-
-writes the scheduler and the join for this program, and nothing for a program that has no such line.
+The scheduler, the state machines, the thread pool and the table that bounds calls in a row are written for a
+program only when the compiler finds work in it to run at once
+([concurrency.md](concurrency.md#what-it-costs)); a program in which it finds none carries none of them, not even
+an import of a thread function. The pool is made at the first piece of work the compiler starts on it (a
+[call in a row](#calls-in-a-row-that-only-compute-a-number-run-at-once), a
+[band](#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)) and keeps its threads for the next.
 
 ### Conditions decided while compiling
 
@@ -173,7 +166,7 @@ the balance is always the same, and some of the allocations are gone.
 A function's parameters are held by its caller for the whole call, so the function does not count them: it reads
 them as they are and lets nothing go when it returns. The caller holds what it passes when it is a name of its own,
 `this`, a singleton, or an object it has just made. A function counts a parameter only when it assigns it again, or
-when it runs as a step of a `Concurrent` (its frame outlives the call that started it).
+when it runs as a step of a state machine (its frame outlives the call that started it).
 
 An argument read from a place the call may assign (an attribute the callee, or anything it calls, writes; a list
 slot; a back reference; the answer of a wait) is counted by the caller before the call and let go after it, so the
@@ -215,7 +208,7 @@ loop that reads `var item = items[index]` and appends to another list of the sam
 counting it.
 
 It does not apply when the name is assigned again, when something after it in the block may write the slot, or in a
-step of a `Concurrent`. What you can observe: nothing but time.
+step of a state machine. What you can observe: nothing but time.
 
 ### An item passed to a call that cannot change its list is not counted
 
@@ -339,32 +332,13 @@ looks its free function up from its class number. The release is written where i
 
 ### Plain counts where no other thread counts a class
 
-A count is a plain addition and subtraction unless the program can run code on another thread: one that starts a
-`Parallel` or makes a `ForeignCallback`, which C may call from a thread of its own. Only then are counts atomic, and
+A count is a plain addition and subtraction unless the program can run code on another thread: one in which the
+compiler runs work on another thread, or that makes a `ForeignCallback`, which C may call from a thread of its own. Only then are counts atomic, and
 even then only for the classes another thread can count. The compiler finds every class whose objects code on another
 thread can name, hold or reach ([no other thread counts a class](proofs.md#no-other-thread-counts-a-class)), and every
-count of any other class stays plain, in the whole program.
-
-```spite
-func PlainCounts() {
-    var summer = Summer(1000000)
-    var sum = Parallel(summer.total)
-    var points = List<Point>()
-    var index = 0
-    while index < 1000 {
-        var point = Point(index, index * 2)
-        points.append(point)
-        index = index + 1
-    }
-    console.print(sum, points.count())
-}
-```
-
-`summer.total` runs on a worker, so `Summer` counts atomically; the thousand `Point`s are touched only by the
-program's own thread, so they count plainly. A count whose class is not known while compiling (a union, a shape, a
+count of any other class stays plain, in the whole program. A count whose class is not known while compiling (a union, a shape, a
 function value) stays atomic in a program with threads, and a program that makes a `ForeignCallback` counts every
-class atomically. A program that makes a `Concurrent` and no `Parallel` runs its tasks on its own thread and counts
-plainly.
+class atomically.
 
 ## Where objects live
 
@@ -1391,9 +1365,10 @@ singleton the program uses.
 
 ### Thread safety for singletons, the cheapest safe form
 
-In a program that makes a `Parallel`, every singleton the work a `Parallel` runs can reach is made safe for threads in
-the first of these forms that holds for what its functions do. A singleton no such work reaches gets none of them,
-and a program without `Parallel` gets none at all.
+In a program that hands C a `ForeignCallback`, which C may call from a thread of its own, every singleton the
+function it calls can reach is made safe for threads in the first of these forms that holds for what its functions
+do. A singleton no such function reaches gets none of them, and a program without one gets none at all. Work the
+compiler runs at once shares no singleton one of them writes, so it never needs these.
 
 1. **Nothing, when it never changes after it is made.** No function but its constructor assigns its attributes, no
    other class does, and every attribute is a number, a `Boolean`, an enum, an untouched `String` or another
@@ -1427,11 +1402,6 @@ func run(): Integer {
 With `Settings` only set in its constructor and `HitCounter.record` a single `hits = hits + amount`, `run` reads the
 step in place and adds atomically, where every call would otherwise take two locks.
 
-While no task is running, the program's own thread is the only one running program code, so a lock that is free is
-claimed with a plain store instead of an atomic step; a task started while a call holds the lock finds it owned and
-waits as usual. A program that makes a `ForeignCallback` always claims atomically, since C may call from a thread of
-its own.
-
 ### A counted loop of calls to one singleton takes its lock once
 
 A `while` outside a singleton whose condition is `counter < bound` and whose last statement is `counter = counter +
@@ -1455,8 +1425,8 @@ func count_up(): Integer {
 }
 ```
 
-Four `Parallel`s running `count_up` each take `Tally`'s lock once. A singleton that would otherwise be made safe with
-atomics takes its lock instead when such a loop in the work would hold it: one lock taken per loop costs less than one
+`count_up` takes `Tally`'s lock once. A singleton that would otherwise be made safe with
+atomics takes its lock instead when such a loop would hold it: one lock taken per loop costs less than one
 atomic step per call. What you can observe: other threads calling the singleton wait for the whole loop instead of
 for each call, which is one of the orders they could already run in.
 

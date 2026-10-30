@@ -2,106 +2,39 @@
 
 There is no `async` and no `await` in Spite, and there never will be. In JavaScript or C# a function that waits
 declares itself `async`, which changes its return type and forces every caller to `await` it, and every caller's
-caller, all the way up: the waiting leaks into every signature above it. Spite keeps waiting a property of the
-*call site*: any function can be run concurrently by whoever calls it, and a function never says whether it waits.
+caller, all the way up: the waiting leaks into every signature above it. In Spite a function never says whether it
+waits, and a program never says what runs at once: the compiler decides.
 
 ## Why one model, and no runtime to bring
 
-Two things went wrong in other languages, and Spite avoids both by where it puts the decision.
+Three things went wrong in other languages, and Spite avoids all three by where it puts the decision.
 
 The first is the colour of a function. When the callee declares itself `async`, every caller has to change with it,
-transitively, and every return type changes too. So the choice belongs to the caller, never the callee: an ordinary
-function is made concurrent by whoever calls it with `Concurrent(...)`, and the handle it gives back joins on first
-use, with no `await`, no wrapper type and no `.wait()` to remember.
+transitively, and every return type changes too. In Spite a call is a call: it waits where it is written, or the
+compiler lets other work run while it waits, and no signature changes either way.
 
 The second is the runtime you bring. When the language only describes a future and leaves the thing that drives it
 to the community, several runtimes appear, and every library has to say which one it was written for. Spite has one
-concurrency model, in the language, and no protocol for an outside driver to implement. A library cannot ask for
-something else to run its work, because nothing else exists to ask.
+model, in the compiler, and no protocol for an outside driver to implement. A library cannot ask for something
+else to run its work, because nothing else exists to ask.
 
-## `Concurrent`: work that waits
+The third is the person choosing. Which calls are independent is a fact about what each one reads and writes, and
+the compiler reads every function a call reaches; a person guesses, and a guess that is wrong is a race. So there
+is no form to ask for threads or for waiting work: `Parallel(...)` and `Concurrent(...)` are not part of Spite, and
+writing either is a compile error that says to call the function itself
+([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#what-runs-at-once)).
 
-`Concurrent(file.read)` takes a function value (a function bound to its instance, as in
-[functions_and_operators.md](functions_and_operators.md)) and starts running it straight away. The handle it
-gives back stands in for what the function returns (a `String?` for `file.read`), and the type is worked out
-from the function, so it is never written.
+Whatever the compiler runs at once, the program prints what running it in order prints. Where it cannot yet prove
+work independent, the work simply runs in order.
 
-```gdscript title=concurrent_tour/sleeper.spite
-var program = Program()
-var name = ""
-var milliseconds = 0
-var log = List<String>()
-
-func Sleeper(starting_name: String, starting_milliseconds: Integer, shared_log: List<String>) {
-    name = starting_name
-    milliseconds = starting_milliseconds
-    log = shared_log
-}
-
-func nap(): String {
-    log.append("{name} falls asleep")
-    var pause = Duration(milliseconds, 'milliseconds')
-    program.sleep(pause)
-    log.append("{name} wakes up")
-    return name
-}
-```
-```gdscript title=concurrent_tour/concurrent_tour.spite entry
-var console = Console()
-var log = List<String>()
-var _slow_nap_milliseconds = 150
-
-func ConcurrentTour() {
-    load "../spite_standard_library/windows"
-    var slow_sleeper = Sleeper("slow", _slow_nap_milliseconds, log)
-    var fast_sleeper = Sleeper("fast", 10, log)
-    var slow = Concurrent(slow_sleeper.nap)
-    var fast = Concurrent(fast_sleeper.nap)
-    log.append("both are asleep")
-    log.append("{slow} and {fast} are back")
-    var notes = File(".spite/concurrency_notes.txt")
-    crash notes.write_string("written before the read")
-    var reading = Concurrent(notes.read_as_string)
-    if reading {
-        log.append("read: {reading}")
-    }
-    var joined_log = log.join("\n")
-    console.print(joined_log)
-}
-```
-```output
-slow falls asleep
-fast falls asleep
-both are asleep
-fast wakes up
-slow wakes up
-slow and fast are back
-read: written before the read
-```
-
-`nap` and `notes.read` are ordinary functions: they sleep and read the way any function does. What made the two naps overlap is the
-caller writing `Concurrent(...)`, and nothing else. The fast one woke first although it was started second.
-
-### Reading the value is the wait
-
-There is no `.wait()` and no `.join()`: on a `Concurrent<Integer>`, `.wait()` is the error `an Integer has no
-function 'wait'`, because the handle already stands for its result. A `Concurrent<String>` goes wherever a `String` is expected, and the first place it
-is used as one is where the program waits for it: `"{slow} and {fast}"` above, `console.print(slow)`,
-`slow.length()`. Reading it a second time does not wait again: the value is kept. A result that may be null is
-narrowed on the handle itself, `if reading { ... }`, as any `T?` is.
-
-A `var` written without a type keeps the handle, so `var reading = Concurrent(notes.read)` is still the running
-work and can be asked whether it has `finished`, the one member the handle has of its own. Every place a handle
-becomes its value is listed in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting).
+## What runs at once
 
 ### Reads in a row overlap
 
-Outside a `Concurrent`, a read waits where it is written, one after another. The one exception the IO classes make
-on their own is reads side by side: when two or more declarations in a
-row each read a `File` (`read()`) or a `Tcp.Connection` (`read_line()`), the compiler starts every read but the last as a
-`Concurrent`, runs the last one, and waits for all of them before the next statement. The program waits for the
-slowest file rather than for each in turn, and nothing it does afterwards can tell: the values are the same, and a
-file written by the next statement is written after the reads.
+When two or more declarations in a row each read a `File` (`read_as_string()`) or a `Tcp.Connection`
+(`read_line()`), the compiler starts every read but the last, runs the last one, and waits for all of them before
+the next statement. The program waits for the slowest file rather than for each in turn, and nothing it does
+afterwards can tell: the values are the same, and a file written by the next statement is written after the reads.
 
 ```gdscript title=reads_in_a_row/reads_in_a_row.spite entry
 var console = Console()
@@ -127,166 +60,91 @@ volume=7 ada=12
 The two reads above ran at once. The rule is deliberately narrow: only reads, only side by side, and only when
 the name read into is not assigned again later, so starting them early cannot change what the program sees. A
 read followed by other work waits where it is written. The exact conditions are in
-[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Reads in a row overlap");
-a program that has two such reads pays for the scheduler, as one that writes `Concurrent` does
-([what it costs](#what-it-costs)).
+[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#what-runs-at-once) ("Reads in a row overlap").
 
-### What the compiler does at a wait
+### Calls in a row run at once
 
-A `Concurrent` is a **state machine** the compiler writes while compiling.
-Every function that can reach a wait (`nap` above, and whatever `nap` calls that waits) is compiled a second time
-as a resumable version: its locals and parameters live in a small frame on
-the heap instead of on the stack, and every wait inside it is a numbered point the function can return from and
-later jump back to. Starting a `Concurrent` makes that frame and runs it to its first wait; when the wait is over,
-the program's event loop runs it again from where it stopped. There is no stack per
-`Concurrent`, no stack switching and nothing to ship that a WebAssembly build could not carry:
+When two or more calls in a row share nothing one of them writes, the compiler runs them on threads at once and
+waits for all of them before the next statement:
+
+```gdscript
+func tick() {
+    physics.update_each()
+    animation.update_each()
+    audio.update_each()
+    renderer.draw_all()
+}
+```
+
+If `physics`, `animation` and `audio` each read and write only their own state, the first three run at once, and
+`renderer.draw_all()` starts after all three have finished, as written. The program reads as one step after
+another and runs as fast as the machine allows. The compiler decides it all while compiling, from what each call
+reads and writes through every function it reaches, so a program with nothing to overlap carries none of it.
+
+Calls whose order can be seen stay in order: anything that prints, touches a file or a socket, or reads and writes
+the same state as another call. A call that does little (a few additions, no loop) is never handed to another
+thread, since starting it there would cost more than running it. Two objects of one class count as one, unless
+each belongs to its owner: two `Counter`s passed around and counted through any name share the attribute `total`
+as far as this rule sees, so they stay in order, while a `Physics` and an `Audio` that each keep their own
+`var meter = Meter()`, never assigned anything else, overlap, meters and all. The exact conditions are in
+[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#what-runs-at-once) ("Calls in a row run at once"), and
+[optimizations.md](optimizations.md#calls-in-a-row-that-only-compute-a-number-run-at-once) shows one.
+
+A loop over a list of different objects is the same row, built while the program runs: `systems.each_update()`
+over a `List<System>` holding a `Physics`, an `Animation` and an `Audio` runs the three at once when their classes
+share nothing written, and in order otherwise. The compiler decides which classes may run together while compiling;
+the loop only looks at which objects the list holds when it starts. A list holding two objects of one class runs
+in order.
+
+### `each_` on a long list runs in bands
+
+Write `particles.each_step()` and nothing more. The compiler runs the walk in bands across the processors when it
+proves each pass touches only its own element and the list is long enough for the bands to pay, and in order
+otherwise, with the same output
+([optimizations.md](optimizations.md#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)).
+
+### The first crash stops the program
+
+Work that runs at once may crash, and the first crash that happens stops the program at once: its report is
+printed and nothing else runs. When two pieces of work would both crash, either report may be the one printed,
+and exactly one is. The report ends with one frame line marked `started`, naming the line where the program wrote
+the call that ran apart.
+
+### No lock to write
+
+Work the compiler runs at once never shares anything one of them writes, so it needs no lock, and there is no
+lock, thread-local or atomic class for a program to name; naming anything in `Spite.Internal` is a compile error
+([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+A program that starts a thread counts references with atomic operations, and every other program keeps the plain,
+cheaper counts ([optimizations.md](optimizations.md#plain-counts-where-no-other-thread-counts-a-class)).
+
+## What the compiler does at a wait
+
+A wait the compiler lets other work run past (a frame's call, below, or a read in a row) is a **state machine** the
+compiler writes while compiling. Every function that can reach a wait is compiled a second time as a resumable
+version: its locals and parameters live in a small frame on the heap instead of on the stack, and every wait
+inside it is a numbered point the function can return from and later jump back to. Starting the work makes that
+frame and runs it to its first wait; when the wait is over, the program's event loop runs it again from where it
+stopped. There is no stack per piece of work, no stack switching and nothing to ship that a WebAssembly build
+could not carry:
 
 | The program writes | While it waits |
 |---|---|
 | `program.sleep(duration)` | the state machine returns, and is run again once its time has come |
 | `Console.read_line()`, reading or writing a `File`, a `Tcp.Server`'s `accept`, a TCP connection's `connect`, `read_line`, `read_as_string` or `read_as_buffer`, a UDP `receive` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
-| reading a `Concurrent`'s value, or dropping it | the state machine is run again once that one has finished |
-| reading a `Parallel`'s value, or dropping it | the thread running it is joined, then anything ready runs once |
 
-Code that is not inside a `Concurrent` (the entry constructor and everything it calls) waits where it is: its
-wait runs the event loop itself, so the state machines keep going around it until it is done, unless the program
-has chosen [where they resume](#choosing-where-concurrents-resume). Only one piece of
-Spite code runs on the program's thread at a time, and a state machine only stops at one of these points, so no
-two pieces of Spite code touch the program's state at the same time. The helper thread runs the system call and
-nothing else.
-
-**What waits inside a state machine.** A wait written as a call (`program.sleep(pause)`, `file.read_as_string()`,
-`reading.length()` on a `Concurrent`, a function of your own that waits) is a point the state machine returns
-from, wherever the call is written: in a `var`, an argument, a `{...}` inside text, a `while` condition (which
-waits again on every pass), the right side of `and` or `or`, a call through a function value, a union or a `type`,
-a constructor. Leaving a scope that drops a `Concurrent` waits for it there too. While one `Concurrent` waits, the
-others run, so a value can change during a wait; the order you wrote still holds. Whatever an expression works out
-before its wait is worked out first and kept, and what comes after is worked out after the wait:
-
-```gdscript title=written_order/written_order.spite entry
-var console = Console()
-var program = Program()
-var count = 1
-
-func WrittenOrder() {
-    load "../spite_standard_library/windows"
-    var adding = Concurrent(add_after_a_bump)
-    var total: Integer = adding
-    console.print("read before the wait:", total, "read after it:", count)
-}
-
-func add_after_a_bump(): Integer {
-    return count + bump()
-}
-
-func bump(): Integer {
-    var one_millisecond = Duration(1, 'milliseconds')
-    count = 100
-    program.sleep(one_millisecond)
-    return 2
-}
-```
-```output
-read before the wait: 3 read after it: 100
-```
-
-`count` is read before `bump()` runs, as written, so the sum is `1 + 2`. A local or a parameter is not copied
-for this, since nothing else can change it while the `Concurrent` waits.
+Code that is not inside a state machine waits where it is: its wait runs the event loop itself, so the state
+machines keep going around it until it is done. Only one piece of Spite code runs on the program's thread at a
+time, and a state machine only stops at one of these points, so no two pieces of Spite code touch the program's
+state at the same time. The helper thread runs the system call and nothing else.
 
 **A network read always waits.** A TCP or UDP read has one form, and it waits for what it answers
 ([standard_library.md](standard_library.md#tcp)): there is no "nothing yet" for a game loop to poll every frame.
-A frame loop keeps running because the compiler parks the wait and runs other ready work meanwhile
-(spite_compiler#218, #219).
 
-**When blocking is faster, the compiler blocks.** A program that never makes a `Concurrent` has no state machines,
-no event loop and no helper threads: every wait is the plain blocking call. Inside a program that has them, a wait
-is the plain call whenever nothing else could run (no `Concurrent` is alive and no REPL is listening). It is the
-same rule as everywhere else in Spite: you write what you mean, and the compiler picks the fast way to do it.
-
-### Dropping a handle waits for it
-
-A `Concurrent` is reference counted like everything else, and when the last reference goes, its `drop()` waits
-for the function to finish. So a block that started work cannot end while the work is still running, and no
-result is ever lost or left running in the background: leaving a scope is a join point. That is also how work
-that returns nothing is waited for: keep its handles in a list, and clearing the list, or leaving the function
-that holds it, waits for all of them.
-
-```gdscript title=joined_on_drop/joined_on_drop.spite entry
-var console = Console()
-var program = Program()
-
-func JoinedOnDrop() {
-    load "../spite_standard_library/windows"
-    start_and_forget()
-    console.print("the scope is left only after ring has finished")
-}
-
-func start_and_forget() {
-    var ringing = Concurrent(ring)
-    console.print("ring has finished: {ringing.finished}")
-}
-
-func ring() {
-    var ten_milliseconds = Duration(10, 'milliseconds')
-    program.sleep(ten_milliseconds)
-    console.print("ring")
-}
-```
-```output
-ring has finished: false
-ring
-the scope is left only after ring has finished
-```
-
-The program itself is the last scope. When the entry function returns, every `Concurrent` still running is run to
-its end before anything is torn down, so a handle kept in a singleton is never cut short and its work never sees a
-half-destroyed singleton. Two `Concurrent`s that each wait for the other could never end, so the wait that closes
-the circle halts and says so, however each of them waits
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting)).
-
-### `finished` never waits
-
-`finished` answers whether the function has returned, and it never waits, so a frame loop can start work, keep
-drawing frames, and pick the result up on the first frame after it is ready; the value is then read without
-waiting at all:
-
-```gdscript title=polled_loading/polled_loading.spite entry
-var console = Console()
-var program = Program()
-
-func PolledLoading() {
-    load "../spite_standard_library/windows"
-    var one_millisecond = Duration(1, 'milliseconds')
-    var level = LevelFile("forest")
-    var loading = Parallel(level.read_tiles)
-    var frames = 0
-    while not loading.finished {
-        frames = frames + 1
-        program.sleep(one_millisecond)
-    }
-    console.print("loaded", loading, "while frames kept running:", frames >= 0)
-}
-```
-```gdscript title=polled_loading/level_file.spite
-var name = ""
-
-func LevelFile(starting_name: String) {
-    name = starting_name
-}
-
-func read_tiles(): String {
-    var tiles = 0
-    while tiles < 100000 {
-        tiles = tiles + 1
-    }
-    return "{name} with {tiles} tiles"
-}
-```
-```output
-loaded forest with 100000 tiles while frames kept running: true
-```
-
-It is the same on every system: it reads a flag the worker sets when the function returns, with no system call.
+**When blocking is faster, the compiler blocks.** A program with no state machine has no event loop and no helper
+threads: every wait is the plain blocking call. Inside a program that has them, a wait is the plain call whenever
+nothing else could run. It is the same rule as everywhere else in Spite: you write what you mean, and the compiler
+picks the fast way to do it.
 
 ### A wait in a frame does not hold the frame
 
@@ -294,8 +152,8 @@ A **frame loop** is a `while` whose passes sleep until the next frame: it calls 
 a function of its own object. The work such a loop runs often waits, for a file, a socket or a database, and a
 frame should not stop while it does. So, in the loop and in every function of its own object it calls, a call
 that waits and answers nothing, made on another object of the program (`report.fetch()`, `systems[index].update()`),
-is started the way `Concurrent` starts a function: it runs until its first wait, the frame goes on, and the rest
-of it runs while the loop sleeps. Nothing in the program says so.
+is started by the compiler as a state machine of its own: it runs until its first wait, the frame goes on, and
+the rest of it runs while the loop sleeps. Nothing in the program says so.
 
 ```gdscript title=frame_waits/report_file.spite
 var program = Program()
@@ -341,18 +199,16 @@ seen the text on its first test. Here it returns at its sleep, and the loop draw
 - **What stays the same.** The call does everything it did, in the order it is written; only when its waits end
   has moved, to later frames. A crash inside it halts the program with its own report, at its own line, as a crash
   anywhere does. A call whose function never waits is the plain call.
-- **What it waits for.** Anything a call waits for: a sleep, a file, a socket, a `Concurrent`'s value. It moves on
-  wherever the program waits, as a `Concurrent` does, which in a frame loop is the frame's sleep; an engine that
-  [chooses where `Concurrent`s resume](#choosing-where-concurrents-resume) chooses it for these too.
+- **What it waits for.** Anything a call waits for: a sleep, a file, a socket. It moves on wherever the program
+  waits, which in a frame loop is the frame's sleep.
 - **How many at once.** Each call site keeps at most eight in flight. The ninth, made while eight from the same line
   still wait, waits in place for the oldest of them, as the plain call would have waited for itself: the frame is
   held, never a call dropped.
 - **None is lost.** A started call nobody waits for still runs to its end: the next time its line is reached, the
-  ones that finished are let go, and the program does not end until every one has finished, as it does for every
-  `Concurrent`.
+  ones that finished are let go, and the program does not end until every one has finished.
 - **The frame's own waits stay.** Only a call on another object is started. The loop's sleep, and anything that
   waits in a function of the loop's own object, is the frame's pace and waits where it is written, and so does a
-  call whose answer is used, or one made inside a `Concurrent`.
+  call whose answer is used.
 - **No write is lost.** The call and the frame now take turns at their waits, so a value one of them read before
   a wait may be out of date after it. When either side would write such a value back (`var seen = count`, a wait,
   then `count = seen + 1`), the call is not started: it waits where it is written, as it always did, and
@@ -360,414 +216,6 @@ seen the text on its first test. Here it returns at its sleep, and the loop draw
   call is started.
 
 The exact conditions are in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame).
-
-## `Parallel`: work that computes
-
-`Concurrent` never makes a program faster at computing: every `Concurrent` runs on the program's one thread. For work that keeps a core
-busy, `Parallel(function)` runs the function on a **thread of its own**, and the same rules apply: the
-handle stands in for the result, `finished` never waits, and dropping it waits.
-
-```gdscript title=parallel_tour/summer.spite
-var limit = 0
-
-func Summer(starting_limit: Integer) {
-    limit = starting_limit
-}
-
-func total(): Long {
-    var sum: Long = 0
-    var index = 0
-    while index < limit {
-        sum = sum + index
-        index = index + 1
-    }
-    return sum
-}
-```
-```gdscript title=parallel_tour/parallel_tour.spite entry
-var console = Console()
-var _large_limit = 3000000
-
-func ParallelTour() {
-    load "../spite_standard_library/windows"
-    var small = Summer(1000000)
-    var large = Summer(_large_limit)
-    var small_sum = Parallel(small.total)
-    var large_sum = Parallel(large.total)
-    console.print(small_sum, large_sum)
-}
-```
-```output
-499999500000 4499998500000
-```
-
-### Calls in a row run at once
-
-A program never has to write `Parallel` to run independent work side by side. When two or more calls in a row
-share nothing one of them writes, the compiler runs them on threads at once and waits for all of them
-before the next statement:
-
-```gdscript
-func tick() {
-    physics.update_each()
-    animation.update_each()
-    audio.update_each()
-    renderer.draw_all()
-}
-```
-
-If `physics`, `animation` and `audio` each read and write only their own state, the first three run at once, and
-`renderer.draw_all()` starts after all three have finished, as written. The program reads as one step after
-another and runs as fast as the machine allows. The compiler decides it all while compiling, from what each call
-reads and writes through every function it reaches, so a program with nothing to overlap carries none of it and
-no call says it may run in parallel.
-
-Calls whose order can be seen stay in order: anything that prints, touches a file or a socket, or reads and writes
-the same state as another call. A call that does little (a few additions, no loop) is never handed to another
-thread, since starting it there would cost more than running it. Two objects of one class count as one, unless
-each belongs to its owner: two `Counter`s passed around and counted through any name share the attribute `total`
-as far as this rule sees, so they stay in order, while a `Physics` and an `Audio` that each keep their own
-`var meter = Meter()`, never assigned anything else, overlap, meters and all. The exact conditions are in
-[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting) ("Calls in a row run at once"), and
-[optimizations.md](concurrency.md#calls-in-a-row-run-at-once) shows one.
-
-A loop over a list of different objects is the same row, built while the program runs: `systems.each_update()`
-over a `List<System>` holding a `Physics`, an `Animation` and an `Audio` runs the three at once when their classes
-share nothing written, and in order otherwise. The compiler decides which classes may run together while compiling;
-the loop only looks at which objects the list holds when it starts. A list holding two objects of one class runs
-in order ([optimizations.md](concurrency.md#calls-in-a-row-run-at-once)).
-
-### Threads for `Parallel`
-
-The compiler starts a thread at each `Parallel` and nowhere else: a program that makes none starts none and carries
-nothing for threads. Any code (an engine system, an asset loader, a library class) hands work over the same way, by
-`Parallel(function)`, and there is nothing else to make or pass around. Reading a `Parallel` waits until its thread
-has returned, so a `Parallel` started from inside another one cannot wait for anything that is waiting for it. At
-exit every `Parallel` still running is finished first. Starting a thread costs time, so give a `Parallel` work that
-is worth it. A long list's walk needs no `Parallel`: write `each_`, and the compiler runs it in bands, which split
-the list across the processors in one go.
-
-**Work that can never finish is a compile error.** A thread is lent to a piece of work until it returns, so
-work that runs forever takes a thread away for good, and there is no `Thread(function)` for it: a loop tied to
-one thread (a window's messages) runs on the program's own thread as one step per frame, and whatever waits
-(accepting connections, reading a socket) waits through a call that gives its thread back. So a `while true` with
-no `return`, `fallback` or `crash` inside it, in the function a `Parallel` runs or in any function that work
-reaches, whose function never waits, is `'Parallel(counter.count_forever)' runs 'Counter.count_forever' on the
-thread pool, and this loop never ends and never waits, so the work never finishes and keeps its thread for good:
-return from the loop once the work is done, or run the loop on the program's own thread`
-(`diagnostics/endless_parallel_work`). It is reported at the loop, once per function.
-
-### Work of its own, and a short section
-
-Work split across threads often wants something of its own on each thread (a command buffer per runner, a scratch
-list) and a short section only one thread may be in at a time. Both have plain forms. Something of its own on
-each thread is an object the work makes itself: a local list, or an object handed over to the `Parallel` that
-runs it, which no other thread can reach. A short section only one thread may be in is a function of a singleton:
-a singleton a `Parallel` reaches is made safe by the compiler, and each call of its functions is one indivisible
-step, so two threads never run `count_two` below at once.
-
-```gdscript title=per_thread_buffers/totals.spite
-singleton
-
-var commands = 0
-var seen = List<String>()
-
-func count_two(first: String, second: String) {
-    commands = commands + 2
-    seen.append(first)
-    seen.append(second)
-}
-
-func total(): Integer {
-    return commands
-}
-```
-```gdscript title=per_thread_buffers/per_thread_buffers.spite entry
-var console = Console()
-var totals = Totals()
-
-func PerThreadBuffers() {
-    load "../spite_standard_library/windows"
-    var runs = List<Parallel<Integer>>()
-    var index = 0
-    while index < 8 {
-        var run = Parallel(record_commands)
-        runs.append(run)
-        index = index + 1
-    }
-    var recorded = 0
-    index = 0
-    while index < runs.count() {
-        var count: Integer = runs[index]
-        recorded = recorded + count
-        index = index + 1
-    }
-    var counted = totals.total()
-    console.print(recorded, "commands recorded,", counted, "counted by the singleton")
-}
-
-func record_commands(): Integer {
-    var own = List<String>()
-    own.append("spawn")
-    own.append("move")
-    var first = own.first()
-    var last = own.last()
-    crash first
-    crash last
-    totals.count_two(first, last)
-    return own.count()
-}
-```
-```output
-16 commands recorded, 16 counted by the singleton
-```
-
-You never write a lock: a singleton of the program's own that a `Parallel` reaches is made
-safe by the compiler. `HitCounter` below only counts, so each `record()` becomes one
-atomic add, with no lock and nothing written in the source:
-
-```gdscript title=shared_counter/hit_counter.spite
-singleton
-
-var hits = 0
-
-func record() {
-    hits = hits + 1
-}
-```
-```gdscript title=shared_counter/shared_counter.spite entry
-var console = Console()
-var counter = HitCounter()
-
-func SharedCounter() {
-    load "../spite_standard_library/windows"
-    var first = Parallel(record_many)
-    var second = Parallel(record_many)
-    var own: Integer = record_many()
-    console.print(first + second + own, "recorded,", counter.hits, "counted")
-}
-
-func record_many(): Integer {
-    var index = 0
-    while index < 1000 {
-        counter.record()
-        index = index + 1
-    }
-    return index
-}
-```
-```output
-3000 recorded, 3000 counted
-```
-
-A singleton that takes a lock holds it for the whole of each call, so one of its functions must not wait for a
-`Parallel` whose work calls back into the same singleton: the work would wait for the lock, and the function holding
-it would wait for the work, forever. When the compiler can see it (the `Parallel` made and read, or dropped, which
-waits, inside the locked function, and its work calling a locked function of that singleton) it is an error
-naming both functions:
-
-```gdscript title=locked_wait_doc/remover.spite
-var columns = Columns()
-var last = 0
-
-func Remover(new_last: Integer) {
-    last = new_last
-}
-
-func run(): Integer {
-    var entity = 0
-    while entity < last {
-        columns.remove_row(entity)
-        entity = entity + 1
-    }
-    return last
-}
-```
-```gdscript title=locked_wait_doc/columns.spite
-singleton
-
-var removed = List<Integer>()
-
-func despawn_all(last: Integer): Integer {
-    var remover = Remover(last)
-    return Parallel(remover.run)
-}
-
-func remove_row(entity: Integer) {
-    removed.append(entity)
-}
-```
-```gdscript title=locked_wait_doc/locked_wait_doc.spite entry error
-var console = Console()
-var columns = Columns()
-
-func LockedWaitDoc() {
-    load "../spite_standard_library/windows"
-    var removed = columns.despawn_all(10)
-    console.print(removed)
-}
-```
-```diagnostic
-'Columns.despawn_all' waits for 'Parallel(remover.run)' while it holds Columns's lock
-```
-
-Start the `Parallel` and read it in the class that asks for the despawn, and let only the work call `Columns`.
-
-### What a singleton's lock costs
-
-The lock is a word of its own on a cache line of its own, taken with one compare-and-swap and let go with one
-store, re-entered for free by the thread that holds it. Taken by one thread only, it costs a few nanoseconds a call.
-Taken by several threads at once it costs more, because each call hands the line from core to core. A thread that
-finds the lock taken does not hammer it: it waits a few pauses of the processor, twice as many each time it looks
-again, and past a thousand it gives its turn to the system between looks, so the thread holding the lock runs on
-and the line stays where it is. Four threads making 250 000 calls each to one shared singleton take 7.7 ms
-([`benchmarks/singletons_a_parallel_reaches_take_a_lock`](https://github.com/Spite-Language/spite_benchmarks/tree/master/singletons_a_parallel_reaches_take_a_lock)),
-a third of the time of the same program in C behind a system mutex, and still fifteen times the time of the same
-work split between the threads with no lock at all. So:
-
-- **Give each worker its own singleton** where the state splits (a generic singleton per column, `Column<T>`,
-  rather than one `Columns` every worker calls), and the locks are never contended.
-- **Call it from a counted loop.** A `while index < count` loop whose calls are all to one singleton (and to lists
-  of plain values), with nothing else locked or waited on in it, takes the lock once around the whole loop and
-  calls the unlocked bodies inside it ([optimizations.md](optimizations.md#a-counted-loop-of-calls-to-one-singleton-takes-its-lock-once)):
-  four workers making 5 million calls each to one shared singleton take 77 ms that way, where C taking a mutex on
-  every call takes 501 ms ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_counted_loop_of_calls_to_one_singleton_takes_its_lock_once)).
-- **Keep its reads apart from its writes.** A function that only reads the singleton's state (`at(row)`, a lookup)
-  takes the readers' side of the lock: a count on its own thread's cache line, so readers on different threads
-  never slow each other down, and only a function that writes waits for them
-  ([optimizations.md](optimizations.md#a-counted-loop-of-reads-shares-its-singletons-lock)). Eight systems
-  reading 15 000 rows each of one singleton through `at(row)`, 20 ticks, take 17 ms, where C taking a mutex for
-  every read takes 103 ms ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/a_singletons_reading_functions_do_not_exclude_each_other)). Anything a function calls or assigns beyond reading makes it a writing function,
-  so keep lookups small and separate from the functions that change the singleton.
-- **Nothing to do between stages.** While no `Parallel` is running, a locked function runs without its lock
-  ([the case](https://github.com/Spite-Language/spite_benchmarks/tree/master/while_no_task_runs_a_singletons_lock_is_skipped): ten million calls in 53 ms, where C
-  taking a mutex on every call takes 76 ms), so code that fills or flushes a singleton on the
-  program's own thread between `Parallel`s pays almost nothing for it.
-- **Or let it take no lock.** A singleton whose changing state is one counter or flag per function becomes atomics,
-  one that never changes takes nothing, and one no `Parallel` reaches takes nothing
-  ([the forms](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)).
-
-There is no lock, thread-local or atomic class for a program to name; naming anything in `Spite.Internal` is a compile error
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)). A program that reaches none carries none.
-
-### A number every thread shares
-
-A counter or a flag that several threads change is a singleton with a whole number or a `Boolean` that each
-function touches once. You write nothing more: the compiler turns every read and write of it into one atomic
-instruction, sequentially consistent, with no lock and no call, and a `Parallel` may reach it like any singleton
-([the forms](optimizations.md#thread-safety-for-singletons-the-cheapest-safe-form)).
-
-```gdscript title=shared_counter/jobs_done.spite
-singleton
-
-var count = 0
-
-func add(amount: Integer) {
-    count = count + amount
-}
-
-func total(): Integer {
-    return count
-}
-```
-```gdscript title=shared_counter/shared_counter.spite entry
-var console = Console()
-var jobs = JobsDone()
-
-func SharedCounter() {
-    load "../spite_standard_library/windows"
-    var first = Parallel(finish_jobs)
-    var second = Parallel(finish_jobs)
-    var finished = first + second
-    var counted = jobs.total()
-    console.print(finished, "finished,", counted, "counted")
-}
-
-func finish_jobs(): Integer {
-    var index = 0
-    while index < 100 {
-        jobs.add(1)
-        index = index + 1
-    }
-    return index
-}
-```
-```output
-200 finished, 200 counted
-```
-
-
-
-A program that makes a `Parallel` (or a `Concurrent`, or a `ForeignCallback` C may call from a thread of its own
-([foreign_libraries.md](foreign_libraries.md#calling-back-into-spite)), or is built with `--repl-port` or
-`--hot-reload`) counts references with atomic operations, because an object can now be shared between threads; every other program keeps
-the plain, cheaper counts, and so does every class whose objects no other thread can count
-([optimizations.md](optimizations.md#plain-counts-where-no-other-thread-counts-a-class)). `Parallel(work)` is checked while compiling: the function it
-runs, and every function of the same class that function calls by name, may read and write only the attributes of
-its own instance that hold values (numbers, `Boolean`, enums, text), its locals and parameters, singletons (which
-the compiler makes safe) which are made to be shared. An attribute holding a
-list, a dictionary or another object is an error naming it, since another thread may hold the same object:
-`'Parallel(tally.count_up)' runs 'record' on another thread, so it may reach only the attributes of its own
-'Tally' that hold values, its locals and singletons: 'marks' holds a List<Integer>, which another thread may
-share` (`diagnostics/parallel_function_reach`, where the maker kept `tally.marks` for itself). Make what the work
-needs a local, or give the work an object of its own whose attributes are values, as each `Summer` above is. The
-check costs nothing at run time.
-
-An object made for the work and **handed over** may keep more: when it is made on its own
-line in the same block as the `Parallel(...)`, nothing else is given it before, and the code that made it never
-touches it again, its task may keep lists of values and objects it made itself. A `Crafter` can collect its recipe
-ids as a `List<Integer>` and its names as a `List<String>`, with no text joined to smuggle them across:
-
-```gdscript title=handed_over_doc/crafter.spite
-var first = 0
-var recipe_ids = List<Integer>()
-var names = List<String>()
-
-func Crafter(starting_first: Integer) {
-    first = starting_first
-}
-
-func want(recipe_id: Integer) {
-    recipe_ids.append(recipe_id)
-}
-
-func craft(): Integer {
-    var index = 0
-    while index < recipe_ids.count() {
-        var recipe_id = recipe_ids[index] + first
-        names.append("recipe {recipe_id}")
-        index = index + 1
-    }
-    return names.count()
-}
-```
-```gdscript title=handed_over_doc/handed_over_doc.spite entry
-var console = Console()
-
-func HandedOverDoc() {
-    load "../spite_standard_library/windows"
-    var crafter = Crafter(100)
-    crafter.want(1)
-    crafter.want(2)
-    var crafted = Parallel(crafter.craft)
-    console.print("crafted", crafted)
-}
-```
-```output
-crafted 2
-```
-
-Reading `crafter` after the `Parallel` line would be `'crafter' was handed to 'Parallel(crafter.craft)', which
-keeps its 'recipe_ids', 'names' on another thread, so it is not used after that line: make another 'Crafter' for
-what follows, or read the task's result` (`diagnostics/parallel_handover`; [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#concurrency-concurrent-parallel-and-hidden-waiting)).
-
-## `each_` on a long list runs in bands
-
-Write `particles.each_step()` and nothing more; there is no parallel form of it. The compiler runs the walk in bands
-across the processors when it proves each pass touches only its own element and the list is long enough for the bands
-to pay, and in order otherwise, with the same output
-([optimizations.md](optimizations.md#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)).
-`particles.parallel_each_step()` is an unknown member.
 
 ## The REPL answers at the waits
 
@@ -852,18 +300,18 @@ for a library call to return.
 
 ## What it costs
 
-Everything on this page is chosen per program, from what the program uses, and a program that uses none of it
-carries none of it; the compiler's side of each is on
+Everything on this page is chosen per program, from what the compiler finds in it, and a program in which it finds
+nothing carries none of it; the compiler's side of each is on
 [optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-used).
 
 | The program | Carries at run time |
 |---|---|
-| uses none of it | nothing: no scheduler, no state machine, no helper thread, no lock, plain reference counts; every wait is the plain blocking call |
-| makes a `Concurrent`, or has two reads in a row | the scheduler and its event loop; a second, resumable copy of each function a `Concurrent` reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside a `Concurrent`; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count; one count the scheduler adds to at each read of `finished` that answers `false` and clears at each step |
-| makes a `Parallel`, or has a loop the compiler runs in bands | one thread started per `Parallel` or band and a small, fixed number of allocations; atomic reference counts for the classes another thread can count; for each program singleton a `Parallel` can reach and that changes, atomics or a lock per call (about 2 ns when one thread takes it, far more when several contend: [what it costs](#what-a-singletons-lock-costs)), or one per counted loop of calls |
+| has nothing the compiler overlaps | nothing: no scheduler, no state machine, no helper thread, no thread pool, plain reference counts; every wait is the plain blocking call |
+| has a wait the compiler lets other work run past (a frame's call, two reads in a row) | the scheduler and its event loop; a second, resumable copy of each function that work reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside it; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count |
+| has calls in a row, a loop over classes or a loop in bands that the compiler runs at once | the thread pool, one start per call or band handed to it and a small, fixed number of allocations |
 | is built with `--repl-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
 
-What is never there: a stack per `Concurrent`, a stack switch, a runtime that a WebAssembly build could not carry.
+What is never there: a stack per piece of work, a stack switch, a runtime that a WebAssembly build could not carry.
 
 ---
 
