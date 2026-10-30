@@ -366,11 +366,11 @@ func is_alive(): Boolean {
   object literal `{ label: "x" }`, with those attributes and functions.
 - `Anything` is the built-in empty `type`, the counterpart of `Nothing`: `component: Anything` and
   `List<Anything>()` accept any object (a number keeps its class, with no allocation). Never declare an empty `type` of your own.
-- `Number` is the library `type` every number class fits (`Tiny` to `Double`, not `Boolean`): its operators and
-  `to_long()`, `to_double()`. Write number code as `value: Number` (operators work, compiled per number class) or
-  `generic $number_type: Number`, and ask
-  `$value_type == Number` (never ten comparisons) to tell a number apart in a walk. Inside a `type`, its own name
-  in a signature is the class that fits.
+- No `type` stands for every number. Write number code as a generic class that declares the `type` its codegen
+  value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum(Measure): Measure }`);
+  every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,
+  `less_than`, `greater_than`. Ask `$value_type.is_number` (never ten comparisons) to tell a number apart in a walk.
+  Inside a `type`, its own name in a signature is the class that fits.
 
 ## Nothing, null, and failure
 
@@ -716,7 +716,7 @@ registration and unregister in its `drop()`: C may call only while it is kept, a
 naming the function. A handed-over function follows a
 `Parallel`'s rules (its own value attributes, locals, singletons). A COM-style interface is a `Memory.Heap` block
 whose first word points at a table filled with `TypedMemory<Long>` and each `ForeignCallback`'s `address`.
-Game maths (docs/game_maths.md): `Vector2`, `Vector3`, `Vector4` are generic over a `Number` class taken from their
+Game maths (docs/game_maths.md): `Vector2`, `Vector3`, `Vector4` are generic over a number class taken from their
 parts, `Vector3(1.0, 2.0, 3.0)` a `Vector3<Float>` and `Vector2(5, 1)` a `Vector2<Integer>` (never `Vector3i`), written
 `Vector3<Float>` where a type is named; every member answers the vector's own class (whole numbers truncate).
 Read as `x`, `y`, `z`, `w`, with `+ - * /` part by part, `scaled(factor)`,

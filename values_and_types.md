@@ -324,36 +324,25 @@ As with `/` on a float, nothing here halts: the square root of `-1` is not-a-num
 `0` is minus infinity, the IEEE answers. What each function answers at its edges is
 [standard_library.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#maths)'s.
 
-### Every number fits `Number`
+### A number library declares the type it needs
 
-The library declares `type Number` once (`library/number.spite`), a [shape](#inline-types-and-duck-typing) that
-every number class fits: `Tiny`, `Short`, `Integer`, `Long`, `Byte`, `UnsignedShort`, `UnsignedInteger`,
-`UnsignedLong`, `Float` and `Double`. `Boolean` and `Memory.Address` do not. It is what every number has in
-common, and nothing more:
-
-```gdscript
-type Number {
-    sum(Number): Number
-    subtract(Number): Number
-    multiply(Number): Number
-    divide(Number): Number
-    remainder(Number): Number
-    less_than(Number): Boolean
-    greater_than(Number): Boolean
-    to_long(): Long
-    to_double(): Double
-}
-```
-
-The first seven are the operators `+`, `-`, `*`, `/`, `%`, `<` and `>` (with `<=` and `>=`), and `Number` in them
-stands for the class that fits: an `Integer` adds an `Integer` and answers one. The last two are conversions every
-number has. A number library is written over it as a generic constrained by `Number`, compiled once per number
-class it is given, so the values stay plain machine numbers and nothing is boxed. `$value_type == Number` asks,
-while compiling, whether a type is a number, which is how a walk over types tells numbers apart
+No `type` stands for every number. A class written over numbers is generic, and declares, as a `type` of its own,
+the functions its codegen value must have, listing only the operators and functions it uses
+([shapes](#inline-types-and-duck-typing)). The operators `+`, `-`, `*`, `/` and `%` are the functions `sum`,
+`subtract`, `multiply`, `divide` and `remainder`, and `<` and `>` (with `<=` and `>=`) are `less_than` and
+`greater_than`; the type's own name in them stands for the class that fits, so an `Integer` adds an `Integer` and
+answers one. Every number class, `Tiny` to `Double`, has these functions, so it fits such a type the way any class
+fits a type, by having its members, and `Boolean` fits none of them. The class is compiled once per number class it
+is given, so the values stay plain machine numbers and nothing is boxed. `$value_type.is_number` asks, while
+compiling, whether a type is a number class, which is how a walk over types tells numbers apart
 ([metaprogramming.md](metaprogramming.md#asking-what-a-generic-was-given)):
 
 ```gdscript title=number_type_doc/statistics.spite
-generic $number_type: Number
+generic $number_type: Measure
+
+type Measure {
+    greater_than(Measure): Boolean
+}
 
 func largest(values: List<$number_type>): $number_type {
     crash values[0]
@@ -382,7 +371,7 @@ func mean(values: List<$number_type>): Double {
 generic $value_type
 
 func kind(): String {
-    if $value_type == Number {
+    if $value_type.is_number {
         return "a number"
     }
     return "not a number"
@@ -415,53 +404,10 @@ func NumberTypeDoc() {
 a number not a number
 ```
 
-A parameter can be typed `Number` too, and its operators are the number's own. The function is compiled once for
-each number class that reaches it ([optimizations.md](optimizations.md#the-class-of-an-object-made-in-the-function-is-known)),
-so in the copy that takes an `Integer`, `value + value` is an `Integer` addition, checked like any other:
-
-```gdscript title=number_parameter_doc/number_parameter_doc.spite entry
-var console = Console()
-
-func NumberParameterDoc() {
-    load "../spite_standard_library/windows"
-    var twice_four = twice(4)
-    var twice_half = twice(0.5)
-    console.print(twice_four, twice_half)
-    var bigger = larger(3, 9)
-    console.print(bigger)
-}
-
-func twice(value: Number): Number {
-    return value + value
-}
-
-func larger(first: Number, second: Number): Number {
-    if first > second {
-        return first
-    }
-    return second
-}
-```
-```output
-8 1
-9
-```
-
-`Number` has no operators of its own: an operator on a value typed `Number` is always the operator of the class the
-value really is, under the casting rules every number follows. Since each copy is compiled for its class,
-`value + 0.5` is the error it would be on an `Integer` when an `Integer` reaches it. A value whose class is known
-only while the program runs (read from a `List<Number>`) reaches the copy for its class. In a `--hot-reload` or REPL
-build, where new code may bring a class later, the function is compiled once as written, and an operator there
-finds both classes while the program runs and does exactly what the copy would: a right side that widens to the
-left side's class is widened, and one that is wider, which a copy refuses while compiling, halts the program instead:
-
-```
-spite: 'value + step' works in a Byte, the class of its left side, and its right side is an Integer, which would be cut to fit, at game/game.spite:31 in Game.grown
-```
-
-The same holds for a `type` of your own that requires an operator's function: `left + right` on two values read as
-`type Addable { sum(Addable): Addable }` calls the `sum` of the left side's class, and a right side of another
-class, a compile error in a copy, halts with `which is not one`.
+`Statistics<Boolean>` is refused while compiling, since `Boolean` has no `greater_than`. An operator on a value read
+as a `type` of your own that requires the operator's function, `left + right` on two values read as
+`type Addable { sum(Addable): Addable }`, calls the `sum` of the left side's class, and a right side of another
+class halts with `which is not one`.
 
 ## `String`
 

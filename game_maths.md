@@ -17,8 +17,9 @@ each answering a new vector: `+` is `sum`, `-` `subtract`, `*` and `/` work part
 `==` compares every part. Scaling by a number is `scaled(factor)`, since one name is one function and `*` already
 takes a vector.
 
-A vector holds any number class: `Vector2`, `Vector3` and `Vector4` are generic over a class that fits
-[`Number`](values_and_types.md#every-number-fits-number), taken from the parts it is made with, so
+A vector holds any number class: `Vector2`, `Vector3` and `Vector4` are generic over a class that fits the
+[`type` each declares](values_and_types.md#a-number-library-declares-the-type-it-needs) (`Vector3.Component`: the
+operators, `equals`, `minimum`, `maximum` and `absolute`), taken from the parts it is made with, so
 `Vector3(1.0, 2.0, 2.0)` is a `Vector3<Float>`, `Vector2(5, 1)` a `Vector2<Integer>`, and a `Vector3<Double>` keeps
 `Double`'s precision. There is no `Vector3i` or `Vector3d`: the class is written out where a type is named,
 `func move(by: Vector3<Float>)`, and each class is its own packed copy of the code.
