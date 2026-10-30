@@ -396,15 +396,14 @@ func is_alive(): Boolean {
 - Every proof the compiler makes (narrowing, proven `[]` reads, a proven divisor, frame objects,
   singleton locks) is listed in [proofs.md](https://github.com/Spite-Language/spite_documentation/blob/master/proofs.md), with when it does **not** apply. Read its "Which proofs
   apply to my code" first: where a proof does not hold, you write the check yourself.
-- A `switch` is over a union or a `T?` and covers every member; `_:` as the last case answers for the rest, and
-  two cases doing the same thing are an error: write it once as `_:`. A `switch` over an enum, a whole number or
-  a text has value cases: `'red': return 30`, `-1: ...`, `"es": ...`; over an enum it covers every value or ends
-  with `_:` (`has no case for 'amber'`), over a number or a text it always ends with `_:`. Three `if`s in a row
-  that each compare one name with a constant and only return are an error that writes the switch for you (`these 3
-  'if's each compare 'index' with a value and return, which is what a 'switch' says: write 'switch index { ... }'`);
-  an `else if` chain of three is the same.
+- A `switch` is over a union, a `T?`, an enum or a `Boolean`, and names every member or value: there is no `_:`,
+  so a member added later is an error at every switch until it has a case. Cases may share a one-line body
+  (`Cat: walk()` and `Dog: walk()`); when all but one share it, write `if value.class == Fish { swim() } else { walk() }`.
+  Value cases are `'red': return 30` or `true:`/`false:`. A `switch` over a number or a text is an error: choose with
+  `if`s. Three `if`s in a row that each compare one name with one of its enum values and only return are an error that
+  writes the switch for you, naming every value; an `else if` chain of three is the same.
 - `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside. A
-  switch that is one class case and `_:`, each a `return`, is an error: write the `if`, or `return value.class == Monster`.
+  switch that is one class case and `_:`, each a `return`, is an error naming the `if`, or `return value.class == Monster`.
   In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every
@@ -754,15 +753,17 @@ in a `cdylib`, Zig `export fn` in a dynamic library, Go `//export` with `-buildm
   full-word snake_case names, `T?` instead of a null handle or a "not found" code, an object that holds the handle and
   releases it in `drop()`, `String` for text.
 - A C status or enum becomes a Spite enum the binding writes, with Spite names, each value mapped to its C number;
-  the mapping is a `switch` on the number whose `_:` is a bare `crash`, so a number it does not list halts at the boundary:
+  the mapping is `if`s on the number ending in a bare `crash`, so a number it does not list halts at the boundary:
 
   ```gdscript
   func packing_of(code: Integer): Packing {
-      switch code {
-          0: return 'packed'
-          1: return 'output_too_small'
-          _: crash
+      if code == 0 {
+          return 'packed'
       }
+      if code == 1 {
+          return 'output_too_small'
+      }
+      crash
   }
   ```
 

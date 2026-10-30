@@ -363,12 +363,16 @@ func pack(input: Buffer, output: Buffer): Packing {
 }
 
 func packing_of(code: Integer): Packing {
-    switch code {
-        0: return 'packed'
-        1: return 'output_too_small'
-        2: return 'input_corrupt'
-        _: crash
+    if code == 0 {
+        return 'packed'
     }
+    if code == 1 {
+        return 'output_too_small'
+    }
+    if code == 2 {
+        return 'input_corrupt'
+    }
+    crash
 }
 
 func drop() {

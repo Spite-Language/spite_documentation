@@ -278,7 +278,7 @@ func describe(creature: Creature) {
     switch creature {
         Dog: show_trick(creature)
         Fish: console.print("a fish with", creature.fins, "fins")
-        _: show_sound(creature)
+        Cat: show_sound(creature)
     }
 }
 
@@ -298,19 +298,19 @@ a fish with 2 fins
 something that says meow
 ```
 
-**`_:` answers for every member without a case of its own.** It is the last case, and it means "this body, written
-once for each remaining member": the value is narrowed to each of them in turn, so `show_sound(creature)` needs a
-`show_sound` only for the members `_` answers for (here `Cat`), not for the whole union. A switch stays exhaustive:
-`_` is how it covers the rest, not a way to skip it. Two cases that do the same thing are an error naming `_:`,
-and so is a case that does what `_:` already does, or a `_:` that answers for nothing (the exact rules are with
-[unions](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#unions-in-full)).
+**A switch names every member, and there is no `_:`.** A member added to the union later is then an error at
+every switch until it has a case, so nothing takes a body written before it existed. Two cases may share a one-line
+body, `Cat: show_sound(creature)` and `Dog: show_sound(creature)`. When every case but one shares its body, the switch
+is an `if` instead: `if creature.class == Fish { swim(creature) } else { walk() }` (the error writes it out). A `_:`
+is an error naming the cases to write
+([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#unions-in-full)).
 
 ## `switch` over values
 
-A `switch` also takes an enum value, a whole number or a text, and then each case is one value written out: an
-enum's `'value'`, a number (`-1` included) or a quoted text. A switch over an enum covers every value, or ends with
-`_:` for the rest, so a value added to the enum later cannot be forgotten; a number or a text has more values than
-any switch lists, so its switch always ends with `_:`.
+A `switch` also takes an enum value or a `Boolean`, and then each case is one value written out: an enum's `'value'`,
+`true` or `false`. It covers every value, so a value added to the enum later cannot be forgotten. A number or a text
+has more values than any switch could list, so choosing among them is an `if`, and `switch count` on a number is an
+error saying so.
 
 ```gdscript title=value_switch_doc/value_switch_doc.spite entry
 enum Light {
@@ -341,16 +341,18 @@ func following(light: Light): Light {
     switch light {
         'green': return 'amber'
         'amber': return 'red'
-        _: return 'green'
+        'red': return 'green'
     }
 }
 
 func spoken(count: Integer): String {
-    switch count {
-        1: return "one"
-        2: return "two"
-        _: return "many"
+    if count == 1 {
+        return "one"
     }
+    if count == 2 {
+        return "two"
+    }
+    return "many"
 }
 ```
 ```output
@@ -385,42 +387,10 @@ func seconds_for(light: Light): Integer {
 this switch over 'light' has no case for 'amber'
 ```
 
-**Three `if`s that only compare one value with a constant and return are a `switch`.**
-Each is a compile error that shows the switch to write, which says in one place what the
-chain says in three:
-
-```gdscript title=if_chain_error/if_chain_error.spite entry error
-var console = Console()
-
-func IfChainError() {
-    load "../spite_standard_library/windows"
-    var day = day_name(1)
-    console.print(day)
-}
-
-func day_name(index: Integer): String {
-    if index == 0 {
-        return "monday"
-    }
-    if index == 1 {
-        return "tuesday"
-    }
-    if index == 2 {
-        return "wednesday"
-    }
-    return "later"
-}
-```
-```diagnostic
-these 3 'if's each compare 'index' with a value and return, which is what a 'switch' says: write 'switch index { 0: return "monday"  1: return "tuesday"  2: return "wednesday"  _: return "later" }'
-```
-
-The same goes for an `else if` chain. Two such `if`s stay as they are.
-
-A link that asks about several values with `or` is still a link: `if word == "byte" or word == "tiny" { return 1 }`
-is two cases of the switch, `"byte": return 1` and `"tiny": return 1`. Every comparison in the chain tests the same
-value, so the chain is a switch however the values are grouped
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#a-chain-of-ifs-on-one-value-is-a-switch)).
+**Three `if`s that only compare one value with its enum values and return are a `switch`.** Each is a compile error
+that shows the switch to write, naming every value. A chain over numbers or text stays a chain of `if`s, since no
+switch can list every number
+([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#a-chain-of-ifs-on-one-enum-value-is-a-switch)).
 
 ## `value.class == Class`
 
@@ -602,8 +572,8 @@ func is_fish(creature: Creature): Boolean {
 this switch only asks what 'creature' is: write 'return creature.class == Fish'
 ```
 
-Anything that would need an `else` stays a switch, and so does a switch with more cases: `_:` narrows to each
-remaining member, which an `else` cannot.
+A `_:` is refused anyway (above); for a switch shaped like this one, this error comes first, since it names the
+shorter form.
 
 ## Nothing after a `return`
 

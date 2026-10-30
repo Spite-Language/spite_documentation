@@ -46,7 +46,7 @@ accepted or refused whatever the optimisation settings.
   [Overflow](#arithmetic-that-does-not-fit-halts), [ranges](#a-range-proves-arithmetic-fits).
 - **A function that answers something**: end every path with `return` or a bare `crash`.
   [Every path ends](#every-path-ends-in-a-return).
-- **A `switch`**: cover every member or value, or end with `_:`. [Switches](#a-switch-covers-every-case).
+- **A `switch`**: name every member or value; there is no `_:`. [Switches](#a-switch-covers-every-case).
 - **Generic code asking about `$T`**: the questions fold and only the branch taken is compiled.
   [Compile-time questions](#compile-time-questions).
 - **Small objects of numbers**: they live in registers or the frame when they never leave their function.
@@ -196,10 +196,10 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 ### A switch covers every case
 
 - **Proves**: a member, value or null added later cannot be forgotten.
-- **Rule**: a switch over a union covers every member or ends with `_:`; over a `T?` of a class or union it covers
-  the class (or every member) and `Null`, or ends with `_:`; over an enum every value or `_:`; over a whole number or
-  a text it always ends with `_:`. A needless or repeated case is an error.
-- **Falls back**: refused: `this switch over '...' has no case for ...: add the cases, or end with '_:' for the rest`.
+- **Rule**: a switch over a union covers every member; over a `T?` of a class or union it covers the class (or every
+  member) and `Null`; over an enum or a `Boolean` every value. There is no `_:`, and a switch over a whole number or
+  a text is refused: choose among those with `if`s. A repeated case is an error.
+- **Falls back**: refused: `this switch over '...' has no case for ...: add the cases`.
 
 See [Switch over values](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#switch-over-values).
 
