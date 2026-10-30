@@ -369,6 +369,13 @@ func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, rows:
 }
 ```
 ```gdscript title=sparse_row_doc/sparse_row_doc.spite entry
+type Moving {
+    entity: Entity
+    position: Position
+    velocity: Velocity
+    trail: Trail
+}
+
 var console = Console()
 var runner = Runner<Moving>()
 var mover = Mover()
