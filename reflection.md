@@ -12,7 +12,7 @@ var name = "troll"
 var health = 10
 
 func alive(): Boolean {
-    return health > 0
+    return health > 0 and not name.is_empty()
 }
 ```
 ```gdscript title=every_class_an_object/every_class_an_object.spite entry
@@ -101,7 +101,7 @@ func ClassAndInstance() {
     troll.attributes.each(show)
     troll.attributes.each(heal)
     console.print("health is now", troll.health)
-    console.print("troll is a Monster:", troll.class == Monster)
+    console.print("troll's class:", troll.class)
     var bound = troll.functions["alive"]
     crash bound
     console.print("bound to troll:", bound.name)
@@ -127,7 +127,7 @@ declared 1 health Integer
 troll's name = troll
 troll's health = 7
 health is now 12
-troll is a Monster: true
+troll's class: Monster
 bound to troll: alive
 ```
 
@@ -854,6 +854,10 @@ var name = ""
 
 func Monster(starting_name: String) {
     name = starting_name
+}
+
+func greeting(): String {
+    return "I am {name}"
 }
 ```
 ```gdscript title=every_class_of_the_program/every_class_of_the_program.spite entry
