@@ -129,7 +129,9 @@ The program's own folder is merged first and the folders it loads come after it,
 folder, not the program. A file in the program root that reopens a class a loaded folder declares keeps every
 name the loaded folder does not have (an added attribute or function works), but where both declare the same
 name, the constructor included, the loaded folder's version is the one that stays. To replace something a
-loaded folder declares, put the replacement in a folder loaded after it, as `mods` is above.
+loaded folder declares, put the replacement in a folder loaded after it, as `mods` is above. A repository pinned to a commit
+([below](#loading-a-repository-pinned-to-a-commit)) is merged before the program instead, so where the program's
+own files and a pinned copy declare the same name, the program's declaration stays.
 
 The program's entry class is the one class nothing reopens: a loaded `bundle/potion.spite` in the program
 `potion/` would otherwise become part of the entry class `Potion`, so it is an error naming both files
@@ -360,8 +362,7 @@ loads `../../../../spite_truetype@41c09e2/truetype` from `plugins/ui_plugin/ui/`
 `D:/Projects/spite_truetype` both when you build the engine itself and when a game loads the engine at a pin. A
 package fetched from a URL names the repositories it loads by URL, since a path on its author's machine means
 nothing on yours. An ordinary `load` in a fetched package stays inside that package's repository: one that leaves
-it is an error, since the copy holds only its own commit's files. **Two pins of one repository** at different
-commits are two libraries ([below](#two-versions-of-one-repository)).
+it is an error, since the copy holds only its own commit's files. **Two pins of one repository** at different commits are one library ([below](#two-versions-of-one-repository)).
 
 This program loads a folder of the language's own repository as it was at a commit. The documentation's programs
 are written out into `.spite/docs/<name>/` of that repository and compiled from there, so `../../..` is the
@@ -383,9 +384,10 @@ gadget x3
 
 ### Two versions of one repository
 
-Two pins of one repository at different commits are two different libraries. Nothing
-unifies them, nothing compares what differs between them, and it is not an error: a game that pins
-`engine@6c7dca9` and a plugin that pins `engine@41c09e2` each compile against the engine they pinned.
+Two pins of one repository at different commits are one library: every commit's files reopen the same namespaces
+and classes, merged the way a [reopening](#monkey-patching-mods) is. A game that pins `engine@6c7dca9` and a
+plugin that pins `engine@41c09e2` share one engine, so the physics the plugin runs moves the same bodies the game
+draws. A plugin never needs bumping in step with the engine as long as the commits agree.
 
 ```gdscript
 func Game() {
@@ -399,34 +401,16 @@ func Minimap() {
 }
 ```
 
-A **package** here is a repository at a commit, or the program itself: the program's folder and every folder it
-loads without a pin belong to the program, and every folder of a pinned copy belongs to that copy. A name written
-in a package means the classes of the version that package pinned, so `Renderer` in the game is the engine at
-`6c7dca9` and `Renderer` in the minimap is the engine at `41c09e2`. Each version's classes are its own: a value of
-one version's `Renderer` is not accepted where the other's is needed, and a singleton of one is not the other's.
-A reopening reopens the version its package pinned, so a game's `mods/renderer.spite` changes the engine the game
-loads and leaves the minimap's alone. A class of the standard library that a version reopens is still the one
-class, as it is for any two packages.
+What one commit adds, the merged class has; what both declare must be the same in both. A function given two
+bodies, or an attribute given two types, by two commits stops the compile with an error naming the declaration
+and both commits, such as "'Renderer.draw' is declared one way by 6c7dca9 and another by 41c09e2, two commits of
+one repository this program loads as one library (...): pin commits that agree, or declare it in the program's
+own files, which win". Blank lines and comments do not count as a difference.
 
-One package may pin a repository at two commits, and that is not two versions: the two pins are two ordinary
-loads into the same namespace, and the later one reopens the earlier exactly as a later folder does ([monkey
-patching](#monkey-patching-mods)), overriding what both define. A package that pins `engine@6c7dca9/core` and then
-`engine@41c09e2/tools` reads the tools of the later commit on top of the core of the earlier. If the two commits do
-not fit together, the compiler reports whatever breaks, as it would for any two folders, and the answer is to pin
-commits that fit (or fork the repository, which is all git). The pair is one version, spelled by its first commit,
-and a commit belongs to one version only: a commit that one package reads alongside another cannot also be read
-alone by a second package, which is an error naming both lines.
-
-A package that pins
-neither version and names a class that only the versions have is an error listing each version and the line that
-pinned it, and so is a package that reopens such a class: it loads the version it means. A game that loads only
-the minimap and writes `Renderer` is told "'Renderer' is a class only versions of a repository hold, and this
-package pins none of them", followed by each version as `../../engine@41c09e2, pinned by <file>:<line> ('load
-"../../engine@41c09e2/core"')`, where the file is the minimap's copy in `.spite/git/`.
-
-Messages, reflection and `--final-classes` spell a version's class with the version first, the repository's name
-and the commit (`engine_6c7dca9.Renderer`), and `--final-classes` prints each version into a folder of that
-name. The code the versions share unchanged is folded into one by identical code folding.
+The program's own files win: the files of pinned copies are merged before the program's folder and the folders
+it loads without a pin, so a `renderer.spite` of the game's own that declares `draw` settles which `draw` the
+game runs, and the two commits may then disagree on it. A class keeps its plain name, `Renderer`, in messages,
+reflection and `--final-classes`, since there is only one.
 
 ## Files beside a package's source
 
