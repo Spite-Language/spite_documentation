@@ -168,8 +168,8 @@ the compiler: it has the rules every change follows.
 ## One way to do each thing
 
 Two ways of doing one thing is a decision somebody has to make again at every call site, so Spite keeps one.
-There is one loop (`while`, with no `for`, `break` or `continue`), one way to convert a value (`to_<type>()` on the
-value), one name per function (no overloading), no lambdas, no destructuring, no macros, no ternary and no `++`. A
+There is one loop (`while`, with no `for`, `break` or `continue`), one way to convert a value (a conversion in
+the class it makes), one name per function (no overloading), no lambdas, no destructuring, no macros, no ternary and no `++`. A
 model has fewer ways to be wrong, and a reader never wonders why this file does it differently.
 
 ## The compiler is the formatter and the linter, and it refuses

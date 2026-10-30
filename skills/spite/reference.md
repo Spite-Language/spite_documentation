@@ -168,10 +168,12 @@ func is_alive(): Boolean {
   `\n`, `\t`, `\r`, `\\`, `\"` and `\{` for a literal brace, in any order: `"\\\{"` is a backslash and a brace; a
   text inside a hole keeps its own escapes and holes).
 - No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer? = "12"` reads
-  it (`"12".to_integer()`). A value meeting another class is cast through its `to_<type>()`, the wanted class in
-  `snake_case`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = "#ff8000"` calls
-  `to_color()`, and the cast answers what the conversion answers (a `T?` is narrowed before a plain `T`); a class
-  with no such conversion is an error naming it (`there is no 'Point.to_ip_address()' to call`). Anything with a `to_string()` (numbers, `Boolean`, enums, a class that declares one) casts to text wherever a
+  it. A value meeting another class is cast through that class's conversion, `func Color(from: String): Color?`
+  declared in `Color`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = "#ff8000"` calls
+  it, and the cast answers what the conversion answers (a `T?` is narrowed before a plain `T`); a conversion is never
+  called by name, and a class with no such conversion is an error naming it (`IpAddress declares no
+  'IpAddress(from: Point)'`). A class is built three ways: its constructor, a conversion (`func X(from: Y): X?`) and a
+  preset (`func Pi(): Float`, called `Float.Pi()`). Anything with a `to_string()` (numbers, `Boolean`, enums, a class that declares one) casts to text wherever a
   `String` is wanted: `label.text = clicks`, `show(clicks)`, `return clicks`, `names[badge]` on a `Dictionary` (a whole number there keys it by numbers instead). So a
   text of one hole and nothing else, `"{clicks}"`, is an error naming the direct form; elsewhere write
   `clicks.to_string()`. Arithmetic is done in the left side's type, so write the wider operand first: `total * count` with a `Long`
@@ -197,8 +199,8 @@ func is_alive(): Boolean {
   (natural), `logarithm_base_2()`, `logarithm_base_10()`, `floor()`, `ceiling()`, `round()`, `truncate()`,
   `absolute()`, `minimum(other)`, `maximum(other)`, `clamp(low, high)`, `is_finite()`, `is_infinite()`,
   `is_not_a_number()`; on a whole number `absolute()`, `minimum`, `maximum`, `clamp`. Constants are asked of the
-  class, as get-only attributes read without parentheses: `Float.pi`, `tau`, `euler_number`, `infinity`,
-  `not_a_number`, `largest`, `smallest` (the most negative), and `Integer.largest`, `Long.smallest` and so on. Each is the C library's function, called
+  class, as get-only attributes read without parentheses: `Float.Pi()`, `tau`, `euler_number`, `infinity`,
+  `not_a_number`, `largest`, `smallest` (the most negative), and `Integer.Largest()`, `Long.Smallest()` and so on. Each is the C library's function, called
   inline; do not write your own `sine` or square root from a series. Nothing halts: `(-1.0).square_root()` is
   `nan`, and `nan` passes on through `minimum`, `maximum` and `clamp` (`nan.minimum(0.0)` is `nan`).
 - Everything that is not a number, a `Boolean` or an enum value is a reference: passing, assigning and storing share
@@ -340,7 +342,7 @@ func is_alive(): Boolean {
   enum again replaces it: its list is all the values the enum has, so adding one means restating the rest. An enum is a class, and `Course.values` lists its values
   in order, an ordinary list: `Course.values.each(list_course)` calls `list_course(course: Course)` once per value,
   unrolled while compiling (`$value_type.values` in a generic). Text becomes a value only as a `Course?`:
-  `name.to_menu_course()` for `Menu.Course` (`to_`, the declaring class, the enum), or `var course: Course? = name`.
+  `var course: Menu.Course? = name`; a conversion is never called by name.
   An enum, a union and a type are always declared inside a class: a file holding only one of its own name is an error. A value may be given a number with `=` on its line
   (`'admin' = 99`; the next unnumbered value counts on, the first from 0; two values with one number are an
   error), only where a C library, a file format or the network fixes the numbers.
@@ -437,12 +439,11 @@ func is_alive(): Boolean {
     trace, unless the program is built with `--trace-fallbacks`, which prints each one as it fails.
 - Narrowing tests presence, never the value: `crash keys[index]` passes on an element holding `0.0`, and `if count`
   runs on an `Integer?` holding `0`.
-- Reading a number from text answers a `T?`: `"42".to_integer()` is an `Integer?`, `null` for `"forty two"`,
+- Reading a number from text answers a `T?`: `var read: Integer? = "42"` is an `Integer?`, `null` for `"forty two"`,
   `"12abc"`, `""` or a number the type cannot hold, so narrow it (`crash count` where the text is yours, `if`/`fallback`
   where it came from outside). `var age: Integer = "42"` is an error; `var age: Integer? = "42"` reads it.
-- Text is read as an enum value the same way: `"calm".to_cat_mood()` is a `Cat.Mood?` (`to_`, the declaring class and
-  the enum's name in `snake_case`), `null` when no value is spelled that way; `var mood: Mood = text` is an error naming `to_cat_mood()`,
-  and `var mood: Mood? = text` reads it.
+- Text is read as an enum value the same way: `var mood: Cat.Mood? = "calm"`, `null` when no value is spelled that
+  way; `var mood: Mood = text` is an error, and `var mood: Mood? = text` reads it.
 - A function that declares a result ends every path with a `return` (or a bare `crash`): a path that reaches the
   closing `}` is an error naming it (`'sign_of' answers a String, but when 'value < 0' is false (line 12, an 'if'
   with no 'else') it reaches its end without a 'return'`). An `if`/`else` whose branches both return, a `switch`
@@ -581,11 +582,11 @@ as `var console = Console()`.
 `print`, `error` and `debug` write their line out at once, so a log redirected to a file shows every line as it
 happens; `write` waits for the next line end, the next `read_line()` or the exit. There is no `flush()`: lines from
 two threads never split each other, and everything is out before an exit, a crash report or a read.
-An address is an `IpAddress` (IPv4 or IPv6 only, the port a number beside it): `"::1".to_ip_address(): IpAddress?`
-reads one from text or resolves a host name (`"example.com".to_ip_address()`, its first address, IPv4 first, keeping
+An address is an `IpAddress` (IPv4 or IPv6 only, the port a number beside it): `var read: IpAddress? = "::1"`
+reads one from text or resolves a host name (`var read: IpAddress? = "example.com"`, its first address, IPv4 first, keeping
 the name for HTTP's `host`; `null` when neither), `"example.com".resolve_ip_addresses(): List<IpAddress>` gives every
 address (IPv4 first), `to_string()` writes it as RFC 5952 does, `==` compares; no constructor and no network call
-takes text, so a program narrows `"127.0.0.1".to_ip_address()` and passes the `IpAddress`.
+takes text, so a program narrows `var read: IpAddress? = "127.0.0.1"` and passes the `IpAddress`.
 TCP is `Tcp.Server()` (`listen_locally(port)`, `listen_everywhere(port)`, `listen_at(address, port)`,
 `accept(): Tcp.Connection?`) and `Tcp.Client()` (`connect(address, port)`, `connect_locally(port)`); a client and a `Tcp.Connection` talk alike: lines
 (`read_line(): String?`, `write_line(text)`), text (`read_as_string(): String?`, `write_string(text)`) or bytes as a
@@ -684,9 +685,9 @@ calendar time, added to a `Date`,
 reads a local reading: `var zones = TimeZones()`, `zones.find("America/New_York"): TimeZone?`, `zones.utc()`,
 `zones.fixed_offset(duration)`, then `instant.to_date_time_in(zone)`, `instant.to_string_in(zone)` and
 `local.to_instant_in(zone, 'compatible')` (or `'earlier'`/`'later'`, always written); `zone.identifier` is its
-IANA identifier. Text reads ISO 8601 through `to_<type>()` (`"2024-03-10T07:00:00Z".to_instant(): Instant?`,
-`to_date()`, `to_duration()`, ...) and `to_string()` writes it. `Date(2023, 2, 29)` halts, so read outside text
-with `text.to_date()`, which answers `null`, as a leap second and a bracketed zone that disagrees with the offset
+IANA identifier. Text reads ISO 8601 through each type's conversion (`var read: Instant? = "2024-03-10T07:00:00Z"`,
+`Date?`, `Duration?`, ...) and `to_string()` writes it. `Date(2023, 2, 29)` halts, so read outside text
+with `var read: Date? = text`, which answers `null`, as a leap second and a bracketed zone that disagrees with the offset
 do ([time.md](https://github.com/Spite-Language/spite_documentation/blob/master/time.md)).
 `DynamicLibrary("ucrtbase.dll", 'identity', "")` calls a native library's functions as members
 (`c_runtime.strlen(text)`, `_as_long`/`_as_double`/`_as_text` for wider results); the standard library's
@@ -716,7 +717,7 @@ parts `column_0_row_0` to `column_3_row_3`. Each answer is a new object, so one 
 highest)`, `Plane()` with `set_point_normal`, `Frustum()` with `set_from_view_projection(matrix)` then
 `intersects_box`/`intersects_sphere`, and `Ray(origin, direction)` whose `hit_plane`, `hit_box` and `hit_triangle`
 answer a `Float?` distance, `null` for a miss. Colours: `Color(0.2, 0.5, 0.9, 1.0)` holds `red`, `green`, `blue`, `alpha` from 0 to 1, its one
-constructor; text becomes one only through `"#ff6347".to_color()`, a `Color?` (also `rgb()`, `rgba()`, `hsl()`,
+constructor; text becomes one only through `var read: Color? = "#ff6347"`, a `Color?` (also `rgb()`, `rgba()`, `hsl()`,
 `hsla()` and CSS names; `null` for text naming none, so `crash` it), written with `to_hexadecimal_string()`, `to_rgb_string()`, `to_hsl_string()`, converted with
 `to_linear()` and `to_standard_rgb()`. Animation and shading: `CubicBezier(start, first_handle, second_handle, end)`
 with `y_at_x(x)`, `var easing = Easing()` then `easing.in_out_cubic(amount)` and the rest, `Noise(seed)` with
@@ -778,10 +779,10 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `a << 3`, `a >> 3`, `a & mask`, `a \| mask`, `a ^ mask`, `~a` | `Spite has no '<<': bits are functions on the whole numbers` (each names its function) | `a.shifted_left(3)`, `a.shifted_right(3)`, `a.bits_and(mask)`, `a.bits_or(mask)`, `a.bits_exclusive_or(mask)`, `a.bits_inverted()` |
 | `x.sqrt()`, `x.sin()`, `x.atan2(y)`, `x.pow(y)`, `x.abs()`, `a.min(b)`, `x.ceil()`, `x.isnan()`, ... | `Float has no function 'sqrt': Spite spells it 'square_root', since no name is abbreviated` | every name in full: `square_root()`, `sine()`, `cosine()`, `tangent()`, `arc_sine()`, `arc_cosine()`, `arc_tangent()`, `power(y)`, `exponential()`, `logarithm()`, `logarithm_base_2()`, `logarithm_base_10()`, `absolute()`, `minimum(b)`, `maximum(b)`, `ceiling()`, `truncate()`, `is_not_a_number()`, `is_infinite()`, `is_finite()`; `floor()`, `round()` and `clamp(low, high)` keep their names |
 | `Math.atan2(y, x)`, `atan2f(y, x)` | `Spite has no 'Math'` | `y.arc_tangent_over(x)`: the angle of the point `(x, y)` |
-| `Math.sqrt(x)`, `Math.PI` | `Spite has no 'Math': maths is a function of the number itself, like 'value.square_root()'` | `x.square_root()`, `Float.pi` |
+| `Math.sqrt(x)`, `Math.PI` | `Spite has no 'Math': maths is a function of the number itself, like 'value.square_root()'` | `x.square_root()`, `Float.Pi()` |
 | `sqrt(x)`, `sqrtf(x)`, `pow(x, y)` | `this class has no function 'sqrt': maths is a function of the number itself` | `x.square_root()`, `x.power(y)` |
-| `M_PI`, `f32::consts::PI`, `FLT_MAX`, `INT_MAX`, `INFINITY`, `NAN` | `unknown identifier 'M_PI'` | `Float.pi` (`Double.pi` for the 64-bit one), `Float.largest`, `Integer.largest`, `Float.infinity`, `Float.not_a_number` |
-| `angle.pi`, `Float.pi()` | `'pi' is a constant of the class Float, not of a value` | `Float.pi` |
+| `M_PI`, `f32::consts::PI`, `FLT_MAX`, `INT_MAX`, `INFINITY`, `NAN` | `unknown identifier 'M_PI'` | `Float.Pi()` (`Double.Pi()` for the 64-bit one), `Float.Largest()`, `Integer.Largest()`, `Float.Infinity()`, `Float.NotANumber()` |
+| `angle.pi`, `Float.pi()` | `'pi' is a constant of the class Float, not of a value` | `Float.Pi()` |
 | `count++`, `count += 1` | `Spite has no '++': write 'count = count + 1'` | `count = count + 1` |
 | `condition ? a : b` | `Spite has no 'condition ? a : b'` | an `if` with an `else`, or a function that returns one or the other |
 | `int`, `Int`, `bool`, `Bool`, `to_int()` | `'Int' is spelled 'Integer'`, `'int' abbreviates: write 'integer'` | `Integer`, `Boolean`, `to_integer()`: no name is abbreviated, the language's own included |

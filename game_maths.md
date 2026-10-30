@@ -163,7 +163,7 @@ func GameRotationsBasics() {
     load "../spite_standard_library/windows"
     var turn = Quaternion<Float>()
     var axis = Vector3(0.0, 0.0, 1.0)
-    var quarter_turn = Float.pi * 0.5
+    var quarter_turn = Float.Pi() * 0.5
     turn.set_axis_angle(axis, quarter_turn)
     var along = Vector3(1.0, 0.0, 0.0)
     var turned = turn.rotate(along)
@@ -224,7 +224,7 @@ nothing behind
 
 A `Color` holds four `Float`s from 0 to 1, `red`, `green`, `blue` and `alpha`, and it has one constructor that
 takes them: `Color(0.2, 0.5, 0.9, 1.0)`. Text becomes a colour through `to_color()`, which reads what the web
-writes for one: `"#ff6347".to_color()`, and the same for `#rgb`, `#rgba`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()`
+writes for one: `var read: Color? = "#ff6347"`, and the same for `#rgb`, `#rgba`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()`
 and `hsla()` with commas or spaces and an alpha after a `/`, and the 148 CSS colour names. It answers a `Color?`,
 `null` for text that names no colour, so `crash` it when the text is your own and a mistake would be a bug.
 A colour writes itself back as `to_hexadecimal_string()`, `to_rgb_string()` and `to_hsl_string()`, and
@@ -235,13 +235,13 @@ shader adds up.
 var console = Console()
 
 func GameColorsBasics() {
-    var tomato = "tomato".to_color()
+    var tomato: Color? = "tomato"
     crash tomato
     console.print("{tomato} {tomato.to_rgb_string()} {tomato.to_hsl_string()}")
-    var faded = "hsl(210, 50%, 40%, 0.25)".to_color()
+    var faded: Color? = "hsl(210, 50%, 40%, 0.25)"
     crash faded
     console.print("{faded} {faded.to_rgb_string()}")
-    var wrong = "#12".to_color()
+    var wrong: Color? = "#12"
     if wrong {
         console.print("read")
     } else {

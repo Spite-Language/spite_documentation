@@ -520,8 +520,8 @@ func average_member(member: Spite.AttributeDeclaration): Float? {
     if item_count == 0 {
         return null
     }
-    var total = sum_member(member)
-    return total.to_float() / item_count.to_float()
+    var total: Float = sum_member(member)
+    return total / item_count
 }
 ```
 

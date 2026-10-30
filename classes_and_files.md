@@ -189,6 +189,63 @@ func DroppedReport() {
 'Report("the door opens")' makes a 'Report' and drops it: a constructed object must be kept and used, so a class whose construction is the whole point should be a function instead
 ```
 
+## Constructors, conversions and presets
+
+A class is built in three ways, and each has a fixed shape so it can't be mistaken for another:
+
+| Kind | Shape | Who calls it |
+|---|---|---|
+| **constructor** | named after the class, no return type, fills `this` | the program: `Meters(42195)` |
+| **conversion** | named after the class, one parameter named `from`, returns the class or its `?` | the compiler, wherever a value of the `from` type meets the class |
+| **preset** | a PascalCase name of its own, no parameters, returns exactly the class | the program: `Meters.Marathon()` |
+
+```gdscript title=distances/meters.spite
+var amount = 0
+
+func Meters(starting_amount: Integer) {
+    amount = starting_amount
+}
+
+func Meters(from: String): Meters? {
+    var read: Integer? = from
+    fallback read
+    return Meters(read)
+}
+
+func Marathon(): Meters {
+    return Meters(42195)
+}
+```
+```gdscript title=distances/distances.spite entry
+var console = Console()
+
+func Distances() {
+    load "../spite_standard_library/windows"
+    var run = Meters.Marathon()
+    console.print(run.amount)
+    var walked: Meters? = "1200"
+    crash walked
+    console.print(walked.amount)
+}
+```
+```output
+42195
+1200
+```
+
+**A conversion** lives in the class it builds, so `String` knows nothing of `Meters`, `IpAddress` or `Color`. Its
+`?` says it can fail: `Meters(from: String): Meters?` answers `null` for text that isn't a number, and the caller
+narrows it. A conversion without `?` can't fail. A class has at most one conversion from each type. It is never
+called by name: where a `String` is given and a `Meters?` is wanted, the compiler calls it, and writing the call
+yourself is an error. An enum or a union declared in a class gets its conversions in that class, named by the type
+alone (`func Job(from: String): Job?`). Text already converts to an enum by its values with nothing written.
+
+**A preset** names a special value of its class: `Float.Pi()`, `Color.Red()`, `Vector3.Up()`. It builds a fresh
+value on each call, which the compiler folds, so nobody can change a shared one. Its body is a single `return` of
+literals, other presets or a constructor call on literals: it reads nothing and does no work but building.
+
+A conversion and a preset answer with `return` and never assign `this`. Only these three shapes build a class.
+
 ## Singletons
 
 A file whose first line is `singleton` has one instance: calling its constructor anywhere answers that same

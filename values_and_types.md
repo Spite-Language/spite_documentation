@@ -208,17 +208,18 @@ func NumberMethods() {
 None of this costs anything at run time: a number is still a plain value (an `Integer` is an `int32_t`), the
 class gives it functions, not a header, and a function the program never calls is not emitted. A cast from one
 number type to another is written by assignment, `var half: Float = count`, or by passing the value where the
-other type is expected; it compiles to the one machine conversion. A conversion belongs to the value converted:
-its function is the source's `to_<type>()`, so `count.to_float()` is the call form, and a function named
-`from_...` is an error ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numbers-are-classes-and-this)).
+other type is expected; it compiles to the one machine conversion, and there is no call form
+([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numbers-are-classes-and-this)).
 
 The same rule casts between any two classes. Where a value meets a place that wants another class (an argument, a
-`return`, an assignment, a `var` with a written type), the compiler calls the value's `to_<type>()`, the wanted
-class's name in `snake_case`: `var paint: Color? = "#ff8000"` is `"#ff8000".to_color()`, and a `Meters` passed where
-a `Feet` is wanted is `meters.to_feet()` when `Meters` declares `func to_feet(): Feet`. The cast answers what the
-conversion answers, so text read as an `IpAddress` is an `IpAddress?`, narrowed like any other `T?` before it goes
-where a plain `IpAddress` is wanted. A class with no such conversion is an error naming the call it would need:
-`a Point cannot be used where an IpAddress is needed: ... there is no 'Point.to_ip_address()' to call`
+`return`, an assignment, a `var` with a written type), the compiler calls the wanted class's conversion from it, a
+function named after the class with one parameter `from`
+([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)): `var paint: Color? = "#ff8000"`
+reads the text through `func Color(from: String): Color?`, and a `Meters` passed where a `Feet` is wanted goes
+through `func Feet(from: Meters): Feet` when `Feet` declares it. The cast answers what the conversion answers, so
+text read as an `IpAddress` is an `IpAddress?`, narrowed like any other `T?` before it goes where a plain `IpAddress`
+is wanted. A class with no such conversion is an error naming the conversion it would need:
+`a Point cannot be used where an IpAddress is needed: ... IpAddress declares no 'IpAddress(from: Point)'`
 ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#casting)).
 
 `this` works in every class, not only numbers, to hand the object itself to something:
@@ -228,7 +229,7 @@ name: write `name`, not `this.name`.
 A decimal is worked out for speed, and its last bits are never a promise. A decimal literal is a `Float`, so
 `tenth * 3.0` with a `Float` `tenth` multiplies in `Float` precision, and `tenth == 0.1` is `true` after `var tenth:
 Float = 0.1`. Inside a loop the compiler may fuse a multiply and an add into one step and add up a sum in another
-order, which is what lets a loop over decimals run several at a time; `Float.not_a_number` and the infinities still
+order, which is what lets a loop over decimals run several at a time; `Float.NotANumber()` and the infinities still
 behave as they always do. A loop that compares decimals with `==` or `!=` keeps every step in the order written,
 so what an exact comparison sees is exact.
 
@@ -285,11 +286,11 @@ have `absolute()`, `minimum(other)`, `maximum(other)` and `clamp(low, high)`. Ea
 library's function written where it is called (`sqrtf` on a `Float`, `sqrt` on a `Double`), with no call of
 Spite's own around it.
 
-A number class also answers its constants on the class itself, `Float.pi`, since they belong to no one value:
-`pi`, `tau`, `euler_number`, `infinity`, `not_a_number`, `largest` and `smallest` on `Float` and `Double`, and
-`largest` and `smallest` on every whole number. `Integer.largest` is 2147483647 and `Float.smallest` the
-most negative `Float` there is. A constant is a get-only attribute of the class: it is read without parentheses,
-and nothing can assign it.
+A number class also answers its special values as presets on the class itself, `Float.Pi()`, since they belong to
+no one value ([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)): `Pi()`, `Tau()`,
+`EulerNumber()`, `Infinity()`, `NotANumber()`, `Largest()` and `Smallest()` on `Float` and `Double`, and
+`Largest()` and `Smallest()` on every whole number. `Integer.Largest()` is 2147483647 and `Float.Smallest()` the
+most negative `Float` there is. A preset builds its value on each call, and the compiler folds it.
 
 ```gdscript title=maths_basics/maths_basics.spite entry
 var console = Console()
@@ -298,7 +299,7 @@ func MathsBasics() {
     load "../spite_standard_library/windows"
     var side: Double = 2.0
     var diagonal = side.square_root()
-    console.print("{diagonal} {Float.pi} {Double.pi}")
+    console.print("{diagonal} {Float.Pi()} {Double.Pi()}")
     var speed = 7.5
     var capped = speed.clamp(0.0, 5.0)
     var ahead = speed.round()
@@ -306,7 +307,7 @@ func MathsBasics() {
     console.print("{capped} {ahead} {behind.round()} {behind.floor()} {behind.absolute()}")
     var negative = -1.0
     var root = negative.square_root()
-    console.print("{root} {root.is_not_a_number()} {Integer.largest}")
+    console.print("{root} {root.is_not_a_number()} {Integer.Largest()}")
 }
 ```
 ```output
@@ -367,10 +368,10 @@ func mean(values: List<$number_type>): Double {
     var total: Double = 0.0
     var index = 0
     while index < values.count() {
-        total = total + values[index].to_double()
+        total = total + values[index]
         index = index + 1
     }
-    return total / values.count().to_double()
+    return total / values.count()
 }
 ```
 ```gdscript title=number_type_doc/describe.spite
@@ -550,10 +551,10 @@ func StringBasics() {
     console.print("parts count", parts_count)
     var joined_parts = parts.join(" - ")
     console.print("joined", joined_parts)
-    var age = "42".to_integer()
+    var age: Integer? = "42"
     crash age
     console.print("parsed", age)
-    var not_a_number = "not a number".to_integer()
+    var not_a_number: Integer? = "not a number"
     if not_a_number {
         console.print("parsed", not_a_number)
     } else {
@@ -632,8 +633,8 @@ never plain `Job` ([how it resolves](https://github.com/Spite-Language/spite_spe
 An enum is a closed list of values, and `'knight'` is an **enum value literal**: a value the enum does not list
 is a compile error naming the ones it does, and `'orange'` where no enum is expected (`var choice = 'orange'`, with
 nothing to check it against) is an error too. Every enum is its own class with its conversions: `value.to_string()`
-is its name, `value.to_integer()` its number, `"tail".to_bird_part()` and `7.to_bird_part()` make a `Bird.Part?` from a name or a
-number (`null` when no value has it), and `Part.values` lists the values. At run time an enum value is a small
+is its name, `var number: Integer = value` its number, `var part: Bird.Part? = "tail"` and `var part: Bird.Part? = 7`
+read one from a name or a number (`null` when no value has it), and `Part.values` lists the values. At run time an enum value is a small
 integer ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
 
 Text is read as an enum value the way it is read as a number: `"soup".to_enum_from_text_course()` answers a `Course?`, the value

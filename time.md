@@ -146,7 +146,7 @@ read the clock twice around the code instead.
 
 `Date(year, month, day)` is a date in the proleptic Gregorian calendar, the one ISO 8601 uses, for any year
 (year 0 is 1 BC). A date that does not exist (`Date(2023, 2, 29)`) halts the program, since a program that
-builds one from its own numbers has a bug; text from outside is read with `text.to_date()` instead, which
+builds one from its own numbers has a bug; text from outside is read with `var read: Date? = text` instead, which
 answers `null` ([Text](#text)). `Time(hour, minute, second, nanosecond)` is the same for a clock reading, and
 `DateTime(date, time)` joins the two.
 
@@ -342,18 +342,18 @@ known up to when they were written, on every system: a future law change is not 
 
 ## Text
 
-Time text is ISO 8601 as RFC 3339 and RFC 9557 profile it. Writing is every type's `to_string()`; reading is a
-`to_<type>()` on the text, as `to_integer()` and `to_color()` are, each answering `null` for text that is not
+Time text is ISO 8601 as RFC 3339 and RFC 9557 profile it. Writing is every type's `to_string()`; reading is
+each type's conversion from text, as `Integer`'s and `Color`'s are, each answering `null` for text that is not
 exactly that type:
 
 | Function | Reads | Refuses |
 |---|---|---|
-| `text.to_instant()` | `2024-03-10T07:00:00Z`, `2024-03-10T03:00:00-04:00[America/New_York]` | a reading with no offset |
-| `text.to_date_time()` | `2024-03-10T02:30:00`, `2024-03-10 02:30` | a reading with an offset |
-| `text.to_date()` | `2024-02-29`, `+012345-06-07` | `2023-02-29` |
-| `text.to_time()` | `09:30`, `23:59:59.5` | `24:00`, the leap second `23:59:60` |
-| `text.to_duration()` | `PT1H30M`, `-PT0.5S` | `P1D`: a day is a `Period` |
-| `text.to_period()` | `P1Y2M3D`, `P2W` | `PT1H`: an hour is a `Duration` |
+| `var read: Instant? = text` | `2024-03-10T07:00:00Z`, `2024-03-10T03:00:00-04:00[America/New_York]` | a reading with no offset |
+| `var read: DateTime? = text` | `2024-03-10T02:30:00`, `2024-03-10 02:30` | a reading with an offset |
+| `var read: Date? = text` | `2024-02-29`, `+012345-06-07` | `2023-02-29` |
+| `var read: Time? = text` | `09:30`, `23:59:59.5` | `24:00`, the leap second `23:59:60` |
+| `var read: Duration? = text` | `PT1H30M`, `-PT0.5S` | `P1D`: a day is a `Period` |
+| `var read: Period? = text` | `P1Y2M3D`, `P2W` | `PT1H`: an hour is a `Duration` |
 
 The refusals are the point: text that carries an offset is an instant, and reading it as a local reading would
 drop the one fact that makes it exact, while text without one is a local reading and needs a zone to become an
@@ -370,26 +370,26 @@ var console = Console()
 
 func TimeTextReading() {
     load "../spite_standard_library/windows"
-    var exact = "2024-03-10T03:00:00-04:00[America/New_York]".to_instant()
+    var exact: Instant? = "2024-03-10T03:00:00-04:00[America/New_York]"
     crash exact
-    var local = "2024-03-10 02:30".to_date_time()
+    var local: DateTime? = "2024-03-10 02:30"
     crash local
-    var lap = "PT90M".to_duration()
+    var lap: Duration? = "PT90M"
     crash lap
     console.print(exact, local, lap)
-    var no_offset = "2024-03-10T02:30:00".to_instant()
+    var no_offset: Instant? = "2024-03-10T02:30:00"
     if no_offset {
         console.print("unexpected")
     } else {
         console.print("a local reading is not an instant")
     }
-    var wrong_zone = "2024-03-10T03:00:00-05:00[America/New_York]".to_instant()
+    var wrong_zone: Instant? = "2024-03-10T03:00:00-05:00[America/New_York]"
     if wrong_zone {
         console.print("unexpected")
     } else {
         console.print("New York was not five hours behind")
     }
-    var no_such_day = "2023-02-29".to_date()
+    var no_such_day: Date? = "2023-02-29"
     if no_such_day {
         console.print("unexpected")
     } else {

@@ -666,7 +666,7 @@ bounds and answers `null` outside them.
 ### A number's own value is its register
 
 A number is read through the bytes of its room, and the room is made only when its bytes are needed. A read of the
-number's own width at offset 0 is the number itself: no `Buffer` is made, so `index.to_string()`, `count.to_long()`
+number's own width at offset 0 is the number itself: no `Buffer` is made, so `index.to_string()`, `var read: Long? = count`
 and every other function of the numbers cost no allocation. `to_buffer()`, and a read at another offset or width,
 still copies the bytes into a `Buffer`.
 

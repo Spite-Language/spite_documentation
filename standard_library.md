@@ -28,7 +28,7 @@ REPL can look at any of it.
 | Class | What it is | Page |
 |---|---|---|
 | `String` | immutable text | [below](#string) |
-| `Integer`, `Long`, `Float`, `Double`, `Boolean`, ... | numbers, as classes, with their maths (`square_root()`, `sine()`, `Float.pi`, ...) | [values_and_types.md](values_and_types.md#numbers-are-classes), [maths](values_and_types.md#maths-functions) |
+| `Integer`, `Long`, `Float`, `Double`, `Boolean`, ... | numbers, as classes, with their maths (`square_root()`, `sine()`, `Float.Pi()`, ...) | [values_and_types.md](values_and_types.md#numbers-are-classes), [maths](values_and_types.md#maths-functions) |
 | `Nothing`, `Anything` | what a function returns when it returns nothing; the empty `type` every class fits | [functions_and_operators.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#calling-one) |
 | `Number` | the `type` every number class fits: its operators and `to_long()`, `to_double()` | [values_and_types.md](values_and_types.md#every-number-fits-number) |
 | `List<T>`, `Dictionary<Key, Value>` | containers, and the member templates | [collections.md](collections.md) |
@@ -39,7 +39,7 @@ REPL can look at any of it.
 | `Program` | this program: what it was started with, exit, sleep, environment variables, its own path | [below](#program) |
 | `Clock` | elapsed time for measuring, and the wall clock | [below](#clock) |
 | `Benchmark<T>` | one timed run of a function: what it answered and how long it took | [time.md](time.md#measuring-a-piece-of-work) |
-| `Instant`, `Duration`, `Date`, `Time`, `DateTime`, `Period`, `TimeZone`, `TimeZones` | exact time, the calendar, time zones as presentation, ISO 8601 text (read with `text.to_instant()` and the rest) | [time.md](time.md) |
+| `Instant`, `Duration`, `Date`, `Time`, `DateTime`, `Period`, `TimeZone`, `TimeZones` | exact time, the calendar, time zones as presentation, ISO 8601 text (read with `var read: Instant? = text` and the rest) | [time.md](time.md) |
 | `Environment`, `Build` | run-time and compile-time settings | [programs.md](programs.md) |
 | `Reload` | how many reloads a `--hot-reload` program has swapped in, and which classes they rebuilt | [repl.md](repl.md#knowing-what-a-reload-rebuilt) |
 | `JsonWriter<T>`, `JsonReader<T>` | any value to JSON text and back | [json.md](json.md) |
@@ -89,9 +89,9 @@ that is `null` past the end, before the start or inside a character of several b
 the text or backwards, never a shorter text that would read like the one asked for. The one member that halts is
 `byte_at`, on a byte below 0 or past the end, since it answers a number and a `0` there reads like a real byte; it
 names the index and the length. Reading a number is the one that can find nothing to answer, so
-`to_integer()` and the other `to_<type>()` readings answer a `T?`: `null` when the text is not a number that fits
-the type. Assigning text to a number calls the matching one, so it is allowed only into a `T?`:
-`var age: Integer? = "42"` is `42`, and `var age: Integer = "42"` is an error naming `to_integer()`. Every member,
+each number's conversion from text answers a `T?`: `null` when the text is not a number that fits the type.
+Assigning text to a number calls it, so it is allowed only into a `T?`: `var age: Integer? = "42"` is `42`, and
+`var age: Integer = "42"` is an error. Every member,
 with what it answers at the edges, is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#the-string-class).
 
 ```gdscript title=string_members/string_members.spite entry
@@ -104,7 +104,7 @@ func StringMembers() {
     var first = names.first()
     crash first
     var shouted = first.upper_case()
-    var count = "3".to_integer()
+    var count: Integer? = "3"
     crash count
     var missing = line.index_of("barbara")
     var first_length = first.length()
@@ -690,20 +690,20 @@ var console = Console()
 
 func IpAddressForms() {
     load "../spite_standard_library/windows"
-    var read = "2001:DB8:0:0:0:0:0:7".to_ip_address()
+    var read: IpAddress? = "2001:DB8:0:0:0:0:0:7"
     crash read
     var is_ipv6 = read.is_ipv6()
     console.print("{read} {is_ipv6}")
-    var mapped = "::ffff:10.0.0.1".to_ip_address()
-    var plain = "10.0.0.1".to_ip_address()
+    var mapped: IpAddress? = "::ffff:10.0.0.1"
+    var plain: IpAddress? = "10.0.0.1"
     crash mapped
     crash plain
     var same = mapped == plain
     console.print("{mapped} {same}")
-    var name = "localhost".to_ip_address()
+    var name: IpAddress? = "localhost"
     crash name
     console.print("localhost is first {name}")
-    var nowhere = "no-such-host.invalid".to_ip_address()
+    var nowhere: IpAddress? = "no-such-host.invalid"
     if not nowhere {
         console.print("a name that resolves to nothing is null")
     }
@@ -723,7 +723,7 @@ localhost resolves first to 127.0.0.1
 
 | Member | Does |
 |---|---|
-| `"text".to_ip_address(): IpAddress?` | reads dotted IPv4 (`"192.168.1.20"`) or IPv6 (`"::1"`, `"2001:db8::7"`, `"::ffff:10.0.0.1"`, `"fe80::1%4"`), or resolves a host name (`"localhost"`, `"example.com"`) to its first address, IPv4 first, waiting in place; `null` when the text is neither, or names nothing. An address from a name keeps the name, which `Http.Client` writes as the `host` header and `WebSocket.Client` in its handshake |
+| `var read: IpAddress? = "text"` | reads dotted IPv4 (`"192.168.1.20"`) or IPv6 (`"::1"`, `"2001:db8::7"`, `"::ffff:10.0.0.1"`, `"fe80::1%4"`), or resolves a host name (`"localhost"`, `"example.com"`) to its first address, IPv4 first, waiting in place; `null` when the text is neither, or names nothing. An address from a name keeps the name, which `Http.Client` writes as the `host` header and `WebSocket.Client` in its handshake |
 | `"host".resolve_ip_addresses(): List<IpAddress>` | asks the system for every address a host name (or an address written as text) names, the IPv4 ones first; empty when it names none. It waits in place |
 | `is_ipv4(): Boolean`, `is_ipv6(): Boolean` | which kind it is |
 | `==`, `!=` | the same address or not (its `equals(other)`) |
@@ -734,7 +734,7 @@ An IPv4 address inside `::ffff:` is that IPv4 address, so a datagram a dual-stac
 comes from `127.0.0.1`. There is no constructor that takes text, and no network call takes text: text becomes an address through
 `to_ip_address()`, which can answer `null`, and every call that says where to go takes an `IpAddress`. Once the compiler casts text where an `IpAddress` is wanted and folds a
 literal it can read (spite_compiler#228, #229), `client.connect("127.0.0.1", 8080)` needs nothing written; until
-then a program narrows `"127.0.0.1".to_ip_address()` first.
+then a program narrows `var read: IpAddress? = "127.0.0.1"` first.
 
 ## TCP
 
@@ -778,13 +778,13 @@ the client left: true
 | `Tcp.Server` | Does |
 |---|---|
 | `listen_locally(port)`, `listen_everywhere(port)` | listens on `127.0.0.1`, or on every interface of both IPv4 and IPv6; `false` when it cannot |
-| `listen_at(address: IpAddress, port)` | listens on the one interface an address names (a host name's, through `"localhost".to_ip_address()`, its first address, IPv4 first); `false` when it cannot |
+| `listen_at(address: IpAddress, port)` | listens on the one interface an address names (a host name's, through `var read: IpAddress? = "localhost"`, its first address, IPv4 first); `false` when it cannot |
 | `accept(): Tcp.Connection?` | waits for the next client; `null` when the server is not listening |
 | `close()` | stops listening |
 
 | `Tcp.Client` | Does |
 |---|---|
-| `connect(address: IpAddress, port)` | connects to an address (a host name's through `"example.com".to_ip_address()`); `false` when nobody answers |
+| `connect(address: IpAddress, port)` | connects to an address (a host name's through `var read: IpAddress? = "example.com"`); `false` when nobody answers |
 | `connect_locally(port)` | connects to `127.0.0.1` |
 
 | A `Tcp.Client` and a `Tcp.Connection` | Do |
@@ -825,7 +825,7 @@ func UdpPing() {
     var client = Udp.Client()
     crash client.open()
     var ping = "ping".to_buffer()
-    var server_address = "127.0.0.1".to_ip_address()
+    var server_address: IpAddress? = "127.0.0.1"
     crash server_address
     crash client.send_to(server_address, 47402, ping)
     var arrived = server.receive()
@@ -957,7 +957,7 @@ func talk() {
     var socket = WebSocket.Client()
     var request = Http.Request()
     request.path = "/chat"
-    var server_address = "127.0.0.1".to_ip_address()
+    var server_address: IpAddress? = "127.0.0.1"
     crash server_address
     crash socket.connect(server_address, 8080, request)
     fallback socket.send_string("hello")

@@ -10,7 +10,8 @@ A formatter that offers choices, and a linter that warns, hand every choice back
 doing one thing is a decision somebody makes again at every place it appears, so Spite keeps one: before adding a
 way to do something, look for the one that already exists, and when two exist, remove one. Conversions are the
 example: `Float.from_integer(count)` and `count.to_float()` both look reasonable, nobody could say which class owns a
-conversion, and so only `to_<type>()` on the value being converted exists.
+conversion, and so only the conversion in the class it makes exists, `func Float(from: Integer): Float`, which the
+compiler applies wherever the value meets the class.
 
 For the same reason there are no warnings. A warning is a decision left to the reader, and a reader who skims will
 skip it. The compiler either rewrites your code into the one style or refuses it. Syntax follows the same rule:
