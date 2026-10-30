@@ -35,11 +35,6 @@ var note: String? = null
 ```gdscript title=json_basics/item.spite
 var name = ""
 var count = 1
-
-func Item(starting_name: String, starting_count: Integer) {
-    name = starting_name
-    count = starting_count
-}
 ```
 ```gdscript title=json_basics/json_basics.spite entry
 var console = Console()
@@ -51,7 +46,9 @@ func JsonBasics() {
     order.customer = "Ada \"the\" first"
     order.total = 12.5
     order.status = 'shipped'
-    var tea = Item("tea", 2)
+    var tea = Item()
+    tea.name = "tea"
+    tea.count = 2
     order.items.append(tea)
     var writer = JsonWriter<Order>()
     var text = writer.write(order)
@@ -78,6 +75,64 @@ Ada "the" first shipped tea 2
   text is not JSON, or not this class's JSON; one reader reads any number of texts. Narrow it like any other `T?`: `crash` when bad input is a bug, `fallback` when the program should carry on,
   `if` when absence is a case.
 
+### What a reader makes
+
+A reader makes each object it reads one of two ways, and the class says which. **A class made without arguments**
+(no constructor, or one without parameters) is made that way and its attributes are filled from the text, as
+`Order` and `Item` are above. **A class whose constructor takes arguments** is read through its conversion
+([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)): the reader reads the value the
+conversion takes, then converts it, and a conversion that answers `null` makes the read `null`. A class with
+neither is a compile error at the line that makes the reader, naming both forms. `BinaryReader` makes a class only
+the first way: bytes hold its attributes, never what a conversion takes.
+
+```gdscript title=json_converted/version.spite
+var major = 0
+var minor = 0
+
+func Version(starting_major: Integer, starting_minor: Integer) {
+    major = starting_major
+    minor = starting_minor
+}
+
+func Version(from: String): Version? {
+    var parts = from.split(".")
+    fallback parts.count() == 2
+    var major_text = parts[0]
+    var minor_text = parts[1]
+    var read_major: Integer? = major_text
+    var read_minor: Integer? = minor_text
+    fallback read_major and read_minor
+    return Version(read_major, read_minor)
+}
+```
+```gdscript title=json_converted/release.spite
+var name = ""
+var version = Version(0, 1)
+```
+```gdscript title=json_converted/json_converted.spite entry
+var console = Console()
+
+func JsonConverted() {
+    load "../spite_standard_library/windows"
+    var reader = JsonReader<Release>()
+    var release = reader.read("\{\"name\": \"spite\", \"version\": \"2.7\"}")
+    crash release
+    console.print(release.name, release.version.major, release.version.minor)
+    var unread = reader.read("\{\"name\": \"spite\", \"version\": \"two\"}")
+    if not unread {
+        console.print("two is not a version")
+    }
+}
+```
+```output
+spite 2 7
+two is not a version
+```
+
+A number is read into a number attribute through that number class's conversion from text, as any text becomes
+a number ([values_and_types.md](values_and_types.md#numeric-types-and-the-casting-rule)), so `3.7` read into an
+`Integer` makes the read `null`: `Integer(from: String)` answers `null` for it, and the reader has no rule of its own.
+
 ## Write and read bytes
 
 `BinaryWriter` and `BinaryReader` are the JSON pair for bytes: a serializer that knows its type, turning a whole
@@ -103,11 +158,6 @@ var note: String? = null
 ```gdscript title=binary_basics/item.spite
 var name = ""
 var count = 1
-
-func Item(starting_name: String, starting_count: Integer) {
-    name = starting_name
-    count = starting_count
-}
 ```
 ```gdscript title=binary_basics/binary_basics.spite entry
 var console = Console()
@@ -119,7 +169,9 @@ func BinaryBasics() {
     order.customer = "Ada"
     order.total = 12.5
     order.status = 'shipped'
-    var tea = Item("tea", 2)
+    var tea = Item()
+    tea.name = "tea"
+    tea.count = 2
     order.items.append(tea)
     var writer = BinaryWriter<Order>()
     var bytes = writer.write(order)

@@ -659,8 +659,10 @@ to make a system that breaks its rule a compile error
 `read(text): T?`, reads it (`crash` it when bad text is a bug), for any class, list, dictionary, enum, number, `Boolean`, `String` or `T?`;
 `read` skips unknown keys, keeps defaults for missing ones, reads a camelCase or PascalCase key (`buyPrice`,
 `BuyPrice`) into its snake_case attribute (`buy_price`) when no attribute has the key's exact name, so never
-rename attributes to match foreign JSON, and is `null` on a value of the wrong kind; an enum
-reads back only as one of its values' names. A key that is not an attribute's name goes in the serializer's
+rename attributes to match foreign JSON, and is `null` on a value of the wrong kind (`3.7` for an `Integer`
+too); an enum reads back only as one of its values' names. A read class needs a constructor without parameters
+(the reader fills it) or a conversion such as `func Version(from: String): Version?` (the reader converts what it
+reads); `BinaryReader` needs the constructor. A key that is not an attribute's name goes in the serializer's
 `keys`, a map keyed by the attribute, set whole before its first use: a literal
 (`writer.keys = {Order.attributes['buy_price']: "price"}`) is folded into the code, and a map made at run time (in a
 loop, from a function) is copied when set and turned into a table by the compiler; one class's serializers take
