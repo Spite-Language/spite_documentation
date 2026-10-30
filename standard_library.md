@@ -627,8 +627,6 @@ name? no input
 | `exit(code)` | flushes what was printed and ends the process with `code` |
 | `sleep(duration)` | waits the `Duration`'s whole milliseconds; other `Concurrent` work runs meanwhile ([concurrency.md](concurrency.md)). A duration under a millisecond, zero or negative only lets other work have its turn |
 | `arguments()` | what the program was started with, as a `List<String>`, the executable left out ([programs.md](programs.md#programarguments-the-raw-command-line)) |
-| `argument_named(name)` | the value of `--name=...`, as a `String?`: `null` when none was given, a bare `--name` included |
-| `has_flag(name)` | whether a bare `--name` was given (`false` for a `--name=...`) |
 | `environment(name)` | the process environment variable, as a `String?`: `null` when it is not set |
 | `executable_path()` | the path of the running executable, as the operating system gives it, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
 | `working_directory()` | the folder the program runs in, as a `String?`: `null` when the system refuses or the path is not UTF-8 |

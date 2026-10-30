@@ -79,40 +79,9 @@ player ada class knight
 
 That run is `spite raw_arguments ada knight`.
 
-Two reads tell a setting from a flag. `program.argument_named("level")` answers the value of `--level=3` as a
-`String?`, `null` when no `--level=...` was given; `program.has_flag("verbose")` answers whether a bare
-`--verbose` was given. Neither stands in for the other: a bare `--level` has no value, so `argument_named` answers
-`null` for it, and a `--verbose=yes` is a setting, so `has_flag` answers `false`. A program that takes either form
-asks both and decides. The name is written as on the command line, kebab-case.
-
-```gdscript title=flags_and_settings/flags_and_settings.spite entry arguments=--verbose,--level=3
-var console = Console()
-var program = Program()
-
-func FlagsAndSettings() {
-    load "../spite_standard_library/windows"
-    var verbose = program.has_flag("verbose")
-    console.print("verbose", verbose)
-    var level = program.argument_named("level")
-    if level {
-        console.print("level", level)
-    }
-    var level_flag = program.has_flag("level")
-    console.print("level as a flag", level_flag)
-}
-```
-```output
-verbose true
-level 3
-level as a flag false
-```
-
-That run is the built program started directly, `.spite/build/flags_and_settings/flags_and_settings.exe --verbose
---level=3`: given to the compiler, a flag that names no `Environment` setting is an error
-([compiler.md](compiler.md)), so a program that takes its flags through the compiler declares them there.
-
-A setting the program always wants is better declared in `Environment`, which gives it a type, a default and a
-name the compiler checks.
+A named value is never read by its text: `--level=3` and a bare `--verbose` reach the program only as the
+`Environment` attributes they set, `var level = 0` and `var verbose = false`, typed, with a default and a name the
+compiler checks ([below](#run-time-settings-environment)).
 
 ## Run-time settings: `Environment`
 

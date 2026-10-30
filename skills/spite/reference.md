@@ -91,9 +91,8 @@ func is_alive(): Boolean {
   whose construction is the whole point is a function instead (`report(text)` on the class that needs it).
 - A program is a folder, and it starts by constructing the class of the file named after the folder
   (`game/game.spite` is `Game`). That constructor takes no arguments: settings come from `Environment()` and
-  `Build()` below, and `program.arguments()` is the raw command line anywhere (a `List<String>`;
-  `argument_named("player")` for `--player=value`, a `String?`, and `has_flag("verbose")` for a bare `--verbose`; neither
-  answers the other form). `spite game/game.spite` is an error: a program is named by its folder.
+  `Build()` below, and `program.arguments()` is the raw command line anywhere (a `List<String>`). A named value
+  (`--player=value`, a bare `--verbose`) is read only as the `Environment` attribute it sets, never by its text. `spite game/game.spite` is an error: a program is named by its folder.
 - `return` is always written. The return type is written `(): Type`. No return type means it returns `Nothing`,
   so `return 1` there is `'one' returns nothing, so 'return' cannot carry a value here`.
 - Only `while` exists. There is no `for`, `break` or `continue`: an early exit is part of the loop's condition.
@@ -589,7 +588,7 @@ a class prints once it declares `func to_string(): String`, and `debug` shows an
 `append_string(text)`, `byte_count()`, `last_written()`, `exists`, `remove`, `move_to(path)`: renames or moves, `false` when something is already there; bytes are a `Buffer`: `read_as_buffer(): Buffer?` (the whole file; read or mapped is the compiler's choice), `read_buffer_at(position, count): Buffer?` for a file too big for one buffer, `write_buffer(buffer)`, `append_buffer(buffer): Long?` where they start), `Directory(path)` (`path`, `folder_name`, `entries(): List<Directory.Entry>?` (`null` when the folder cannot be opened; each entry a `Directory` or a `File`, switched on;
 one kind is `entries.filter_files()` or `filter_directories()`, never a helper of its own), `exists`, `create`, `move_to(path)`),
 `Process(command, arguments)` (`run(): Integer?`, `null` when the command could not start; `read_output_as_string(): String?` or `read_output_as_buffer(): Buffer?`, `null` before a run: standard output only; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(duration)`,
-`arguments(): List<String>`, `argument_named(name): String?`, `has_flag(name): Boolean`, `environment(name): String?`, `executable_path(): String?`, `working_directory(): String?`). The library halts only on the program's own mistakes (an index outside a text, a negative count); what the outside world does is an answer (`T?` or `Boolean`): a file, a folder, a lock, a process, a line of input that is not UTF-8, the system refusing a call, random bytes not given (`SecureRandom().random_buffer(count): Buffer?`), the machine's zone (`zones.system(): TimeZone?`), and the program decides with `fallback` or `crash`. `Console` is a singleton: `Console()` is the same instance everywhere, bound once
+`arguments(): List<String>`, `environment(name): String?`, `executable_path(): String?`, `working_directory(): String?`). The library halts only on the program's own mistakes (an index outside a text, a negative count); what the outside world does is an answer (`T?` or `Boolean`): a file, a folder, a lock, a process, a line of input that is not UTF-8, the system refusing a call, random bytes not given (`SecureRandom().random_buffer(count): Buffer?`), the machine's zone (`zones.system(): TimeZone?`), and the program decides with `fallback` or `crash`. `Console` is a singleton: `Console()` is the same instance everywhere, bound once
 as `var console = Console()`.
 `print`, `error` and `debug` write their line out at once, so a log redirected to a file shows every line as it
 happens; `write` waits for the next line end, the next `read_line()` or the exit. There is no `flush()`: lines from
