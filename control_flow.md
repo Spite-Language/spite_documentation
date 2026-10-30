@@ -227,6 +227,10 @@ A loop states the condition it runs under, so `while true` is an error, like any
 and is always true here: a loop ends by its condition, so loop 'while' what its leaving paths change, a 'running'
 local they set to false or the loop's real exit test`. A loop that waits for a value loops `while not found` and
 assigns it; one that runs until something happens loops `while running` and sets `running = false` where it ends.
+A loop whose condition reads only locals that nothing inside it changes, with no `return`, `fallback` or `crash` and no
+call, could only spin, so it is an error too: `'while running' never ends: nothing inside it changes 'running', and it
+calls nothing and has no 'return', 'fallback' or 'crash', so the program would spin here for good: change 'running'
+inside the loop, or leave it with a 'return'`.
 
 None of this costs anything at run time beyond the branches and loops it compiles to: every rule on this page
 is checked while compiling. Only a REPL build adds a check point to each loop
