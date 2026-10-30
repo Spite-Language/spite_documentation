@@ -203,14 +203,14 @@ machine that pauses there; an engine asks it to start such a system as a `Concur
 to call every other system directly ([concurrency.md](concurrency.md)). `is_mutated` follows every call, however deep:
 `into.append(path)` changes the list passed as `into`, and nothing changes `path`.
 
-What a function does with each of its attributes and arguments is one dictionary, keyed by name, whose values are
-`Spite.Access`es, and a dictionary takes the member templates over its values:
+The attributes of its class a function reads and writes are two lists of declarations, following every call it
+makes to its own class:
 
 ```gdscript
 var update = Movement.functions['update_each']
 fallback update
-var written = update.accesses.filter_written()
-var only_read = update.accesses.count_read()
+var written = update.writes.map_names()
+var read_count = update.reads.count()
 ```
 
 **A question that means a program is wrong is a `crash`**, and a `crash` whose condition is decided while compiling

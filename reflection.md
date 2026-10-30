@@ -51,13 +51,13 @@ no function fly
 declared in monster.spite: true
 ```
 
-`Monster` read as a value is its `Spite.Class`. `.attributes` and `.functions` are ordinary lists, so `each` walks
-them and `[]` with a name answers the member or `null`. Every member of a reflection object is read as an
+`Monster` read as a value is its `Spite.Class`. `.attributes` and `.functions` are dictionaries keyed by the member's
+name, so `each` walks them and `[]` with a name answers the member or `null`. Every member of a reflection object is read as an
 attribute, with no `()`, and none of them can be assigned. A list member template works on them like on any list,
 so the names of every attribute are one call:
 
 ```gdscript
-var names = Monster.attributes.map_names()
+var names = Monster.attributes.keys()
 ```
 
 None of this costs anything when the program runs. `Monster` is named in the code, so the compiler knows the
@@ -155,7 +155,41 @@ func peek(attribute: Spite.AttributeDeclaration) {
 ```
 
 A declaration still reaches one instance's field: `troll.attributes[attribute]` indexes the instance with it, which
-is how a function handed a class's attribute reads or writes it on a value it was given.
+is how a function handed a class's attribute reads or writes it on a value it was given. Indexed by a declaration
+the compiler knows, it is the field itself, the short form of `troll.attributes[attribute.name].value`.
+
+### An attribute named as a value
+
+`Whisper.attributes["to"]` is the declaration of `Whisper`'s attribute `to`, a value a program can keep and hand
+on, so a library can take the attribute it works through (`Audience.Linked(Whisper.attributes["to"])`). The key is
+checked while compiling: a class named in the code that declares no attribute of that name is an error naming the
+class, so renaming the attribute without the places that name it does not build. A key on an instance's
+`.attributes` is not checked, and answers `null` when the name is missing.
+
+```gdscript title=named_attribute/whisper.spite
+var from = 1
+var to = 2
+var text = ""
+```
+```gdscript title=named_attribute/named_attribute.spite entry
+var console = Console()
+
+func NamedAttribute() {
+    load "../spite_standard_library/windows"
+    var to = Whisper.attributes["to"]
+    console.print(to.name, to.index, to.class)
+    var whisper = Whisper()
+    whisper.text = "psst"
+    var bound = whisper.attributes["text"]
+    crash bound
+    var declaration = bound.declaration
+    console.print(declaration.name, bound.owner.class)
+}
+```
+```output
+to 1 Integer
+text Whisper
+```
 
 ### A call, built before it runs
 
@@ -295,8 +329,8 @@ that would take an argument is a collection indexed or filtered instead, so ther
 |---|---|---|
 | `.name` | the class's own name, a `String` | `Monster.name` is `Monster` |
 | `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
-| `.attributes` | a `List<Spite.AttributeDeclaration>`, in declaration order | `Monster.attributes['health']` |
-| `.functions` | a `List<Spite.Function>`, in the order they were made | `Monster.functions['alive']` |
+| `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes['health']` |
+| `.functions` | a `Dictionary<String, Spite.Function>` keyed by name, in the order they were made | `Monster.functions['alive']` |
 | `.values` | an enum's values, in order | `Phase.values[1]` is `'update'` |
 | `.is_singleton` | the class has a `singleton` line | `Console.is_singleton` is `true` |
 | `.is_stateful` | a function besides the constructor and `drop()` changes the object, or a singleton it binds does | `Counter.is_stateful` |
@@ -333,7 +367,8 @@ There is no root namespace object: a namespace at the top has `null` as its `.pa
 | `.owner` | on a bound function: the instance it is bound to | `troll.functions['alive'].owner` is `troll` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
-| `.accesses` | a `Dictionary<String, Spite.Access>` keyed by name: every attribute and argument it reads or writes | `update_each.accesses.filter_written()` |
+| `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |
+| `.writes` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code writes | `update_each.writes.count()` |
 
 A class's `.functions` holds `Spite.FunctionDeclaration`s: the members above, none bound to an instance, and in a
 template over functions `.hole` (the text that stands in the function's name for the template's word) and `.index`. An
@@ -376,21 +411,13 @@ A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, 
 declaration, plus `.value` and `.owner`. Which one a function takes depends on what it is for: a template, or a walk of the
 class, takes the declaration, and a walk of an instance's data takes the bound attribute.
 
-### `Spite.Access`
+### What a function reads and writes
 
-What a function does with one attribute or argument, the value of `function.accesses`:
-
-| Member | Answers | Example |
-|---|---|---|
-| `.is_read` | the function reads it | `access.is_read` |
-| `.is_written` | the function writes it | `access.is_written` |
-| `.target` | the `Spite.Attribute or Spite.Argument` it is about | `access.target.name` |
-
-An attribute and an argument of one function cannot share a name, so one dictionary holds both. Its attributes come
-first, in declaration order, then its arguments, in order. Both answers follow every call to a function of the same
-class, however deep, so `remember()` below writes `trail` for `update_each`; an attribute or argument the function
-neither reads nor writes has no entry. Calling a function on an attribute (`trail.append(position)`) reads it, and
-writes it when that function changes the object it is called on.
+`function.reads` and `function.writes` answer the attributes of its class that its code reads and writes, as
+`Spite.AttributeDeclaration`s in declaration order. Both follow every call to a function of the same class, however
+deep, so `remember()` below writes `trail` for `update_each`. Calling a function on an attribute
+(`trail.append(position)`) reads it, and writes it when that function changes the object it is called on. What a
+function does with an argument is the argument's own `.is_mutated`.
 
 ```gdscript title=access_report/movement.spite
 var position = 0
@@ -413,39 +440,38 @@ func AccessReport() {
     load "../spite_standard_library/windows"
     var update = Movement.functions['update_each']
     crash update
-    update.accesses.each(describe)
-    var written = update.accesses.filter_written()
-    var written_count = written.count()
-    console.print("written:", written_count)
+    update.reads.each(describe_read)
+    var writes = update.writes
+    var written = writes.map_names()
+    var joined = written.join(", ")
+    console.print("writes:", joined)
     var movement = Movement()
     movement.update_each(2)
     console.print(movement.position)
 }
 
-func describe(access: Spite.Access) {
-    console.print(access.target.name, "read", access.is_read, "written", access.is_written)
+func describe_read(attribute: Spite.AttributeDeclaration) {
+    console.print("reads", attribute.name)
 }
 ```
 ```output
-position read true written true
-speed read true written false
-trail read true written true
-steps read true written false
-written: 2
+reads position
+reads speed
+reads trail
+writes: position, trail
 2
 ```
 
-A function known only at run time answers the same dictionary: one kept in a list and read later, a function value
-like `movement.remember`, or one read from `value.class.functions` through `Anything`. The program carries a table
-of what each function reads and writes only when some code asks `.accesses` of such a function, and builds each
-dictionary the first time it is asked. The table covers the functions of the program and the packages it loads;
-a function of the standard library, a function value taken through a `type` (which has no single function behind
-it) and any function in a `--hot-reload` build, where reloading would make the table stale, are not in it, and
-asking their `.accesses` at run time halts.
+A function known only at run time answers the same lists: one kept in a list and read later, a function value
+like `movement.remember`, or one read from `value.class.functions` through `Anything`. The program carries what
+each function reads and writes only when some code asks `.reads` or `.writes` of such a function. The functions of
+the program and the packages it loads answer; a function of the standard library, a function value taken through a
+`type` (which has no single function behind it) and any function in a `--hot-reload` build, where reloading would
+make the answer stale, do not, and asking them at run time halts.
 
 ## Members are lists
 
-Every collection above is an ordinary `List` (and `.accesses` an ordinary `Dictionary`), so everything a list has
+Every collection above is an ordinary `List` (and `.attributes` and `.functions` ordinary `Dictionary`s keyed by name), so everything a list has
 works on it: `[]` with a name answers the member or `null`, and `count()`, `each`, `filter` and every member
 template do what they do on any list.
 
@@ -524,7 +550,7 @@ templates work over its values:
 ```gdscript
 var names = Monster.attributes.map_names()
 var counted = Shop.every_class.count_is_singleton()
-var written = update_each.accesses.filter_written()
+var written = update_each.writes.map_names()
 ```
 
 ## Known while compiling
@@ -655,7 +681,7 @@ func RunTimeType() {
     var gadget = Gadget()
     var anything: Anything = gadget
     var attributes = anything.attributes
-    var first = attributes.first()
+    var first = attributes.values().first()
     crash first
     var made = fresh(first)
     console.print(made)

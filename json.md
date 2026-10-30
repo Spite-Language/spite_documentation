@@ -455,7 +455,7 @@ it came from afterwards changes nothing:
 
 ```gdscript
 var keys = Dictionary<Spite.AttributeDeclaration, String>()
-var declarations = MeshRecord.attributes
+var declarations = MeshRecord.attributes.values()
 var index = 0
 while index < declarations.count() {
     var described = declarations[index]
