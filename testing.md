@@ -1,10 +1,9 @@
 # Testing
 
-A test is a package that crashes. There is no framework: no `expect`, no matchers, no reporter and no summary.
-A test is an ordinary function whose name starts with `test_`, in a class whose name ends with `Tests`, and
-`crash` is the assertion: when a test is wrong, the program halts with the condition, the values of its
-operands and the file and line ([failure.md](failure.md#what-a-crash-reports)), which is everything needed to fix
-it. A run that prints nothing passed.
+A test is a function that crashes. Its name is `test` or starts with `test_`, it takes nothing, and `crash` is the
+assertion: when a test is wrong, it halts with the condition, the values of its operands and the file and line
+([failure.md](failure.md#what-a-crash-reports)), which is everything needed to fix it. There is no `expect`, no
+matcher and nothing to register.
 
 ```gdscript
 func test_append_and_prepend_keep_order() {
@@ -17,14 +16,13 @@ func test_append_and_prepend_keep_order() {
 }
 ```
 
-## The runner is thirty lines of Spite
+## A test program runs `Test`
 
-A runner finds every test itself, through reflection: `Spite.Class.instances` is every class in the program, and
-each class's `.functions` its functions ([reflection.md](reflection.md)). Nothing registers a test, and there is no
-manifest to keep in step. A test package is a folder like any program: its tests in classes of their own (the entry
-class lists no functions, [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/testing.md)), and an entry class that runs them:
+A project keeps one entry point, and its tests are a program of their own beside it that `load`s the project. The
+tests sit in classes of a namespace (a folder), and the entry runs them with the library's `Test` class:
+`Test(namespace)` takes the namespace and `run()` runs every test in it.
 
-```gdscript title=test_package/text_tests.spite
+```gdscript title=test_package/checks/text_tests.spite
 func test_trim_removes_the_spaces_around_text() {
     var trimmed = "  spite  ".trim()
     crash trimmed == "spite"
@@ -36,106 +34,103 @@ func test_split_keeps_empty_pieces() {
 }
 ```
 ```gdscript title=test_package/test_package.spite entry
-var console = Console()
-var program = Program()
-var ran = 0
-
 func TestPackage() {
     load "../spite_standard_library/windows"
-    var classes = Spite.Class.instances
-    var index = 0
-    while index < classes.count() {
-        var tested = classes[index]
-        if tested.name.ends_with("Tests") {
-            run(tested.name, tested.functions)
-        }
-        index = index + 1
-    }
-    crash ran > 0
-    console.print("every test passed")
-}
-
-func run(class_name: String, functions: List<Spite.Function>) {
-    var index = 0
-    while index < functions.count() {
-        var function = functions[index]
-        if function.name.starts_with("test_") and chosen(class_name, function.name) {
-            function.call_function()
-            ran = ran + 1
-            console.print("passed", function.name)
-        }
-        index = index + 1
-    }
-}
-
-func chosen(class_name: String, function_name: String): Boolean {
-    var arguments = program.arguments()
-    if arguments.count() == 0 {
-        return true
-    }
-    var wanted = arguments[0]
-    return wanted == class_name or wanted == function_name
+    var tester = Test(Checks)
+    tester.run()
 }
 ```
 ```output
-passed test_trim_removes_the_spaces_around_text
-passed test_split_keeps_empty_pieces
-every test passed
+pass Checks.TextTests.test_trim_removes_the_spaces_around_text
+pass Checks.TextTests.test_split_keeps_empty_pieces
+2 tests, 2 passed, 0 failed
 ```
 
-`call_function()` calls a function found through reflection that takes no arguments, which is what a test is. The
-runner takes one argument, the name of a class of tests or of one test, and runs only that; a name that matches
-nothing is a crash at `crash ran > 0`, never a run that passes because it ran nothing. A project's tests are a
-program of their own, beside the project, that `load`s the code it tests (`load "../game"`); the repository's
-`tests/` tests the standard library, which every program loads anyway, with the same runner.
+`run()` walks the namespace's classes, then every namespace below it, and in each class every function named
+`test` or `test_...`, in the order they are declared. For each test it **builds the class with its constructor**, so
+a class's constructor is the setup its tests share: whatever it makes, each test starts from it. Then it calls the
+test. A test program is never part of the program it tests, so tests take no room in what a hot reload rebuilds.
 
-## Run them
+```gdscript title=test_setup/bank/account.spite
+var balance = 0
 
-A test package is run like any program, by naming its folder:
+func deposit(amount: Integer) {
+    balance = balance + amount
+}
 
-```bash
-spite test_package                                    # every test in the folder
-spite test_package TextTests                          # one class of tests
-spite test_package test_split_keeps_empty_pieces      # one test
-spite test_package --debug-memory                     # every test, and prove nothing leaked
+func withdraw(amount: Integer) {
+    balance = balance - amount
+}
+```
+```gdscript title=test_setup/bank/account_tests.spite
+var account = Bank.Account()
+
+func AccountTests() {
+    account.deposit(100)
+}
+
+func test_withdraws() {
+    account.withdraw(30)
+    crash account.balance == 70
+}
+
+func test_starts_from_its_own_setup() {
+    crash account.balance == 100
+}
+```
+```gdscript title=test_setup/test_setup.spite entry
+func TestSetup() {
+    load "../spite_standard_library/windows"
+    var tester = Test(Bank)
+    tester.run()
+}
+```
+```output
+pass Bank.AccountTests.test_withdraws
+pass Bank.AccountTests.test_starts_from_its_own_setup
+2 tests, 2 passed, 0 failed
 ```
 
-Each folder of tests is a package of its own, so a project with `game_tests/` and `network_tests/` runs one folder
-with `spite game_tests` and all of them by naming each. The compile in front of the run is part of the test: a
-test that cannot compile reports `path:line: error: ...` and runs nothing.
+## Each test runs on its own
 
-**When every test passes**, the run prints what the runner prints (here a line per test and `every test passed`)
-and exits with status 0.
+`run()` runs each test in a run of its own: it starts the same program again with the setting `SPITE_TEST` naming
+one test (`Bank.AccountTests.test_withdraws`), and that run builds the class and calls only that test. So no test
+sees what another left behind, and a failing test does not stop the others. Under each test's line comes whatever
+its run printed, indented. When every test passes, the program exits with status 0; when any fails, the last line
+counts it and the program exits with status 1.
 
-**When a test fails**, its `crash` halts the program: everything printed so far is flushed, one report line and the
-call chain go to the error stream and the program exits with status 1. Break
+**When a test fails**, its `crash` halts its own run, and the report it writes is shown under its line. Break
 `test_split_keeps_empty_pieces` by expecting two pieces, and the run says:
 
 ```
-passed test_trim_removes_the_spaces_around_text
-spite: the program stopped at test_package/text_tests.spite:8 in TextTests.test_split_keeps_empty_pieces (pieces.count()=3)
-spite.frame	test_package/text_tests.spite:8	TextTests	test_split_keeps_empty_pieces
-spite.frame	test_package/test_package.spite:19	TestPackage	run
-spite.frame	test_package/test_package.spite:5	TestPackage	TestPackage
+pass Checks.TextTests.test_trim_removes_the_spaces_around_text
+fail Checks.TextTests.test_split_keeps_empty_pieces
+    spite: the program stopped at test_package/checks/text_tests.spite:8 in Checks.TextTests.test_split_keeps_empty_pieces (pieces.count()=3)
+    spite.frame	test_package/checks/text_tests.spite:8	Checks.TextTests	test_split_keeps_empty_pieces
+    spite.frame	test_package/test_package.spite:4	TestPackage	TestPackage
+2 tests, 1 passed, 1 failed
 ```
 
-The first line is the report, and it is enough: the file and line of the `crash` (`text_tests.spite:8`), the
-class and the test, and the value of every part of the condition, then the other values in scope
-([what a crash reports](failure.md#what-a-crash-reports)); the `spite.frame` lines below it say how the run got
-there. The condition itself is not repeated, since it is on the
-line named. There is no expected-versus-actual prose: the test says `pieces.count() == 2`, the report says
-`pieces.count()=3`, and the line is open in front of you.
+The report is enough: the file and line of the `crash` (`text_tests.spite:8`), the class and the test, and the value
+of every part of the condition ([what a crash reports](failure.md#what-a-crash-reports)). There is no
+expected-versus-actual prose: the test says `pieces.count() == 2`, the report says `pieces.count()=3`, and the line
+is open in front of you.
 
-**Iterating on a failure** is one loop. Open the line the report names; read the values; decide whether the code
-or the test is wrong; fix it; run that one test again by name (`spite test_package test_split_keeps_empty_pieces`)
-until it passes; then run the whole folder, since a fix can break another test. The first failure stops the run,
-so each run hands you exactly one thing to fix. To look around inside a test while it runs, run the package with
-`--hot-reload --repl-port=4000` and set a breakpoint on the test's line ([repl.md](repl.md#breakpoints)).
+**One test alone** is the same program with the setting given: `SPITE_TEST=Checks.TextTests.test_split_keeps_empty_pieces`
+in the environment runs that test in place, with no report line and no count, so a failure is the bare crash
+report and the status is the test's own. That is the loop for fixing a failure: open the line the report names,
+fix the code or the test, run that test alone until it passes, then run them all, since a fix can break another
+test. To look around inside a test while it runs, build the test program with `--hot-reload --repl-port=4000` and
+set a breakpoint on the test's line ([repl.md](repl.md#breakpoints)).
+
+**The compile in front of the run is part of the test**: a test that cannot compile reports `path:line: error: ...`
+and nothing runs.
 
 ## Why tests that crash are the best tests
 
-- **A test stops at the first broken fact.** Nothing runs on top of a value already known to be wrong, so a run is
-  as fast as the first failure and a failure never cascades into forty more that only repeat it.
+- **A test stops at its first broken fact.** Nothing in that test runs on top of a value already known to be
+  wrong, so a failure never cascades into forty more lines that only repeat it, and each failing test hands you
+  exactly one line to open.
 - **There is nothing to write but the fact.** No `expect(...).toEqual(...)`, no matcher vocabulary, no message to
   keep true: `crash pieces.count() == 3` is the test, and the compiler writes the report from it.
 - **The report is the memory, not a story about it.** It points at the line and shows the values there. A model
@@ -147,19 +142,6 @@ so each run hands you exactly one thing to fix. To look around inside a test whi
 - **What the compiler can prove is not a test at all.** A null not checked, a `switch` missing a value, a type that
   does not fit, a `crash` whose condition is known while compiling: each is a compile error before any test runs
   ([proofs.md](proofs.md)). Tests are left for what only running can show.
-
-## Tests prove there are no leaks
-
-The repository's own runner calls each test twice and crashes when the second call leaves any allocation behind,
-through `program.live_allocations()`, so every test is a leak test as well. The whole run under
-`--debug-memory` must print nothing and balance:
-
-```bash
-spite tests --debug-memory
-```
-
-Nothing of this is in a program that is not a test: the runner is the test package's own entry class, and the
-reflection it reads (`.instances`, `.functions`) is generated only because it reads it.
 
 ---
 

@@ -684,8 +684,8 @@ Boolean
 ## Every class in the program
 
 `Spite.Class.instances` is every class of the program, its own folder and every package it loads but not the
-standard library, in the order of their dotted names, because a class is an instance of `Spite.Class`. That is how the
-test package finds its tests without being told about them ([testing.md](testing.md)). Memory and threads are not
+standard library, in the order of their dotted names, because a class is an instance of `Spite.Class`. Walking a namespace's
+`.classes` the same way is how the library's `Test` class finds the tests of a namespace without being told about them ([testing.md](testing.md)). Memory and threads are not
 reflected: a program cannot ask where a value lives, how many objects exist or which are alive, so nothing it
 could watch ever stands in the way of how the compiler places them.
 

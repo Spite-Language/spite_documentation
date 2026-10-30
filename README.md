@@ -145,7 +145,7 @@ with a link to the next.
     `--development`, and which build to measure.
 23. [repl.md](repl.md): the local and remote REPL, `spite connect`, live reload, and a replayed debugging
     session.
-24. [testing.md](testing.md): a test is a function that crashes; the test package finds them itself, runs one by name, and why crashing tests suit an AI.
+24. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
 25. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if
     anything) you could notice.
 26. [proofs.md](proofs.md): every fact the compiler proves while compiling, what each one buys, and when it does
