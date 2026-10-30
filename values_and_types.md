@@ -816,7 +816,7 @@ alive true
 ```
 
 Like `enum` and `type`, a `union` takes no `=` and lists one member per line. A `switch` may answer several
-members at once with `_:`, and `enemy == Monster` asks which member a value is
+members at once with `_:`, and `enemy.class == Monster` asks which member a value is
 ([control_flow.md](control_flow.md#switch-over-a-union)). `Monster?` is exactly this kind of union: `Monster` and
 `Null`, the class whose only value is `null`.
 

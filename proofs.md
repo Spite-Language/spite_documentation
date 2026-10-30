@@ -168,7 +168,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 
 ### A class test narrows its block
 
-- **Proves**: inside `if value == Monster { }` the value is a `Monster`.
+- **Proves**: inside `if value.class == Monster { }` the value is a `Monster`.
 - **Rule**: it narrows on a name, a member path, or a side of an `and`. A null tests false; in a generic class a
   test that cannot hold folds to false. `!=`, the `else` and a leaving `if` narrow nothing.
 - **Buys**: the member's attributes and functions are read inside the block.

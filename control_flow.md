@@ -422,13 +422,14 @@ is two cases of the switch, `"byte": return 1` and `"tiny": return 1`. Every com
 value, so the chain is a switch however the values are grouped
 ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#a-chain-of-ifs-on-one-value-is-a-switch)).
 
-## `value == Class`
+## `value.class == Class`
 
-A class name on the right of `==` or `!=` asks what class a value is: `creature == Fish` is true when `creature`
-is a `Fish`. A `T?` that is null is no class, so the test is false. Naming a class that cannot be a member of the
+A value's class compared with a class asks what class the value is: `creature.class == Fish` is true when
+`creature` is a `Fish`. The test is written on the class, `.class`, since a class is compared with a class:
+`creature == Fish` is an error naming `creature.class == Fish`. A `T?` that is null is no class, so the test is false. Naming a class that cannot be a member of the
 value's union is an error, since the answer could only be `false`, and so is testing a value whose own type already
 answers (a plain `Cat` tested for `Cat` or `Fish`, or a union already narrowed to `Fish` tested again) outside
-a generic class ([proofs.md](proofs.md#proving-what-is-proven-is-an-error)). `if value == Class { }` narrows
+a generic class ([proofs.md](proofs.md#proving-what-is-proven-is-an-error)). `if value.class == Class { }` narrows
 the value inside the block, the way a switch case does:
 
 ```gdscript title=class_test_doc/cat.spite
@@ -460,11 +461,11 @@ func ClassTestDoc() {
 }
 
 func can_swim(creature: Creature): Boolean {
-    return creature == Fish
+    return creature.class == Fish
 }
 
 func fins_of(creature: Creature): Integer {
-    if creature == Fish {
+    if creature.class == Fish {
         return creature.fins
     }
     return 0
@@ -476,8 +477,8 @@ fins 2
 a cat's fins 0
 ```
 
-A generic class is named with its codegen values and no parentheses: `found == Storage<Health>`, or
-`found == Storage<$component_type>` inside a generic class. This is how a value read through a `type` is narrowed
+A generic class is named with its codegen values and no parentheses: `found.class == Storage<Health>`, or
+`found.class == Storage<$component_type>` inside a generic class. This is how a value read through a `type` is narrowed
 back to the generic class it really is. A class that fits the `type` may be tested for before any value of it
 has been stored there; one that does not fit is the error that says why.
 
@@ -502,10 +503,10 @@ func GenericClassTestDoc() {
     var words = Storage<String>()
     words.items.append("hello")
     var counted: Counted = words
-    var holds_words = counted == Storage<String>
-    var holds_numbers = counted == Storage<Integer>
+    var holds_words = counted.class == Storage<String>
+    var holds_numbers = counted.class == Storage<Integer>
     console.print(holds_words, holds_numbers)
-    if counted == Storage<String> {
+    if counted.class == Storage<String> {
         var first = counted.items.first()
         crash first
         console.print(first)
@@ -523,7 +524,7 @@ value of the class it was made for without a generic function (there are none). 
 keeps its class, so `Find<Integer>` finds it too. Where the value's own type already answers (a `Health` tested
 against `$wanted_type` bound to `Health`, or a union that does not hold the bound class) the test is decided
 while compiling, and it is never the "never true" error, since another binding may make it true. The same goes
-for any class test inside a generic class: one that can never be true for one instantiation (`held == Health` in
+for any class test inside a generic class: one that can never be true for one instantiation (`held.class == Health` in
 a `Box<Label>`) folds to `false` and its branch is removed from that copy, while outside a generic it stays the
 error. The full rules for class tests are with
 [unions](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#unions-in-full).
@@ -566,8 +567,8 @@ hello 43
 ```
 
 **So a switch that is one early return is an error.** A switch with one class case and `_:`, each a single
-`return`, says no more than `if value == Class { return ... }` followed by what `_:` returns, and when both
-return `Boolean` literals, it is `return value == Class`. The error names the form to write:
+`return`, says no more than `if value.class == Class { return ... }` followed by what `_:` returns, and when both
+return `Boolean` literals, it is `return value.class == Class`. The error names the form to write:
 
 ```gdscript title=single_case_switch_error/cat.spite
 var lives = 9
@@ -598,7 +599,7 @@ func is_fish(creature: Creature): Boolean {
 }
 ```
 ```diagnostic
-this switch only asks what 'creature' is: write 'return creature == Fish'
+this switch only asks what 'creature' is: write 'return creature.class == Fish'
 ```
 
 Anything that would need an `else` stays a switch, and so does a switch with more cases: `_:` narrows to each

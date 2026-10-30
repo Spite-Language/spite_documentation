@@ -48,10 +48,7 @@ thing. A class that hides another class visible from an enclosing namespace (`Ph
 absolute, and only its last folder, the namespace, must be snake_case); a file at the same namespace path
 reopens the class: same-named functions, attributes and enums replace (an enum declared again is its whole new
 list of values), the rest are added. `Build` is the exception: a field the program's own `build.spite` declares keeps the
-program's value over a loaded package's (a flag, then the program, then the package). A repository pinned with
-`load "../engine@6c7dca9/core"` is merged before the program, so the program's own declaration of a name wins over
-it, and two commits of one repository are one library: what both declare must agree, or the compile stops naming
-the declaration and both commits. A package opens the files
+program's value over a loaded package's (a flag, then the program, then the package). A package opens the files
 beside its own source through `class.source_folder()` (or `$item_type.source_folder()`), the absolute folder of
 the class's file on the machine that built it, never through a path relative to where the program runs.
 A name that resolves to no class is `unknown type 'X'`, with `did you mean
@@ -399,8 +396,8 @@ func is_alive(): Boolean {
   that each compare one name with a constant and only return are an error that writes the switch for you (`these 3
   'if's each compare 'index' with a value and return, which is what a 'switch' says: write 'switch index { ... }'`);
   an `else if` chain of three is the same.
-- `value == Monster` is a class test (false for `null`), and `if value == Monster { }` narrows `value` inside. A
-  switch that is one class case and `_:`, each a `return`, is an error: write the `if`, or `return value == Monster`.
+- `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside. A
+  switch that is one class case and `_:`, each a `return`, is an error: write the `if`, or `return value.class == Monster`.
   In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every

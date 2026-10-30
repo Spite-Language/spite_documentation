@@ -432,7 +432,7 @@ page:
 | a last `if value { ... }` with no `else` | `fallback value` | [failure.md](failure.md#the-last-if-of-a-function) |
 | `var watcher = tracker` then `fallback watcher` | `fallback tracker` | [failure.md](failure.md#narrowing-a-path) |
 | `fallback tracker` on a value that cannot be null | removing it | [failure.md](failure.md#narrowing-a-path) |
-| a switch that is one class case and `_:`, each a `return` | `if value == Class` or `return value == Class` | [control_flow.md](control_flow.md#value--class) |
+| a switch that is one class case and `_:`, each a `return` | `if value.class == Class` or `return value.class == Class` | [control_flow.md](control_flow.md#valueclass--class) |
 | two switch cases with the same body | `_:` | [control_flow.md](control_flow.md#switch-over-a-union) |
 | three `if`s comparing one value with a constant, each only returning | the `switch` it spells | [control_flow.md](control_flow.md#switch-over-values) |
 | a `while` over `items` whose body only adds up `items[index].price` | `var total = items.sum_price()` | [collections.md](collections.md#member-templates-loops-you-do-not-write) |

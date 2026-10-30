@@ -619,7 +619,7 @@ func AttributeObjects() {
 
 func show_component(component: Anything) {
     var described: String = component.class
-    if component == Health {
+    if component.class == Health {
         described = "Health {component.amount}"
     }
     console.print(described)

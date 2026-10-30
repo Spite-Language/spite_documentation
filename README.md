@@ -112,7 +112,7 @@ with a link to the next.
    guards, `crash` and its report.
 7. [functions_and_operators.md](functions_and_operators.md): functions, function values, variadic arguments,
    operators as functions, attribute interception.
-8. [control_flow.md](control_flow.md): `if`, `while` (the only loop), `switch` with `_:`, and `value == Class`.
+8. [control_flow.md](control_flow.md): `if`, `while` (the only loop), `switch` with `_:`, and `value.class == Class`.
 9. [style.md](style.md): the formatter and the lints: names, comments, blank lines, nothing unused, one call
    per line, and the short forms the compiler insists on.
 10. [memory.md](memory.md): reference counting, `copy`, `drop`, cycles, borrowed items, placement, and

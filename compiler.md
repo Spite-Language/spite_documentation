@@ -249,8 +249,9 @@ the namespace folders it belongs to. It is useful after a `load` or a reopening:
 that won, so reopening stops being invisible. What it writes is a program, not a report: running the printed
 entry file runs the same program. `Build` is printed with the defaults it
 was declared with (the program's own `build.spite` included), not the values this build folded, so running the
-printed program takes its flags again. A repository loaded at two commits is one library, so each of its classes
-is printed once, as the commits merged it ([packages.md](packages.md#two-versions-of-one-repository)).
+printed program takes its flags again. A repository loaded at two commits is printed once per version, each in
+a folder named by the repository and the commit (`engine_6c7dca9/`), since the versions are two libraries
+([packages.md](packages.md#two-versions-of-one-repository)).
 
 Each attribute and function is marked with one comment line linking the `.spite` file that supplied it: the
 program's own file, a file it loads, or the reopening that replaced it, as a path relative to the printed

@@ -838,16 +838,16 @@ text, or nothing
 something else
 ```
 
-A class test on a value folds the same way inside a generic. In `Detector<Label>`, `item == Health` can never be
+A class test on a value folds the same way inside a generic. In `Detector<Label>`, `item.class == Health` can never be
 true, so it is `false` and its branch is removed from that copy, while `Detector<Health>` keeps it. Outside a
 generic the same never-true test is an error, since there it is always a mistake; inside one, code a particular
-copy cannot use is what tree shaking is for ([control_flow.md](control_flow.md#value--class)).
+copy cannot use is what tree shaking is for ([control_flow.md](control_flow.md#valueclass--class)).
 
 ```gdscript title=generic_never_true/detector.spite
 generic $item_type
 
 func is_health(item: $item_type): Boolean {
-    if item == Health {
+    if item.class == Health {
         return true
     }
     return false
