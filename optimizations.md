@@ -1009,9 +1009,9 @@ func run(number: Integer): Integer {
 
 `run` becomes `Doubling.applied` then `Adding.applied`. It applies when the list is read only by the one function that
 appends to it and by such counted loops, is filled only from the class's setup, and each class's function has the
-parameters and answer of the `type`'s. A `register` called anywhere else is refused
-([a stage registers its passes only in its setup](proofs.md#a-list-its-setup-fills-holds-what-the-setup-made)); anything
-else touching the list leaves the loop as written, testing each item's class.
+parameters and answer of the `type`'s ([a list its setup fills holds what the setup made](proofs.md#a-list-its-setup-fills-holds-what-the-setup-made)).
+A `register` called anywhere else, or anything else touching the list, leaves the loop as written, testing each
+item's class; nothing is refused.
 
 ### A chain of `filter_` steps runs as one loop
 

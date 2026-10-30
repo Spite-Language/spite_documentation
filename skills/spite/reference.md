@@ -661,10 +661,10 @@ rename attributes to match foreign JSON, and is `null` on a value of the wrong k
 too); an enum reads back only as one of its values' names. A read class needs a constructor without parameters
 (the reader fills it) or a conversion such as `func Version(from: String): Version?` (the reader converts what it
 reads); `BinaryReader` needs the constructor. A key that is not an attribute's name goes in the serializer's
-`keys`, a map keyed by the attribute, set whole before its first use: a literal
-(`writer.keys = {Order.attributes['buy_price']: "price"}`) is folded into the code, and a map made at run time (in a
-loop, from a function) is copied when set and turned into a table by the compiler; one class's serializers take
-their maps one way, and a run-time map keying anything but a public attribute holding a value halts. Writing a `Float` or `Double` that is infinity or not-a-number
+`keys`, a map keyed by the attribute: a literal
+(`writer.keys = {Order.attributes['buy_price']: "price"}`) is folded into the code, a map made at run time (in a
+loop, from a function) is copied when set and turned into a table by the compiler, and a map that is mixed,
+changed, held or passed on is read as the program runs (never an error); a run-time map keying anything but a public attribute holding a value halts. Writing a `Float` or `Double` that is infinity or not-a-number
 to JSON crashes showing the value and the attribute (`shown=inf	path=Order.price`): check the number first
 if `null` is wanted. **Between Spite programs, and for files a Spite program reads back, use bytes instead**:
 `BinaryWriter<T>()` with `write(value): Buffer` and

@@ -446,10 +446,9 @@ func Ranged(): Long {
 - **Proves**: the exact items of a list.
 - **Rule**: a list attribute written by nothing but its default and filled only from the class's setup with objects
   the setup makes holds exactly those objects, in that order. A function `register(step: SomeType)` that appends to
-  such a list may be called only from the setup, or a refusal names the call: `'Stage.register' is called outside
-  the setup of 'Stage': ... move this call there`.
+  such a list may be called from anywhere: called only from the setup, the list is known.
 - **Buys**: a loop that calls through the list's `type` is a direct call per item.
-- **Falls back**: the loop as written.
+- **Falls back**: the loop as written, when `register` is called anywhere else; nothing is refused (D1781).
 
 ## Items read from a list
 

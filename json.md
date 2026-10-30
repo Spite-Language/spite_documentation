@@ -468,8 +468,11 @@ writer.keys = keys
 
 A serializer whose `keys` is never set has no map, and writes and reads every attribute under its own name. A
 written-out map naming an attribute the class does not have, a private one or one holding a singleton is an
-error, and a map made while the program runs that does so halts where it is set. The serializers of one class
-take their maps one way: a literal for one and a map made while the program runs for another is an error.
+error, and a map made while the program runs that does so halts where it is set. Mixing the two is fine: where
+one serializer of a class gets a literal and another a map made while the program runs, or two get different
+literals, or a key is changed later (`writer.keys[detail] = "lod"`), or the map is held in a local or handed to a
+function, the compiler stops folding that class's map and each serializer reads its own map as it runs, so every
+change is seen.
 
 A class that still declares a function `json_key_<attribute>()`, the old way to name a key, is an error at that
 function naming the map, so a key it gave is never silently dropped:
