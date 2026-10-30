@@ -993,7 +993,7 @@ not smuggle text into a condition to have it printed (`crash found or bone_name 
 values in scope without it.
 
 A `crash` the compiler can decide is not left for the run: one whose condition asks only what is known while
-compiling (a codegen value, `functions['run_each']`, `is_fixed_size`, ...) and is false, in a function the program reaches,
+compiling (a codegen value, `functions["run_each"]`, `is_fixed_size`, ...) and is false, in a function the program reaches,
 is a compile error at the `crash`, since the program would halt there every time
 ([metaprogramming.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)).
 

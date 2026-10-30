@@ -23,11 +23,11 @@ func EveryClassAnObject() {
     var kind: Spite.Class = Monster
     console.print("a class is a value:", kind)
     Monster.attributes.each(describe)
-    var alive = Monster.functions['alive']
+    var alive = Monster.functions["alive"]
     if alive {
         console.print("function", alive.name, "returns", alive.returns)
     }
-    if not Monster.functions['fly'] {
+    if not Monster.functions["fly"] {
         console.print("no function fly")
     }
     Monster.source_files.each(show_file)
@@ -102,7 +102,7 @@ func ClassAndInstance() {
     troll.attributes.each(heal)
     console.print("health is now", troll.health)
     console.print("troll is a Monster:", troll.class == Monster)
-    var bound = troll.functions['alive']
+    var bound = troll.functions["alive"]
     crash bound
     console.print("bound to troll:", bound.name)
 }
@@ -197,15 +197,15 @@ Calling a function value calls it, as always: `greet("Ann")`, `tick()`. To fill 
 by name, before running it, make a `Spite.Call` from the function's declaration and the instance to run it on:
 
 ```gdscript
-var call = Spite.Call(MoveSystem.functions['run_each'], system)
-call.arguments['position'] = position
-call.arguments['velocity'] = velocity
+var call = Spite.Call(MoveSystem.functions["run_each"], system)
+call.arguments["position"] = position
+call.arguments["velocity"] = velocity
 call.call()
 ```
 
 Nothing runs until `call.call()`. `system` must be a `MoveSystem`, or the line is a compile error. This is the only
-way to build a call; a bound function, `system.functions['run_each']`, is for passing the function as a value and
-calling it. When the function is named in the code (`MoveSystem.functions['run_each']`, or a `var` holding it that is
+way to build a call; a bound function, `system.functions["run_each"]`, is for passing the function as a value and
+calling it. When the function is named in the code (`MoveSystem.functions["run_each"]`, or a `var` holding it that is
 never assigned again), the whole thing is the plain call `system.run_each(position, velocity)`, with no object made.
 An argument left unfilled is a compile error at `call.call()`; so is filling one twice, or naming one the function
 does not have. A call built from a function known only at run time is a real object, and `call()` halts when the
@@ -220,11 +220,11 @@ attribute `kind()`, or a member read, `thing.class()` or `argument.class()`.
 |---|---|
 | a class name, `Monster`, `Shop.Tools.Hammer` | its `Spite.Class` |
 | a namespace name, `Shop.Tools` | its `Spite.Namespace` |
-| an enum name, `Phase` | its `Spite.Class`, whose `.values` are its values in order |
+| an enum name, `Phase` | its `Spite.Enum`; `Phase.values` alone is the list of its values, as `Phase`s |
 | `class` inside a function | the class the function answers on |
 | `namespace` inside a function | that class's namespace, or `null` at the root of a program |
 | `$T` in a generic class | the class it was given ([metaprogramming.md](metaprogramming.md#asking-what-a-generic-was-given)) |
-| `value.class` | the class `value` really is, through a `type` or a union too |
+| `value.class` | the class `value` really is, through a `type` or a union too; an enum value's is its `Spite.Enum` |
 | `Spite.Class.instances` | every class of the program |
 | `Spite.Namespace.instances` | every namespace of the program |
 
@@ -329,9 +329,8 @@ that would take an argument is a collection indexed or filtered instead, so ther
 |---|---|---|
 | `.name` | the class's own name, a `String` | `Monster.name` is `Monster` |
 | `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
-| `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes['health']` |
-| `.functions` | a `Dictionary<String, Spite.Function>` keyed by name, in the order they were made | `Monster.functions['alive']` |
-| `.values` | an enum's values, in order | `Phase.values[1]` is `'update'` |
+| `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes["health"]` |
+| `.functions` | a `Dictionary<String, Spite.Function>` keyed by name, in the order they were made | `Monster.functions["alive"]` |
 | `.is_singleton` | the class has a `singleton` line | `Console.is_singleton` is `true` |
 | `.is_stateful` | a function besides the constructor and `drop()` changes the object, or a singleton it binds does | `Counter.is_stateful` |
 | `.is_fixed_size` | its size is known while compiling: only numbers, `Boolean`s, enums and `String`s | `Vector3<Float>.is_fixed_size` is `true` |
@@ -357,6 +356,60 @@ list, and a question about a path is asked of those `File`s.
 
 There is no root namespace object: a namespace at the top has `null` as its `.parent`.
 
+### `Spite.Enum`
+
+An enum is a class of its own, and its reflection object is a `Spite.Enum`, not a `Spite.Class`: `Phase` named as a
+value, `phase.class` on one of its values, or the class that declares it asked for its enums.
+
+| Member | Answers | Example |
+|---|---|---|
+| `.name` | the enum's own name | `Phase.name` is `Phase` |
+| `.name_with_namespaces` | its name through the class that declares it | `Phase.name_with_namespaces` is `Game.Phase` |
+| `.owner` | the `Spite.Class` that declares it | `Phase.owner` is `Game` |
+| `.values` | a `Dictionary<String, Spite.EnumValue>` keyed by name, in declaration order | `phase.class.values["update"].number` |
+
+`Phase.values` written on the enum itself stays the list of its values as `Phase`s, the list `each` walks; the
+declarations are the `.values` of the `Spite.Enum`, reached through a value (`phase.class.values`) or a variable
+that holds one. A value's own conversions are not reflection: `var number: Integer = phase` and
+`var phase: Phase? = text` are the casts every enum has ([values_and_types.md](values_and_types.md#enums)).
+
+```gdscript title=enum_declarations/enum_declarations.spite entry
+enum Part {
+    'wing'
+    'tail' = 7
+    'beak'
+}
+
+var console = Console()
+
+func EnumDeclarations() {
+    load "../spite_standard_library/windows"
+    var tag: Part = 'tail'
+    var described = tag.class
+    console.print(described, described.owner)
+    var tail = described.values["tail"]
+    crash tail
+    console.print(tail.name, tail.number, tail.index)
+    var names = described.values.keys().join(" ")
+    console.print(names)
+}
+```
+```output
+Part EnumDeclarations
+tail 7 1
+wing tail beak
+```
+
+### `Spite.EnumValue`
+
+The declaration of one value of an enum.
+
+| Member | Answers | Example |
+|---|---|---|
+| `.name` | the value's name | `tail.name` is `tail` |
+| `.number` | its whole number, the one `var number: Integer = value` gives | `tail.number` is `7` |
+| `.index` | its place in declaration order, 0 for the first | `tail.index` is `1` |
+
 ### `Spite.Function`
 
 | Member | Answers | Example |
@@ -364,7 +417,7 @@ There is no root namespace object: a namespace at the top has `null` as its `.pa
 | `.name` | the function's name | `alive.name` is `alive` |
 | `.arguments` | a `List<Spite.Argument>`, in order | `hurt.arguments[0].name` is `amount` |
 | `.returns` | a `Spite.Class`, `Nothing` when none is declared | `alive.returns` is `Boolean` |
-| `.owner` | on a bound function: the instance it is bound to | `troll.functions['alive'].owner` is `troll` |
+| `.owner` | on a bound function: the instance it is bound to | `troll.functions["alive"].owner` is `troll` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
 | `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |
@@ -379,8 +432,8 @@ instance's `.functions` holds `Spite.Function`s bound to it, and `call_function(
 
 | Member | Answers | Example |
 |---|---|---|
-| `Spite.Call(declaration, instance)` | a call of a `Spite.FunctionDeclaration` on an instance of its class, nothing run yet | `Spite.Call(MoveSystem.functions['run_each'], system)` |
-| `.arguments` | its arguments by name, each written once before the call runs | `call.arguments['position'] = position` |
+| `Spite.Call(declaration, instance)` | a call of a `Spite.FunctionDeclaration` on an instance of its class, nothing run yet | `Spite.Call(MoveSystem.functions["run_each"], system)` |
+| `.arguments` | its arguments by name, each written once before the call runs | `call.arguments["position"] = position` |
 | `call()` | runs it, answering what the function answers | `call.call()` |
 
 ### `Spite.Argument`
@@ -399,12 +452,12 @@ instance's `.functions` holds `Spite.Function`s bound to it, and `call_function(
 |---|---|---|
 | `.name` | the attribute's name | `attribute.name` is `health` |
 | `.class` | its declared class | `attribute.class` is `Integer` |
-| `.index` | its place in declaration order, 0 for the first | `Monster.attributes['health'].index` is `1` |
-| `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes['health'].declaration` |
-| `.owner` | on a bound attribute: the object it belongs to | `troll.attributes['health'].owner` is `troll` |
+| `.index` | its place in declaration order, 0 for the first | `Monster.attributes["health"].index` is `1` |
+| `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
+| `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
 | `.camel_case_name`, `.pascal_case_name` | its name as other systems spell it | `buy_price` is `buyPrice`, `BuyPrice` |
-| `.is_singleton` | its class is a singleton | `ReflectionObjects.attributes['console'].is_singleton` |
-| `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes['health'].value` |
+| `.is_singleton` | its class is a singleton | `ReflectionObjects.attributes["console"].is_singleton` |
+| `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes["health"].value` |
 
 A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index`, the case spellings and
 `.is_singleton`, never a `.value`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
@@ -438,7 +491,7 @@ var console = Console()
 
 func AccessReport() {
     load "../spite_standard_library/windows"
-    var update = Movement.functions['update_each']
+    var update = Movement.functions["update_each"]
     crash update
     update.reads.each(describe_read)
     var writes = update.writes
@@ -497,11 +550,11 @@ var console = Console()
 
 func ConstantSelection() {
     load "../spite_standard_library/windows"
-    var update = Runner.functions['update_each']
+    var update = Runner.functions["update_each"]
     if update {
         console.print(update.name, "changes its label:", update.arguments[1].is_mutated)
     }
-    if not Runner.functions['draw_each'] {
+    if not Runner.functions["draw_each"] {
         console.print("no draw_each")
     }
     var walked = Runner.functions.filter(walks_each)
@@ -702,9 +755,9 @@ every class, so the prompt can ask anything the program can:
 ```gdscript
 > Monster.attributes.map_names()
 name, health
-> Monster.functions['alive'].returns
+> Monster.functions["alive"].returns
 Boolean
-> troll.attributes['health'].value = 40
+> troll.attributes["health"].value = 40
 ```
 
 ## Every class in the program
@@ -729,7 +782,7 @@ func EveryClassOfTheProgram() {
     load "../spite_standard_library/windows"
     var classes = Spite.Class.instances
     var class_count = classes.count()
-    var found = classes['Monster']
+    var found = classes["Monster"]
     crash found
     console.print("the program has", class_count, "classes, among them", found)
 }

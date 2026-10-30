@@ -32,7 +32,7 @@ of printing: a path or call (`World().player.health`, `Channel(1).number`, `mons
 `describe Monster`, `classes`, `enums`, `memory`, and `eval <expression>` / `run <statement>` to compile code into
 the running program. `break monster.spite:42` stops before that line; `where`, `locals` and any path through a local
 answer there, `continue` goes on, `breaks` lists and `clear` removes. A reload that would lose data (an attribute
-renamed) is held and names the map to send: `reload {Hero.attributes['level']: "rank"}`, or `reload {}` to let the
+renamed) is held and names the map to send: `reload {Hero.attributes["level"]: "rank"}`, or `reload {}` to let the
 value go. Use `--check` only to see every error at once or for a program that cannot stay running, run the
 tests before calling the work done, and build `--optimized` only to measure. Every answer is one JSON line. The
 commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
@@ -290,7 +290,7 @@ func is_alive(): Boolean {
 - A runner that treats systems of one row and of several differently asks `if phase.arguments.count() == 1 { }`
   of each `phase: Spite.Function` it walks (`var phases = $system_type.functions.filter_name_ends_with("_each")`,
   then `phases.each(run_phase)`),
-  or of one function, `$system_type.functions['update_each']` narrowed first. It is decided while compiling, so the branch for the other arity is
+  or of one function, `$system_type.functions["update_each"]` narrowed first. It is decided while compiling, so the branch for the other arity is
   never compiled: a `Stream<$system_type, argument.class>` that calls `system.phase_each(row)` is made only for
   one-row systems. With a pattern whose functions take different counts, ask inside the walk instead.
 - `fallback` and `crash` on a compile-time question fold like `if`: `fallback $slot_type == Entity` then `return
@@ -475,7 +475,7 @@ func is_alive(): Boolean {
   `Monster.attributes.each(describe)` with `func describe(attribute: Spite.AttributeDeclaration)`, unrolled while compiling into
   one call per attribute, each copy typed by its attribute (a function of another object handed a constant,
   `helper.describe(attribute)`, is compiled once for it too). A member by name is `[]` and answers a `T?`
-  (`Runner.functions['run_each']`); a selection is a member template (`Runner.functions.filter_name_ends_with("_each")`).
+  (`Runner.functions["run_each"]`); a selection is a member template (`Runner.functions.filter_name_ends_with("_each")`).
   A name is selected, never built from text. There is no `Symbol<...>`: walks are plain code on the reflection objects. A walk sees private `_` attributes and
   reads and writes them through the walked attribute; a serializer skips them, and attributes holding a singleton,
   with `if not attribute.name.starts_with("_") and not attribute.is_singleton`, which folds. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
@@ -499,14 +499,14 @@ func is_alive(): Boolean {
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
   A `Spite.Class` known only at run time, called with no arguments (`part()`, an attribute `kind()`, `thing.class()`,
   `argument.class()`), makes an object of it typed `Anything`.
-- A call built before it runs: `var call = Spite.Call(MoveSystem.functions['run_each'], system)` (a declaration and
-  an instance of its class, the only way to build one), `call.arguments['position'] = value`, `call.call()`; known
+- A call built before it runs: `var call = Spite.Call(MoveSystem.functions["run_each"], system)` (a declaration and
+  an instance of its class, the only way to build one), `call.arguments["position"] = value`, `call.call()`; known
   while compiling it is the direct call.
   There is no `call_with`.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,
   `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
-- Questions are get-only attributes, folded on a constant: `Loader.functions['load_each']` (narrow it), then
+- Questions are get-only attributes, folded on a constant: `Loader.functions["load_each"]` (narrow it), then
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes); `Loader.is_stateful`,
   `Vector3.is_fixed_size`, `Monster.is_singleton`. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
@@ -516,7 +516,7 @@ func is_alive(): Boolean {
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
   so keep one generic class with a helper per kind, not one class per kind.
 - `fallback`/`crash` on such a condition folds too, and a `crash` that folds to false in a function the program calls
-  is a compile error naming the instance (`Slot<List<String>>`): write a library's rules as `crash $row_type.functions['update_each']`
+  is a compile error naming the instance (`Slot<List<String>>`): write a library's rules as `crash $row_type.functions["update_each"]`
   and a class that breaks one fails the build.
 - A getter with no setter makes a read-only attribute: `get_fahrenheit()` answers `.fahrenheit`, and assigning
   it is an error.
@@ -644,7 +644,7 @@ that reads, sleeps or waits is an ordinary function, and the compiler suspends i
 run ([concurrency.md](https://github.com/Spite-Language/spite_documentation/blob/master/concurrency.md)), wherever the
 wait is written (an `and`, a function value, a constructor), keeping the written order: in `count + bump()`,
 `count` is read before `bump()` waits, even if another `Concurrent` changes it meanwhile.
-`$system_type.functions['update_each'].is_resumable` is decided while compiling (and `phase.is_resumable` for each
+`$system_type.functions["update_each"].is_resumable` is decided while compiling (and `phase.is_resumable` for each
 function a walk visits): `true` when the function can reach a wait, so an engine starts it as a `Concurrent` and
 polls `finished`, and calls it directly otherwise. A system never says that it does IO. A wait in a frame does not hold the frame: in a `while` that sleeps on a
 `Program` (itself or through its own class's functions), and in its own class's functions it calls, a statement
@@ -652,7 +652,7 @@ polls `finished`, and calls it directly otherwise. A system never says that it d
 whose function can wait is started like a `Concurrent` and finishes in a later frame, eight per statement at most,
 all of them before the program ends. Write the IO plainly in the system's own class; never wrap it in `Concurrent`
 to keep a frame loop going.
-`update.arguments[1].is_mutated` (with `var update = $system_type.functions['last_each']` narrowed by `crash update`)
+`update.arguments[1].is_mutated` (with `var update = $system_type.functions["last_each"]` narrowed by `crash update`)
 is decided while compiling the same way: `true` when the function, or anything it calls, changes what its argument
 number 1 (from 0) is given or anything reached through it; an engine writes `crash not update.arguments[1].is_mutated`
 to make a system that breaks its rule a compile error
@@ -666,7 +666,7 @@ too); an enum reads back only as one of its values' names. A read class needs a 
 (the reader fills it) or a conversion such as `func Version(from: String): Version?` (the reader converts what it
 reads); `BinaryReader` needs the constructor. A key that is not an attribute's name goes in the serializer's
 `keys`, a map keyed by the attribute: a literal
-(`writer.keys = {Order.attributes['buy_price']: "price"}`) is folded into the code, a map made at run time (in a
+(`writer.keys = {Order.attributes["buy_price"]: "price"}`) is folded into the code, a map made at run time (in a
 loop, from a function) is copied when set and turned into a table by the compiler, and a map that is mixed,
 changed, held or passed on is read as the program runs (never an error); a run-time map keying anything but a public attribute holding a value halts. Writing a `Float` or `Double` that is infinity or not-a-number
 to JSON crashes showing the value and the attribute (`shown=inf	path=Order.price`): check the number first
@@ -679,7 +679,7 @@ classes. A socket's or a file's bytes are a `Buffer` already, read the same way.
 different classes, write `writer.schema()` (a `Long` the compiler works out from the classes, free to ask) once at
 the start of a file or connection and compare it with `reader.schema()` before reading. Attributes named `_...`
 and attributes holding a singleton are left out of both. A JSON key that is not an attribute's name comes from a map
-given to the serializer, keyed by the attribute (`{MeshRecord.attributes['minimum_level_of_detail']: "min_lod"}`);
+given to the serializer, keyed by the attribute (`{MeshRecord.attributes["minimum_level_of_detail"]: "min_lod"}`);
 a class never declares `json_key_<attribute>()`, which is an error. A union, a `type` (`Anything` included) or a function value anywhere in what they see is a compile error at
 the line that makes the writer or reader (`JsonWriter cannot write 'Owner': 'Owner.pet' is the union Pet, ...`):
 keep what they see to the kinds above ([json.md](https://github.com/Spite-Language/spite_documentation/blob/master/json.md)). `Json` no longer exists: it is the two classes above.

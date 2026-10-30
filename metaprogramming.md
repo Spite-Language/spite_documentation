@@ -76,9 +76,9 @@ walk is `each`, a selection is a filter or a member template, and a member by na
 | every attribute of a class | `Monster.attributes.each(show)` |
 | every class of a folder | `Shop.Tools.classes.each(make)`, with `make(part: Spite.Class)` |
 | every value of an enum | `Phase.values.each(run)`, with `run(phase: Phase)` |
-| one function, if the class has it | `Runner.functions['run_each']`, a `Spite.FunctionDeclaration?` narrowed by `if` or `fallback` |
-| the same function bound to an instance | `runner.functions['run_each']`, a `Spite.Function?` |
-| a call filled argument by argument | `Spite.Call(Runner.functions['run_each'], runner)`, then `call.arguments['name'] = value` and `call.call()` |
+| one function, if the class has it | `Runner.functions["run_each"]`, a `Spite.FunctionDeclaration?` narrowed by `if` or `fallback` |
+| the same function bound to an instance | `runner.functions["run_each"]`, a `Spite.Function?` |
+| a call filled argument by argument | `Spite.Call(Runner.functions["run_each"], runner)`, then `call.arguments["name"] = value` and `call.call()` |
 | the functions whose names end in `_each` | `Runner.functions.filter(walks_each)`, or `Runner.functions.filter_name_ends_with("_each")` to count or to ask |
 | a function's arguments | `function.arguments.each(describe_taken)` |
 | an enum's values, in order | `Phase.values` |
@@ -177,13 +177,13 @@ var console = Console()
 
 func AskingFunctions() {
     load "../spite_standard_library/windows"
-    var loading = Loader.functions['load_each']
+    var loading = Loader.functions["load_each"]
     if loading {
         console.print("load_each can wait:", loading.is_resumable)
         console.print("it changes 'into':", loading.arguments[1].is_mutated)
         console.print("it changes 'path':", loading.arguments[0].is_mutated)
     }
-    var ticking = Loader.functions['tick_each']
+    var ticking = Loader.functions["tick_each"]
     if ticking {
         console.print("tick_each can wait:", ticking.is_resumable)
     }
@@ -207,7 +207,7 @@ The attributes of its class a function reads and writes are two lists of declara
 makes to its own class:
 
 ```gdscript
-var update = Movement.functions['update_each']
+var update = Movement.functions["update_each"]
 fallback update
 var written = update.writes.map_names()
 var read_count = update.reads.count()
@@ -219,7 +219,7 @@ rule it keeps, and a class that breaks it fails the build at the line that break
 
 ```gdscript
 func run_between_frames(system: $system_type) {
-    var update = $system_type.functions['update_each']
+    var update = $system_type.functions["update_each"]
     crash update
     crash not update.arguments[0].is_mutated
 }
@@ -232,7 +232,7 @@ branch it rules out may call what that class does not have:
 generic $target_type
 
 func call(target: $target_type): String {
-    var run = $target_type.functions['run_each']
+    var run = $target_type.functions["run_each"]
     if run {
         target.run_each(3)
         return "{$target_type.name} runs"

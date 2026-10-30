@@ -641,11 +641,15 @@ is its name, `var number: Integer = value` its number, `var part: Bird.Part? = "
 read one from a name or a number (`null` when no value has it), and `Part.values` lists the values. At run time an enum value is a small
 integer ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
 
-Text is read as an enum value the way it is read as a number: `"soup".to_enum_from_text_course()` answers a `Course?`, the value
-spelled that way, or `null` when the enum has none, since any value of the enum there would read as a real one.
-The reading is named after the class that declares the enum and the enum (`to_`, then both names in `snake_case`:
-`to_menu_course_kind()` for `Menu.CourseKind`), the same inside that class as outside it, and assigning text to a
-`Course?` calls it too. Assigning text to a plain `Course` is an error naming the reading:
+Every enum is its own class, and the compiler gives it two **conversions** written the way any class writes one
+([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)), as if `EnumFromText` declared
+`func Course(from: String): Course?` and `func Course(from: Integer): Course?`. Like every conversion, it is applied
+where a value meets the class, never called: assigning text to a `Course?` reads the value spelled that way, and a
+whole number the value with that number, each `null` when the enum has none, since any value of the enum there
+would read as a real one. Writing the call, `Course(name)`, is refused as a conversion called by name, and assigning
+text to a plain `Course` is an error naming the `?` to write. The class that declares the enum may give it more
+conversions, written in that class and named by the enum alone (`func Course(from: Float): Course?` in
+`EnumFromText`); one from text or a whole number replaces the compiler's own:
 
 ```gdscript title=enum_from_text/enum_from_text.spite entry
 enum Course {
@@ -662,7 +666,7 @@ func EnumFromText() {
     var index = 0
     while index < names.count() {
         var name = names[index]
-        var course = name.to_enum_from_text_course()
+        var course: Course? = name
         if course {
             console.print(name, "is a course:", course)
         } else {
@@ -679,8 +683,8 @@ brunch is no course
 
 ### Walking an enum's values
 
-An enum is a class, so `Course` read as a value is its `Spite.Class`, and `Course.values` lists its values in the
-order the enum declares them. It is an ordinary list, walked with `each` like any other
+An enum is a class, so `Course` read as a value is its `Spite.Enum` ([reflection.md](reflection.md#spiteenum)),
+and `Course.values` lists its values, as `Course`s, in the order the enum declares them. It is an ordinary list, walked with `each` like any other
 ([metaprogramming.md](metaprogramming.md#walking-a-programs-structure)).
 
 ```gdscript title=enum_walk/enum_walk.spite entry

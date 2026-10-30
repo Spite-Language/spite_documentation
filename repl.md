@@ -649,9 +649,9 @@ and a reload never guesses: it holds the change, swaps in nothing, and says what
 
 ```text
 $ spite connect 4000 --command="wait_reload"
-{"ok":false,"error":"...the reload of Hero is held, since it would lose data: level is gone and rank is new, ... reload {Hero.attributes['level']: \"rank\"}; to let what level holds be released: reload {}"}
+{"ok":false,"error":"...the reload of Hero is held, since it would lose data: level is gone and rank is new, ... reload {Hero.attributes["level"]: \"rank\"}; to let what level holds be released: reload {}"}
 
-$ spite connect 4000 --command="reload {Hero.attributes['level']: \"rank\"}"
+$ spite connect 4000 --command="reload {Hero.attributes["level"]: \"rank\"}"
 {"ok":true,"value":"rebuilt Hero, ...\nmoved every Hero to its new attributes: level is now rank","type":""}
 ```
 

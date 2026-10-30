@@ -42,7 +42,7 @@ It keeps running, even after its entry constructor returns, until a client sends
    stopped, `locals` lists what is in scope, any path may start at a local's name, and `continue` goes on. `breaks`
    lists them, `clear` removes them.
 5. **When a reload is held**, read why. Renaming an attribute is held because it would lose data, and the answer
-   names the map to send: `reload {Hero.attributes['level']: "rank"}` keeps the value under the new name, and
+   names the map to send: `reload {Hero.attributes["level"]: "rank"}` keeps the value under the new name, and
    `reload {}` lets it go.
 
 Leave the loop only when you need to:

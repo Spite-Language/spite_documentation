@@ -442,7 +442,7 @@ text round-trips:
 
 ```gdscript
 var writer = JsonWriter<MeshRecord>()
-writer.keys = {MeshRecord.attributes['minimum_level_of_detail']: "min_lod", MeshRecord.attributes['instance_count']: "instances"}
+writer.keys = {MeshRecord.attributes["minimum_level_of_detail"]: "min_lod", MeshRecord.attributes["instance_count"]: "instances"}
 ```
 
 The key is the one way to write that attribute: `minimum_level_of_detail` and `minimumLevelOfDetail` are then
