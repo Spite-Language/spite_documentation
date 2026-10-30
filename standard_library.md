@@ -124,6 +124,28 @@ ADA 3 null da d
 2 Ada, grace, linus
 ```
 
+## Paths
+
+A `Path` is a place in the file system. It is made from text by a conversion, so a program writes the text and the
+compiler casts it wherever a `Path` is wanted: `File("levels/forest.txt")` and `var level: Path = "levels/forest.txt"`
+both read the text as a path ([conversions](classes_and_files.md#constructors-conversions-and-presets)). Reading it
+tidies it: `.` and empty pieces go, `..` takes back the piece before it, both separators become `/`, and a trailing
+separator goes, so `"./a/b/../c/"` is `a/c`, and a path that starts at the root never climbs above it.
+
+| Member | Result | Notes |
+|---|---|---|
+| `name` | `String` | the last piece: `d.txt` |
+| `extension` | `String` | after the name's last dot, `txt`; empty when there is none, and for a name that starts with a dot (`.env`) |
+| `parent` | `Path` | everything but the last piece; `.` when there is none |
+| `is_rooted` | `Boolean` | starts at the root (`/`) or a drive (`C:`) |
+| `joined(other)` | `Path` | `other` inside this one; a rooted `other` is itself |
+| `written` | `String` | the text as it was given, untidied |
+| `==`, `to_string()` | | two paths are equal when their tidied text is |
+
+`File`, `Directory`, `move_to`, `FileSystemWatcher`'s `watch_folder` and `watch_file`, `Environment.load_from_file`
+and `Process`'s `working_directory` all take a `Path` (`tests/paths`). They hand the system the path as it was
+written, and `File(...).path` reads it back that way.
+
 ## Read and write a file
 
 `File(path)` is a value, a path, and several may exist at once.
@@ -446,7 +468,7 @@ output build finished
 | Member | Result | Notes |
 |---|---|---|
 | `Process(command, arguments)` | | `arguments` is a `List<String>`, each one argument of the child, quoted for you (below) |
-| `working_directory` | `String` | the folder the child runs in; `""`, the default, is the program's own |
+| `working_directory` | `Path?` | the folder the child runs in; `null`, the default, is the program's own |
 | `environment_variables` | `Dictionary<String, String>` | variables set for the child alone, on top of the program's own: `process.environment_variables["LOG"] = "1"` |
 | `run()` | `Integer?` | runs it through the system's shell, waits for it and answers its exit code (`null` when it could not start, so no exit code is made up for it; on Linux and macOS, a child a signal ended answers 128 plus the signal's number, as a shell reports it); captures standard output as bytes on Windows, where byte `0x1A` does not end the output |
 | `read_output_as_string()` | `String?` | what it wrote to its standard output; `null` before `run()`, after a run that could not start, or when those bytes are not UTF-8 |
