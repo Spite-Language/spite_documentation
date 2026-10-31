@@ -552,8 +552,9 @@ func is_alive(): Boolean {
   refuses it and runs the program with no flags), else the `SERVE` environment variable, else a `.env`
   file loaded with `environment.load_from_file(".env")` (answers `false` when it cannot be read), else the
   default. A value not of the setting's type stops the program with an error naming the setting and exit code 1.
-  A setting named like a `Build` field is a compile error naming both.
-- Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite --serve=true`, else its default) and is a constant in the program, so `if build.serve { }`
+  A setting named like a `Build` field is a compile error naming both. Every program makes `Environment()` as its entry
+  starts, so an undeclared flag is refused even where nothing else makes it.
+- Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite --serve=true`, else the `SERVE` variable, else a `SERVE=` line of the `.env` file in the folder built, else its default) and is a constant in the program, so `if build.serve { }`
   keeps only one branch; in a `--hot-reload` build the program's own reads of a field are made while it runs, and
   the standard library's stay constants. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and
   `build.target_operating_system` are `Build` fields too. A flag is kebab-case (`--debug-memory`) and sets the

@@ -119,8 +119,8 @@ func Server() {
 ordinary `if`, with both branches compiled in.
 
 That reading is the whole run-time cost: one pass over the command line and one environment lookup per declared
-field, once, when `Environment()` is first made. A program that never makes `Environment()` carries none of it
-([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#program-settings-environment)).
+field, once, when `Environment()` is first made. The compiler makes `Environment()` as the entry starts, so a
+program that never makes it still refuses a flag it does not declare ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#program-settings-environment)).
 
 ```gdscript title=setting_type_error/environment.spite
 var workers: Integer = 1
@@ -169,11 +169,13 @@ func BuildSettings() {
 serving as tester
 ```
 
-That is `spite --serve=true --name=tester` in `build_settings`. A `--name=value` naming a `Build` field sets that
-field while compiling; a field nobody sets keeps the default it was declared with. Either way `build.serve` is
-the literal `true` in the built program: `if build.serve { }` is decided while compiling, and the branch it does
-not take is never generated. `name` belongs to `Environment`, so the compiler passes `--name=tester` to the
-program, which reads it when it runs.
+That is `spite --serve=true` in `build_settings`, with `NAME=tester` in the environment. A `--name=value` naming a
+`Build` field sets that field while compiling; a field no flag sets is read from its variable (`SERVE=true`), then
+from a `.env` file in the folder built (`SERVE=true` as a line of it), and else keeps the default it was declared
+with. Either way `build.serve` is the literal `true` in the built program: `if build.serve { }` is decided while
+compiling, and the branch it does not take is never generated. `name` belongs to `Environment`, so `spite` refuses
+`--name=tester`: the program it runs is given no flags and reads `name` from the environment, and the built
+executable is given `--name=tester` itself.
 
 - A `Boolean` field may be given bare: `--optimized` is `--optimized=true`. Any other bare flag is an error naming
   the value it needs.
