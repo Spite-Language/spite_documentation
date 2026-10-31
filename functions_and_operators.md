@@ -249,14 +249,16 @@ func greater_than(other: Money): Boolean {
 ```
 ```gdscript title=operators_as_functions/operators_as_functions.spite entry
 var console = Console()
+var _wallet_cents = 150
+var _expected_total_cents = 200
 
 func OperatorsAsFunctions() {
     load "../spite_standard_library/windows"
-    var wallet = Money(150)
+    var wallet = Money(_wallet_cents)
     var found = Money(50)
     var total = wallet + found
     console.print("total cents", total.cents)
-    var two_hundred = Money(200)
+    var two_hundred = Money(_expected_total_cents)
     var is_two_hundred = total == two_hundred
     console.print("equal", is_two_hundred)
     console.print("greater", total > wallet)

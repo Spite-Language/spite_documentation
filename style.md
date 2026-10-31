@@ -275,16 +275,24 @@ this comment is not a link: a comment is one line holding only a link to a markd
 
 ## A number gets a name
 
-A number inside an expression says nothing about what it means, so it is named first:
+A number inside an expression says nothing about what it means, so it is named first, by a private attribute of
+the class:
 
 ```gdscript
-var days_per_cycle = 146097
-var days = cycles * days_per_cycle + remaining
+var _days_in_400_years = 146097
+
+func days_of(cycles: Integer, remaining: Integer): Integer {
+    return cycles * _days_in_400_years + remaining
+}
 ```
 
-`146097` in the middle of the arithmetic is an error that gives this form. The name costs nothing: the compiler folds
-it as it folded the number. `0`, `1` and `-1` need no name, and neither does the number on the right of the `var`
-that names it. The rule is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#a-number-is-named-before-it-is-used).
+`146097` in the middle of the arithmetic is an error that asks for this form:
+`the number 146097 does not say what it means: declare a private attribute that names it, like 'var _what_it_means = 146097', and write the name here`.
+The rule starts narrow and grows: today it covers a whole number of three or more digits that is neither a power of
+ten nor a power of two, and a decimal that is a preset of the library (`3.14159` is refused, naming `Float.Pi()`).
+An attribute's default is where the number may stand, and so is the body of a preset. The name costs nothing: an
+attribute nothing writes is read as its default where it is read, a constant as the number was. The rule
+is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#named-numbers).
 
 ## A function body holds no empty lines
 

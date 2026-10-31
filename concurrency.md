@@ -49,10 +49,11 @@ func nap(): String {
 ```gdscript title=concurrent_tour/concurrent_tour.spite entry
 var console = Console()
 var log = List<String>()
+var _slow_nap_milliseconds = 150
 
 func ConcurrentTour() {
     load "../spite_standard_library/windows"
-    var slow_sleeper = Sleeper("slow", 150, log)
+    var slow_sleeper = Sleeper("slow", _slow_nap_milliseconds, log)
     var fast_sleeper = Sleeper("fast", 10, log)
     var slow = Concurrent(slow_sleeper.nap)
     var fast = Concurrent(fast_sleeper.nap)
@@ -385,11 +386,12 @@ func total(): Long {
 ```
 ```gdscript title=parallel_tour/parallel_tour.spite entry
 var console = Console()
+var _large_limit = 3000000
 
 func ParallelTour() {
     load "../spite_standard_library/windows"
     var small = Summer(1000000)
-    var large = Summer(3000000)
+    var large = Summer(_large_limit)
     var small_sum = Parallel(small.total)
     var large_sum = Parallel(large.total)
     console.print(small_sum, large_sum)
@@ -781,11 +783,12 @@ var console = Console()
 var program = Program()
 var frame = 0
 var running = true
+var _frames_to_run = 200
 
 func FrameLoop() {
     load "../spite_standard_library/windows"
     var ten_milliseconds = Duration(10, 'milliseconds')
-    while running and frame < 200 {
+    while running and frame < _frames_to_run {
         frame = frame + 1
         program.sleep(ten_milliseconds)
     }
@@ -820,10 +823,11 @@ two frames:
 var console = Console()
 var passes: Long = 0
 var running = true
+var _passes_to_run: Long = 300000000
 
 func BusyLoop() {
     load "../spite_standard_library/windows"
-    while running and passes < 300000000 {
+    while running and passes < _passes_to_run {
         passes = passes + 1
     }
     console.print("stopped after at least one pass:", passes > 0)

@@ -210,15 +210,17 @@ one call and walk the buffer rather than record by record.
 
 ```gdscript title=byte_records/byte_records.spite entry
 var console = Console()
+var _first_record_value: Long = 1111
+var _second_record_value: Long = 2222
 
 func ByteRecords() {
     load "../spite_standard_library/windows"
     var store = File(".spite/documentation_byte_records.bin")
     var record = Buffer(8)
-    record.append_long_little_endian(1111)
+    record.append_long_little_endian(_first_record_value)
     crash store.write_buffer(record)
     var next = Buffer(8)
-    next.append_long_little_endian(2222)
+    next.append_long_little_endian(_second_record_value)
     var second_at = store.append_buffer(next)
     crash second_at
     var read_back = store.read_buffer_at(second_at, 8)
@@ -404,6 +406,7 @@ program that calls `changes()` once a frame sees a save about 100 ms after it ha
 ```gdscript title=watch_folder/watch_folder.spite entry
 var console = Console()
 var program = Program()
+var _most_tries = 250
 
 func WatchFolder() {
     load "../spite_standard_library/windows"
@@ -415,7 +418,7 @@ func WatchFolder() {
     var changed = watcher.changes()
     var tries = 0
     var twenty_milliseconds = Duration(20, 'milliseconds')
-    while changed.is_empty() and tries < 250 {
+    while changed.is_empty() and tries < _most_tries {
         program.sleep(twenty_milliseconds)
         changed = watcher.changes()
         tries = tries + 1
@@ -766,12 +769,13 @@ and so is a game server.
 ```gdscript title=tcp_echo/tcp_echo.spite entry
 var console = Console()
 var server = Tcp.Server()
+var _echo_port = 47401
 
 func TcpEcho() {
     load "../spite_standard_library/windows"
-    crash server.listen_locally(47401)
+    crash server.listen_locally(_echo_port)
     var client = Tcp.Client()
-    crash client.connect_locally(47401)
+    crash client.connect_locally(_echo_port)
     var peer = server.accept()
     crash peer
     crash client.write_line("ping")
@@ -837,17 +841,18 @@ by asking for the wrong one.
 
 ```gdscript title=udp_ping/udp_ping.spite entry
 var console = Console()
+var _ping_port = 47402
 
 func UdpPing() {
     load "../spite_standard_library/windows"
     var server = Udp.Server()
-    crash server.open_locally(47402)
+    crash server.open_locally(_ping_port)
     var client = Udp.Client()
     crash client.open()
     var ping = "ping".to_buffer()
     var server_address: IpAddress? = "127.0.0.1"
     crash server_address
-    crash client.send_to(server_address, 47402, ping)
+    crash client.send_to(server_address, _ping_port, ping)
     var arrived = server.receive()
     crash arrived
     var text = arrived.read_as_string()
@@ -973,13 +978,15 @@ Required` for a version other than 13), so a request is never answered twice. A 
 `sec-websocket-protocol`) go out with the handshake:
 
 ```gdscript
+var _chat_server_port = 8080
+
 func talk() {
     var socket = WebSocket.Client()
     var request = Http.Request()
     request.path = "/chat"
     var server_address: IpAddress? = "127.0.0.1"
     crash server_address
-    crash socket.connect(server_address, 8080, request)
+    crash socket.connect(server_address, _chat_server_port, request)
     fallback socket.send_string("hello")
     var answer = socket.receive()
     crash answer
@@ -1087,12 +1094,13 @@ read inside the window is one load, with no test at all
 
 ```gdscript title=byte_numbers/byte_numbers.spite entry
 var console = Console()
+var _first_record = 1200
 
 func ByteNumbers() {
     load "../spite_standard_library/windows"
     var message = Buffer(10)
     message.append_unsigned_short_big_endian(2)
-    message.append_integer_big_endian(1200)
+    message.append_integer_big_endian(_first_record)
     message.append_integer_big_endian(-35)
     var records = read_records(message)
     console.print("records:", records)

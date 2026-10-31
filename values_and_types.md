@@ -30,13 +30,15 @@ as in a hash or a noise function, the code says so with a function named for it:
 
 ```gdscript title=numeric_overflow/numeric_overflow.spite entry
 var console = Console()
+var _value_that_fits_a_byte = 200
+var _large_hash: UnsignedInteger = 4000000000
 
 func NumericOverflow() {
     load "../spite_standard_library/windows"
-    var wide = 200
+    var wide = _value_that_fits_a_byte
     var cut: Byte = wide
     console.print("fits", cut)
-    var hash: UnsignedInteger = 4000000000
+    var hash: UnsignedInteger = _large_hash
     hash = hash.wrapping_multiply(3)
     console.print("wraps to", hash)
 }
@@ -75,16 +77,18 @@ function that says so:
 
 ```gdscript title=wrapping_by_name/wrapping_by_name.spite entry
 var console = Console()
+var _hash_offset_basis: UnsignedLong = 1469598103934665603
+var _hash_prime: UnsignedLong = 1099511628211
 
 func WrappingByName() {
     load "../spite_standard_library/windows"
-    var hash: UnsignedLong = 1469598103934665603
+    var hash: UnsignedLong = _hash_offset_basis
     var text = "spite"
     var index = 0
     while index < text.length() {
         var code = text.byte_at(index)
         var mixed = hash.bits_exclusive_or(code)
-        hash = mixed.wrapping_multiply(1099511628211)
+        hash = mixed.wrapping_multiply(_hash_prime)
         index = index + 1
     }
     console.print(hash)
@@ -256,6 +260,7 @@ program ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/sp
 
 ```gdscript title=bitwise_basics/bitwise_basics.spite entry
 var console = Console()
+var _upper_four_bits_set: Byte = 240
 
 func BitwiseBasics() {
     load "../spite_standard_library/windows"
@@ -265,7 +270,7 @@ func BitwiseBasics() {
     var packed = flags.shifted_left(4).bits_or(3)
     console.print("{packed} {packed.shifted_right(4)} {packed.bits_and(15)}")
     var negative = -16
-    var small: Byte = 240
+    var small: Byte = _upper_four_bits_set
     console.print("{negative.shifted_right(2)} {small.shifted_right(2)} {small.bits_inverted()}")
     console.print("{flags.shifted_left(32)} {negative.shifted_right(40)} {small.set_bit_count()}")
 }

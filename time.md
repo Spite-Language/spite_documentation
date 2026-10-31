@@ -67,23 +67,27 @@ hours, minutes, seconds and a fraction; both round toward zero and keep the sign
 
 ```gdscript title=time_instants/time_instants.spite entry
 var console = Console()
+var _launch_seconds_since_1970 = 1710054000
+var _lap_milliseconds = 90500
+var _half_second_milliseconds = 500
+var _two_hours_in_minutes = 120
 
 func TimeInstants() {
     load "../spite_standard_library/windows"
-    var launch_since_1970 = Duration(1710054000, 'seconds')
+    var launch_since_1970 = Duration(_launch_seconds_since_1970, 'seconds')
     var launch = Instant(launch_since_1970)
     var hour = Duration(1, 'hours')
     var later = launch + hour
     var earlier = launch + -hour
     var between = later - earlier
     console.print(launch, later, earlier, between)
-    var lap = Duration(90500, 'milliseconds')
+    var lap = Duration(_lap_milliseconds, 'milliseconds')
     var minutes = lap.total('minutes')
     var seconds = lap.part('seconds')
-    var half = Duration(-500, 'milliseconds')
+    var half = Duration(-_half_second_milliseconds, 'milliseconds')
     console.print(lap, minutes, seconds, half, lap * 2)
     var in_order = earlier < launch and launch < later
-    var two_hours = Duration(120, 'minutes')
+    var two_hours = Duration(_two_hours_in_minutes, 'minutes')
     console.print(in_order, between == two_hours)
 }
 ```
@@ -156,17 +160,21 @@ years, months and days between two dates the same way, so adding it back lands o
 
 ```gdscript title=time_calendar/time_calendar.spite entry
 var console = Console()
+var _leap_year = 2024
+var _common_year = 2023
+var _birth_year = 1990
+var _current_year = 2024
 
 func TimeCalendar() {
     load "../spite_standard_library/windows"
-    var end_of_january = Date(2024, 1, 31)
+    var end_of_january = Date(_leap_year, 1, 31)
     var month = Period(1, 'months')
     var leap = end_of_january + month
-    var common = Date(2023, 1, 31) + month
+    var common = Date(_common_year, 1, 31) + month
     var fortnight = leap + Period(2, 'weeks')
     console.print(leap, common, fortnight, leap.weekday, leap.day_of_year)
-    var born = Date(1990, 5, 15)
-    var today = Date(2024, 3, 10)
+    var born = Date(_birth_year, 5, 15)
+    var today = Date(_current_year, 3, 10)
     var age = born.period_until(today)
     var days = born.days_until(today)
     console.print(age, days, today.is_leap_year, today.days_in_month)
@@ -221,20 +229,22 @@ first 01:30. It is still written at every call.
 ```gdscript title=time_zones_named/time_zones_named.spite entry
 var console = Console()
 var zones = TimeZones()
+var _launch_seconds_since_1970 = 1710054000
+var _clock_change_year = 2024
 
 func TimeZonesNamed() {
     load "../spite_standard_library/windows"
     var new_york = zones.find("America/New_York")
     crash new_york
-    var launch_since_1970 = Duration(1710054000, 'seconds')
+    var launch_since_1970 = Duration(_launch_seconds_since_1970, 'seconds')
     var launch = Instant(launch_since_1970)
     var shown = launch.to_string_in(new_york)
     var offset = new_york.offset_at(launch)
     console.print(launch, shown, offset)
-    var skipped_day = Date(2024, 3, 10)
+    var skipped_day = Date(_clock_change_year, 3, 10)
     var skipped_time = Time(2, 30, 0, 0)
     var skipped = DateTime(skipped_day, skipped_time)
-    var repeated_day = Date(2024, 11, 3)
+    var repeated_day = Date(_clock_change_year, 11, 3)
     var repeated_time = Time(1, 30, 0, 0)
     var repeated = DateTime(repeated_day, repeated_time)
     var after_gap = skipped.to_instant_in(new_york, 'compatible')
@@ -264,12 +274,13 @@ date and time, add a `Period`, and turn it back into an instant.
 ```gdscript title=time_tomorrow/time_tomorrow.spite entry
 var console = Console()
 var zones = TimeZones()
+var _saturday_seconds_since_1970 = 1709996400
 
 func TimeTomorrow() {
     load "../spite_standard_library/windows"
     var new_york = zones.find("America/New_York")
     crash new_york
-    var saturday_since_1970 = Duration(1709996400, 'seconds')
+    var saturday_since_1970 = Duration(_saturday_seconds_since_1970, 'seconds')
     var saturday = Instant(saturday_since_1970)
     var local = saturday.to_date_time_in(new_york)
     var tomorrow = local + Period(1, 'days')
@@ -295,12 +306,14 @@ program halts), and a zone with rules comes from the database.
 ```gdscript title=time_offsets/time_offsets.spite entry
 var console = Console()
 var zones = TimeZones()
+var _launch_seconds_since_1970 = 1710054000
+var _india_offset_minutes = 330
 
 func TimeOffsets() {
     load "../spite_standard_library/windows"
-    var launch_since_1970 = Duration(1710054000, 'seconds')
+    var launch_since_1970 = Duration(_launch_seconds_since_1970, 'seconds')
     var launch = Instant(launch_since_1970)
-    var india_offset = Duration(330, 'minutes')
+    var india_offset = Duration(_india_offset_minutes, 'minutes')
     var india = zones.fixed_offset(india_offset)
     var universal = zones.utc()
     var india_text = launch.to_string_in(india)
