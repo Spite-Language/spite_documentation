@@ -344,7 +344,9 @@ that would take an argument is a collection indexed or filtered instead, so ther
 | `.source_files` | a `List<File>`: every file that declares or reopens the class, in load order | `Monster.source_files.first()` |
 
 A class has no folder of its own: a reopening may live anywhere a program loads, so `.source_files` is the whole
-list, and a question about a path is asked of those `File`s.
+list, and a question about a path is asked of those `File`s. One function or attribute is written in one file, which
+its declaration's `.source_file` answers: a tool that rebuilds what a function's code makes can watch the file that
+code comes from.
 
 ### `Spite.Namespace`
 
@@ -492,6 +494,7 @@ object, so nothing in it can be called by itself.
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
 | `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |
 | `.writes` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code writes | `update_each.writes.count()` |
+| `.source_file` | the `File` it is written in: the reopening's file for a function a reopening declares | `alive.source_file.path` |
 | `.hole`, `.index` | in a template over functions: the text that stands in the function's name for the template's word, and its place | `phase.hole` is `update` |
 
 A declaration runs on an object through a `Spite.Call` ([above](#a-call-built-before-it-runs)), and a function value
@@ -505,7 +508,7 @@ An object's `.functions` is a `Dictionary<String, Spite.Function>`: each functio
 |---|---|---|
 | `.declaration` | its `Spite.FunctionDeclaration` | `troll.functions["alive"].declaration.returns` |
 | `.owner` | the object it is bound to | `troll.functions["alive"].owner` is `troll` |
-| `.name`, `.arguments`, `.returns`, `.is_resumable`, `.returned_literal`, `.reads`, `.writes` | read through its declaration | `troll.functions["hurt"].arguments.count()` |
+| `.name`, `.arguments`, `.returns`, `.is_resumable`, `.returned_literal`, `.reads`, `.writes`, `.source_file` | read through its declaration | `troll.functions["hurt"].arguments.count()` |
 | `call_function()` | calls it on its owner when it takes no arguments, dropping what it answers; on one that takes arguments it halts | `troll.functions["roar"].call_function()` |
 
 A function named without calling it (`troll.alive`) given where a `Spite.Function` is wanted is the same bound function.
@@ -539,10 +542,11 @@ A function named without calling it (`troll.alive`) given where a `Spite.Functio
 | `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
 | `.camel_case_name`, `.pascal_case_name` | its name as other systems spell it | `buy_price` is `buyPrice`, `BuyPrice` |
 | `.is_singleton` | its class is a singleton | `ReflectionObjects.attributes["console"].is_singleton` |
+| `.source_file` | on a declaration: the `File` it is written in | `Monster.attributes["health"].source_file` |
 | `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes["health"].value` |
 
-A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index`, the case spellings and
-`.is_singleton`, never a `.value`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
+A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index`, the case spellings,
+`.is_singleton` and `.source_file`, never a `.value`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
 declaration, plus `.value` and `.owner`. Which one a function takes depends on what it is for: a template, or a walk of the
 class, takes the declaration, and a walk of an instance's data takes the bound attribute.
 

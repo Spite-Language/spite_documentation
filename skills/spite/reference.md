@@ -511,7 +511,8 @@ func is_alive(): Boolean {
   `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
 - Questions are get-only attributes, folded on a constant: `Loader.functions["load_each"]` (narrow it), then
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
-  `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes); `Loader.is_stateful`,
+  `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`
+  (the `File` a function or an attribute is written in); `Loader.is_stateful`,
   `Vector3.is_fixed_size`, `Monster.is_singleton`. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
 - In a generic class, `if $value_type == List { }` (also `Dictionary`, `Null` for any `T?`, `Enum` for any enum,
   or an exact type) is decided while compiling, and `$value_type.element_type` names what the type holds. It is
