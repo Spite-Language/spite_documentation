@@ -472,9 +472,15 @@ output build finished
 | `Process(command, arguments)` | | `arguments` is a `List<String>`, each one argument of the child, quoted for you (below) |
 | `working_directory` | `Path?` | the folder the child runs in; `null`, the default, is the program's own |
 | `environment_variables` | `Dictionary<String, String>` | variables set for the child alone, on top of the program's own: `process.environment_variables["LOG"] = "1"` |
-| `run()` | `Integer?` | runs it through the system's shell, waits for it and answers its exit code (`null` when it could not start, so no exit code is made up for it; on Linux and macOS, a child a signal ended answers 128 plus the signal's number, as a shell reports it); captures standard output as bytes on Windows, where byte `0x1A` does not end the output |
+| `with_errors` | `Boolean` | `false`; `true` reads the child's error stream into the output too, as the shell's `2>&1` |
+| `keeps_errors_apart` | `Boolean` | `false`; `true` reads the child's error stream on its own, for `read_errors_as_string()` |
+| `time_limit` | `Duration?` | `null`, the default, waits as long as the child takes; past the limit the child, and everything it started, is stopped and `run()` answers `null` |
+| `run()` | `Integer?` | runs it through the system's shell, waits for it and answers its exit code (`null` when it could not start or was stopped at its `time_limit`, so no exit code is made up for it; on Linux and macOS, a child a signal ended answers 128 plus the signal's number, as a shell reports it); captures standard output as bytes on Windows, where byte `0x1A` does not end the output |
 | `read_output_as_string()` | `String?` | what it wrote to its standard output; `null` before `run()`, after a run that could not start, or when those bytes are not UTF-8 |
 | `read_output_as_buffer()` | `Buffer?` | the same output as the bytes it wrote, for a child that writes bytes; `null` before `run()` or after a run that could not start |
+| `read_errors_as_string()` | `String?` | what it wrote to its error stream, when `keeps_errors_apart` is `true`; `null` otherwise, before `run()`, or after a run that could not start |
+| `read_errors_as_buffer()` | `Buffer?` | the same error stream as bytes |
+| `was_stopped` | `Boolean` | `true` after a run its `time_limit` stopped; what it wrote until then can still be read |
 | `run_attached()` | `Integer?` | runs it with the program's own terminal, so what it writes and reads is the user's, and answers its exit code, read as `run()` reads it; `null` when the system could not start it |
 
 Each argument reaches the child whole, as one argument, whatever it holds. On Linux and macOS each is put in single
@@ -488,12 +494,40 @@ programs that read `-key=value` themselves expect) and still splits back into `-
 
 `working_directory` and `environment_variables` are set by the shell line itself, before the command: a
 `cd` into the folder and one assignment per variable, so a relative command or path is read from that folder, and
-a folder that does not exist fails the run with the shell's exit code. The output is read 4 KiB at a time and each
+a folder that does not exist fails the run with the shell's exit code. The output is read as it arrives, up to 64 KiB at a time, and each
 piece appended in place, so reading 50 MB takes as long as the child takes to write it. It is kept as bytes, and
 read as text only when asked, so a child that writes bytes is never forced through a `String`.
 
 The output includes the child process's own trailing newline, which is why the example above calls `.trim()`.
-What the child writes to its error stream is not captured: it goes to the program's own error stream. `run()`
+What the child writes to its error stream goes to the program's own error stream, unless `with_errors` reads it into the output or `keeps_errors_apart` reads it on its own:
+
+```gdscript title=process_limits/process_limits.spite entry
+var console = Console()
+var _patience_seconds = 300
+
+func ProcessLimits() {
+    load "../spite_standard_library/windows"
+    var timed = Process("cmd", ["/c", "echo", "answer"])
+    timed.keeps_errors_apart = true
+    timed.time_limit = Duration(_patience_seconds, 'seconds')
+    var code = timed.run()
+    if not code {
+        console.print("stopped", timed.was_stopped)
+        return
+    }
+    var output = timed.read_output_as_string()
+    var errors = timed.read_errors_as_string()
+    crash output and errors
+    var trimmed_output = output.trim()
+    var error_bytes = errors.length()
+    console.print(code, trimmed_output, "errors:", error_bytes)
+}
+```
+```output
+0 answer errors: 0
+```
+
+On Windows the output is the bytes the child wrote, so a line ends `\r\n` there. `run()`
 is not one of the library's waits: it blocks the thread that calls it, and other waiting work does not run
 meanwhile ([which calls wait](#read-and-write-a-file)).
 
