@@ -800,10 +800,11 @@ zero 20
 A `fallback` is the only way to write a guard. An `if` with no `else` whose whole body returns what a `fallback`
 would (`null` from a function returning a `T?`, an empty collection made on the spot from one returning a
 collection, `0`, `false`, `""`, an object made with no arguments, or a bare `return` from one returning nothing) is a
-guard spelled the long way. It is a compile error wherever it stands, inside a loop or a nested
-`if` included, and the message names the `fallback` of the opposite condition:
+guard spelled the long way, wherever it stands, inside a loop or a nested `if` included. It has exactly one fix,
+so the compiler makes it (D1767): it writes the `fallback` of the opposite condition in the `if`'s place, says
+so, and compiles the fixed file:
 
-```gdscript title=default_guard_error/default_guard_error.spite entry error
+```gdscript title=default_guard_error/default_guard_error.spite entry
 var console = Console()
 var names = List<String>()
 
@@ -820,11 +821,14 @@ func first_name(): String? {
     return names.first()
 }
 ```
+```output
+false
+```
 ```diagnostic
-this 'if' only returns 'null', which is what 'fallback' returns when its condition fails: write 'fallback not names.is_empty()' and let the rest run unindented
+fixed: this 'if' only returned 'null', which is what 'fallback' returns when its condition fails; wrote 'fallback not names.is_empty()' in its place
 ```
 
-The fix reads top to bottom:
+The file then reads top to bottom:
 
 ```gdscript title=default_guard_fixed/default_guard_fixed.spite entry
 var console = Console()
@@ -845,11 +849,13 @@ func first_name(): String? {
 false
 ```
 
-The message turns the condition around for you: `if count < 0 or count > limit` becomes
-`fallback count >= 0 and count <= limit`.
+The fix turns the condition around for you: `if count < 0 or count > limit` becomes
+`fallback count >= 0 and count <= limit`. Two cases stay errors naming that `fallback`, since the fix is not
+the compiler's to make: an `if` in a constructor, which takes no `fallback`, and an `if` holding a comment, which
+the rewrite would lose. So does one in a library's file, which the compiler never rewrites.
 
 The rule covers every answer type a `fallback` can return, so an `if` that only returns `0`, `false` or `""` is
-refused the same way and named as the `fallback` it is:
+rewritten the same way into the `fallback` it is:
 
 ```gdscript title=default_answer/default_answer.spite entry
 var console = Console()

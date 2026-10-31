@@ -85,8 +85,9 @@ func is_alive(): Boolean {
 
 - The file name is the class name (`monster.spite` is `Monster`). A file holds declarations only, in this
   order: a `singleton` line, `generic $name` lines, enums, unions, types, variables, the constructor, then
-  functions (`a file holds declarations and nothing else` for a statement at file level; `a file is ordered` for
-  the wrong order). Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
+  functions (`a file holds declarations and nothing else` for a statement at file level). A program's file in
+  the wrong order is put back in order by the compiler, which prints `fixed: ... moved it up, since a file is
+  ordered` for each declaration it moved. Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
   name starting with `_` is private to its class (`'_hidden' is private to 'Secret'`).
 - The function named like the class is the constructor. Do not write an empty one: a class without a constructor
   is made from its defaults, and `func Monster() { }` is an error (`has an empty constructor: delete it`).
@@ -163,7 +164,9 @@ func is_alive(): Boolean {
   `max` are still errors, as abbreviations.)
 - A function body holds no empty lines: the blank line is where a second function wants to be, so name the part
   below it and call it. The formatter (and so every compile) deletes one you write. An `if` whose only statement is a bare `return`
-  is an error too: that is a precondition, and a precondition is written `fallback condition`.
+  (or a return of what `fallback` answers: `null`, `0`, `false`, `""`, an empty list) is a precondition, written
+  `fallback condition`: the compiler rewrites such an `if` into its `fallback` and prints `fixed: ...`. In a
+  constructor it is an error, since a constructor takes no `fallback`.
 - A comment is one line, outside functions, and nothing but a link to a markdown heading:
   `# notes.md#why-this-exists` (relative to the folder of the file it is in, like `load`; the file and the heading must exist).
   Anything else, including `//` and `/* */`, is an error. If the code already says it, do not write it.

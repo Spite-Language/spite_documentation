@@ -66,10 +66,11 @@ short form is made the only form the compiler accepts. In the same spirit:
 ## A file is ordered
 
 A file holds, in this order: the `singleton` line, `generic` lines, enums, unions, types, variables, the
-constructor, then functions ([classes_and_files.md](classes_and_files.md#what-a-file-holds)). Anything out of
-order is an error naming what came before it:
+constructor, then functions ([classes_and_files.md](classes_and_files.md#what-a-file-holds)). A file of yours
+that is out of order is put back in order by the compiler, which moves each declaration (with the comment lines
+right above it) and says so, then compiles the fixed file:
 
-```gdscript title=declaration_order_error/declaration_order_error.spite entry error
+```gdscript title=declaration_order_error/declaration_order_error.spite entry
 var console = Console()
 
 func DeclarationOrderError() {
@@ -79,9 +80,16 @@ func DeclarationOrderError() {
 
 var label = "late"
 ```
-```diagnostic
-but a file is ordered: the singleton line, generic lines, enums, unions, types, variables, the constructor, then functions
+```output
+late
 ```
+```diagnostic
+fixed: a variable came after the constructor here; moved it up, since a file is ordered: the singleton line, generic lines, enums, unions, types, variables, the constructor, conversions, presets, then functions
+```
+
+The same goes for anything else with exactly one fix (D1767): the compiler fixes it in the file and prints a
+`fixed:` line for it, so you read what changed. A mistake whose fix needs a choice stays an error, and a file of
+the standard library or of a package is never rewritten, so there it stays the error.
 
 ## Names
 
