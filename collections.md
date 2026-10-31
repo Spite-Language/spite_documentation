@@ -135,7 +135,9 @@ cacti 9 50
 ```
 
 A key written twice is an error (`"cactus" is written twice in this dictionary: keep one entry for each key`), and
-an empty dictionary is made with `Dictionary<Key, Value>()`, since `{}` names no types.
+`{}` is an empty dictionary where its type is declared: `var scores: Dictionary<String, Integer> = {}`, or `{}`
+given to a `Dictionary<String, Integer>` parameter. Where nothing names the types, `{}` is an empty object, so write
+`Dictionary<Key, Value>()` there.
 
 ### Any type is a key
 

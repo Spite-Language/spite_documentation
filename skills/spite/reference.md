@@ -242,7 +242,8 @@ func is_alive(): Boolean {
   by identity (one object, one key; the dictionary holds it). A class that declares `equals` cannot be a key
   (key by what `equals` compares); nor can a nullable, a union or a value class. A dictionary literal writes its
   entries, `{"cactus": "cacti", "foot": "feet"}` or `{1: 1, 2: 4}` (keyed `String` or `Integer` unless declared);
-  a key written twice is an error, and an empty one is `Dictionary<Key, Value>()`. A list or a dictionary is not printable: `console.print(list)` is `'List<Integer>' does not fit type
+  a key written twice is an error, and an empty one is `{}` where its type is declared
+  (`var scores: Dictionary<String, Integer> = {}`), `Dictionary<Key, Value>()` elsewhere. A list or a dictionary is not printable: `console.print(list)` is `'List<Integer>' does not fit type
   'Printable'`; print `list.join(", ")`, or `console.debug(list)`.
 - A chain of templates, `teams.filter_active().map_leads().sum_age()`, runs as one loop with no list in between.
 - To remove many elements, never call `remove_at` or `remove_swapping` in a loop: `creatures.remove_where_dead()`
