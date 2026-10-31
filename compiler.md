@@ -22,8 +22,8 @@ spite --build                       build it without running it
 spite --executable-path=out/game.exe    build it there
 spite --serve=true                  set a field the program's build.spite declares
 spite --final-classes=.spite/final  also write the merged classes as Spite into .spite/final
-spite --high-ir                     also write the high representation, .spite/build/<folder>.high_ir.txt
-spite --low-ir                      the same for the low representation, .spite/build/<folder>.low_ir.txt
+spite --high-ir                     also write the high representation, .spite/build/<name>.high_ir.txt
+spite --low-ir                      the same for the low representation, .spite/build/<name>.low_ir.txt
 ```
 
 Every command and flag, with exactly what it does, is listed under [Command line](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#command-line). Flags mix
@@ -108,8 +108,8 @@ the compiler writes, and can be deleted whenever you like; no `.spite/` folder i
 | Output | Path option | Default |
 |---|---|---|
 | the executable | `executable_path` | `<program>/.spite/build/<name>.exe` |
-| the high representation | `high_ir` | not written; the flag names a folder, one `.ir` file per class |
-| the low representation | `low_ir` | not written; the flag names a folder, one `.ir` file per class |
+| the high representation | none: `high_ir` is on or off | not written; `--high-ir` writes `<program>/.spite/build/<name>.high_ir.txt` |
+| the low representation | none: `low_ir` is on or off | not written; `--low-ir` writes `<program>/.spite/build/<name>.low_ir.txt` |
 
 The executable's exit code is what the entry constructor answers. A path moves the executable:
 
@@ -140,8 +140,8 @@ Every option is a `Build` field with a literal default, declared by the standard
 | `executable_path` | `""` | where the executable goes; `""` is `<program>/.spite/build/<name>.exe` ([above](#where-the-outputs-go)) |
 | `final_classes` | `""` | writes the merged classes to this folder |
 | `optimization_report` | `""` | writes what could not be optimised, and why, to this file ([below](#read-what-was-not-optimised)) |
-| `high_ir` | `""` | writes the program's high IR, one `.ir` file per class, to this folder |
-| `low_ir` | `""` | writes the program's low IR, one `.ir` file per class, to this folder |
+| `high_ir` | `false` | writes the program's high representation to `<program>/.spite/build/<name>.high_ir.txt` |
+| `low_ir` | `false` | writes the program's low representation to `<program>/.spite/build/<name>.low_ir.txt` |
 | `development` | `false` | an [inspectable build](#development-builds-and-tree-shaking): nothing tree-shaken, internals as ordinary objects |
 | `repl` | `false` | runs the program, then opens a REPL on it at the terminal ([repl.md](repl.md)) |
 | `repl_port` | `0` (off) | serves the remote REPL on `127.0.0.1` at this port while the program runs ([repl.md](repl.md)) |
