@@ -170,13 +170,18 @@ var console = Console()
 
 func UnusedError() {
     load "../spite_standard_library/windows"
-    var forgotten = 3
-    console.print("hello")
+    var greeting = "hello"
+    var forgotten = greeting.length()
+    console.print(greeting)
 }
 ```
 ```diagnostic
 'forgotten' is never read: remove it
 ```
+
+An unread local whose value does nothing, a literal, a text with no hole or a name, has one fix, so the compiler
+removes it from the file and says so: `fixed: 'forgotten' was never read, and making it does nothing; removed it`.
+One made by a call stays an error, since removing it would drop the call.
 
 ```gdscript title=written_not_read/written_not_read.spite entry error
 var console = Console()

@@ -229,9 +229,10 @@ func record() {
 'watcher' only copies 'tracker' so it can be narrowed: narrow 'tracker' itself
 ```
 
-A check on something that cannot be null proves nothing, and is an error too: `fallback tracker` written twice,
-or a `fallback` on a plain `Tracker`. The error names the check that already proved it ("'tracker' is already
-narrowed by 'fallback tracker' on line 8: remove this check"), whatever the type, text and numbers included.
+A check on something that cannot be null proves nothing: `fallback tracker` written twice, or a `fallback` on a
+plain `Tracker`. On a line of its own the compiler removes it and names the check that already proved it ("fixed:
+'tracker' was already narrowed by 'fallback tracker' on line 8; removed this check"), whatever the type, text and
+numbers included. Inside an `if` condition it is an error with the same words, ending in "remove this check".
 
 ### A call may undo a proof
 
@@ -368,8 +369,9 @@ ogre
 troll
 ```
 
-Checking such a name again is the "already narrowed" error: `crash found` above is "'found' is already narrowed by
-the proof that every value it can hold is present: remove this check". The proof does not reach a `T?` parameter,
+Checking such a name again proves nothing: a `crash found` line above is removed by the compiler, "fixed: 'found'
+was already narrowed by the proof that every value it can hold is present; removed this check", and an `if found`
+is the error "'found' is already narrowed by the proof that every value it can hold is present: remove this check". The proof does not reach a `T?` parameter,
 an attribute with no default, or what the standard library answers: those are narrowed as usual. What the
 library answers is the type its signature gives, the same on every target, so a program that compiles on one
 target compiles on all. The same holds for a value that was never a `T?`: `crash` on any local that cannot be null,

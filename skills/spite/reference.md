@@ -133,7 +133,8 @@ func is_alive(): Boolean {
   (`message` not `msg`, `index` not `idx`, `value` not `val`). The error names the word to write: `'msg' abbreviates: write 'message' instead of 'msg'`,
   `the variable 'n' is a single letter`, `the variable 'myValue' must be written in snake_case`. The language's own
   type names follow the rule: `Integer`, `Boolean`, never `Int`, `Bool`. Folder names are snake_case too.
-- A local that is never read is an error (`'total' is never read: remove it`). Assigning is not reading, and no
+- A local that is never read is an error (`'total' is never read: remove it`); one never assigned whose value is a
+  literal or a name is removed by the compiler (`fixed: ... removed it`). Assigning is not reading, and no
   spelling silences it. A parameter the signature needs but the body ignores is named `_name` (`the parameter
   'amount' is never read: remove it, or name it '_amount' if the signature needs it`); a `_name` that is read is
   an error too. A function nobody calls is never reported. A use inside a branch a codegen test rules out (`if $slot_type == Entity { ... }`) still counts, so
@@ -417,9 +418,10 @@ func is_alive(): Boolean {
   `return` of which cannot be null. Read it with nothing written; a `fallback`, `crash` or `if` on it is `is already
   narrowed by the proof that every value it can hold is present`. A `T?` parameter and what the library answers are
   narrowed as usual.
-- Proving what is already proven is an error too: `fallback` on a value that cannot be null here (`so 'fallback' on it
-  proves nothing: remove the check`, any local that cannot be null, a copy included), and `crash list[index]` inside `while index < list.count()` (`'list[index]'
-  is already proven by the loop condition`). Delete the line.
+- Proving what is already proven is a mistake too: `fallback` on a value that cannot be null here (`so 'fallback' on it
+  proved nothing; removed the check`, any local that cannot be null, a copy included), and `crash list[index]` inside `while index < list.count()` (`'list[index]'
+  is already proven by the loop condition`). The compiler deletes such a `crash` or `fallback` line and prints `fixed: ...`;
+  an `if` on it stays an error. A local nothing reads whose value is a literal or a name is deleted the same way.
 - A `Boolean?` is not a condition (`which would only test that it is there, not that it is true`): narrow it
   first, or compare it `== true`. The exceptions are `fallback flag` and `crash flag`, which mean the flag is there
   and `true` (as on a `Boolean`); there is no `flag != null`.
