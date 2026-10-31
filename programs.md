@@ -119,8 +119,9 @@ func Server() {
 ordinary `if`, with both branches compiled in.
 
 That reading is the whole run-time cost: one pass over the command line and one environment lookup per declared
-field, once, when `Environment()` is first made. The compiler makes `Environment()` as the entry starts, so a
-program that never makes it still refuses a flag it does not declare ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#program-settings-environment)).
+field, once, when `Environment()` is first made. A program given any argument makes `Environment()` before its
+entry starts, so one that never makes it still refuses a flag it does not declare, and a program given none pays
+nothing ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#program-settings-environment)).
 
 ```gdscript title=setting_type_error/environment.spite
 var workers: Integer = 1
