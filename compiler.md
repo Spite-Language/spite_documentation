@@ -2,6 +2,7 @@
 
 The compiler compiles one program. A program is a folder, and its entry file is the one named after the folder:
 compiling `game` compiles `game/game.spite`, whose class `Game` is constructed to start the program. The compiler
+builds the folder it is run from: `cd game`, then `spite`. The compiler
 is written in Spite, builds itself, and writes machine code directly (Windows x64): there is no C compiler, linker
 or other toolchain behind it, and nothing to install beside the compiler and the standard library's folder, which the program loads by its path. The command
 below is written `spite`, for the compiler's executable, `spite.exe`.
@@ -15,14 +16,14 @@ its own `build.spite`, `worker_stack_size`, is given as `--worker-stack-size=256
 program's source unless a path says so ([where the outputs go](#where-the-outputs-go)).
 
 ```
-spite game                          build the executable of game, and run it
-spite game --check                  format it and check that it compiles, building nothing
-spite game --build                  build it without running it
-spite game --executable-path=out/game.exe    build it there
-spite game ada --player-name=Bob    build it and run it, passing it ada and its setting player_name
-spite game --final-classes=.spite/final    also write the merged classes as Spite into .spite/final
-spite game --high-ir=ir/high        also write the high representation of each class
-spite game --low-ir=ir/low          also write the low representation of each class
+spite                               in game: build its executable, and run it
+spite --check                       format it and check that it compiles, building nothing
+spite --build                       build it without running it
+spite --executable-path=out/game.exe    build it there
+spite --serve=true                  set a field the program's build.spite declares
+spite --final-classes=.spite/final  also write the merged classes as Spite into .spite/final
+spite --high-ir                     also write the high representation, .spite/build/<folder>.high_ir.txt
+spite --low-ir                      the same for the low representation, .spite/build/<folder>.low_ir.txt
 ```
 
 Every command and flag, with exactly what it does, is listed under [Command line](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#command-line). Flags mix
@@ -43,15 +44,15 @@ cd game
 spite
 ```
 
-`spite` with no folder builds the folder it is run from, which is how a program is named (D1775): `cd game` and
-then `spite`. Naming the folder, `spite game`, still works while scripts move over to it.
+`spite` builds the folder it is run from, which is how a program is named (D1775): `cd game` and then `spite`.
+Nothing on the command line is given by position: every value is a named setting.
 
 The folder supplies the program's other classes, and the entry class's constructor takes no arguments: the
-program reads its command line through `Environment()`, what its build decided through `Build()`, and the raw
-arguments through `Program().arguments()`. A program is named only by its folder: `spite game/game.spite` is an
-error that answers with the folder form, `spite game`, and a folder with no entry file named after it is an error
-naming the file it looked for ([the texts](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program)). The compiler compiles itself the same way,
-`spite compiler`, whose entry is `compiler/compiler.spite`.
+program reads its command line through `Environment()` and what its build decided through `Build()`. A folder
+with no entry file named after it is an error naming the file it looked for
+([the texts](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program)). The
+compiler compiles itself the same way, `cd spite_compiler` then `spite`, whose entry is
+`spite_compiler/spite_compiler.spite`.
 
 ## How a program is loaded
 
@@ -60,13 +61,12 @@ The compiler follows the `load` lines of the program's entry file in order, then
 
 ## Where it runs
 
-`spite game` runs the program attached to the terminal: its output appears as it is printed, its standard input
-is yours, and the compiler exits with the program's exit code, so a script can run `spite game` where it would
-run the executable. The program receives every argument after the folder that is not a flag, and every flag that
-names a setting its `Environment` declares, in the order given; the compiler's own flags and the folder are not
-passed ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#flags-and-settings)).
+`spite` runs the program attached to the terminal: its output appears as it is printed, its standard input
+is yours, and the compiler exits with the program's exit code, so a script can run `spite` where it would
+run the executable. The program receives every flag that names a setting its `Environment` declares, in the
+order given; the compiler's own flags are not passed ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#flags-and-settings)).
 
-The program the compiler builds runs in the folder you ran it from: a relative path the program opens
+The program the compiler builds runs in the folder you ran it from, its own: a relative path the program opens
 (`File("save.txt")`, `Directory("levels")`, a cache folder) is relative to that folder, not to the compiler's
 repository. A foreign library's header named by a relative path (`DynamicLibrary`'s third argument) is looked for
 in the working directory as well.
@@ -75,7 +75,7 @@ in the working directory as well.
 
 The compiler reads the program first, and decides what to produce only after, from `Build`, so a program's own
 `build.spite` can choose its outputs like any other option ([programs.md](programs.md#compile-time-settings-build)).
-`spite game` builds the executable and runs it, with its settings and arguments. Two flags say to stop sooner:
+`spite` builds the executable and runs it, with its settings. Two flags say to stop sooner:
 `--check` (`Build.check`) only checks that the program compiles, and `--build` (`Build.build`) builds the
 executable without running it. `final_classes` writes the program back out as Spite into a folder, beside whatever
 else the build does ([below](#inspect-merged-classes)), and `optimization_report` writes what the compiler could not
@@ -86,12 +86,13 @@ formatting, which is not an output: every compile does it first ([below](#format
 and never touches one an earlier build left, so checking while the program runs is safe:
 
 ```bash
-spite game            # build .spite/build/game/game.exe and run it
-spite game --build    # build it, run nothing
-spite game --check    # only check that it compiles
+cd game
+spite            # build .spite/build/game.exe and run it
+spite --build    # build it, run nothing
+spite --check    # only check that it compiles
 ```
 
-A build never leaves an old executable behind. `spite game` and `spite game --build` first remove the executable
+A build never leaves an old executable behind. `spite` and `spite --build` first remove the executable
 an earlier build left at their path, so when the build fails, nothing is left there that still runs the old code:
 the executable at that path is always the one the last build made, or none.
 
@@ -113,7 +114,7 @@ the compiler writes, and can be deleted whenever you like; no `.spite/` folder i
 The executable's exit code is what the entry constructor answers. A path moves the executable:
 
 ```bash
-spite game --build --executable-path=build/game.exe
+spite --build --executable-path=build/game.exe
 ```
 
 `.spite/git/` holds the checkouts of the repositories a program's `load`s pin to a commit
@@ -150,8 +151,8 @@ Every option is a `Build` field with a literal default, declared by the standard
 | `program` | the folder named | cannot be given: it is the folder on the command line |
 
 ```bash
-spite game --debug-memory
-spite game --build --executable-path=build/game.exe --debug-memory
+spite --debug-memory
+spite --build --executable-path=build/game.exe --debug-memory
 ```
 
 A program may give an option a different default by reopening `Build` in its own `build.spite`
@@ -182,20 +183,21 @@ describes the tooling, not the program.
 
 ## Pass settings to the program
 
-A program's settings are written exactly like the compiler's flags, beside them: kebab-case on the command line,
-snake_case in code. A program reads its run-time settings from the `Environment` singleton, whose fields it
-declares by reopening `Environment` in its own `environment.spite` (see
-[programs.md](programs.md#run-time-settings-environment)):
+The compiler is an executable like any other: each of its flags is a setting its own `environment.spite`
+declares, read and checked the way a program's are ([programs.md](programs.md#run-time-settings-environment)).
+Running it is the compile of the program it builds, so the same command line also sets the fields that
+program's `build.spite` declares, kebab-case like the compiler's own:
 
 ```bash
-spite game --debug-memory --player-name=Bob --volume=7
+spite --debug-memory --player-count=2
 ```
 
-`--debug-memory` sets a `Build` field (the compiler's own options, or one the program declares in its
-`build.spite`) and is written into the build as a constant; `--player-name=Bob` and `--volume=7` set
-`Environment.player_name` and `Environment.volume`, so the compiler passes them to the program when it runs it.
-Every other argument after the folder that is not a flag (`spite game ada`) is passed to the program too, for
-`program.arguments()` to read. There is no `--` separator: a bare `--` is an error showing the form above.
+`--debug-memory` is the compiler's and `--player-count=2` sets `Build.player_count`, written into the build as a
+constant; a field no flag sets is also read from its variable, `PLAYER_COUNT=2`. Any other flag is an error,
+a setting of the program's `Environment` too: that one is given to the executable,
+`.spite/build/game.exe --volume=7`, or read from the environment by the program `spite` runs, which is given no
+flags. Nothing is given by position: a word that is not a flag (`spite ada`) is an error naming the setting form.
+There is no `--` separator: a bare `--` is an error showing the form above.
 
 Compiler flags and program settings share one set of names, so an `Environment` field named like a `Build` field
 is a compile error naming both. A flag naming no field of either is an error listing the fields `Build` has, a
@@ -215,7 +217,7 @@ again; if it no longer holds the text the compile read (another editor or agent 
 as it is now, `<path> changed while it was being compiled` is printed, and the program is read again from disk. A
 file whose formatting does not change is never written, so its modification time never moves.
 
-There is no command that only formats. A linter or a language server runs `spite game --check`, which formats the
+There is no command that only formats. A linter or a language server runs `spite --check` in the program's folder, which formats the
 program and checks it without building, and there is no mode that checks the formatting without writing it: the
 fix is always the compiler's own. What the formatter rewrites, and what it refuses to, is [style.md](style.md).
 
@@ -289,7 +291,7 @@ The folder has no default: anything inside the program's own folder would be rea
 so the folder is always named. It combines with every build; with `--check` it is the only thing written:
 
 ```bash
-spite game --final-classes=.spite/final --check
+spite --final-classes=.spite/final --check
 ```
 
 ## Read what was not optimised
@@ -300,7 +302,7 @@ every place an optimisation fell back, each line a link to the source line and t
 something you can act on. Nothing is written without the flag, and the program built is the same either way.
 
 ```bash
-spite game --optimization-report=.spite/optimization.md --check
+spite --optimization-report=.spite/optimization.md --check
 ```
 
 The report has one section per optimisation, with how many places it lists:

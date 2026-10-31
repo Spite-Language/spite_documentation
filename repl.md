@@ -1,13 +1,13 @@
 # REPL and live reload
 
-`spite program --repl` runs the program, then answers `attributes`, `functions` and `classes`, `help`, `exit`, paths
+`spite --repl` runs the program, then answers `attributes`, `functions` and `classes`, `help`, `exit`, paths
 such as `monsters[0].health` or `program.player_name`, a singleton by its class's name (`World().entity_count()`,
 `Tick().step_milliseconds`), assignment of a number, Boolean, text or enum literal (`monsters[0].health = 5`, which
 prints the value read back), and calls with literal arguments that print what they return, chained like any path
 (`monsters[0].roar()`, `monsters.count()`, `World().position_of(1).across`), written in Spite by the
 compiler into the build that asks for it. `--repl-port` answers the same commands over TCP, one JSON line each,
 answered where the program waits or at the end of a loop's pass
-([concurrency.md](concurrency.md#the-repl-answers-at-the-waits)), and `spite connect` is its client. `--hot-reload`
+([concurrency.md](concurrency.md#the-repl-answers-at-the-waits)), and `spite --connect` is its client. `--hot-reload`
 swaps the classes whose files changed into the running program, keeping its state, when a file is saved or when the
 REPL is sent `reload` ([Live reload](#live-reload---hot-reload)), moving live objects to their class's new attributes
 when those change. `bytes <path>` answers a value's address, size, bytes and layout as JSON
@@ -92,7 +92,7 @@ above has an `is_alive()`.
 ## Local: `--repl`
 
 ```
-spite repl_program --repl
+spite --repl
 ```
 
 Runs the constructor normally; when it returns, instead of exiting, reads commands from stdin with a
@@ -102,7 +102,7 @@ like a normal run).
 ## Remote: `--repl-port`
 
 ```
-spite repl_program --repl-port=4000
+spite --repl-port=4000
 ```
 
 Before the constructor runs, the program listens on `127.0.0.1:4000` **only**, and a background thread takes
@@ -123,8 +123,8 @@ of the program's own loops.
 Talk to it with the compiler's own client:
 
 ```
-spite connect 4000
-spite connect 4000 --command="program.player_name"
+spite --connect=4000
+spite --connect=4000 --command="program.player_name"
 ```
 
 With no `--command` it is interactive: a `spite> ` prompt that sends each line and prints the answer as
@@ -174,37 +174,37 @@ This session runs against the program above, built with `--repl-port`: every ans
 program sends back.
 
 ```wire repl_program
-$ spite connect 4000 --command="program.player_name"
+$ spite --connect=4000 --command="program.player_name"
 {"ok":true,"value":"Hero","type":"String"}
 
-$ spite connect 4000 --command="program.monsters.count()"
+$ spite --connect=4000 --command="program.monsters.count()"
 {"ok":true,"value":"2","type":"Integer"}
 
-$ spite connect 4000 --command="program.monsters[0]"
+$ spite --connect=4000 --command="program.monsters[0]"
 {"ok":true,"value":"Monster { name: Goblin, health: 30 }","type":"Monster"}
 
-$ spite connect 4000 --command="program.monsters[0].roar()"
+$ spite --connect=4000 --command="program.monsters[0].roar()"
 {"ok":true,"value":"Goblin roars!","type":"String"}
 
 # Debugging a suspiciously low health value: mutate it and confirm.
-$ spite connect 4000 --command="program.monsters[0].health = 5"
+$ spite --connect=4000 --command="program.monsters[0].health = 5"
 {"ok":true,"value":"5","type":"Integer"}
 
-$ spite connect 4000 --command="program.monsters[0].health"
+$ spite --connect=4000 --command="program.monsters[0].health"
 {"ok":true,"value":"5","type":"Integer"}
 
 # A typo'd path is one line, never a crash.
-$ spite connect 4000 --command="program.monstrs"
+$ spite --connect=4000 --command="program.monstrs"
 {"ok":false,"error":"no attribute 'monstrs' in program: console, player_name, player_age, monsters"}
 
-$ spite connect 4000 --command="attributes"
+$ spite --connect=4000 --command="attributes"
 {"ok":true,"value":"console: Console = Console {...}\nplayer_name: String = Hero\nplayer_age: Integer = 20\nmonsters: List<Monster> = List<Monster>(2)","type":""}
 
-$ spite connect 4000 --command="exit"
+$ spite --connect=4000 --command="exit"
 {"ok":true,"value":"","type":""}
 ```
 
-For an AI driving this: issue one command per `spite connect --command="..."` call (or hold one interactive
+For an AI driving this: issue one command per `spite --connect=4000 --command="..."` call (or hold one interactive
 session open), read the single JSON line back, and branch on `"ok"`. `attributes`, `functions` and `classes` first, to see
 what is there (only functions whose arguments are numbers, Boolean, text or an enum can be called), then walk paths
 down to the value in question before mutating anything.
@@ -282,28 +282,28 @@ This session runs against it, built with `--repl-port`:
 
 ```wire repl_world
 # The entry class holds a console and the world; the game's state is in its singletons.
-$ spite connect 4000 --command="attributes"
+$ spite --connect=4000 --command="attributes"
 {"ok":true,"value":"console: Console = Console {...}\nworld: World = World {...}","type":""}
 
-$ spite connect 4000 --command="World().entity_count()"
+$ spite --connect=4000 --command="World().entity_count()"
 {"ok":true,"value":"2","type":"Integer"}
 
-$ spite connect 4000 --command="World().position_of(1)"
+$ spite --connect=4000 --command="World().position_of(1)"
 {"ok":true,"value":"Position { across: 7, along: 1 }","type":"Position?"}
 
-$ spite connect 4000 --command="World().position_of(0).distance_to(0, 0)"
+$ spite --connect=4000 --command="World().position_of(0).distance_to(0, 0)"
 {"ok":true,"value":"25","type":"Integer"}
 
-$ spite connect 4000 --command="Tick().step_milliseconds = 50"
+$ spite --connect=4000 --command="Tick().step_milliseconds = 50"
 {"ok":true,"value":"50","type":"Integer"}
 
-$ spite connect 4000 --command="functions World()"
+$ spite --connect=4000 --command="functions World()"
 {"ok":true,"value":"spawn(across: Integer, along: Integer): Nothing\nentity_count(): Integer\nposition_of(entity: Integer): Position?\nstep_length(): Integer\nto_debug(): String","type":""}
 
-$ spite connect 4000 --command="Position()"
+$ spite --connect=4000 --command="Position()"
 {"ok":false,"error":"'Position' is a class, not a singleton: the prompt never makes an object, it reads the ones the program holds, and 'classes' lists the singletons"}
 
-$ spite connect 4000 --command="exit"
+$ spite --connect=4000 --command="exit"
 {"ok":true,"value":"","type":""}
 ```
 
@@ -344,28 +344,28 @@ city tuned 2 and 2
 ```
 
 ```wire repl_radio
-$ spite connect 4000 --command="classes"
+$ spite --connect=4000 --command="classes"
 {"ok":true,"value":"Build()\nChannel(1)\nChannel(2)\nReplRadio","type":""}
 
-$ spite connect 4000 --command="Channel(1).messages.count()"
+$ spite --connect=4000 --command="Channel(1).messages.count()"
 {"ok":true,"value":"1","type":"Integer"}
 
-$ spite connect 4000 --command="Channel(3)"
+$ spite --connect=4000 --command="Channel(3)"
 {"ok":false,"error":"the program holds no Channel(3): a singleton made with arguments has one instance for each argument list the program asks for, Channel(1), Channel(2)"}
 
-$ spite connect 4000 --command="volumes.keys()"
+$ spite --connect=4000 --command="volumes.keys()"
 {"ok":true,"value":"news\nmusic","type":"List<String>"}
 
-$ spite connect 4000 --command="volumes.has(\"talk\")"
+$ spite --connect=4000 --command="volumes.has(\"talk\")"
 {"ok":true,"value":"false","type":"Boolean"}
 
-$ spite connect 4000 --command="station = \"the \\\"late\\\" show\""
+$ spite --connect=4000 --command="station = \"the \\\"late\\\" show\""
 {"ok":true,"value":"the \"late\" show","type":"String"}
 
-$ spite connect 4000 --command="station = \"the {hour} show\""
+$ spite --connect=4000 --command="station = \"the {hour} show\""
 {"ok":false,"error":"\"the {hour} show\" has a hole, and the prompt reads a text literal as it is written: \\{ writes a brace, and 'eval' makes text from values"}
 
-$ spite connect 4000 --command="exit"
+$ spite --connect=4000 --command="exit"
 {"ok":true,"value":"","type":""}
 ```
 
@@ -398,16 +398,16 @@ read, and an address that is not readable answers `unreadable`. At most 4096 byt
 A program built with `--hot-reload` and a REPL (`--repl` or `--repl-port`) can be stopped at a line while it runs:
 
 ```text
-$ spite connect 4000 --command="break ticker.spite:16"
+$ spite --connect=4000 --command="break ticker.spite:16"
 {"ok":true,"value":"the program stops before the statement on ticker.spite:16","type":""}
 
-$ spite connect 4000 --command="where"
+$ spite --connect=4000 --command="where"
 {"ok":true,"value":"ticker.spite:16","type":""}
 
-$ spite connect 4000 --command="ticker.total"
+$ spite --connect=4000 --command="ticker.total"
 {"ok":true,"value":"2","type":"Integer"}
 
-$ spite connect 4000 --command="continue"
+$ spite --connect=4000 --command="continue"
 {"ok":true,"value":"continued from ticker.spite:16","type":""}
 ```
 
@@ -428,13 +428,13 @@ answers its value as text, and `run` compiles a statement and runs it. The code 
 names the entry instance:
 
 ```text
-$ spite connect 4000 --command="eval program.stock.count() + 40"
+$ spite --connect=4000 --command="eval program.stock.count() + 40"
 {"ok":true,"value":"41","type":""}
 
-$ spite connect 4000 --command="eval Lookup().of(12)"
+$ spite --connect=4000 --command="eval Lookup().of(12)"
 {"ok":true,"value":"22","type":""}
 
-$ spite connect 4000 --command="run program.stock.append(9)"
+$ spite --connect=4000 --command="run program.stock.append(9)"
 {"ok":true,"value":"","type":""}
 ```
 
@@ -448,7 +448,7 @@ An assignment whose right side makes an object is compiled the same way, so an a
 the program never made:
 
 ```text
-$ spite connect 4000 --command="follower = Circle(3)"
+$ spite --connect=4000 --command="follower = Circle(3)"
 {"ok":true,"value":"Circle { radius: 3 }","type":"Circle?"}
 ```
 
@@ -465,7 +465,7 @@ be swapped, which makes the build slower; measure performance only with a produc
 ([Measure only a production build](compiler.md#measure-only-a-production-build)).
 
 ```
-spite game --hot-reload --repl-port=4000
+spite --hot-reload --repl-port=4000
 ```
 
 It works with or without a REPL. Without one, each swap is reported on the program's error output (`spite: rebuilt
@@ -517,24 +517,24 @@ hello, visit 1
 This session runs against a copy of the program above, built with `--hot-reload --repl-port`:
 
 ```text
-$ spite connect 4000 --command="program.visits = 42"
+$ spite --connect=4000 --command="program.visits = 42"
 {"ok":true,"value":"42","type":"Integer"}
 
 # hot_counter.spite: greeting() now returns "welcome back, visit {visits}"
-$ spite connect 4000 --command="reload"
+$ spite --connect=4000 --command="reload"
 {"ok":true,"value":"rebuilt HotCounter","type":""}
 
-$ spite connect 4000 --command="greeting()"
+$ spite --connect=4000 --command="greeting()"
 {"ok":true,"value":"welcome back, visit 42","type":"String"}
 
 # monster.spite: roar() now returns "{name} roars louder", and nothing is sent: the watcher sees the save
-$ spite connect 4000 --command="wait_reload"
+$ spite --connect=4000 --command="wait_reload"
 {"ok":true,"value":"rebuilt Monster","type":""}
 
-$ spite connect 4000 --command="monster.roar()"
+$ spite --connect=4000 --command="monster.roar()"
 {"ok":true,"value":"Goblin roars louder","type":"String"}
 
-$ spite connect 4000 --command="exit"
+$ spite --connect=4000 --command="exit"
 {"ok":true,"value":"","type":""}
 ```
 
@@ -630,15 +630,15 @@ This session runs against a copy of the program, built with `--hot-reload --repl
 move too, wherever the compiler chose to keep them:
 
 ```text
-$ spite connect 4000 --command="program.hero.level = 7"
+$ spite --connect=4000 --command="program.hero.level = 7"
 {"ok":true,"value":"7","type":"Integer"}
 
 # hero.spite: a new attribute, 'var health = 100', and describe() says "{name} at level {level} with {health}"
 # step.spite: a new attribute, 'var pace = 2.0', before 'distance'
-$ spite connect 4000 --command="reload"
+$ spite --connect=4000 --command="reload"
 {"ok":true,"value":"rebuilt Hero, Step, ...\nmoved every Hero to its new attributes: health is new and holds its default\nmoved every Step to its new attributes: pace is new and holds its default","type":""}
 
-$ spite connect 4000 --command="describe()"
+$ spite --connect=4000 --command="describe()"
 {"ok":true,"value":"Ann at level 7 with 100, walked 4","type":"String"}
 ```
 
@@ -648,10 +648,10 @@ and a reload never guesses: it holds the change, swaps in nothing, and says what
 `rank` in `hero.spite` and save:
 
 ```text
-$ spite connect 4000 --command="wait_reload"
+$ spite --connect=4000 --command="wait_reload"
 {"ok":false,"error":"...the reload of Hero is held, since it would lose data: level is gone and rank is new, ... reload {Hero.attributes["level"]: \"rank\"}; to let what level holds be released: reload {}"}
 
-$ spite connect 4000 --command="reload {Hero.attributes["level"]: \"rank\"}"
+$ spite --connect=4000 --command="reload {Hero.attributes["level"]: \"rank\"}"
 {"ok":true,"value":"rebuilt Hero, ...\nmoved every Hero to its new attributes: level is now rank","type":""}
 ```
 
@@ -710,7 +710,7 @@ worked out while compiling, so the check folds away with the branch it guards.
 - **Only what changed is compiled again.** The build writes two files beside the executable: `game.reload_host`,
   what the running program holds (every function with its C prototype, its classes and their layouts, and the
   facts its code was compiled against, below) and `game.reload_files`, a hash of each of the program's files. A
-  reload runs the compiler that built the program with the same options, as `spite reload`. It reads the
+  reload runs the compiler that built the program with the same options and `--reload-at`, in the program's folder. It reads the
   program's files and compares their hashes first, so a save that changed nothing answers at once. Otherwise it
   compiles **only the classes of the changed files**: every class is read and checked, as the changed code needs,
   but no other class's functions are compiled: the new code reaches them in the running program. The C it writes
@@ -778,10 +778,9 @@ worked out while compiling, so the check folds away with the branch it guards.
   a repository's checkout under `.spite/git/` ([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)),
   which is read-only: a pinned commit never changes, so there is nothing to reload there, and a change to that
   package is a new commit and a restart. Each reload's library is written beside the executable, into
-  `.spite/build/` by default; only when that lies inside a watched folder (`spite .` run from inside the
-  program's own folder) does it wake the watcher once more, for a check that finds nothing changed.
-- The compiler, its options and the executable are recorded in the build, so the program must run from the folder
-  it was built from, as `spite game --hot-reload` does.
+  `.spite/build/` by default; only when that lies inside a watched folder does it wake the watcher once more, for a check that finds nothing changed.
+- The compiler, its options, the program's folder and the executable are recorded in the build, and a reload
+  compiles in that folder, so the program can run from any folder.
 
 ---
 

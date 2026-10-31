@@ -21,14 +21,15 @@ Do not compile the whole program after every change. Start it once with live rel
 swap into the running program:
 
 ```
-spite game --hot-reload --repl-port=4000
+cd game
+spite --hot-reload --repl-port=4000
 ```
 
 It keeps running, even after its entry constructor returns, until a client sends `exit`. Then, for each change:
 
 1. **Edit and save the file.** The watcher compiles only the classes that file declares and swaps them in, keeping
    every object's state.
-2. **`spite connect 4000 --command="wait_reload"`** answers once the save is compiled and swapped in, with what was
+2. **`spite --connect=4000 --command="wait_reload"`** answers once the save is compiled and swapped in, with what was
    rebuilt (`rebuilt Monster`) or the compiler's errors. Never poll, never sleep: this is the wait. (`reload` swaps
    in what changed right away, without waiting for the watcher.)
 3. **Ask the program instead of printing.** Every answer is one line of JSON, `{"ok":true,"value":...}`:
@@ -47,10 +48,10 @@ It keeps running, even after its entry constructor returns, until a client sends
 
 Leave the loop only when you need to:
 
-- `spite game --check` formats and compiles without building or running, for a program that cannot stay running,
-  or to see every error of the program in one run; `spite game --build` writes the executable without running it.
+- `spite --check` formats and compiles without building or running, for a program that cannot stay running,
+  or to see every error of the program in one run; `spite --build` writes the executable without running it.
   Every compile formats first; there is no `spite format`.
-- A full run from a fresh start, and the tests (`spite tests`, [docs/testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)),
+- A full run from a fresh start, and the tests (`spite` in `tests`, [docs/testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)),
   before you call the work done.
 - `--optimized` only to measure speed. A `--hot-reload` build is slower on purpose; never time one.
 

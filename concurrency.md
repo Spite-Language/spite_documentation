@@ -250,14 +250,14 @@ stopped
 This session runs against the program above while its loop runs:
 
 ```wire frame_loop
-$ spite connect 4000 --command="program.running"
+$ spite --connect=4000 --command="program.running"
 {"ok":true,"value":"true","type":"Boolean"}
 
 # Answered between two frames: the loop sees the change at its next test.
-$ spite connect 4000 --command="program.running = false"
+$ spite --connect=4000 --command="program.running = false"
 {"ok":true,"value":"false","type":"Boolean"}
 
-$ spite connect 4000 --command="exit"
+$ spite --connect=4000 --command="exit"
 {"ok":true,"value":"","type":""}
 ```
 
@@ -287,10 +287,10 @@ stopped after at least one pass: true
 
 ```wire busy_loop
 # The loop never waits: the command is answered at the end of a pass.
-$ spite connect 4000 --command="program.running = false"
+$ spite --connect=4000 --command="program.running = false"
 {"ok":true,"value":"false","type":"Boolean"}
 
-$ spite connect 4000 --command="exit"
+$ spite --connect=4000 --command="exit"
 {"ok":true,"value":"","type":""}
 ```
 

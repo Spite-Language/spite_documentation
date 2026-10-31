@@ -346,7 +346,7 @@ the compiler makes fast, so write it plainly and let the compiler do the rest. L
 [skills/spite/SKILL.md](skills/spite/SKILL.md) before writing Spite: it is the whole language on one page, with the
 habits from other languages the compiler rejects.
 
-- **Iterate by compiling.** `spite program --check` reports every error in one run; apply each message literally,
+- **Iterate by compiling.** `spite --check` reports every error in one run; apply each message literally,
   since it says what to write.
 - **Re-read a file after compiling it.** Every compile formats the files first, so what is on disk may differ from
   what you wrote.

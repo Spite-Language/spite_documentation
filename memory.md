@@ -670,7 +670,7 @@ clear the `T?` field that closes the loop when you are done with it
 
 ## `--debug-memory`
 
-`spite program --debug-memory` builds with an allocation table and prints `allocations: N frees: N` right before
+`spite --debug-memory` builds with an allocation table and prints `allocations: N frees: N` right before
 the program exits. A mismatch means something leaked; when the two do not balance, it also prints a
 **leaked-object summary by class name**, naming which classes' instances are still alive, which is what makes a
 leaked cycle visible instead of an unexplained count. Every program on these pages is run this way, and must

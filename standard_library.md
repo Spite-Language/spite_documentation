@@ -627,7 +627,6 @@ name? no input
 |---|---|
 | `exit(code)` | flushes what was printed and ends the process with `code` |
 | `sleep(duration)` | waits the `Duration`'s whole milliseconds; other waiting work runs meanwhile ([concurrency.md](concurrency.md)). A duration under a millisecond, zero or negative only lets other work have its turn |
-| `arguments()` | what the program was started with, as a `List<String>`, the executable left out ([programs.md](programs.md#programarguments-the-raw-command-line)) |
 | `environment(name)` | the process environment variable, as a `String?`: `null` when it is not set |
 | `executable_path()` | the path of the running executable, as the operating system gives it, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
 | `working_directory()` | the folder the program runs in, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
@@ -762,7 +761,7 @@ then a program narrows `var read: IpAddress? = "127.0.0.1"` first.
 
 TCP is three classes over IPv4 and IPv6, the same on Windows (winsock), Linux and macOS: a `Tcp.Server` listens
 and accepts, a `Tcp.Client` connects, and each end of a connection talks the same way. What a server accepts is a
-`Tcp.Connection`; a client holds one and talks through it. `--repl-port` and `spite connect` are written with them,
+`Tcp.Connection`; a client holds one and talks through it. `--repl-port` and `spite --connect` are written with them,
 and so is a game server.
 
 ```gdscript title=tcp_echo/tcp_echo.spite entry

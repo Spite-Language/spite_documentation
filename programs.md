@@ -5,12 +5,12 @@ and the program runs by constructing that class. There is no `main` and no entry
 entry class's constructor *is* the program, and when it returns the program ends with exit code `0`.
 
 ```bash
-spite game
+cd game
+spite
 ```
 
-The folder is the only way to name a program: `spite game/game.spite` is an error that says `spite game`. By
-default the build writes the executable into `.spite/` in the folder you ran `spite` from,
-`.spite/build/game/game.exe`, and runs it; nothing is written beside the program's source
+The folder is the only way to name a program: the compiler builds the folder it is run from. By
+default the build writes the executable into `.spite/` in that folder, `.spite/build/game.exe`, and runs it; nothing is written beside the program's source
 ([compiler.md](compiler.md#where-the-outputs-go)).
 
 Every other `.spite` file in the folder is another class of the program, and every folder inside it is a
@@ -19,16 +19,15 @@ namespace ([packages.md](packages.md)): `game/engine/renderer.spite` is `Engine.
 
 ## The entry constructor takes no arguments
 
-The command line is not handed to the entry class. It is read where it is needed, through three singletons that
+The command line is not handed to the entry class. It is read where it is needed, through two singletons that
 work anywhere:
 
 | Read it with | What it is |
 |---|---|
 | `Environment()` | the program's run-time settings, which it declares ([below](#run-time-settings-environment)) |
 | `Build()` | what was decided when the program was compiled ([below](#compile-time-settings-build)) |
-| `Program()` | what the program was started with: `program.arguments()` is the raw command line ([below](#programarguments-the-raw-command-line)) |
 
-So an entry constructor with parameters is an error that names all three:
+So an entry constructor with parameters is an error that names both:
 
 ```gdscript title=entry_arguments_error/entry_arguments_error.spite entry error
 var console = Console()
@@ -46,40 +45,7 @@ A constructor is setup, not logic, and the entry constructor is no exception: `f
 constructor ([failure.md](failure.md#fallback-is-not-allowed-in-a-constructor)). A program whose constructor grows
 complicated splits it into functions it calls, and then reads as a table of contents.
 
-## `program.arguments()`: the raw command line
-
-`Program()` is the one class for what the program was started with. `program.arguments()` answers the arguments
-it was given, as a `List<String>`, in order and verbatim. When the compiler runs the program, those are the
-settings its `Environment` declares and every argument after the folder that is not a flag
-(`spite game ada knight`).
-
-```gdscript title=raw_arguments/raw_arguments.spite entry arguments=ada,knight
-var console = Console()
-var program = Program()
-
-func RawArguments() {
-    load "../spite_standard_library/windows"
-    var arguments = program.arguments()
-    var arguments_count = arguments.count()
-    console.print("arguments", arguments_count)
-    announce(arguments)
-}
-
-func announce(arguments: List<String>) {
-    crash arguments.count() == 2
-    var first = arguments[0]
-    var second = arguments[1]
-    console.print("player", first, "class", second)
-}
-```
-```output
-arguments 2
-player ada class knight
-```
-
-That run is `spite raw_arguments ada knight`.
-
-A named value is never read by its text: `--level=3` and a bare `--verbose` reach the program only as the
+Nothing reaches the program by position, and a named value is never read by its text (D1775): `--level=3` and a bare `--verbose` reach the program only as the
 `Environment` attributes they set, `var level = 0` and `var verbose = false`, typed, with a default and a name the
 compiler checks ([below](#run-time-settings-environment)).
 
@@ -113,19 +79,22 @@ using the production endpoint
 workers 4 verbose true
 ```
 
-That run is `spite program_settings --endpoint=production --worker-count=4 --verbose`: a setting is written like
-a compiler flag, beside the compiler's own flags, kebab-case on the command line and snake_case in code, and a
-`Boolean` may be given bare. Each field is read once, when `Environment()` is first made, from the first of:
+That run is `.spite/build/program_settings.exe --endpoint=production --worker-count=4 --verbose`, after `spite
+--build` in `program_settings`: a setting is written like a compiler flag, kebab-case on the command line and
+snake_case in code, and a `Boolean` may be given bare. `spite` itself refuses it, since it is no flag of the
+compiler and no field of the program's `Build`, and runs the program with no flags (D1812, D1813). Each field is read once, when `Environment()` is first made, from the first of:
 
-1. the program's own command line, `--endpoint=production` (given to the compiler, which passes it on, or to
-   the built program run directly);
+1. the program's own command line, `--endpoint=production`, given to the built program;
 2. the process environment variable named by the field in upper case, `ENDPOINT`;
 3. a `.env` file the program loaded with `environment.load_from_file(".env")`;
 4. the declared default.
 
-Only declared fields are read, so nothing the program does not name is ever loaded. The default's literal is the
-setting's type: `false` is a `Boolean`, a whole number an `Integer`, `""` a `String`. Anything else, a type
-annotation included, is an error naming the three forms. A value that is not of the setting's type
+Only declared fields are read, and every value on the command line must be one: a flag no field declares, or a
+word given by position, stops the program with exit code 1 and an error saying how to declare it. The
+default's literal is the setting's type: `false` is a `Boolean`, a whole number an `Integer`, `""` a `String`.
+A setting may also be a value of an enum the `Environment` declares, its type written, `var mood: Mood =
+'calm'`, and then only that enum's value names are accepted, the error listing them. Anything else is an error
+naming the forms. A value that is not of the setting's type
 (`--verbose=maybe`, or `VERBOSE=maybe` in the environment or a `.env` file) stops the program with exit code 1
 and an error naming the setting, the value and the form it takes, since the program was started wrong and there
 is no line of it to point to.
@@ -200,7 +169,7 @@ func BuildSettings() {
 serving as tester
 ```
 
-That is `spite build_settings --serve=true --name=tester`. A `--name=value` naming a `Build` field sets that
+That is `spite --serve=true --name=tester` in `build_settings`. A `--name=value` naming a `Build` field sets that
 field while compiling; a field nobody sets keeps the default it was declared with. Either way `build.serve` is
 the literal `true` in the built program: `if build.serve { }` is decided while compiling, and the branch it does
 not take is never generated. `name` belongs to `Environment`, so the compiler passes `--name=tester` to the

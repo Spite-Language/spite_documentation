@@ -83,7 +83,7 @@ gh repo clone Spite-Language/spite_standard_library
 bash spite_compiler/scripts/bootstrap.sh --install
 ```
 
-Then put the two files above in a `battle` folder beside the clones and run `spite battle`.
+Then put the two files above in a `battle` folder beside the clones and run `spite` inside it.
 [Getting started](getting_started.md) walks through it.
 
 Writing Spite with an AI? Give it the skill in [skills/spite/](skills/spite/SKILL.md), with the whole language on one
@@ -143,7 +143,7 @@ with a link to the next.
 
 22. [compiler.md](compiler.md): every command and flag, the outputs and where they go, `--final-classes`,
     `--development`, and which build to measure.
-23. [repl.md](repl.md): the local and remote REPL, `spite connect`, live reload, and a replayed debugging
+23. [repl.md](repl.md): the local and remote REPL, `spite --connect`, live reload, and a replayed debugging
     session.
 24. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
 25. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if

@@ -13,19 +13,22 @@ one of them is Spite, not GDScript: write `.spite` files.
 
 ## Run it
 
+Run every command in the program's folder (`cd program`): the compiler builds the folder it runs in, and nothing
+is given by position.
+
 ```
-spite program                           build program/.spite/build/program.exe and run it
-spite program --debug-memory            print the allocation balance at the end
-spite program --repl-port=4000          serve the REPL; spite connect 4000 --command="..." asks it
-spite program --check                   format and compile: the errors, if any (builds nothing, keeps an old executable)
-spite program --build                   build program/.spite/build/program.exe without running it
-spite program --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies), each with its line and why
-spite program --player-name=ada         a setting the program's Environment declares (kebab-case, no '--')
+spite                                   build .spite/build/program.exe and run it
+spite --debug-memory                    print the allocation balance at the end
+spite --repl-port=4000                  serve the REPL; spite --connect=4000 --command="..." asks it
+spite --check                           format and compile: the errors, if any (builds nothing, keeps an old executable)
+spite --build                           build .spite/build/program.exe without running it
+spite --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies), each with its line and why
+spite --player-count=2                  a field the program's build.spite declares (kebab-case)
 ```
 
 **Iterate on the running program, not by rebuilding**. Start it once with
-`spite program --hot-reload --repl-port=4000` and keep it running (it stays up after its constructor returns, until
-a client sends `exit`). Save a file, then `spite connect 4000 --command="wait_reload"`: it answers once the save is
+`spite --hot-reload --repl-port=4000` and keep it running (it stays up after its constructor returns, until
+a client sends `exit`). Save a file, then `spite --connect=4000 --command="wait_reload"`: it answers once the save is
 compiled and swapped in, with what was rebuilt or the compiler's errors, and objects keep their state. Ask instead
 of printing: a path or call (`World().player.health`, `Channel(1).number`, `monsters[0].roar()`,
 `scores.has("ann")`), an assignment (`player.health = 5`, `follower = Circle(3)`),
@@ -37,7 +40,7 @@ value go. Use `--check` only to see every error at once or for a program that ca
 tests before calling the work done, and build `--optimized` only to measure. Every answer is one JSON line. The
 commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
-A program lives in its own folder, and `spite game` runs it: the first line of its entry function loads the standard
+A program lives in its own folder, and `spite` run in it runs it: the first line of its entry function loads the standard
 library by its relative path (`load "../spite_standard_library/windows"`, which loads `common` itself), and `game/`'s every sub folder is a
 namespace and nothing else (`game/engine/renderer/shader.spite` is `Engine.Renderer.Shader`, and
 `game/engine/physics/physics.spite` is `Engine.Physics.Physics`: no file is special). A file and a folder of one
@@ -91,8 +94,8 @@ func is_alive(): Boolean {
   whose construction is the whole point is a function instead (`report(text)` on the class that needs it).
 - A program is a folder, and it starts by constructing the class of the file named after the folder
   (`game/game.spite` is `Game`). That constructor takes no arguments: settings come from `Environment()` and
-  `Build()` below, and `program.arguments()` is the raw command line anywhere (a `List<String>`). A named value
-  (`--player=value`, a bare `--verbose`) is read only as the `Environment` attribute it sets, never by its text. `spite game/game.spite` is an error: a program is named by its folder.
+  `Build()` below. Every value on the command line is named (`--player=value`, a bare `--verbose`) and is read
+  only as the `Environment` or `Build` attribute it sets, never by its text or its position.
 - `return` is always written. The return type is written `(): Type`. No return type means it returns `Nothing`,
   so `return 1` there is `'one' returns nothing, so 'return' cannot carry a value here`.
 - Only `while` exists. There is no `for`, `break` or `continue`: an early exit is part of the loop's condition.
@@ -537,13 +540,13 @@ func is_alive(): Boolean {
   outside it, `Player.Job`); any other is an error where the class is named, not inside the generic.
 - Settings: reopen `Environment` in the program's `environment.spite` with one `var` per setting and a literal
   default (`var serve = false`), then bind `var environment = Environment()` and read `environment.serve`. The
-  value comes from `--serve=true` (or bare `--serve` for a `Boolean`) on the command line, written beside the
-  compiler's flags and kebab-case like them (`spite game --optimized --player-name=x` sets
-  `environment.player_name`; there is no `--` separator), else the `SERVE` environment variable, else a `.env`
+  value comes from `--serve=true` (or bare `--serve` for a `Boolean`) on the executable's command line,
+  kebab-case like the compiler's flags (`game.exe --player-name=x` sets `environment.player_name`; `spite` itself
+  refuses it and runs the program with no flags), else the `SERVE` environment variable, else a `.env`
   file loaded with `environment.load_from_file(".env")` (answers `false` when it cannot be read), else the
   default. A value not of the setting's type stops the program with an error naming the setting and exit code 1.
   A setting named like a `Build` field is a compile error naming both.
-- Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite game --serve=true`, else its default) and is a constant in the program, so `if build.serve { }`
+- Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite --serve=true`, else its default) and is a constant in the program, so `if build.serve { }`
   keeps only one branch; in a `--hot-reload` build the program's own reads of a field are made while it runs, and
   the standard library's stay constants. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and
   `build.target_operating_system` are `Build` fields too. A flag is kebab-case (`--debug-memory`) and sets the
@@ -589,7 +592,7 @@ a class prints once it declares `func to_string(): String`, and `debug` shows an
 `append_string(text)`, `byte_count()`, `last_written()`, `exists`, `remove`, `move_to(path)`: renames or moves, `false` when something is already there; bytes are a `Buffer`: `read_as_buffer(): Buffer?` (the whole file; read or mapped is the compiler's choice), `read_buffer_at(position, count): Buffer?` for a file too big for one buffer, `write_buffer(buffer)`, `append_buffer(buffer): Long?` where they start), `Directory(path)` (`path`, `folder_name`, `entries(): List<Directory.Entry>?` (`null` when the folder cannot be opened; each entry a `Directory` or a `File`, switched on;
 one kind is `entries.filter_files()` or `filter_directories()`, never a helper of its own), `exists`, `create`, `move_to(path)`),
 `Process(command, arguments)` (`run(): Integer?`, `null` when the command could not start; `read_output_as_string(): String?` or `read_output_as_buffer(): Buffer?`, `null` before a run: standard output only; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(duration)`,
-`arguments(): List<String>`, `environment(name): String?`, `executable_path(): String?`, `working_directory(): String?`). The library halts only on the program's own mistakes (an index outside a text, a negative count); what the outside world does is an answer (`T?` or `Boolean`): a file, a folder, a lock, a process, a line of input that is not UTF-8, the system refusing a call, random bytes not given (`SecureRandom().random_buffer(count): Buffer?`), the machine's zone (`zones.system(): TimeZone?`), and the program decides with `fallback` or `crash`. `Console` is a singleton: `Console()` is the same instance everywhere, bound once
+`environment(name): String?`, `executable_path(): String?`, `working_directory(): String?`). The library halts only on the program's own mistakes (an index outside a text, a negative count); what the outside world does is an answer (`T?` or `Boolean`): a file, a folder, a lock, a process, a line of input that is not UTF-8, the system refusing a call, random bytes not given (`SecureRandom().random_buffer(count): Buffer?`), the machine's zone (`zones.system(): TimeZone?`), and the program decides with `fallback` or `crash`. `Console` is a singleton: `Console()` is the same instance everywhere, bound once
 as `var console = Console()`.
 `print`, `error` and `debug` write their line out at once, so a log redirected to a file shows every line as it
 happens; `write` waits for the next line end, the next `read_line()` or the exit. There is no `flush()`: lines from
@@ -834,9 +837,10 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `;` at the end of a line | `';' is not something Spite reads` | nothing |
 | `var memory = Memory()` | `this class has no function 'Memory'` | `var heap = Memory.Heap()` (inside a container of your own; see [memory.md](https://github.com/Spite-Language/spite_documentation/blob/master/memory.md)) |
 | `--repl_port=4000` | `'--repl_port' is written '--repl-port'` | kebab-case flags; the `Build` field behind it stays `repl_port` |
-| `spite game -- --player-name=ada` | `'--' is not a separator` | `spite game --player-name=ada`: settings sit beside the compiler's flags |
-| `spite game --player_name=ada` | `'--player_name' is written '--player-name'` | settings are kebab-case on the command line, like flags |
-| `spite game/game.spite` | `'game/game.spite' is a file, and a program is named by its folder` | `spite game` |
+| `spite -- --player-count=2` | `'--' is not a separator` | `spite --player-count=2`: Build flags sit beside the compiler's |
+| `spite --player_count=2` | `'--player_count' is written '--player-count'` | flags are kebab-case on the command line |
+| `spite --player-name=ada` for an `Environment` setting | `'--player-name' is not a compiler option` | `game.exe --player-name=ada`, or `PLAYER_NAME=ada spite` |
+| `spite game` | `'game' is given by position` | `cd game` then `spite` |
 | renaming `short`, `static` or `near` because C takes them | | the name you meant: Spite reserves nothing for C |
 
 Text is written with its values inside it: `"hello {name}"`, where `{ }` holds one value of any type and

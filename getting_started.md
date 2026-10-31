@@ -21,18 +21,19 @@ Only Windows x64 is written for now.
 A program loads the standard library by its path, in the first lines of its entry function, so a program in a
 folder beside the two clones starts with `load "../spite_standard_library/windows"`.
 
-Then `spite hello_world` compiles the program of the [next section](#hello-world).
+Then `cd hello_world` and `spite` compile the program of the [next section](#hello-world): the compiler builds the
+folder it is run from.
 
 ## Build the compiler from source
 
 The compiler builds itself: given a `spite.exe`, it compiles its own folder into the next one.
 
 ```bash
-spite_compiler/.spite/spite.exe spite_compiler --build --executable-path=spite_compiler/.spite/spite_next.exe
+cd spite_compiler
+.spite/spite.exe --build --executable-path=.spite/spite_next.exe
 ```
 
-It runs from the folder that holds the clones, since the compiler's own entry file loads
-`../spite_standard_library/windows`. The next compiler is kept when it rebuilds itself to the same bytes. A build
+It runs in the compiler's folder, whose entry file loads `../spite_standard_library/windows`, the clone beside it. The next compiler is kept when it rebuilds itself to the same bytes. A build
 from nothing, when no `spite.exe` exists yet, is the chain
 [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md#how-the-compiler-is-built)
 describes.
@@ -40,19 +41,20 @@ describes.
 ## Run a program
 
 ```bash
-spite hello_world                 # build it and run it
-spite hello_world --check         # check that it compiles, build nothing
-spite hello_world --build         # build it without running it
-spite hello_world --high-ir=ir    # also write the high representation of each class into ir/
-spite hello_world --low-ir=ir     # the same for the low representation
-spite hello_world ada --volume=3  # build it and run it with the argument ada and its setting volume
+cd hello_world
+spite                  # build it and run it
+spite --check          # check that it compiles, build nothing
+spite --build          # build it without running it
+spite --high-ir        # also write the high representation into .spite/build/
+spite --low-ir         # the same for the low representation
+VOLUME=3 spite         # build it and run it with its setting volume
 ```
 
 The executable is `hello_world/.spite/build/hello_world.exe`, and its exit code is what the entry constructor
-answers. `spite hello_world` runs it attached to your terminal: what it prints appears as it prints it, what you
-type is its standard input, and the compiler exits with the program's exit code. Every word after the folder that
-is not a flag, and every setting the program's `Environment` declares ([programs.md](programs.md)), is passed to
-the program; the compiler's own flags are not. [compiler.md](compiler.md) lists every option. The programs that every compiler of Spite must pass, one
+answers. `spite` runs it attached to your terminal: what it prints appears as it prints it, what you
+type is its standard input, and the compiler exits with the program's exit code. The program is given no flags:
+it reads the settings its `Environment` declares ([programs.md](programs.md)) from the environment, and its
+executable takes them as flags, `.spite/build/hello_world.exe --volume=3`. Nothing is given by position. [compiler.md](compiler.md) lists every option. The programs that every compiler of Spite must pass, one
 for each rule, are in [spite_spec](https://github.com/Spite-Language/spite_spec).
 
 ## Hello world
@@ -74,7 +76,8 @@ Hello, Spite!
 and run it:
 
 ```bash
-spite hello_world
+cd hello_world
+spite
 ```
 
 A file is a class, named by its file name: `hello_world.spite` is the class `HelloWorld`. There is no `main`: the
@@ -139,7 +142,7 @@ the compiler as plain loops where they are used, so they cost exactly what the l
 ## What the compiler will do to your file
 
 Every compile formats the program's own files first, and may rewrite them: the compiler is the formatter, there
-is one style, and nothing turns it off ([style.md](style.md)). `spite game --check` formats and checks the program
+is one style, and nothing turns it off ([style.md](style.md)). `spite --check` formats and checks the program
 without building it ([compiler.md](compiler.md#formatting)). The compiler will also refuse things other languages accept: an
 abbreviated name, a variable nobody reads, a blank line inside a function, a call passed straight into another
 call, an object constructed and thrown away. Each comes with an error that says exactly what to write instead. There
