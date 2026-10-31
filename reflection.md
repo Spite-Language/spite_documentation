@@ -754,9 +754,11 @@ Wheel Wheel { size: 3 }
 3 phases, the last is finish
 ```
 
-`make` is compiled twice, as `make_for_axle` and `make_for_wheel` in `--final-classes`: `part()` is
-`Part.Axle()` in one copy and `Part.Wheel()` in the other. Every folder named `part` anywhere is found by this
-filter over every namespace, with nothing registered.
+Every folder named `part` anywhere is found by this filter over every namespace, with nothing registered. The filter
+runs when the program does, so `make` is compiled once and `part()` makes whichever class it is handed. Walked from a
+namespace the code names, `Part.classes.each(make)`, `make` is compiled once for each class instead
+(`make_over_Part_Axle` and `make_over_Part_Wheel` in `--final-classes`), and `part()` is `Part.Axle()` in one copy and
+`Part.Wheel()` in the other.
 
 ## Known only at run time
 

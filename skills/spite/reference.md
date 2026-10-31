@@ -489,7 +489,9 @@ func is_alive(): Boolean {
   `label.attributes[attribute]` (a member that is a function taking nothing is called); the class walked is the class of
   the value the body reads it on. `func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
   attributes[attribute] = value }` makes `person.age = 2` and `person.name = "x"` work. An exact function
-  always wins. A parameter that is not a word of its name makes an ordinary function a walk calls.
+  always wins. A parameter that is not a word of its name makes an ordinary function a walk calls, and a template
+  whose only parameter is its word's (`show_function(function: Spite.FunctionDeclaration)`), handed to `each` over a
+  class's `.functions` or a function's `.arguments`, is that walk's walker.
 - A template over **functions**: `func run_phase_each(phase: Spite.FunctionDeclaration, amount: Integer) {
   system.phase_each(amount) }` ranges over the functions of `system`'s class that fit `<phase>_each` (the call in the
   body says the class and the pattern); `run_phases_each(2)` runs it for every one in the order they were made,

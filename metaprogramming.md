@@ -148,9 +148,10 @@ render_each
 `filter(walks_each)` keeps the functions whose test answers true, and a walk over what it kept is unrolled like a walk over
 `Runner.functions` itself: the test still runs when the program does, but the compiler writes one `describe` for each
 function the class has. `count_name_starts_with("re")` counts `render_each` and `reset`. A walk over nothing walks nothing: a class with no
-attributes, or a filter that keeps none, calls the function zero times. The walker is called `describe_taken`, not
+attributes, or a filter that keeps none, calls the function zero times. The walker could as well be called
 `describe_argument`: a parameter named by a word of its function's name makes the function a template
-([below](#templates-when-the-name-says-what-it-is-given)), so a plain walker leaves that word out of its name.
+([below](#templates-when-the-name-says-what-it-is-given)), and a template whose only parameter is that one, handed to
+`each` over a class's functions or a function's arguments, is that walk's walker all the same.
 
 ### Asking a question while compiling
 
