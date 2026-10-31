@@ -187,7 +187,12 @@ to a `T?` of a number calls it too. A number becomes text with its own
 `library/double.spite`, ...), the way `String` is. Their functions are called on a value like any class's,
 and inside one of them `this` is the number itself. Turning a number into text is `to_string()`, written in Spite in
 `library/long.spite` and `library/double.spite`, and it is what a text hole (`"count {count}"`) calls. A program reopens a number
-class the way it reopens any class ([packages.md](packages.md#monkey-patching-mods)), with a file named after it:
+class the way it reopens any class ([packages.md](packages.md#monkey-patching-mods)), with a file named after it.
+How wide a number is comes from its class too: each one's private `_set_this` checks the range it holds
+(`crash value >= _smallest_value and value <= _largest_value`, with `-128` and `127` named in `Tiny`), and the
+compiler reads the width and the sign from that range
+([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#a-number-states-its-range)).
+A reopening file:
 
 ```gdscript title=number_methods/integer.spite
 func doubled(): Integer {
