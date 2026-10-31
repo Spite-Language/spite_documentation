@@ -497,7 +497,7 @@ func is_alive(): Boolean {
   attributes[attribute] = value }` makes `person.age = 2` and `person.name = "x"` work. An exact function
   always wins. A parameter that is not a word of its name makes an ordinary function a walk calls, and a template
   whose only parameter is its word's (`show_function(function: Spite.FunctionDeclaration)`), handed to `each` over a
-  class's `.functions` or a function's `.arguments`, is that walk's walker.
+  class's `.functions` or a function's `.arguments`, known while compiling or only at run time, is that walk's walker.
 - A template over **functions**: `func run_phase_each(phase: Spite.FunctionDeclaration, amount: Integer) {
   system.phase_each(amount) }` ranges over the functions of `system`'s class that fit `<phase>_each` (the call in the
   body says the class and the pattern); `run_phases_each(2)` runs it for every one in the order they were made,
@@ -505,7 +505,7 @@ func is_alive(): Boolean {
   A name that fits nothing is an error listing the functions that fit. A template over **arguments**: `func
   made_argument(argument: Spite.Argument, start: Integer): argument.class`, called as its plural spread into a call,
   `system.update_each(made_arguments(start))`, once for each argument of `update_each`. A plain walker over arguments
-  leaves the word out of its name (`describe_taken`). `Spite.Attribute` and `Spite.Function` (bound to an object, with
+  may leave the word out of its name (`describe_taken`). `Spite.Attribute` and `Spite.Function` (bound to an object, with
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
   A `Spite.Class` known only at run time, called with no arguments (`part()`, an attribute `kind()`, `thing.class()`,

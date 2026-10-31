@@ -151,7 +151,8 @@ function the class has. `count_name_starts_with("re")` counts `render_each` and 
 attributes, or a filter that keeps none, calls the function zero times. The walker could as well be called
 `describe_argument`: a parameter named by a word of its function's name makes the function a template
 ([below](#templates-when-the-name-says-what-it-is-given)), and a template whose only parameter is that one, handed to
-`each` over a class's functions or a function's arguments, is that walk's walker all the same.
+`each` over a class's functions or a function's arguments, is that walk's walker all the same, whether the compiler knows
+the list or it is only known when the program runs.
 
 ### Asking a question while compiling
 
@@ -497,8 +498,8 @@ update 7 '' 0
 call's arguments; each answer is typed by its own argument (`argument.class`), so the call is the plain call
 `system.update_each(start, "", 0.0)`. The function is the one the plural is spread into or, inside a template over
 `Spite.FunctionDeclaration`, the function that template stands for. Written anywhere else the plural is an error that
-says to spread it into a call. A plain walker over arguments, called by `each`, takes a name without the word
-(`describe_taken(argument: Spite.Argument)`).
+says to spread it into a call. A walker over arguments, called by `each`, may take a name without the word
+(`describe_taken(argument: Spite.Argument)`) or with it (`show_argument`).
 
 ### Walking a folder or an enum
 
