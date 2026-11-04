@@ -105,7 +105,7 @@ The map is written as Spite writes one, the same map a person gives `load` at th
 The language's MCP is a debugging tool, and never part of what you ship. A program that should let an AI change it
 in production, a game server whose tick rate or spawn rules an AI tunes, writes its own tools: an application's MCP,
 where the program decides what an AI can touch. A library for writing one is proposed in
-[spite_compiler#298](https://github.com/Spite-Language/spite_compiler/issues/298).
+[spite_standard_library#39](https://github.com/Spite-Language/spite_standard_library/issues/39).
 
 ---
 
