@@ -393,6 +393,7 @@ already holds is passed as it is.
 |---|---|---|
 | `watch_for_changes(target: FileSystemWatcher.Target)` | `Boolean` | `Target` is the union of `Directory` and `File`: a `File`, or a `Directory` with everything below it; `false` when there is nothing there to watch |
 | `changes()` | `List<String>` | never waits: the paths changed since the last call, each once, or none |
+| `settled_changes()` | `List<String>` | like `changes()`, but when a change has been seen and the 100 ms are not over yet, waits for them to end instead of answering none; with nothing changed it never waits |
 | `wait_for_changes()` | | blocks this thread until `changes()` has something to answer |
 
 A change is reported once the watcher has seen none for 100 ms, so a burst (a save that writes a file in pieces,

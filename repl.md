@@ -759,7 +759,9 @@ worked out while compiling, so the check folds away with the branch it guards.
   with it. A reload moves nothing until it has installed every slot, and releases nothing a removed attribute held
   until every object has moved. All of it is in a `--hot-reload` build only.
 - **The swap happens where the program waits**, or at the end of a pass of one of its
-  loops: the program loads the library
+  loops. A call that waits, such as `console.read_line()`, a `File` read or write, or a socket's receive, is a
+  place to swap just before and just after it, and `Program.sleep` swaps while it sleeps, so a program with no loop picks up a save before its next
+  statement. There the program loads the library
   with the operating system's loader, the one `DynamicLibrary` uses, hands it the addresses of the program's
   functions, and re-points the slots. Nothing runs halfway through a step. The library is compiled on a helper
   thread while the program keeps running, so a game keeps drawing frames while its code is rebuilt.
