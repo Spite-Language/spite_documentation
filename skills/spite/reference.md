@@ -168,7 +168,8 @@ func is_alive(): Boolean {
   (or a return of what `fallback` answers: `null`, `0`, `false`, `""`, an empty list) is a precondition, written
   `fallback condition`: the compiler rewrites such an `if` into its `fallback` and prints `fixed: ...`. In a
   constructor it is an error, since a constructor takes no `fallback`.
-- A comment is one line, outside functions, and nothing but a link to a markdown heading:
+- A comment is one line, right above a function or at the top of the file (the class's heading; one anywhere else
+  between declarations is moved there), and nothing but a link to a markdown heading:
   `# notes.md#why-this-exists` (relative to the folder of the file it is in, like `load`; the file and the heading must exist).
   Anything else, including `//` and `/* */`, is an error. If the code already says it, do not write it.
 

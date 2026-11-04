@@ -250,8 +250,9 @@ class's or `String`'s storage, and `Build` and `Environment` settings.
 
 ## Comments are links
 
-A comment is one line, outside functions and declaration bodies, and it holds nothing but a link to a heading in
-a markdown file. Prose above a two-line function that explains the compiler instead of the code is the habit this
+A comment is one line that holds nothing but a link to a heading in a markdown file, and it sits right above a
+function or at the top of the file, as the class's heading. The compiler moves one written anywhere else between
+declarations to the top of the file and says so; one inside a body is an error. Prose above a two-line function that explains the compiler instead of the code is the habit this
 rule ends, and a note that is needed becomes a section somewhere a reader can open:
 
 ```gdscript
