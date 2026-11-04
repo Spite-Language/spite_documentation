@@ -143,8 +143,8 @@ Every option is a `Build` field with a literal default, declared by the standard
 | `high_ir` | `false` | writes the program's high representation to `<program>/.spite/build/<name>.high_ir.txt` |
 | `low_ir` | `false` | writes the program's low representation to `<program>/.spite/build/<name>.low_ir.txt` |
 | `development` | `false` | an [inspectable build](#development-builds-and-tree-shaking): nothing tree-shaken, internals as ordinary objects |
-| `repl` | `false` | runs the program, then opens a REPL on it at the terminal ([repl.md](repl.md)) |
-| `repl_port` | `0` (off) | serves the remote REPL on `127.0.0.1` at this port while the program runs ([repl.md](repl.md)) |
+| `repl` | `false` | runs the program with a console where you type Spite into it ([repl.md](repl.md)) |
+| `mcp_port` | `0` (off) | listens for the language's MCP on `127.0.0.1` at this port while the program runs; implies `hot_reload` ([mcp.md](mcp.md)) |
 | `hot_reload` | `false` | swaps changed classes into the running program; implies `development` ([repl.md](repl.md#live-reload---hot-reload)) |
 | `debug_memory` | `false` | counts allocations and frees and prints them when the program ends ([below](#counting-memory---debug-memory)) |
 | `trace_fallbacks` | `false` | writes each `fallback` taken of the program to the error stream as it fails, not only in a crash's report ([failure.md](failure.md#what-a-crash-reports)) |
@@ -165,19 +165,19 @@ a constant in the built program, so with `var build = Build()` beside the attrib
 keeps one branch.
 
 None of this is in the program that is built: choosing, building and writing outputs is the compiler's own
-work, and `Build` is a folded singleton that holds nothing at run time. Only four options add code to the program,
-and only to a build that asks for them: `--debug-memory` its allocation table, `--repl` and `--repl-port` the REPL
-and the reflection it walks, `--hot-reload` a slot per function and a file watcher, and `--trace-fallbacks` a write
-in each `fallback` taken. Each one's cost is on its
+work, and `Build` is a folded singleton that holds nothing at run time. Only five options add code to the program,
+and only to a build that asks for them: `--debug-memory` its allocation table, `--repl` the console and a slot per
+function, `--hot-reload` a slot per function and a file watcher, `--mcp-port` the MCP's listener with all of
+`--hot-reload`, and `--trace-fallbacks` a write in each `fallback` taken. Each one's cost is on its
 page.
 
 ### Measure only a production build
 
-REPL and live-reload builds are slower on purpose. They exist to tell you more while the program runs: every
-function sits in a slot so it can be swapped, the program can stop at a breakpoint, and the REPL can inspect any
-object. None of that is free, and none of it is meant to be fast.
+REPL, MCP and live-reload builds are slower on purpose. They exist to tell you more while the program runs: every
+function sits in a slot so it can be swapped, every loop has a check point where a line or a reload can run, and a
+REPL line or an MCP `evaluate` can reach any object. None of that is free, and none of it is meant to be fast.
 
-So any benchmark or performance comparison of Spite uses a build with no `--repl`, no `--repl-port`, no
+So any benchmark or performance comparison of Spite uses a build with no `--repl`, no `--mcp-port`, no
 `--hot-reload` and no `--debug-memory` (which counts every allocation). A number measured on any other build
 describes the tooling, not the program.
 
@@ -227,8 +227,8 @@ A normal build keeps only what the program uses: a condition on a codegen value 
 branch, a template exists only for the names called, and reflection only where it is read
 ([metaprogramming.md](metaprogramming.md#tree-shaking)).
 
-An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every generated
-function instead, every function of your classes compiled even when nothing calls it, so live reload has all of them to swap and the REPL can reach every internal, and the
+An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--mcp-port`) keeps every generated
+function instead, every function of your classes compiled even when nothing calls it, so live reload has all of them to swap and a REPL line can reach every internal, and the
 singletons that hold nothing, such as `Build`, are ordinary objects that `.instances` lists. Every other build
 is a production build ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#inspectable-and-production-builds)). Conditions on
 codegen values and `Build` fields fold in both: they are facts of the build, not values the running program could
@@ -266,7 +266,7 @@ What is written is what the program **ends up with**, not what was written down:
 generator after it has run, so a class the generator never made is not there, and a generic template the program
 instantiates is printed from its merged file, so the printed program can instantiate it again. Tree shaking of a production build runs after that, so a library class
 the program never uses (`FileSystemWatcher`, `Tcp.Server`) may still be printed although it was dropped from the executable.
-The classes the compiler writes for itself (the copy table, the REPL's prompt, the fault report) are not printed:
+The classes the compiler writes for itself (the copy table, the REPL's session, the fault report) are not printed:
 compiling the printed program writes them again.
 
 Every class the program names comes from a file of the program or of the standard library, including `DynamicLibrary`,
@@ -337,7 +337,7 @@ A line looks like this, its link relative to the report's folder so it opens fro
 
 Like `--final-classes`, the report describes what the program ends up with: a function that tree shaking removes
 reports nothing, and the library's lines are listed with the program's, sorted by file and line, since they cost
-the program the same. An inspectable build (`--development`, `--repl`, `--repl-port`, `--hot-reload`) places
+the program the same. An inspectable build (`--development`, `--repl`, `--mcp-port`, `--hot-reload`) places
 nothing in the frame by design; its report says so and lists only the lists that hold references and the overflow
 checks kept.
 
@@ -354,4 +354,4 @@ are listed is [in the specification](https://github.com/Spite-Language/spite_spe
 
 ---
 
-Next: [REPL and live reload](repl.md), running a program with a REPL and swapping changed classes into it.
+Next: [REPL and live reload](repl.md), typing Spite into a running program and swapping changed classes into it.

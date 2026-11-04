@@ -17,7 +17,7 @@ Two rules decide what belongs here.
 
 **Zero runtime, and everything tree-shakeable.** A program that does not use a feature carries none of it. Nothing
 needs a scheduler, an interpreter or a registry shipped beside the program: the work is done while compiling
-instead, and what only the run can know is the smallest check that can decide it. REPL, live reload and debugging
+instead, and what only the run can know is the smallest check that can decide it. REPL, MCP, live reload and debugging
 features may cost something while the program runs, but only in the builds that ask for them. Those builds are
 slower on purpose, so measure performance only with a production build
 ([Measure only a production build](compiler.md#measure-only-a-production-build)).
@@ -28,7 +28,7 @@ real surprise, so every cost that remains is written down on this page, under th
 `--optimization-report` lists every place in your program where one of them fell back
 ([compiler.md](compiler.md#read-what-was-not-optimised)).
 
-**Internals stay ordinary objects where you inspect them.** A `--repl`, `--repl-port`, `--hot-reload` or
+**Internals stay ordinary objects where you inspect them.** A `--repl`, `--mcp-port`, `--hot-reload` or
 `--development` build is an *inspectable* build: nothing is tree-shaken, every attribute of your classes keeps its
 declared place, and the optimisations that hide something (tree shaking, static singletons, folded dictionaries,
 shrunk layouts, ranges that drop checks) are not applied, because code added later may read any of it. Everything
@@ -52,7 +52,7 @@ survived.
 
 A function nobody calls, outside a generic class, is still compiled and checked, so a mistake in it is still
 reported; it just is not in the executable. An inspectable build keeps everything, so live reload has every function
-to swap and the REPL can reach every class ([compiler.md](compiler.md#development-builds-and-tree-shaking)).
+to swap and a REPL line can reach every class ([compiler.md](compiler.md#development-builds-and-tree-shaking)).
 
 ### Concurrency machinery only where it is used
 

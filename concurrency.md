@@ -219,12 +219,14 @@ The exact conditions are in [the rules](https://github.com/Spite-Language/spite_
 
 ## The REPL answers at the waits
 
-A `--repl-port` build (see [repl.md](repl.md)) serves its commands **on the program's own thread, at the same
-waits**. The socket thread only reads a command and hands it over; the scheduler answers it the next time the
-program waits, and hands the answer back. Every command therefore sees the program between two steps, never in
-the middle of one: a frame loop that ends in `program.sleep` is answered between frames, a tool waiting on
-`Console.read_line` is answered while it waits, and once the entry constructor returns, the program waits for
-nothing but commands until a client sends `exit`. None of this is written by the program.
+A line typed at the REPL ([repl.md](repl.md)) and code the language's MCP sends with `evaluate` ([mcp.md](mcp.md))
+run **on the program's own thread, at the same waits**. The console's thread, or the MCP connection's, only reads
+and compiles the code and hands it over; the scheduler runs it the next time the program waits, and hands the answer
+back. Every line therefore sees the program between two steps, never in the middle of one: a frame loop that ends
+in `program.sleep` is answered between frames, a tool waiting on a file or a socket is answered while it waits, and
+once the entry constructor returns, the program waits for nothing but lines until the REPL's input ends or the code
+it runs calls `program.exit(0)`. A save that `--hot-reload` swaps in goes live at the same moments. None of this is
+written by the program.
 
 ```gdscript title=frame_loop/frame_loop.spite entry
 var console = Console()
@@ -247,25 +249,23 @@ func FrameLoop() {
 stopped
 ```
 
-This session runs against the program above while its loop runs:
+This session runs against the program above, started with `spite --repl`, while its loop runs:
 
-```wire frame_loop
-$ spite --connect=4000 --command="program.running"
-{"ok":true,"value":"true","type":"Boolean"}
+```text
+spite> running
+true
 
 # Answered between two frames: the loop sees the change at its next test.
-$ spite --connect=4000 --command="program.running = false"
-{"ok":true,"value":"false","type":"Boolean"}
-
-$ spite --connect=4000 --command="exit"
-{"ok":true,"value":"","type":""}
+spite> running = false
+stopped
+spite> program.exit(0)
 ```
 
-A program that never waits is answered too. In a `--repl-port` or `--hot-reload` build, and only there, the
-compiler ends every pass of every `while` in the program's own code with a **check point**: one load of a flag
-that the REPL's thread (or the file watcher) raises when a command (or a changed file) is waiting; only then does it
-answer it there, on the program's thread, between two passes of the loop. A busy loop is served between two passes the way a frame loop is served between
-two frames:
+A program that never waits is answered too. In a `--repl`, `--mcp-port` or `--hot-reload` build, and only there,
+the compiler ends every pass of every `while` in the program's own code with a **check point**: one load of a flag
+that the console's thread, an MCP connection's thread or the file watcher raises when a line, a request or a
+changed file is waiting; only then does it run it there, on the program's thread, between two passes of the loop. A
+busy loop is served between two passes the way a frame loop is served between two frames:
 
 ```gdscript title=busy_loop/busy_loop.spite entry
 var console = Console()
@@ -285,17 +285,16 @@ func BusyLoop() {
 stopped after at least one pass: true
 ```
 
-```wire busy_loop
-# The loop never waits: the command is answered at the end of a pass.
-$ spite --connect=4000 --command="program.running = false"
-{"ok":true,"value":"false","type":"Boolean"}
+This time the program runs with `spite --mcp-port=4000` and an AI sends the assignment over the MCP:
 
-$ spite --connect=4000 --command="exit"
-{"ok":true,"value":"","type":""}
+```text
+# The loop never waits: the assignment runs at the end of a pass, and the program prints its line.
+evaluate  {"code": "running = false"}
+→ (Nothing)
 ```
 
 A build without those flags has no check points at all, and its C is byte for byte what it would be if check
-points did not exist. The standard library's own loops have none either, so a command waits
+points did not exist. The standard library's own loops have none either, so a line waits
 for a library call to return.
 
 ## What it costs
@@ -309,7 +308,7 @@ nothing carries none of it; the compiler's side of each is on
 | has nothing the compiler overlaps | nothing: no scheduler, no state machine, no helper thread, no thread pool, plain reference counts; every wait is the plain blocking call |
 | has a wait the compiler lets other work run past (a frame's call, two reads in a row) | the scheduler and its event loop; a second, resumable copy of each function that work reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside it; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count |
 | has calls in a row, a loop over classes or a loop in bands that the compiler runs at once | the thread pool, one start per call or band handed to it and a small, fixed number of allocations |
-| is built with `--repl-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
+| is built with `--repl`, `--mcp-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
 
 What is never there: a stack per piece of work, a stack switch, a runtime that a WebAssembly build could not carry.
 

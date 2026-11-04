@@ -855,9 +855,9 @@ one loop.
 
 `_read_value(index)` reads the element in slot `index` of the list's buffer, retained, the same way a container of
 your own would ([memory.md](memory.md#memory-belongs-to-the-compiler)); everything else is written in the file. A
-build with `--repl` or `--repl-port` compiles every template that fits every element class of a list the loop
-can reach, so `monsters.sum_health()` can be typed at the prompt; that is the one build where templates nobody
-calls are in the program. A private member (`_name`) of the element gets none: a template is
+build with `--repl` or `--mcp-port` compiles every template that fits every element class of a list the loop
+can reach, so `monsters.sum_health()` can be typed at the REPL or sent to `evaluate`; that is the one build where
+templates nobody calls are in the program. A private member (`_name`) of the element gets none: a template is
 `List`'s code, and a private name is read only inside its own class
 ([classes_and_files.md](classes_and_files.md#private-names)), so a list whose element class has `_join()` has no `each__join`
 in any build.

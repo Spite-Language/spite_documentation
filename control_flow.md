@@ -233,7 +233,7 @@ calls nothing and has no 'return', 'fallback' or 'crash', so the program would s
 inside the loop, or leave it with a 'return'`.
 
 None of this costs anything at run time beyond the branches and loops it compiles to: every rule on this page
-is checked while compiling. Only a REPL build adds a check point to each loop
+is checked while compiling. Only a `--repl`, `--mcp-port` or `--hot-reload` build adds a check point to each loop
 ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#control-flow-in-full) say which builds).
 
 ## `switch` over a union

@@ -143,12 +143,14 @@ with a link to the next.
 
 22. [compiler.md](compiler.md): every command and flag, the outputs and where they go, `--final-classes`,
     `--development`, and which build to measure.
-23. [repl.md](repl.md): the local and remote REPL, `spite --connect`, live reload, and a replayed debugging
-    session.
-24. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
-25. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if
+23. [repl.md](repl.md): the REPL, a console where you type Spite into the running program, and live
+    reload.
+24. [mcp.md](mcp.md): the language's MCP, how an AI runs code in a running program and sees its edits go
+    live.
+25. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
+26. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if
     anything) you could notice.
-26. [proofs.md](proofs.md): every fact the compiler proves while compiling, what each one buys, and when it does
+27. [proofs.md](proofs.md): every fact the compiler proves while compiling, what each one buys, and when it does
     not apply, so you know when to write the check yourself.
 
 ## About these pages

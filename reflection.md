@@ -63,8 +63,8 @@ var names = Monster.attributes.keys()
 None of this costs anything when the program runs. `Monster` is named in the code, so the compiler knows the
 object, everything read from it, and every element of its lists: `each` above is two calls to `describe` written
 out while compiling, each compiled for its own attribute, and no list of attributes exists in the program
-([Known while compiling](#known-while-compiling)). The same expressions typed at a REPL prompt are answered from
-tables only a REPL build carries ([Known only at run time](#known-only-at-run-time)).
+([Known while compiling](#known-while-compiling)). The same expressions typed at the REPL, or sent with the MCP's
+`evaluate`, are answered from tables only those builds carry ([Known only at run time](#known-only-at-run-time)).
 
 ## A class and an instance of it
 
@@ -763,8 +763,8 @@ namespace the code names, `Part.classes.each(make)`, `make` is compiled once for
 ## Known only at run time
 
 A value typed `Anything` or a union, a reflection object kept in an attribute and read later, and everything typed
-at the REPL prompt are only known at run time. Reflection still answers them, from tables the program builds only
-for the classes such a read can reach, and there `attribute.value` is an `Anything?`: the value itself (a number
+at the REPL or sent to `evaluate` are only known at run time. Reflection still answers them, from tables the program
+builds only for the classes such a read can reach, and there `attribute.value` is an `Anything?`: the value itself (a number
 keeps its class, held with its class's tag, and text is boxed), `null` only when the attribute holds `null`. Its text is `.value.to_string()`.
 
 ```gdscript title=attribute_objects/health.spite
@@ -839,15 +839,15 @@ func fresh(attribute: Spite.Attribute): attribute.class {
 ```
 
 One function body serves both: called with a constant it is typed and unrolled, and called from the REPL with a
-live object it takes the run-time path. A `--repl`, `--repl-port` or `--development` build keeps the tables for
-every class, so the prompt can ask anything the program can:
+live object it takes the run-time path. A `--repl`, `--mcp-port` or `--development` build keeps the tables for
+every class, so a REPL line can ask anything the program can:
 
-```gdscript
-> Monster.attributes.map_names()
+```text
+spite> Monster.attributes.map_names()
 name, health
-> Monster.functions["alive"].returns
+spite> Monster.functions["alive"].returns
 Boolean
-> troll.attributes["health"].value = 40
+spite> troll.attributes["health"].value = 40
 ```
 
 ## Every class in the program

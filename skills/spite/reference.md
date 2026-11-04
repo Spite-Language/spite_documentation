@@ -19,26 +19,27 @@ is given by position.
 ```
 spite                                   build .spite/build/program.exe and run it
 spite --debug-memory                    print the allocation balance at the end
-spite --repl-port=4000                  serve the REPL; spite --connect=4000 --command="..." asks it
+spite --mcp-port=4000                   run it for the language's MCP; spite --mcp=4000 is the server a client starts
 spite --check                           format and compile: the errors, if any (builds nothing, keeps an old executable)
 spite --build                           build .spite/build/program.exe without running it
 spite --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies), each with its line and why
 spite --player-count=2                  a field the program's build.spite declares (kebab-case)
 ```
 
-**Iterate on the running program, not by rebuilding**. Start it once with
-`spite --hot-reload --repl-port=4000` and keep it running (it stays up after its constructor returns, until
-a client sends `exit`). Save a file, then `spite --connect=4000 --command="wait_reload"`: it answers once the save is
-compiled and swapped in, with what was rebuilt or the compiler's errors, and objects keep their state. Ask instead
-of printing: a path or call (`World().player.health`, `Channel(1).number`, `monsters[0].roar()`,
-`scores.has("ann")`), an assignment (`player.health = 5`, `follower = Circle(3)`),
-`describe Monster`, `classes`, `enums`, `memory`, and `eval <expression>` / `run <statement>` to compile code into
-the running program. `break monster.spite:42` stops before that line; `where`, `locals` and any path through a local
-answer there, `continue` goes on, `breaks` lists and `clear` removes. A reload that would lose data (an attribute
-renamed) is held and names the map to send: `reload {Hero.attributes["level"]: "rank"}`, or `reload {}` to let the
-value go. Use `--check` only to see every error at once or for a program that cannot stay running, run the
-tests before calling the work done, and build `--optimized` only to measure. Every answer is one JSON line. The
-commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
+**Iterate on the running program, not by rebuilding**. Start it once with `spite --mcp-port=4000` and keep it
+running (it stays up after its constructor returns, until code you send calls `program.exit(0)`), with your MCP
+client running the server `spite --mcp=4000`. The program watches its files: edit and save them as usual, and
+every save is compiled and swapped in with objects keeping their state. The `evaluate` tool waits until every save
+is live, then runs Spite in the program and answers its value and class, or the compiler's error when a save or the
+code does not compile. Ask instead of printing: an expression or call (`World().player.health`, `Channel(1).number`,
+`monsters[0].roar()`, `scores.has("ann")`), an assignment (`player.health = 5`, `var follower = Circle(3)`; a `var`
+or `func` stays for later calls), and reflection (`Spite.Class.instances`, `Monster.attributes`,
+`Program().live_allocations()`). To see a value inside a function, add a `console.print`, save, and read the
+program's output. A reload that would lose data (an attribute renamed) is held and names the map: call `reload`
+with `renames` `{Hero.attributes["level"]: "rank"}`, or `{}` to let the value go. A person gets the same with
+`spite --repl`, a console that runs each typed line. Windows only for now. Use `--check` only to see every error at
+once or for a program that cannot stay running, run the tests before calling the work done, and build `--optimized`
+only to measure. The tools are in [mcp.md](https://github.com/Spite-Language/spite_documentation/blob/master/mcp.md).
 
 A program lives in its own folder, and `spite` run in it runs it: the first line of its entry function loads the standard
 library by its relative path (`load "../spite_standard_library/windows"`, which loads `common` itself), and `game/`'s every sub folder is a
@@ -846,7 +847,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `// comment`, `/* comment */` | `Spite has no '//' or '/* */' comments` | nothing, or `# docs/page.md#section` on its own line outside a function |
 | `;` at the end of a line | `';' is not something Spite reads` | nothing |
 | `var memory = Memory()` | `this class has no function 'Memory'` | `var heap = Memory.Heap()` (inside a container of your own; see [memory.md](https://github.com/Spite-Language/spite_documentation/blob/master/memory.md)) |
-| `--repl_port=4000` | `'--repl_port' is written '--repl-port'` | kebab-case flags; the `Build` field behind it stays `repl_port` |
+| `--mcp_port=4000` | `'--mcp_port' is written '--mcp-port'` | kebab-case flags; the `Build` field behind it stays `mcp_port` |
 | `spite -- --player-count=2` | `'--' is not a separator` | `spite --player-count=2`: Build flags sit beside the compiler's |
 | `spite --player_count=2` | `'--player_count' is written '--player-count'` | flags are kebab-case on the command line |
 | `spite --player-name=ada` for an `Environment` setting | `'--player-name' is not a compiler option` | `game.exe --player-name=ada`, or `PLAYER_NAME=ada spite` |

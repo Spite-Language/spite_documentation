@@ -37,7 +37,7 @@ system's file in a class that each system's folder reopens, as the standard libr
 - **Only what is called is bound.** The symbols a program calls are looked up once, when the library opens, so
   every later call is one indirect call. A symbol named only by code the program never reaches is not looked up
   at all ([optimizations.md](optimizations.md#tree-shaking)), except in an inspectable build
-  (`--development`, `--repl`, `--repl-port`, `--hot-reload`), which keeps everything. A missing library or a
+  (`--development`, `--repl`, `--mcp-port`, `--hot-reload`), which keeps everything. A missing library or a
   missing symbol stops the program at that point, naming the file, or the symbol and the Spite function that
   wanted it.
 - **A foreign call goes through the attribute or variable holding the library**, so the compiler knows which

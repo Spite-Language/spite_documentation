@@ -20,8 +20,8 @@ source, but a production build keeps only what `main` can reach: a program that 
 a `Tcp.Client` or a `Process` has none of their code, and none of the operating-system functions only
 they call is looked up when the program starts ([optimizations.md](optimizations.md#tree-shaking)).
 What a class costs when it is used is what its Spite does, and each section below says where that is more than a
-call. An inspectable build (`--repl`, `--repl-port`, `--hot-reload`, `--development`) keeps everything, so the
-REPL can look at any of it.
+call. An inspectable build (`--repl`, `--mcp-port`, `--hot-reload`, `--development`) keeps everything, so a
+REPL line can look at any of it.
 
 ## What is in it
 
@@ -57,7 +57,7 @@ REPL can look at any of it.
 | `DynamicLibrary` | call a native library | [foreign_libraries.md](foreign_libraries.md) |
 | `Spite.Class`, `Spite.Function`, ... | reflection | [reflection.md](reflection.md) |
 
-The other files of the library are the machinery these are built from: `NumberText` and the time-zone readers. They are ordinary classes a program can read and the REPL can inspect, which a program
+The other files of the library are the machinery these are built from: `NumberText` and the time-zone readers. They are ordinary classes a program can read and a REPL line can inspect, which a program
 has no reason to call. Memory, the event loop and the threads the compiler runs work on are not classes of
 the library: the compiler writes them ([memory.md](memory.md#memory-belongs-to-the-compiler)).
 
@@ -795,8 +795,8 @@ then a program narrows `var read: IpAddress? = "127.0.0.1"` first.
 
 TCP is three classes over IPv4 and IPv6, the same on Windows (winsock), Linux and macOS: a `Tcp.Server` listens
 and accepts, a `Tcp.Client` connects, and each end of a connection talks the same way. What a server accepts is a
-`Tcp.Connection`; a client holds one and talks through it. `--repl-port` and `spite --connect` are written with them,
-and so is a game server.
+`Tcp.Connection`; a client holds one and talks through it. The two halves of the language's MCP
+([mcp.md](mcp.md)) talk through them, and so does a game server.
 
 ```gdscript title=tcp_echo/tcp_echo.spite entry
 var console = Console()

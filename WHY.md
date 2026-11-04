@@ -83,8 +83,9 @@ leave to an expert, or to nobody:
 - **Counting only where it is needed.** Reference counts are left out wherever the compiler proves they would only
   go up and back down; objects, function values and argument lists that never escape live in the caller's frame;
   a returned object is built where the caller keeps it.
-- **Nothing you do not use exists.** Reflection, symbols, registries, the thread pool, the debugger and the REPL
-  are in the executable only when the program reads them, and identical generated functions are folded into one.
+- **Nothing you do not use exists.** Reflection, symbols, registries and the thread pool are in the executable only
+  when the program reads them, the REPL and the MCP only in a build that asks for them, and identical generated
+  functions are folded into one.
 
 Every one of them, with what it costs when it cannot apply and a program that shows it, is in
 [docs/optimizations.md](optimizations.md), and each has a benchmark against plain and hand-tuned C.
@@ -303,11 +304,12 @@ every error without building, and `--hot-reload` swaps changed classes into a ru
 
 ## A running program that answers questions
 
-Run a program with `--hot-reload --repl-port=4000` and it keeps running while you work. Save a file and only the
-changed classes are recompiled and swapped in; live objects move to a class's new attributes. Ask it anything by
-its path (`World().player.health`, `describe Monster`), set a breakpoint with `break monster.spite:42` and read the
-locals there. Every answer is one line of JSON, so a script or a model can drive it as easily as a person
-([docs/repl.md](repl.md)).
+Run a program with `--repl` and type Spite into it while it runs: `World().player.health` prints the health,
+`Monster.attributes` asks reflection what a monster holds, `monsters[0].health = 5` changes it. There are no commands
+to learn, since every line is code. With `--hot-reload` every save is swapped in as you make it: only the changed
+classes are recompiled, and live objects move to a class's new attributes. An AI gets the same through the
+language's MCP: start the program with `--mcp-port=4000`, and its `evaluate` tool runs code in the program once every
+save is live. Windows only for now ([docs/repl.md](repl.md), [docs/mcp.md](mcp.md)).
 
 ## Written by AI, decided by a person
 
@@ -412,9 +414,9 @@ the cores and lets a frame go on while a call waits, with no `async`, no handle 
 Windows.
 [docs/concurrency.md](concurrency.md)
 
-**What tooling is there?** The compiler is the formatter and linter; a REPL, live reload and breakpoints come
-with it; `--debug-memory` counts every allocation. No language server or editor highlighting yet.
-[docs/repl.md](repl.md)
+**What tooling is there?** The compiler is the formatter and linter; a REPL, live reload and an MCP for AI agents
+come with it; `--debug-memory` counts every allocation. No language server or editor highlighting yet.
+[docs/repl.md](repl.md), [docs/mcp.md](mcp.md)
 
 **Is there a package manager?** No, by design: a dependency is a git URL pinned to a commit in a `load` line, and
 the ordinary compile fetches it. No registry, manifest or lockfile. [docs/packages.md](packages.md)

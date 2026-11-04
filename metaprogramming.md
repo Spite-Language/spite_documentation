@@ -996,14 +996,14 @@ at compile time:
   ([optimizations.md](optimizations.md#tree-shaking)).
 - The **concurrency machinery** (the state machines of waiting work and the loop that runs them, the thread pool,
   atomic reference counts) exists only in a program in which the compiler finds work to run at once, or that is
-  built with `--repl-port` or `--hot-reload`
+  built with `--repl`, `--mcp-port` or `--hot-reload`
   ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-used)).
 
 This is tree shaking over the program's own model.
 
-An inspectable build (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every function and class the
-program generated instead of only the ones reachable from `main`, so live reload has all of them to swap and the REPL
-can reach them, along with the run-time tables of every class
+An inspectable build (`--development`, `--hot-reload`, `--repl` or `--mcp-port`) keeps every function and class the
+program generated instead of only the ones reachable from `main`, so live reload has all of them to swap and a REPL
+line can reach them, along with the run-time tables of every class
 ([compiler.md](compiler.md#development-builds-and-tree-shaking)). What is decided while compiling is decided there
 too: templates are still generated only for the names called, and [conditions on codegen values](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)
 still fold. Every optimisation the compiler makes on its own, and the builds it applies in, is listed in

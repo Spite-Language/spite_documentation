@@ -17,34 +17,44 @@ text is in the specification, [specs/](https://github.com/Spite-Language/spite_s
 
 ## How to iterate: keep the program running
 
-Do not compile the whole program after every change. Start it once with live reload and a REPL, and let every save
+Do not compile the whole program after every change. Start it once with the language's MCP, and let every save
 swap into the running program:
 
 ```
 cd game
-spite --hot-reload --repl-port=4000
+spite --mcp-port=4000
 ```
 
-It keeps running, even after its entry constructor returns, until a client sends `exit`. Then, for each change:
+and give your MCP client the server that talks to it (in Claude Code, a `.mcp.json` in the project):
 
-1. **Edit and save the file.** The watcher compiles only the classes that file declares and swaps them in, keeping
-   every object's state.
-2. **`spite --connect=4000 --command="wait_reload"`** answers once the save is compiled and swapped in, with what was
-   rebuilt (`rebuilt Monster`) or the compiler's errors. Never poll, never sleep: this is the wait. (`reload` swaps
-   in what changed right away, without waiting for the watcher.)
-3. **Ask the program instead of printing.** Every answer is one line of JSON, `{"ok":true,"value":...}`:
-   - a path or a call: `player.health`, `monsters[0].roar()`, `World().entity_count()` (a singleton by name,
+```json
+{
+  "mcpServers": {
+    "spite": { "command": "spite", "args": ["--mcp=4000"] }
+  }
+}
+```
+
+`--mcp-port` includes live reload: the program watches its files and swaps every save in, keeping every object's
+state. It keeps running, even after its entry constructor returns, until code you send calls `program.exit(0)`. It
+runs on Windows for now. Then, for each change:
+
+1. **Edit and save the file**, as you normally would. The watcher compiles only the classes that file declares and
+   swaps them in.
+2. **Call `evaluate` with Spite code.** It waits until every save is compiled and swapped in, then runs the code in
+   the program and answers its value and class (`30  (Integer)`), or the compiler's error when a save or the code
+   does not compile. Never poll, never sleep: `evaluate` is the wait. Ask the program instead of printing:
+   - an expression or a call: `player.health`, `monsters[0].roar()`, `World().entity_count()` (a singleton by name,
      `Channel(1)` one made with arguments), `scores.keys()`;
-   - an assignment to try a value: `monsters[0].health = 5`, or an object made there: `follower = Circle(3)`;
-   - `describe Monster` (attributes and functions), `classes`, `enums`, `attributes`, `functions`, `memory` (live
-     allocations and bytes);
-   - `eval stock.count() + 40` and `run stock.append(9)` compile code typed at the prompt into the running program.
-4. **Debug where it goes wrong.** `break monster.spite:42` stops the program before that line; `where` says where it
-   stopped, `locals` lists what is in scope, any path may start at a local's name, and `continue` goes on. `breaks`
-   lists them, `clear` removes them.
-5. **When a reload is held**, read why. Renaming an attribute is held because it would lose data, and the answer
-   names the map to send: `reload {Hero.attributes["level"]: "rank"}` keeps the value under the new name, and
-   `reload {}` lets it go.
+   - an assignment to try a value: `monsters[0].health = 5`, or an object made there: `var follower = Circle(3)`
+     (a `var` or `func` you send stays for the calls after it);
+   - reflection for what is there: `Spite.Class.instances`, `Monster.attributes`, `Monster.functions.has("roar")`,
+     `monsters[0].attributes`, and `Program().live_allocations()` for memory.
+3. **To see a value at a moment** inside a function, add a `console.print` there and save, then read the program's
+   output where you started it; remove the line once you have read it.
+4. **When a reload is held**, read why. Renaming an attribute is held because it would lose data, and the answer
+   names the map: call `reload` with `renames` set to `{Hero.attributes["level"]: "rank"}` to keep the value under
+   the new name, or to `{}` to let it go.
 
 Leave the loop only when you need to:
 
@@ -53,13 +63,13 @@ Leave the loop only when you need to:
   Every compile formats first; there is no `spite format`.
 - A full run from a fresh start, and the tests (`spite` in `tests`, [docs/testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)),
   before you call the work done.
-- `--optimized` only to measure speed. A `--hot-reload` build is slower on purpose; never time one.
+- `--optimized` only to measure speed. An `--mcp-port` build is slower on purpose; never time one.
 
 Every compile, a reload included, rewrites your files into the one style first: read a file back before editing it
 again. Every error comes as `path:line: error: message (in Class.function)` and says what to write instead: write
 that, and nothing cleverer. A failure at run time is a `spite: the program stopped at ...` or `spite.fault` line naming the file, the line
-and the values there: open that line, and do not add logging. The commands are in
-[docs/repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
+and the values there: open that line, and do not add logging. The tools are in
+[docs/mcp.md](https://github.com/Spite-Language/spite_documentation/blob/master/mcp.md).
 
 Write the plain, readable version first. Do not hand-optimise: the compiler fuses chains, specialises generics,
 places memory and removes what is unused on its own.

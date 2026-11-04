@@ -1,42 +1,31 @@
 # REPL and live reload
 
-`spite --repl` runs the program, then answers `attributes`, `functions` and `classes`, `help`, `exit`, paths
-such as `monsters[0].health` or `program.player_name`, a singleton by its class's name (`World().entity_count()`,
-`Tick().step_milliseconds`), assignment of a number, Boolean, text or enum literal (`monsters[0].health = 5`, which
-prints the value read back), and calls with literal arguments that print what they return, chained like any path
-(`monsters[0].roar()`, `monsters.count()`, `World().position_of(1).across`), written in Spite by the
-compiler into the build that asks for it. `--repl-port` answers the same commands over TCP, one JSON line each,
-answered where the program waits or at the end of a loop's pass
-([concurrency.md](concurrency.md#the-repl-answers-at-the-waits)), and `spite --connect` is its client. `--hot-reload`
-swaps the classes whose files changed into the running program, keeping its state, when a file is saved or when the
-REPL is sent `reload` ([Live reload](#live-reload---hot-reload)), moving live objects to their class's new attributes
-when those change. `bytes <path>` answers a value's address, size, bytes and layout as JSON
-([Native memory](#native-memory-bytes)). `describe Monster`, `enums` and `memory` describe a class, the program's
-enums and the heap in use; an assignment takes `null` into a `T?`, a literal into a list or dictionary element, and
-another path's instance (`follower = leader`); a path walks into a union's active member. A reload swaps in a change
-to an enum's values, each held value keeping its meaning. With `--hot-reload`, `eval <expression>` and
-`run <statement>` compile code typed at the prompt into the running program and run it once
-([below](#code-typed-at-the-prompt)).
+`spite --repl` starts your program with a console attached. You type Spite at the `spite> ` prompt, and the line
+runs inside the running program: an expression prints its value, a statement just runs. There are no commands to
+learn, because every line is ordinary code: to see what a class holds you ask reflection, to print you call
+`console.print`, and to make an object you make one.
 
 ```text
 spite> monsters[0]
 Monster { name: Goblin, health: 30 }
 spite> monsters[0].health = 5
+spite> monsters[0].health
 5
 spite> monsters[0].roar()
 Goblin roars!
-spite> monstrs
-no attribute 'monstrs' in program: console, player_name, player_age, monsters
+spite> var strongest = monsters[1]
+spite> strongest.name
+Orc
 ```
 
-The REPL inspects and drives the *running* program, local (`--repl`, standard input) and remote
-(`--repl-port`, TCP). It is ordinary Spite, `ReadEvaluatePrintLoop` in the standard library, walking the program
-through reflection ([reflection.md](reflection.md)). It reads and changes the running state, and with
-`--hot-reload` it also swaps in code you edited while the program keeps running
-([Live reload](#live-reload---hot-reload)).
+`--hot-reload` swaps the code you save into a running program, keeping its state
+([Live reload](#live-reload---hot-reload)). An AI does not type into a console: it drives a running program through
+the language's MCP ([mcp.md](mcp.md)), which runs code the same way and makes sure every save is live first.
 
-A REPL or live-reload build is slower on purpose: it trades speed for what it tells you while the program runs.
-Never measure performance with one; benchmarks use a production build
+The REPL, live reload and the MCP all compile new code into a program while it runs, so they run on Windows for now
+(Linux and macOS: [spite_compiler#297](https://github.com/Spite-Language/spite_compiler/issues/297)). A REPL or
+live-reload build is slower on purpose: it trades speed for what it tells you while the program runs. Never measure
+performance with one; benchmarks use a production build
 ([Measure only a production build](compiler.md#measure-only-a-production-build)).
 
 ## The program this page uses
@@ -80,401 +69,115 @@ player Hero age 20
 monster count 2
 ```
 
-What the loop needs to reach a live value (the attributes and functions of every class the loop can reach,
-and the member templates that fit each list's elements, so `monsters.sum_health()` works at the prompt) is
-compiled only into a `--repl`/`--repl-port` build, never into a normal one, so it costs nothing when you are not
-debugging. A REPL build is also an [inspectable build](compiler.md#development-builds-and-tree-shaking):
-nothing is tree-shaken, so every internal can be reached, and the executable is larger than a production build of
-the same program. For the same reason the REPL's reads count only in that build: an attribute the program's own
-code never reads is still an error in a normal one ([style.md](style.md#nothing-unused)), which is why `Monster`
-above has an `is_alive()`.
-
-## Local: `--repl`
+## Typing Spite into a running program
 
 ```
 spite --repl
 ```
 
-Runs the constructor normally; when it returns, instead of exiting, reads commands from stdin with a
-`spite> ` prompt until `exit` or end of input, then drops everything and exits cleanly (memory balanced, just
-like a normal run).
+The program starts and the prompt appears at once. A line you type runs the next time the program waits (a
+`program.sleep`, a file or socket read) or finishes a pass of one of its loops, so it sees the program between two
+steps, never halfway through one. Once the constructor has returned, a line runs as soon as you press Enter.
 
-## Remote: `--repl-port`
-
-```
-spite --repl-port=4000
-```
-
-Before the constructor runs, the program listens on `127.0.0.1:4000` **only**, and a background thread takes
-one client at a time, and there is **no authentication**. Anyone who can reach that port on that machine can read
-and mutate the running program. This is a local debugging tool for you and an AI on the same machine, never
-something to expose past `127.0.0.1`. The program keeps running while it is served, and each command is answered
-on the program's own thread the next time it waits (a `program.sleep`, a `Console.read_line()`, a file or socket
-read) or reaches the end of a pass of one of its loops, so a command never sees it halfway through a step
-([concurrency.md](concurrency.md#the-repl-answers-at-the-waits) serves a frame loop between frames and a busy loop
-between passes). When the constructor returns the process stays alive until a client sends
-`exit`, which flushes what the program printed and ends it with exit code 0. The port is part of the build: a
-program built with `--repl-port` always listens on that port, and a port another program holds stops it before
-its constructor runs, with `error: the REPL could not listen on 127.0.0.1:<port>`. With `--repl` as well, the
-console loop runs first, and after its `exit` the process keeps serving the port. What serving costs, and only in
-a `--repl-port` build: one thread waiting on the socket, and a call with two atomic loads at the end of every pass
-of the program's own loops.
-
-Talk to it with the compiler's own client:
-
-```
-spite --connect=4000
-spite --connect=4000 --command="program.player_name"
-```
-
-With no `--command` it is interactive: a `spite> ` prompt that sends each line and prints the answer as
-`value (type)` or `error: message`. With `--command` it sends that one command, prints the raw JSON line, and
-
-exits, which is the form tests and AI clients use.
-
-## The wire protocol
-
-One command per line in, one line of JSON out: `{"ok":true,"value":"...","type":"Integer"}` on success,
-`{"ok":false,"error":"..."}` on failure. A multi-line value (such as the answer to `attributes`) uses `\n`
-inside that one JSON string, never a real newline on the wire. `type` is the class of the value; it is empty
-for an answer that is not a value (`help`, `attributes`, `functions`, `exit`) and `Nothing` for a call that
-returns nothing. The entry instance is always rooted at the fixed name `program`, regardless of what the entry
-class is actually called, and a path may leave `program.` out. The wire format is JSON, but it is not a
-promise: the format is free to become whatever an AI client reads best, binary included.
-
-The commands are the ones `--repl` answers:
-
-- **paths**: `program`, `program.monsters`, `program.monsters[0].health`. A `T?` that holds a value is walked
-  through, and a `Dictionary`'s entries are walked by key: `program.settings.volume`.
-- **calls**: `program.monsters.count()`, `program.monsters[0].roar()`, with literal arguments. A call that answers
-  an object is walked on like any path: `World().position_of(1).across`. The standard library's functions are
-  called the same way, on any of its values a path reaches: `player.name.upper_case()`.
-- **singletons**, by their class's name: `World()`, `Tick().step_milliseconds`, `Ui.Panel().title`,
-  `Column<Position>().values[0]`, and one made with arguments by its arguments: `Channel(1).number`. The name binds
-  the instance the program already has and never makes one.
-- **a dictionary's** `count()`, `keys()` and `has(key)`: `scores.has("ann")`.
-- **assignment** of a number, `Boolean`, text or enum literal: `program.player_name = "Aria"`, through
-  `set_<attribute>` when the class declares one, answering the value read back afterwards. A text literal is
-  written as in a program, escapes included (`"a \"quoted\" word"`). The target may be a list or dictionary element
-  (`names[1] = "cat"`, `scores["ann"] = 9`), a `T?` takes `null`, and an attribute or element of a class takes
-  another path's instance of that class (`follower = leader`), which then holds the same object, or one made at the
-  prompt (`follower = Circle(3)`) in a program built with `--hot-reload` and `--repl-port`
-  ([Code typed at the prompt](#code-typed-at-the-prompt)).
-- `describe Circle` (a class's attributes and functions, with their types and signatures), `enums` (each
-  of the program's enums with its values) and `memory` (the live allocations and the bytes they hold).
-- `attributes`, `functions` (of the program, or of any path: `functions World()`), `classes` (the singletons the
-  prompt can bind, then the program's other classes), `help`, `exit`.
-- `reload`, `last_reload` and `wait_reload`, which answer in a `--hot-reload` build
-  ([Live reload](#live-reload---hot-reload)) and fail everywhere else with `'reload' answers in a program built with --hot-reload, which swaps its code while it
-  runs, and this one was not`.
-
-## A worked debugging session
-
-This session runs against the program above, built with `--repl-port`: every answer below is the exact line the
-program sends back.
-
-```wire repl_program
-$ spite --connect=4000 --command="program.player_name"
-{"ok":true,"value":"Hero","type":"String"}
-
-$ spite --connect=4000 --command="program.monsters.count()"
-{"ok":true,"value":"2","type":"Integer"}
-
-$ spite --connect=4000 --command="program.monsters[0]"
-{"ok":true,"value":"Monster { name: Goblin, health: 30 }","type":"Monster"}
-
-$ spite --connect=4000 --command="program.monsters[0].roar()"
-{"ok":true,"value":"Goblin roars!","type":"String"}
-
-# Debugging a suspiciously low health value: mutate it and confirm.
-$ spite --connect=4000 --command="program.monsters[0].health = 5"
-{"ok":true,"value":"5","type":"Integer"}
-
-$ spite --connect=4000 --command="program.monsters[0].health"
-{"ok":true,"value":"5","type":"Integer"}
-
-# A typo'd path is one line, never a crash.
-$ spite --connect=4000 --command="program.monstrs"
-{"ok":false,"error":"no attribute 'monstrs' in program: console, player_name, player_age, monsters"}
-
-$ spite --connect=4000 --command="attributes"
-{"ok":true,"value":"console: Console = Console {...}\nplayer_name: String = Hero\nplayer_age: Integer = 20\nmonsters: List<Monster> = List<Monster>(2)","type":""}
-
-$ spite --connect=4000 --command="exit"
-{"ok":true,"value":"","type":""}
-```
-
-For an AI driving this: issue one command per `spite --connect=4000 --command="..."` call (or hold one interactive
-session open), read the single JSON line back, and branch on `"ok"`. `attributes`, `functions` and `classes` first, to see
-what is there (only functions whose arguments are numbers, Boolean, text or an enum can be called), then walk paths
-down to the value in question before mutating anything.
-
-## Singletons: where a game's state lives
-
-A game's state rarely hangs off its entry class: the entry makes an app and runs it, and the world, the clock and
-the columns of components are singletons. The prompt binds a singleton by its class's name, the way the program's
-own code does (`World()`, `Ui.Panel()`, `Column<Position>()`), and reads, calls and assigns through it. It
-binds the one instance the program already made; it never makes one, so reading a singleton the program has not
-asked for yet says so instead of creating it.
-
-```gdscript title=repl_world/position.spite
-var across = 0
-var along = 0
-
-func Position(new_across: Integer, new_along: Integer) {
-    across = new_across
-    along = new_along
-}
-
-func distance_to(other_across: Integer, other_along: Integer): Integer {
-    var across_gap = across - other_across
-    var along_gap = along - other_along
-    return across_gap * across_gap + along_gap * along_gap
-}
-```
-```gdscript title=repl_world/tick.spite
-singleton
-
-var step = 0
-var step_milliseconds = 16
-```
-```gdscript title=repl_world/world.spite
-singleton
-
-var positions = List<Position>()
-var tick = Tick()
-
-func spawn(across: Integer, along: Integer) {
-    var made = Position(across, along)
-    positions.append(made)
-    tick.step = tick.step + 1
-}
-
-func entity_count(): Integer {
-    return positions.count()
-}
-
-func position_of(entity: Integer): Position? {
-    return positions[entity]
-}
-
-func step_length(): Integer {
-    return tick.step_milliseconds
-}
-```
-```gdscript title=repl_world/repl_world.spite entry
-var console = Console()
-var world = World()
-
-func ReplWorld() {
-    load "../spite_standard_library/windows"
-    world.spawn(3, 4)
-    world.spawn(7, 1)
-    var count = world.entity_count()
-    console.print("entities", count)
-}
-```
-```output
-entities 2
-```
-
-This session runs against it, built with `--repl-port`:
-
-```wire repl_world
-# The entry class holds a console and the world; the game's state is in its singletons.
-$ spite --connect=4000 --command="attributes"
-{"ok":true,"value":"console: Console = Console {...}\nworld: World = World {...}","type":""}
-
-$ spite --connect=4000 --command="World().entity_count()"
-{"ok":true,"value":"2","type":"Integer"}
-
-$ spite --connect=4000 --command="World().position_of(1)"
-{"ok":true,"value":"Position { across: 7, along: 1 }","type":"Position?"}
-
-$ spite --connect=4000 --command="World().position_of(0).distance_to(0, 0)"
-{"ok":true,"value":"25","type":"Integer"}
-
-$ spite --connect=4000 --command="Tick().step_milliseconds = 50"
-{"ok":true,"value":"50","type":"Integer"}
-
-$ spite --connect=4000 --command="functions World()"
-{"ok":true,"value":"spawn(across: Integer, along: Integer): Nothing\nentity_count(): Integer\nposition_of(entity: Integer): Position?\nstep_length(): Integer\nto_debug(): String","type":""}
-
-$ spite --connect=4000 --command="Position()"
-{"ok":false,"error":"'Position' is a class, not a singleton: the prompt never makes an object, it reads the ones the program holds, and 'classes' lists the singletons"}
-
-$ spite --connect=4000 --command="exit"
-{"ok":true,"value":"","type":""}
-```
-
-A singleton made with arguments has one instance for each argument list
-([classes_and_files.md](classes_and_files.md#one-instance-per-argument-values)), and the prompt names each by its
-arguments, as the program does: `Channel(1)` is the instance the program's `Channel(1)` made, and an argument list
-the program never asks for has no instance to read. A dictionary answers `keys()` and `has(key)` beside `count()`,
-and a text literal at the prompt is written as in a program, with its escapes:
-
-```gdscript title=repl_radio/channel.spite
-singleton
-
-var number = 0
-var messages = List<String>()
-
-func Channel(channel_number: Integer) {
-    number = channel_number
-}
-```
-```gdscript title=repl_radio/repl_radio.spite entry
-var console = Console()
-var news = Channel(1)
-var music = Channel(2)
-var volumes = Dictionary<String, Integer>()
-var station = "city"
-
-func ReplRadio() {
-    load "../spite_standard_library/windows"
-    news.messages.append("storm tonight")
-    volumes["news"] = 7
-    volumes["music"] = 4
-    var tuned = volumes.count()
-    console.print(station, "tuned", tuned, "and", music.number)
-}
-```
-```output
-city tuned 2 and 2
-```
-
-```wire repl_radio
-$ spite --connect=4000 --command="classes"
-{"ok":true,"value":"Build()\nChannel(1)\nChannel(2)\nReplRadio","type":""}
-
-$ spite --connect=4000 --command="Channel(1).messages.count()"
-{"ok":true,"value":"1","type":"Integer"}
-
-$ spite --connect=4000 --command="Channel(3)"
-{"ok":false,"error":"the program holds no Channel(3): a singleton made with arguments has one instance for each argument list the program asks for, Channel(1), Channel(2)"}
-
-$ spite --connect=4000 --command="volumes.keys()"
-{"ok":true,"value":"news\nmusic","type":"List<String>"}
-
-$ spite --connect=4000 --command="volumes.has(\"talk\")"
-{"ok":true,"value":"false","type":"Boolean"}
-
-$ spite --connect=4000 --command="station = \"the \\\"late\\\" show\""
-{"ok":true,"value":"the \"late\" show","type":"String"}
-
-$ spite --connect=4000 --command="station = \"the {hour} show\""
-{"ok":false,"error":"\"the {hour} show\" has a hole, and the prompt reads a text literal as it is written: \\{ writes a brace, and 'eval' makes text from values"}
-
-$ spite --connect=4000 --command="exit"
-{"ok":true,"value":"","type":""}
-```
-
-## Native memory: `bytes`
-
-`bytes <path>` answers where a value lives and what its bytes are, as one JSON object an agent can diff between two
-processes, a client's player against the server's, while it rubber-bands. For an instance it gives the class,
-the address, the size, the bytes in hexadecimal, and each attribute's offset, size and value; for a list, the list
-object and its buffer of items; for a number or text held by an attribute or a list, its own slot:
+- **An expression prints its value**, as `"{value}"` would make it text. A statement (an assignment, a call that
+  answers nothing, an `if`, a `while`) prints only what it prints itself.
+- **`program` is the running entry instance**, and its attributes and functions can also be named bare:
+  `program.player_name` and `player_name` are the same thing.
+- **A line is ordinary code.** It can call any function, `console.print("a", 1, true)` included, make objects,
+  name any class, and reach a singleton by its name, `World().entity_count()`, exactly as the program's own code
+  does.
+- **`var` and `func` stay.** `var strongest = monsters[1]` keeps `strongest` for every line after it, and
+  `func healthy(): Integer { ... }` declares a function the next lines can call. Declaring the same name again
+  replaces it.
+- **A line that opens a block continues** on the next one, under a `...> ` prompt, until its braces close:
 
 ```text
-spite> bytes World().positions[1]
-{"class":"Position","address":"0x1e8647ec050","bytes":16,"hex":"04000000580000000700000001000000","fields":[{"name":"across","class":"Integer","offset":8,"bytes":4,"value":"7"},{"name":"along","class":"Integer","offset":12,"bytes":4,"value":"1"}]}
-spite> bytes World().positions
-{"class":"List<Position>","address":"0x1e8647f6100","bytes":40,"hex":"0300...","buffer":{"address":"0x1e8647f5f50","bytes":16,"shown":16,"hex":"f0bf7e64e801000050c07e64e8010000"}}
-spite> bytes Tick().step_milliseconds
-{"class":"Integer","address":"0x1e8647ebf1c","bytes":4,"hex":"10000000","value":"16"}
-spite> bytes 0x1e8647ebf10 16
-{"address":"0x1e8647ebf10","bytes":16,"hex":"02000000590000000200000010000000"}
-spite> bytes 0x10 8
-unreadable: 0x10 for 8 bytes
+spite> for monster in monsters {
+...>     console.print(monster.name, monster.health)
+...> }
+Goblin 5
+Orc 50
 ```
 
-The first eight bytes of every object are its header, the reference count and the class's number. A read only
-reads, and it never crashes the program it inspects: the bytes are copied through the operating system's checked
-read, and an address that is not readable answers `unreadable`. At most 4096 bytes are shown at a time.
+- **A line that does not compile** prints the compiler's error, and nothing changes: the session and the program
+  are as they were before the line.
 
-## Breakpoints
-
-A program built with `--hot-reload` and a REPL (`--repl` or `--repl-port`) can be stopped at a line while it runs:
+Questions about the program itself are lines of Spite too, answered by reflection
+([reflection.md](reflection.md)):
 
 ```text
-$ spite --connect=4000 --command="break ticker.spite:16"
-{"ok":true,"value":"the program stops before the statement on ticker.spite:16","type":""}
-
-$ spite --connect=4000 --command="where"
-{"ok":true,"value":"ticker.spite:16","type":""}
-
-$ spite --connect=4000 --command="ticker.total"
-{"ok":true,"value":"2","type":"Integer"}
-
-$ spite --connect=4000 --command="continue"
-{"ok":true,"value":"continued from ticker.spite:16","type":""}
+spite> Spite.Class.instances.count()
+2
+spite> Monster.attributes.count()
+2
+spite> Monster.functions.has("roar")
+true
+spite> monsters[0].attributes["health"].value
+5
 ```
 
-`break <file>:<line>` compiles a stop into the function that line belongs to and swaps it in, the way a reload
-swaps in a saved file; a program that never sets one carries nothing for it. The file is one of the program's own,
-named by the end of its path, and the line is one a statement starts on; anything else is refused and the program
-keeps its code. The next time any code reaches the line, the program stops before it and waits for the prompt:
-`where` answers where it stopped, `locals` lists `self` and every local in scope there, a line each (`next: Integer = 3`), every other command answers
-as usual, and `continue` lets the program go on. `breaks` lists the breakpoints and `clear` (or
-`clear ticker.spite:16`) removes them, compiling the code again without the stop. A call made at the prompt that
-reaches a breakpoint answers `stopped at ticker.spite:16` at once, and its own answer is the answer to `continue`.
-At the console the program prints `stopped at ticker.spite:16` and reads commands until `continue`.
+`Spite.Class.instances` lists the program's classes, `Monster.attributes` and `Monster.functions` describe one, an
+instance's `.attributes` reads its live values, and `Program().live_allocations()` and `live_bytes()` answer what
+the heap holds ([memory.md](memory.md)).
 
-## Code typed at the prompt
+### Input and ending
 
-In a program built with `--hot-reload` and a REPL, `eval` compiles an expression into the running program and
-answers its value as text, and `run` compiles a statement and runs it. The code is ordinary Spite, and `program`
-names the entry instance:
+While the REPL is open, everything you type is the REPL's. A `Console.read_line()` in the program answers `null`,
+as if the input had ended, instead of waiting for the keyboard.
+
+The end of input (Ctrl+Z then Enter on Windows, Ctrl+D elsewhere), or a line calling `program.exit(0)`, ends the
+program the normal way: everything is released and memory is balanced. **Ctrl+C ends it at once**, whatever is
+running, your line or the program's own code, with exit code 130.
+
+### A scratchpad
+
+Run `spite --repl` in a folder with no program, and you get an empty one with the standard library loaded: a
+place to try an expression, a text function or a class of the standard library before you write it into a program.
+
+## Loading what you changed
+
+The REPL does not watch your files: what you are poking at does not change under you because you saved something.
+When you want a change, load it:
 
 ```text
-$ spite --connect=4000 --command="eval program.stock.count() + 40"
-{"ok":true,"value":"41","type":""}
-
-$ spite --connect=4000 --command="eval Lookup().of(12)"
-{"ok":true,"value":"22","type":""}
-
-$ spite --connect=4000 --command="run program.stock.append(9)"
-{"ok":true,"value":"","type":""}
+spite> load "monster.spite"
+rebuilt Monster
+spite> monsters[0].roar()
+Goblin roars louder!
 ```
 
-The code is compiled as the body of a function of a class of its own, swapped in by a reload and called once, so it
-reads and changes what the entry instance reaches, makes objects (`Lookup().of(12)` makes a `Lookup` the program
-never held), and calls any function, a generic class's included. `eval`'s value becomes text as it would in
-`"{value}"`. A value that does not become text, and code that does not compile, answer the compiler's error, and the
-program keeps its code. The code stays loaded until the next `eval` or `run`.
+A file the program already loads is updated in its place, so what goes live is what a fresh start would choose
+([monkey patching](packages.md#monkey-patching-mods) included). A file the program never loaded is loaded after
+everything else, as if you had added a `load` line at the end of the entry's constructor, so its declarations win.
+Everything the program held stays: objects, singletons, and the `var`s you typed.
 
-An assignment whose right side makes an object is compiled the same way, so an attribute can be given an object
-the program never made:
+If you would rather have every save swapped in as you make it, start the REPL with the watcher too:
 
-```text
-$ spite --connect=4000 --command="follower = Circle(3)"
-{"ok":true,"value":"Circle { radius: 3 }","type":"Circle?"}
+```
+spite --repl --hot-reload
 ```
 
-The construction becomes `prompt_made_<n>(): Circle`, which the REPL calls once and whose object it assigns as
-it assigns another path's.
+`load` still compiles a file at once when you do not want to wait for the watcher.
 
 ## Live reload: `--hot-reload`
 
 `--hot-reload` builds a program that can take new code while it runs. Save a file of the program, and the classes
 that file declares are compiled again, on their own, into a small library the running program loads and swaps in
-the next time it waits or ends a pass of a loop, the same moments the REPL is answered at. Objects, singletons
-and everything the REPL changed stay as they were: only functions change. Every function sits in a slot so it can
+the next time it waits or ends a pass of a loop, the same moments a REPL line runs at. Objects, singletons
+and everything a REPL line changed stay as they were: only functions change. Every function sits in a slot so it can
 be swapped, which makes the build slower; measure performance only with a production build
 ([Measure only a production build](compiler.md#measure-only-a-production-build)).
 
 ```
-spite --hot-reload --repl-port=4000
+spite --hot-reload
 ```
 
-It works with or without a REPL. Without one, each swap is reported on the program's error output (`spite: rebuilt
-Monster`); with `--repl` or `--repl-port`, `reload` swaps in what changed right away and answers what it rebuilt, and
-`last_reload` answers what the last swap did, which is how you learn about one the file watcher made.
-`wait_reload` waits for the watcher: it answers once every save of the program's files has been compiled and
-swapped in (or refused), with what `last_reload` would then say, so a tool that saves a file never polls. A program
-built without `--hot-reload` has none of this: no watcher, no swapping, and `reload` answers that it was not
-built for it. `--hot-reload` keeps every function (it implies `--development`), since a new version of a class
+Each swap, or each save it refuses, is one line on the program's error output (`spite: rebuilt Monster`). The
+REPL carries the same machinery without the watcher, so it changes only when you `load`
+([Loading what you changed](#loading-what-you-changed)); `spite --repl --hot-reload` has both. The language's MCP
+always runs with the watcher, and its `evaluate` waits until every save is live before it runs anything
+([mcp.md](mcp.md)). A development build does not include any of this unless you ask: the slots cost every call a
+jump. `--hot-reload` keeps every function (it implies `--development`), since a new version of a class
 may call one nothing called before, and it compiles like the default build, so a reload is quick. It is
 slower than a release build, since its code is not optimised and every call goes through a slot a reload can
 re-point: a `--hot-reload` build trades run speed for live information, and speed is measured on release builds.
@@ -514,43 +217,33 @@ func monster_roar(): String {
 hello, visit 1
 ```
 
-This session runs against a copy of the program above, built with `--hot-reload --repl-port`:
+This session runs against a copy of the program above, started with `spite --repl --hot-reload`:
 
 ```text
-$ spite --connect=4000 --command="program.visits = 42"
-{"ok":true,"value":"42","type":"Integer"}
+spite> visits = 42
 
-# hot_counter.spite: greeting() now returns "welcome back, visit {visits}"
-$ spite --connect=4000 --command="reload"
-{"ok":true,"value":"rebuilt HotCounter","type":""}
+# hot_counter.spite: greeting() now returns "welcome back, visit {visits}", and the watcher swaps the save in
+spite: rebuilt HotCounter
+spite> greeting()
+welcome back, visit 42
 
-$ spite --connect=4000 --command="greeting()"
-{"ok":true,"value":"welcome back, visit 42","type":"String"}
-
-# monster.spite: roar() now returns "{name} roars louder", and nothing is sent: the watcher sees the save
-$ spite --connect=4000 --command="wait_reload"
-{"ok":true,"value":"rebuilt Monster","type":""}
-
-$ spite --connect=4000 --command="monster.roar()"
-{"ok":true,"value":"Goblin roars louder","type":"String"}
-
-$ spite --connect=4000 --command="exit"
-{"ok":true,"value":"","type":""}
+# monster.spite: roar() now returns "{name} roars louder"
+spite: rebuilt Monster
+spite> monster.roar()
+Goblin roars louder
 ```
 
-`visits` kept the 42 set before the first reload, and the second reload rebuilt `Monster` alone. When the watcher
-has already swapped a save in, `reload` finds nothing left to do and answers `nothing changed since the code the
-program runs`. For an AI: edit the file and send `reload`; or save and send `wait_reload`, which answers once the
-watcher has swapped the save in.
+`visits` kept the 42 set before the first reload, and the second reload rebuilt `Monster` alone. Without
+`--hot-reload` the same two changes go live with `load "hot_counter.spite"` and `load "monster.spite"`.
 
 ### What a reload can change
 
 | You change | What happens |
 |---|---|
 | a function's body | the next call runs the new body; a call already running finishes the old one |
-| a new function on an existing class | the new code calls it, the REPL's `functions` lists it and the prompt can call it |
+| a new function on an existing class | the new code calls it, `Monster.functions` lists it and a REPL line can call it |
 | a function's parameters or return type | it becomes a new function: the rebuilt class and every class that calls it are rebuilt too |
-| a function you deleted | whatever still holds it (a function value, the REPL) keeps its last code; the answer says `removed Monster.roar` |
+| a function you deleted | whatever still holds it (a function value, the REPL's session) keeps its last code; the answer says `removed Monster.roar` |
 | an attribute's default value | instances made after the reload get the new default |
 | a class's attributes: added, removed, renamed or retyped | every live object of the class moves to the new attributes ([below](#changing-a-classs-attributes)); the answer says what each class's objects kept |
 | an enum's values: added, removed or reordered | the whole program is compiled again, and every value a running object holds keeps its meaning; a `switch` that meets a value the reload removed halts naming it |
@@ -560,7 +253,7 @@ watcher has swapped the save in.
 | `build.spite`: a field added, removed or given a new default | the whole program is compiled again, and the program's code sees the new value: in a `--hot-reload` build a `Build` field the program declares is read while it runs, and the standard library's reads of its own fields (the compiler's options) stay constants |
 | a file deleted | the program is compiled without it, as for any other change |
 | a function, attribute or constructor that a later `load` reopens ([monkey patching](packages.md#monkey-patching-mods)) | the reload keeps load order, as a fresh start would: an edit to the earlier declaration changes nothing while the later one replaces it, an edit to the later one goes live, deleting the later one (or its file) brings the earlier one back, and a replacement a later load gains goes live; a `Build` field the program's own `build.spite` declares stays the program's ([Build options](compiler.md#build-options)). When nothing the program runs changed, the answer says `no code the program runs changed, so nothing was rebuilt` |
-| a new class | its functions are compiled into the new code, and `classes` and `describe` see it: the REPL's tables of classes, singletons and enums are swapped in with the code |
+| a new class | its functions are compiled into the new code, and `Spite.Class.instances` lists it |
 
 A refused reload leaves the program exactly as it was, so a save that caught a file half-written is harmless: the
 next save reloads.
@@ -626,38 +319,41 @@ func walked(): Float {
 Ann at level 1, walked 4
 ```
 
-This session runs against a copy of the program, built with `--hot-reload --repl-port`. The `Step`s the list holds
-move too, wherever the compiler chose to keep them:
+This session runs against a copy of the program, started with `spite --repl`. The `Step`s the list holds move too,
+wherever the compiler chose to keep them:
 
 ```text
-$ spite --connect=4000 --command="program.hero.level = 7"
-{"ok":true,"value":"7","type":"Integer"}
+spite> hero.level = 7
 
 # hero.spite: a new attribute, 'var health = 100', and describe() says "{name} at level {level} with {health}"
 # step.spite: a new attribute, 'var pace = 2.0', before 'distance'
-$ spite --connect=4000 --command="reload"
-{"ok":true,"value":"rebuilt Hero, Step, ...\nmoved every Hero to its new attributes: health is new and holds its default\nmoved every Step to its new attributes: pace is new and holds its default","type":""}
-
-$ spite --connect=4000 --command="describe()"
-{"ok":true,"value":"Ann at level 7 with 100, walked 4","type":"String"}
+spite> load "hero.spite"
+rebuilt Hero, ...
+moved every Hero to its new attributes: health is new and holds its default
+spite> load "step.spite"
+rebuilt Step, ...
+moved every Step to its new attributes: pace is new and holds its default
+spite> describe()
+Ann at level 7 with 100, walked 4
 ```
 
-**A renamed attribute keeps its value** through a map given at the prompt, never in the program's code. A save
+**A renamed attribute keeps its value** through a map given with the reload, never in the program's code. A save
 where, in one class, an attribute is gone while another is new could be a rename or a removal and an addition,
 and a reload never guesses: it holds the change, swaps in nothing, and says what it holds. Rename `level` to
 `rank` in `hero.spite` and save:
 
 ```text
-$ spite --connect=4000 --command="wait_reload"
-{"ok":false,"error":"...the reload of Hero is held, since it would lose data: level is gone and rank is new, ... reload {Hero.attributes["level"]: \"rank\"}; to let what level holds be released: reload {}"}
-
-$ spite --connect=4000 --command="reload {Hero.attributes["level"]: \"rank\"}"
-{"ok":true,"value":"rebuilt Hero, ...\nmoved every Hero to its new attributes: level is now rank","type":""}
+spite> load "hero.spite"
+the reload of Hero is held, since it would lose data: level is gone and rank is new: load "hero.spite", {Hero.attributes["level"]: "rank"} keeps what level holds, and load "hero.spite", {} lets it go
+spite> load "hero.spite", {Hero.attributes["level"]: "rank"}
+rebuilt Hero, ...
+moved every Hero to its new attributes: level is now rank
 ```
 
 The map pairs an attribute of the running class with the name of the new one, the same shape as a serializer's
 map of names ([json.md](json.md#a-key-that-is-not-an-attributes-name)), and applies to that one reload. `rank`
-holds the 7 `level` held. `reload {}` lets the old values go instead. An attribute of the map that the running
+holds the 7 `level` held. An empty map, `{}`, lets the old values go instead. Over the MCP the map is `reload`'s
+`renames` ([mcp.md](mcp.md)). An attribute of the map that the running
 class lacks, of another type than the new one, or one that the reload does not rename is refused by name.
 
 What it costs: a change to a class's attributes compiles the whole program, since every class that reads them is
@@ -744,7 +440,7 @@ worked out while compiling, so the check folds away with the branch it guards.
   (`game.reload_start`), since a new process runs the build's code.
 - **One reload at a time.** A reload compares with the files and the baseline of the code the program will run,
   which swapping a library in writes, so a reload waits to compile until the library before it has been swapped in
-  (or refused): the watcher and the prompt never compile against the code before a swap that is still on its way,
+  (or refused): the watcher, the REPL and the MCP never compile against the code before a swap that is still on its way,
   and never read those files while a swap writes them.
 - **Every object of a program class can move.** In a `--hot-reload` build each object of the program's own classes
   carries two hidden words after its header: where its attributes live when they have moved, and its place in a
@@ -754,7 +450,7 @@ worked out while compiling, so the check folds away with the branch it guards.
   the object otherwise), and the reload lays each live object's attributes out anew in a block of their own and
   points the object at it: the object stays where it was, so every reference to it (a local of a function
   running now, a list, another object) still holds it. The functions that read a class's
-  attributes without being its own (its allocation, release and copy, the REPL's reflection, a union's dispatch,
+  attributes without being its own (its allocation, release and copy, reflection, a union's dispatch,
   a template of the standard library made for it, `List<Step>`) are called through slots too, so they move
   with it. A reload moves nothing until it has installed every slot, and releases nothing a removed attribute held
   until every object has moved. All of it is in a `--hot-reload` build only.
@@ -765,10 +461,10 @@ worked out while compiling, so the check folds away with the branch it guards.
   thread while the program keeps running, so a game keeps drawing frames while its code is rebuilt.
 - **The watcher is the standard library's [`FileSystemWatcher`](standard_library.md#watch-files-and-folders)**, the one any
   program can use, started on a thread of its own: `ReadDirectoryChangesW` on Windows, `inotify` on Linux and
-  `kqueue` on macOS, with no polling. It is watching before the program's entry runs and before the REPL listens,
-  so a save made once the REPL answers is never missed. A save made while the build was still compiling is not
+  `kqueue` on macOS, with no polling. It is watching before the program's entry runs and before the MCP listens,
+  so a save made once the MCP answers is never missed. A save made while the build was still compiling is not
   missed either: when the program starts, each of its files is held against the text the build compiled, and if
-  any differs the watcher compiles once before it waits, so `wait_reload` waits for that compile too. The
+  any differs the watcher compiles once before it waits, so the MCP's `evaluate` waits for that compile too. The
   operating system wakes the thread; a burst of changes is waited out until 100 ms pass without one, so a save
   that writes a file in pieces reloads once. Only a change to a `.spite` file, or to a folder, compiles again, and
   never one under a `.spite/` folder: the compiler writes its own output there, so a compile started by its own
@@ -784,4 +480,4 @@ worked out while compiling, so the check folds away with the branch it guards.
 
 ---
 
-Next: [Testing](testing.md), a test is a package that crashes.
+Next: [The language's MCP](mcp.md), how an AI runs code in a running program.
