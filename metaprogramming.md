@@ -631,21 +631,24 @@ there are no generic functions to write instead: a function that takes any class
 `type`, such as the built-in empty `Anything` ([reflection.md](reflection.md#known-only-at-run-time)), or it belongs to a
 generic class. The exact forms and error texts are in [Codegen values](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-).
 
-A codegen value may be a value rather than a type. A condition on it is decided while compiling, so each set of
-values is its own class with only its own branch in it:
+A codegen value is always a type, never a value like `true` or `10`. A value that picks a branch is an ordinary
+constructor argument kept in an attribute: when every object made at a call site is given the same value and nothing
+changes it, the compiler splits the class by that value and decides the branch in each copy, so the test costs
+nothing and you write nothing special for it:
 
 ```gdscript title=codegen_values_doc/weapon.spite
 generic $damage_type
-generic $is_magic
 
 var damage: $damage_type = 0
+var is_magic = false
 
-func Weapon(new_damage: $damage_type) {
+func Weapon(new_damage: $damage_type, magic: Boolean) {
     damage = new_damage
+    is_magic = magic
 }
 
 func hit(): $damage_type {
-    if $is_magic {
+    if is_magic {
         return damage * 2
     }
     return damage
@@ -656,8 +659,8 @@ var console = Console()
 
 func CodegenValuesDoc() {
     load "../spite_standard_library/windows"
-    var staff = Weapon<Integer, true>(10)
-    var club = Weapon<Float, false>(2.5)
+    var staff = Weapon<Integer>(10, true)
+    var club = Weapon<Float>(2.5, false)
     var staff_hit = staff.hit()
     var club_hit = club.hit()
     console.print(staff_hit, club_hit)
@@ -679,6 +682,20 @@ func CodegenCountError() {
 ```
 ```diagnostic
 takes 1 codegen value(s), in this order: $element_type
+```
+
+```gdscript title=codegen_literal_error/codegen_literal_error.spite entry error
+var console = Console()
+
+func CodegenLiteralError() {
+    load "../spite_standard_library/windows"
+    var flags = List<true>()
+    var flags_count = flags.count()
+    console.print(flags_count)
+}
+```
+```diagnostic
+a codegen value is a type, and 'true' is a value
 ```
 
 ### Constraining what a generic accepts
@@ -975,8 +992,10 @@ Spite removes what a program does not use, and it can do so exactly, because eve
 at compile time:
 
 - A **condition on a codegen value** or on a [`Build`](programs.md#compile-time-settings-build) field is decided
-  while compiling, and the branch not taken is never generated: `Weapon<Integer, true>` and `Weapon<Integer, false>`
-  are two classes, and each keeps only the branch of `if $is_magic { }` that it takes.
+  while compiling, and the branch not taken is never generated: `Shelf<Integer>` and `Shelf<String>` are two classes,
+  and each keeps only the branch of `if $item_type == Integer { }` that it takes. A value given to the constructor
+  and never changed decides its branches the same way: the compiler splits the class by the values its objects are
+  made with.
 - A **template** is compiled only for the names a program calls: a program that never calls `sum_price()` has no
   `sum_price`.
 - **Reflection on a constant** folds: a question is `true` or `false`, a walk is unrolled into one call per member,

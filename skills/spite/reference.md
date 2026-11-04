@@ -540,12 +540,14 @@ func is_alive(): Boolean {
   identity. `a[x]` calls `get_at(x)`, which must answer a `T?` (`func get_at(index: Integer): Integer?`, `null` when
   nothing is there); a plain `T` is an error. A read through your own class is narrowed by what you write (`crash
   shelf[0]`): a loop over `shelf.count()` proves nothing about it.
-- Codegen values: `generic $damage_type` and `generic $is_magic`, one per line at the top of `weapon.spite`, and
-  `Weapon<Integer, true>(10)` supplies them in that order; `Pair("a", 1)` may leave them out when the constructor's
+- Codegen values: `generic $key_type` and `generic $value_type`, one per line at the top of `pair.spite`, and
+  `Pair<String, Integer>("a", 1)` supplies them in that order; a codegen value is a type, never a literal
+  (`Weapon<Integer, true>` is an error: pass `true` to the constructor, and the compiler splits the class by the
+  values its objects are made with and decides the branch in each copy); `Pair("a", 1)` may leave them out when the constructor's
   arguments say them (through `$T`, `$T?`, `List<$T>`, `Dictionary<$K, $T>` or a function value). The constructor
-  lists none: `func Weapon(damage: $damage_type)`. `$` is for generics only: a `$name` with no `generic` line is
+  lists none: `func Pair(key: $key_type, value: $value_type)`. `$` is for generics only: a `$name` with no `generic` line is
   an error. A function never has codegen values of its own (`func pick<$value_type>(...)` is an error): a
-  function that takes any object takes `Anything` or a `type`. `if $is_magic { }` is decided at compile time. `generic $item_type: Printable` (with the class's own `type Printable`) accepts
+  function that takes any object takes `Anything` or a `type`. `if $value_type == Integer { }` is decided at compile time. `generic $item_type: Printable` (with the class's own `type Printable`) accepts
   only classes that fit `Console`'s `type` `Printable` (a class's `enum`, `union` and `type` are named through it
   outside it, `Player.Job`); any other is an error where the class is named, not inside the generic.
 - Settings: reopen `Environment` in the program's `environment.spite` with one `var` per setting and a literal
