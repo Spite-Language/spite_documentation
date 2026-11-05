@@ -220,6 +220,7 @@ attribute `kind()`, or a member read, `thing.class()` or `argument.class()`.
 | Written | Answers |
 |---|---|
 | a class name, `Monster`, `Shop.Tools.Hammer` | its `Spite.Class` |
+| a generic class with its codegen values, `List<Float>`, `Shop.Crate<Float>` | the `Spite.Class` of that instance; without them it is an error, since `List` alone is no class yet |
 | a namespace name, `Shop.Tools` | its `Spite.Namespace` |
 | an enum name, `Phase` | its `Spite.Enum`; `Phase.values` alone is the list of its values, as `Phase`s |
 | `class` inside a function | the class the function answers on |

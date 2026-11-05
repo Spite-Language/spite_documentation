@@ -526,7 +526,7 @@ func is_alive(): Boolean {
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`
   (the `File` a function or an attribute is written in); `Loader.is_stateful`,
-  `Vector3.is_fixed_size`, `Monster.is_singleton`. A function that answers nothing `.returns` `Nothing`, never
+  `Vector3<Float>.is_fixed_size` (a generic class is named with its codegen values), `Monster.is_singleton`. A function that answers nothing `.returns` `Nothing`, never
   `null`; only `.namespace`, `.parent` and a bound attribute's `.value` can be `null`. A class's `.generics` is a
   `Dictionary<String, Spite.Class>` of its `generic` lines by name without the `$`
   (`numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer`); there is no `.element_type` on a class. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)

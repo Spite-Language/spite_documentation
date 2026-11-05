@@ -245,7 +245,7 @@ yourself is an error. `var walked: Meters? = Meters("1200")` is refused with "'M
 `Float` or a `Mood?` is wanted. An enum or a union declared in a class gets its conversions in that class, named by the type
 alone (`func Job(from: String): Job?`). Text already converts to an enum by its values with nothing written.
 
-**A preset** names a special value of its class: `Float.Pi()`, `Color.Red()`, `Vector3.Up()`. It builds a fresh
+**A preset** names a special value of its class: `Float.Pi()`, `Integer.Largest()`. It builds a fresh
 value on each call, which the compiler folds, so nobody can change a shared one. Its body is a single `return` of
 literals, other presets or a constructor call on literals: it reads nothing and does no work but building.
 
