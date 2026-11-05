@@ -728,7 +728,9 @@ A tagged union. A `switch` must cover every member, and narrows the value inside
 shares a function/attribute of the same shape, it can be called directly on the union value without a
 `switch` at all (duck-typed, the same way a `type` is; see below).
 
-A union is declared in the class that consumes it, and two classes that both take one each declare their own: a
+A union is declared in the class that consumes it. Two classes of a program that declare one name with one content
+have it moved to the entry class of the namespace holding both, the class named like its folder, which the others name
+`Bunda.Pet` (see [packages](packages.md)). Two with other names or members stay apart: a
 `Shelter.Pet` passes where a `Groomer.Pet` is wanted when every member of it is a member of `Groomer.Pet`, at no cost.
 A caller that only hands a value on passes the member itself (`groomer.groom(cat)`) and declares nothing. Copies
 with the same members are one type inside generics too: a `List<Shelter.Pet>` goes where a `List<Groomer.Pet>` is

@@ -422,7 +422,8 @@ The declaration of one value of an enum.
 ### What a class declares
 
 An enum, a union and a `type` belong to the class that declares them, never to a namespace (D1745). A union or a
-`type` is never named outside its class (D1779), so another class reaches one only through reflection: the class's
+`type` is named only by its class and, for an entry class's, by the classes of its namespace (D1779), so any other class
+reaches one only through reflection: the class's
 `.enums`, `.unions` and `.types`, each a dictionary of declarations keyed by name like `.attributes`.
 
 ```gdscript title=class_declarations/component.spite

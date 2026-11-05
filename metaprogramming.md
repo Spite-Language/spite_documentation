@@ -779,8 +779,8 @@ var weight = 3
 'Rock' does not fit type 'Singer', which 'Chorus' requires of $singer_type: it has no function 'sing'
 ```
 
-The constraint is optional and names a `type` the class declares itself: a `type` is never named outside the class
-that declares it, so `Shelf` declares its own `Printable`, the same as `Console`'s. What fits is what the `type` would accept anywhere, so
+The constraint is optional and names a `type` the class declares itself or its namespace's entry class holds:
+outside those a `type` is never named, so `Shelf` declares its own `Printable`, the same as `Console`'s. What fits is what the `type` would accept anywhere, so
 `Shelf<Integer>` above is fine, and so is a `T?` (`null` prints as `null`), while a `T?` against a `type` that needs
 more than printing, or a function value, is not. It is checked wherever a class is given,
 written out or read from the constructor's arguments, and it costs nothing at run time: the check is the

@@ -362,8 +362,11 @@ func is_alive(): Boolean {
   An enum, a union and a type are always declared inside a class: a file holding only one of its own name is an error. A value may be given a number with `=` on its line
   (`'admin' = 99`; the next unnumbered value counts on, the first from 0; two values with one number are an
   error), only where a C library, a file format or the network fixes the numbers.
-- A union is declared in each class that consumes it (two classes may each declare one); a union value fits another
-  union when all its members are members of it, and a caller passes the member value itself. Copies with the same
+- A union is declared in the class that consumes it. One name and content declared by two classes of a root is moved
+  by the compiler to the entry class of the lowest namespace holding both (the class named like its folder, its file
+  created if missing), and every use is rewritten: `Bunda.Pet` in a class of that namespace or below, plain `Pet` only in
+  the entry class. Outside that namespace it is never named. A union value fits another
+  union when all its members are members of it, and a caller passes the member value itself. Unions with the same
   members are one type inside a generic (`List<A.Pet>` is `List<B.Pet>`).
 - `union Enemy { Player Monster }`, written one member per line: `switch enemy { Player: ... Monster: { ... } }`
   must cover every member and narrows `enemy` inside each case; a function or attribute every member has can be
