@@ -151,11 +151,11 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
   since a running object may hold a null an older version stored. The answer of a call worked out while compiling
   is not proven yet.
 
-### A condition known while compiling is an error
+### A condition known while compiling is fixed or refused
 
 - **Proves**: every condition written can go either way.
 - **Rule**: outside a generic class and a walk, an `if` or `while` the compiler decides while compiling, and an
-  `fallback` that folds false, are refused, `while true` among them. A condition on a `Build` field is kept.
+  `fallback` that folds false, are refused, `while true` among them, unless the compiler can fix them in a program's own file ([failure.md](failure.md#a-condition-known-while-compiling-is-fixed-or-refused)). A condition on a `Build` field is kept.
 - **Falls back**: remove the condition, keeping the code that runs.
 
 ### A copy made to narrow is an error

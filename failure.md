@@ -382,13 +382,13 @@ In a `--hot-reload` or `--repl` build only locals are proven, never attributes: 
 null an older version of the program stored there, so `target` above is narrowed as usual in those builds. They are
 built for how fast you iterate, not for the last check.
 
-### A condition known while compiling is an error
+### A condition known while compiling is fixed or refused
 
 An `if` or `while` whose condition the compiler already knows, and a `fallback` that can never hold, are errors:
 `if 2 > 1` is "'if 2 > 1' is decided while compiling and is always true here, so it tells a reader nothing: remove
 the 'if' and keep the code it runs". In your own files the compiler makes that change itself: an `if` always true
 becomes its body, one always false becomes its `else` or goes, a `while` that never runs goes, and each prints a
-`fixed:` line. Two are kept, since choosing at compile time is their purpose: a condition on
+`fixed:` line. An `if` whose body declares a name the rest of the function also mentions stays the error, since moving it left would change what that name means. Two are kept, since choosing at compile time is their purpose: a condition on
 a field of `Build`, which the command line sets ([programs.md](programs.md#compile-time-settings-build)), and a
 codegen value in a generic class. `while true` is no exception: a loop states the condition it runs under, so it
 loops `while running`, `while not found` or on its real exit test.

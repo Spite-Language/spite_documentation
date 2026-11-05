@@ -223,7 +223,7 @@ stopped at 2
 ([failure.md](failure.md#narrowing-a-path)).
 
 A loop states the condition it runs under, so `while true` is an error, like any condition the compiler knows
-([failure.md](failure.md#a-condition-known-while-compiling-is-an-error)): `'while true' is decided while compiling
+([failure.md](failure.md#a-condition-known-while-compiling-is-fixed-or-refused)): `'while true' is decided while compiling
 and is always true here: a loop ends by its condition, so loop 'while' what its leaving paths change, a 'running'
 local they set to false or the loop's real exit test`. A loop that waits for a value loops `while not found` and
 assigns it; one that runs until something happens loops `while running` and sets `running = false` where it ends.
