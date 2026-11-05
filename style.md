@@ -308,6 +308,38 @@ An attribute's default is where the number may stand, and so is the body of a pr
 attribute nothing writes is read as its default where it is read, a constant as the number was. The rule
 is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#named-numbers).
 
+## The file content budget
+
+A file holds at most 1200 statements. That number is its file content budget, it holds for every Spite program, and
+no flag, setting or comment lifts it. A file that long is rarely one thing: past the budget it is probably missing some cleanups.
+
+```text
+drawing.spite: error: this file holds 1201 statements, over its file content budget of 1200: clean it up until it is back within it, grouping state into an object and giving each concern a file of its own (in Drawing)
+```
+
+The compiler counts from the parsed file, so formatting changes nothing:
+
+| Counts as one | Counts as nothing |
+|---|---|
+| a local, an assignment, a call, `return`, `fallback`, `crash`, `load` | comments and blank lines |
+| `if`, each `else if`, `while`, and each statement inside them, at any depth | closing braces and a bare `else` |
+| a `switch` | the cases of that `switch` |
+| a class-level `var` | function headers |
+| a statement spread over many lines | the entries of an `enum`, `union` or `type` |
+
+Each of the exceptions is there for a reason:
+
+- **An enum's entries.** An enum is one entry per line and reopening it replaces it, so it has no way to get smaller. If
+  lines counted, an enum over the budget could not exist. Counting statements forbids nothing.
+- **A switch's cases.** Each case is one line, and a switch over an enum is exhaustive with one value per case, so a
+  switch over a large enum cannot be split either. A case that opens an `if` or a `while` still pays for what is inside it.
+- **A statement over many lines.** A printed call with one argument per line, or a long list literal, is still one thing
+  said once, so it costs one.
+
+It is an error and not something the formatter rewrites, because where to split a file is a design choice the
+compiler cannot make. Get back within the budget by cleaning up, not by cutting the file in two at the number: group
+state into an object, name the concerns, and give each one a file of its own. The rule is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#the-file-content-budget).
+
 ## A function body holds no empty lines
 
 A blank line inside a function is where a second function wants to be: the part below it is a step with a
