@@ -18,7 +18,7 @@ each answering a new vector: `+` is `sum`, `-` `subtract`, `*` and `/` work part
 takes a vector.
 
 A vector holds any number class: `Vector2`, `Vector3` and `Vector4` are generic over a class that fits the
-[`type` each declares](values_and_types.md#a-number-library-declares-the-type-it-needs) (`Common.Component`, which the three vectors share: the
+[`type` each declares](values_and_types.md#a-number-library-declares-the-type-it-needs) (`Vector3Component` in `Vector3`, each with the
 operators, `equals`, `minimum`, `maximum` and `absolute`), taken from the parts it is made with, so
 `Vector3(1.0, 2.0, 2.0)` is a `Vector3<Float>`, `Vector2(5, 1)` a `Vector2<Integer>`, and a `Vector3<Double>` keeps
 `Double`'s precision. There is no `Vector3i` or `Vector3d`: the class is written out where a type is named,
