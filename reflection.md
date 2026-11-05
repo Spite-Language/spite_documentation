@@ -339,9 +339,12 @@ that would take an argument is a collection indexed or filtered instead, so ther
 | `.is_stateful` | a function besides the constructor and `drop()` changes the object, or a singleton it binds does | `Counter.is_stateful` |
 | `.is_fixed_size` | its size is known while compiling: only numbers, `Boolean`s, enums and `String`s | `Vector3<Float>.is_fixed_size` is `true` |
 | `.is_list`, `.is_dictionary`, `.is_optional`, `.is_enum` | the kind of a type | `$value_type.is_list` |
-| `.element_type` | a list's element, or what an optional holds | `$list_type.element_type` |
-| `.value_type` | a dictionary's value | `$map_type.value_type` |
+| `.generics` | a `Dictionary<String, Spite.Class>`: the class each `generic` line was given, keyed by its name without the `$`, in `generic`-line order; empty for a class that is not generic | `numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer` |
 | `.source_files` | a `List<File>`: every file that declares or reopens the class, in load order | `Monster.source_files.first()` |
+
+`.generics` holds the same names a codegen value reads while compiling, `$list_type.element_type`; a dictionary's are `"key_type"` and `"value_type"`. A literal name on a
+class known while compiling folds and is proven present, and a name the class has no `generic` line for is a compile
+error. Inside a walk, a generic argument can name one: `Query<argument.class.generics["element_type"]>()`.
 
 A class has no folder of its own: a reopening may live anywhere a program loads, so `.source_files` is the whole
 list, and a question about a path is asked of those `File`s. One function or attribute is written in one file, which
