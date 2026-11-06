@@ -344,7 +344,7 @@ checks kept.
 ## Errors and usage
 
 With no program, the compiler prints its usage text and exits unsuccessfully. A `.spite` file named instead of
-its folder, a folder with no entry file, an entry constructor that takes arguments, `--check` given with `--build` or
+its folder, a folder with no entry file, an entry constructor that takes arguments, an entry class with a `generic` line, `--check` given with `--build` or
 `--executable-path`, a flag the compiler no longer has (`--run`, `--executable`), a flag with an underscore, a `--name=value` that names no field of `Build` or `Environment`, and a bare `--` are errors
 too, each naming the fix; their texts are [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program).
 

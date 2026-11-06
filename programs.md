@@ -41,6 +41,9 @@ func EntryArgumentsError(name: String) {
 is the entry constructor, and it takes no arguments
 ```
 
+The entry class is the one that runs, so it cannot be generic: a `generic` line in it is an error, and what needs
+codegen values goes in a class the entry class makes.
+
 A constructor is setup, not logic, and the entry constructor is no exception: `fallback` is not allowed in any
 constructor ([failure.md](failure.md#fallback-is-not-allowed-in-a-constructor)). A program whose constructor grows
 complicated splits it into functions it calls, and then reads as a table of contents.
