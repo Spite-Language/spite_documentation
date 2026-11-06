@@ -226,7 +226,7 @@ func record() {
 }
 ```
 
-That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`.
+That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`. A copy read after a call that may write `tracker` is another thing, since it keeps the value the call may take away: it stays as written.
 
 A check on something that cannot be null proves nothing: `fallback tracker` written twice, or a `fallback` on a
 plain `Tracker`. On a line of its own the compiler removes it and names the check that already proved it ("fixed:
