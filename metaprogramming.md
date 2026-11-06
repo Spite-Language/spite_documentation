@@ -152,7 +152,9 @@ attributes, or a filter that keeps none, calls the function zero times. The walk
 `describe_argument`: a parameter named by a word of its function's name makes the function a template
 ([below](#templates-when-the-name-says-what-it-is-given)), and a template whose only parameter is that one, handed to
 `each` over a class's functions or a function's arguments, is that walk's walker all the same, whether the compiler knows
-the list or it is only known when the program runs.
+the list or it is only known when the program runs. The list must be the class's own functions: a function of another class put
+into a kept list (`walked.append(...)`) is an item the compiler wrote no copy for, and the walk stops the program with
+`spite: 'walked.each' holds an item the compiler did not list for it`, naming the line.
 
 ### Asking a question while compiling
 
@@ -484,7 +486,8 @@ name between the pattern's fixed words, with no enum behind it, so `phase_each` 
 happened to have; a name that fits nothing (`run_rendr_each`) is an error that lists the functions that fit. Inside the
 copy, `phase.name` is the function's name (`update_each`), `phase.hole` the text that took the place of `phase`
 (`update`), and `phase.index` its place; `phase.argument_count()` stays. A class can also name the pattern as text on a
-class value: `$system_type.argument_count("<phase>_each")`.
+class value: `$system_type.argument_count("<phase>_each")`. When the body says the pattern twice, with a call and with
+text, the one written first in the body is the pattern; the other is only an ordinary call or question.
 
 ### Templates over arguments
 
@@ -551,7 +554,8 @@ In a copy, `part.has_function("name")` and `part.function_waits("name")` are dec
 that does not apply is never compiled and may call what the class lacks. A namespace the program has no folder for is
 an unknown name, like any other. Inside a copy, a call of a function of the class with a constant argument is compiled
 once for that argument, up to eight calls deep, so a check split into helper functions decides as one written in a single
-function does. A walk over an empty list calls nothing.
+function does; a ninth call deeper is left to the run, and a `crash` there halts when the program does. A walk over an
+empty list calls nothing.
 
 ### Member templates
 
@@ -607,8 +611,7 @@ var paths = entries.map_paths()
 `entries()` is a `List<Directory.Entry>?`, a union of `Directory` and `File` (`null` when the folder cannot be
 opened); `filter_files()` answers a `List<File>`, and `path` is the member both classes have.
 The other templates take a member class the same way: `entries.count_files()`, `any_directories()`,
-`all_files()` and `remove_where_directories()`. A name that matches both a member class and an attribute is a
-compile error naming the fix.
+`all_files()` and `remove_where_directories()`.
 
 ### Templates and walks, side by side
 

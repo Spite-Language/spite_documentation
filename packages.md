@@ -401,8 +401,8 @@ read from where the file sits in *its* repository, not in the copy, so an engine
 loads `../../../../spite_truetype@41c09e2/truetype` from `plugins/ui_plugin/ui/` reaches
 `D:/Projects/spite_truetype` both when you build the engine itself and when a game loads the engine at a pin. A
 package fetched from a URL names the repositories it loads by URL, since a path on its author's machine means
-nothing on yours. An ordinary `load` in a fetched package stays inside that package's repository: one that leaves
-it is an error, since the copy holds only its own commit's files. **Two pins of one repository** at different commits are one library ([below](#two-versions-of-one-repository)).
+nothing on yours. An ordinary `load` in a fetched package is read from where its copy lies, not from where the file sits in
+its repository, so it reaches nothing of the author's machine (the folder is not there, an error); pin the other repository instead. **Two pins of one repository** at different commits are one library ([below](#two-versions-of-one-repository)).
 
 This program loads a folder of the language's own repository as it was at a commit. The documentation's programs
 are written out into `.spite/docs/<name>/` of that repository and compiled from there, so `../../..` is the
