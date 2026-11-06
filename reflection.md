@@ -378,7 +378,7 @@ class known while compiling folds and is proven present, and a name the class ha
 error. Inside a walk, a generic argument can name one: `Query<argument.class.generics["element_type"]>()`.
 
 A class has no folder of its own: a reopening may live anywhere a program loads, so `.source_files` is the whole
-list, and a question about a path is asked of those `File`s. One function or attribute is written in one file, which
+list, a namespace's `.source_directories` answers its directories, and a question about a path is asked of those `File`s. One function or attribute is written in one file, which
 its declaration's `.source_file` answers: a tool that rebuilds what a function's code makes can watch the file that
 code comes from.
 
