@@ -19,11 +19,13 @@ assignment, a function argument (toward the parameter type), and `return` (towar
 | `Double` | `double` (64-bit) |
 
 A number is written in plain digits, and `_` may separate them for reading: `1_000_000` is a million and
-`0.000_01` a hundred-thousandth, a `_` standing only between two digits. There is no exponent (`2.5e3` is an
+`0.000_01` a hundred-thousandth, a `_` standing only between two digits: `1__000`, `1000_` and `12._5` are errors.
+A decimal has digits on both sides of its point (`.5` is not a number). There is no exponent (`2.5e3` is an
 error that writes `2_500` for you).
 
-An integer literal is `Integer`; one too big for `Integer` becomes `Long` automatically. **A number never
-silently wraps.** Arithmetic whose answer does not fit its type halts, unsigned exactly as signed, and so does a
+An integer literal is an `Integer` and a decimal literal a `Float`. A whole number too big for an `Integer` is a
+compile error that asks for a wider type: declare the name `Long` (`var _total: Long = 3000000000`). **A number
+never silently wraps.** Arithmetic whose answer does not fit its type halts, unsigned exactly as signed, and so does a
 wider value put into a narrower name ([below](#arithmetic-that-does-not-fit-halts)). Where wrapping is the point,
 as in a hash or a noise function, the code says so with a function named for it: `wrapping_sum`,
 `wrapping_subtract` and `wrapping_multiply` on every whole number keep the low bits of the answer:
@@ -64,6 +66,9 @@ func scaled(amount: Integer, factor: Integer): Integer {
 spite: 'amount * factor' does not fit in an Integer (2000000000 * 2), at game/game.spite:17 in Game.scaled
 ```
 
+A whole-number `/` or `%` by zero halts too (`'total / parts' divided by zero, at ...`), and a divisor the compiler
+sees is zero (`total / 0`) is a compile error. A decimal that is not a number, or is infinite, put into a whole
+number halts like any value that does not fit. Float division stays IEEE: `x / 0.0` is infinity or not-a-number.
 The same holds for `-` in front of a value (`-lowest` with the smallest `Integer`, or any unsigned value but `0`),
 for the smallest signed value divided by `-1`, and for a value put into a narrower name, by assignment, as an
 argument or by `return`: `var small: Tiny = count` halts when `count` is 200 (`spite: 200, an Integer, does not fit
@@ -103,8 +108,12 @@ func WrappingByName() {
 Arithmetic is done in the left side's type, and the right side is cast to it: `count * total` with an `Integer`
 `count` and a `Long` `total` is an `Integer` multiply. So a right side wider than the left (more bits, or a
 `Float`/`Double` under a whole number) is a compile error naming the fix: write the wider one first
-(`total * count`), or, for `-`, `/` and `%`, store the left side in the wider type first. A literal on the right
-that fits the left type is fine (`small + 1` stays a `Byte` addition). A constant that overflows the `Integer` its
+(`total * count`), or, for `-`, `/` and `%`, store the left side in the wider type first. Wider means more bits:
+`Tiny` and `Byte` have 8, `Short` and `UnsignedShort` 16, `Integer`, `UnsignedInteger` and `Float` 32, `Long`,
+`UnsignedLong` and `Double` 64, so a `Short` under a `Byte`, a `Double` under a `Float` and an `Integer` variable
+under a `Byte` are errors, while signedness alone is not wider. A literal on the right that fits the left type is
+fine (`small + 1` stays a `Byte` addition); one that does not fit (`small + 300`) is the error "300 does not fit in
+a Byte". A constant that overflows the `Integer` its
 arithmetic is done in is an error too, instead of wrapping:
 
 ```gdscript title=wider_first/wider_first.spite entry error
@@ -156,7 +165,8 @@ func CastingEdge() {
 ```
 
 Written the other way round the comparison is done in `Float`, and answers what the mathematics does. An integer
-literal that fits the left side is not wider (`small < 10` with a `Byte` `small`):
+literal that fits the left side is not wider (`small < 10` with a `Byte` `small`), and a decimal literal under a
+whole number never fits:
 
 ```gdscript title=casting_fixed/casting_fixed.spite entry
 var console = Console()
@@ -175,11 +185,11 @@ mathematically true true
 total 6
 ```
 
-`String` converts both ways. Text is read as a number by `String`'s `to_<name>()` for that type:
-`to_integer()`, `to_long()`, `to_double()`, ... (the full list is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numeric-types)). Each answers a
-`T?`, `null` when the text is not a number that fits, since a `0` there would read as a real zero; assigning text
-to a `T?` of a number calls it too. A number becomes text with its own
-`to_string()` ([below](#numbers-are-classes)).
+`String` converts both ways. Text is read as a number by that number class's conversion, which runs where text
+meets a `T?` of the number: `var age: Integer? = "42"`. It answers `null` when the text is not a number that fits
+the type, since a `0` there would read as a real zero. Text put into a plain `Integer` is an error that names the
+`?` to write, and there is no `to_integer()` to call. A number becomes text with its own
+`to_string()` ([below](#numbers-are-classes)), and wherever text is wanted the number is made text by itself.
 
 ### Numbers are classes
 
@@ -191,8 +201,11 @@ class the way it reopens any class ([packages.md](packages.md#monkey-patching-mo
 How wide a number is comes from its class too: each one reaches its own value through `set_this` and `get_this`, as
 any class reaches an attribute through `set_x` and `get_x`, and `set_this` checks the range it holds
 (`crash value >= _smallest_value and value <= _largest_value`, with `-128` and `127` named in `Tiny`), and the
-compiler reads the width and the sign from that range
-([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#a-number-states-its-range)).
+compiler reads the width and the sign from that range. A program that loads no standard library has no number
+classes at all: `Integer` is then an unknown type. Reading and writing `this` are the compiler's own, so
+`count.get_this()` and `count.set_this(4)` are errors that tell you to write `count` and `count = 4`. There is no
+type for "any number": `Number` names nothing, and a class written over numbers is generic
+([below](#a-number-library-declares-the-type-it-needs)).
 A reopening file:
 
 ```gdscript title=number_methods/integer.spite
@@ -222,8 +235,7 @@ func NumberMethods() {
 None of this costs anything at run time: a number is still a plain value (an `Integer` is an `int32_t`), the
 class gives it functions, not a header, and a function the program never calls is not emitted. A cast from one
 number type to another is written by assignment, `var half: Float = count`, or by passing the value where the
-other type is expected; it compiles to the one machine conversion, and there is no call form
-([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numbers-are-classes-and-this)).
+other type is expected; it compiles to the one machine conversion, and there is no call form.
 
 The same rule casts between any two classes. Where a value meets a place that wants another class (an argument, a
 `return`, an assignment, a `var` with a written type), the compiler calls the wanted class's conversion from it, a
@@ -233,8 +245,7 @@ reads the text through `func Color(from: String): Color?`, and a `Meters` passed
 through `func Feet(from: Meters): Feet` when `Feet` declares it. The cast answers what the conversion answers, so
 text read as an `IpAddress` is an `IpAddress?`, narrowed like any other `T?` before it goes where a plain `IpAddress`
 is wanted. A class with no such conversion is an error naming the conversion it would need:
-`a Point cannot be used where an IpAddress is needed: ... IpAddress declares no 'IpAddress(from: Point)'`
-([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#casting)).
+`a Point cannot be used where an IpAddress is needed: ... IpAddress declares no 'IpAddress(from: Point)'`.
 
 `this` works in every class, not only numbers, to hand the object itself to something:
 `registry.append(this)`. Reading your own members through it is an error, because a class already reads them by
@@ -249,7 +260,9 @@ so what an exact comparison sees is exact.
 
 ### Bitwise functions
 
-There are no bitwise operator symbols. Every whole-number class (`Tiny` to `UnsignedLong`, not `Float`, `Double`
+There are no bitwise operator symbols: `value << 3` and `value >> 3` are errors that name `value.shifted_left(count)`
+and `value.shifted_right(count)`, and a lone `&`, `|`, `^` or `~` names `bits_and`, `bits_or`, `bits_exclusive_or`
+and `bits_inverted`. Every whole-number class (`Tiny` to `UnsignedLong`, not `Float`, `Double`
 or `Boolean`) answers them as functions, each compiled to the one C operation and inlined in an optimised build:
 
 | Function | Answers |
@@ -262,7 +275,9 @@ or `Boolean`) answers them as functions, each compiled to the one C operation an
 
 Each answers the receiver's type, with `other` cast to it like any argument: a `Byte` and a `Long` mask give a
 `Byte`. No shift is undefined: a count of the width or more moves every bit out, and a negative count halts the
-program ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numbers-are-classes-and-this)).
+program. Calling one on a `Float` or a `Double` is an error, since they are not whole numbers; cast to a
+whole number first. `bits_as_unsigned()` on a signed whole number and `bits_as_signed()` on an unsigned one keep
+the bits and read them with the other sign, so a signed `-1` is `4294967295` as an `UnsignedInteger`.
 
 ```gdscript title=bitwise_basics/bitwise_basics.spite entry
 var console = Console()
@@ -333,7 +348,7 @@ nan true 2147483647
 
 As with `/` on a float, nothing here halts: the square root of `-1` is not-a-number and the logarithm of
 `0` is minus infinity, the IEEE answers. What each function answers at its edges is
-[standard_library.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#maths)'s.
+[standard_library.md](standard_library.md)'s.
 
 ### A number library declares the type it needs
 
@@ -429,12 +444,12 @@ joining written text with `+` is an error naming the form above. `==`/`!=`/`<`/`
 
 A backslash writes a character a text cannot hold as itself: `\n` (line break), `\t` (tab), `\r` (carriage
 return), `\\` (backslash), `\"` (double quote) and `\{` (brace). Escapes follow each other freely, so `"\\\{"` is a
-backslash and a brace, and a text written inside a hole keeps its own escapes and holes
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#text-escapes)).
+backslash and a brace, and a text written inside a hole keeps its own escapes and holes. Any other character
+after a backslash is that character. A `{` that never closes by the end of the file, and a text that never
+closes by the end of its line, are errors.
 
 A text that is one hole and nothing else, `"{clicks}"`, is an error: it is the value
-itself, so the value is written directly, and where text is wanted it becomes text on its own
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#casting)). The error gives the line to write:
+itself, so the value is written directly, and where text is wanted it becomes text on its own. The error gives the line to write:
 
 ```gdscript title=lone_hole/lone_hole.spite entry error
 var console = Console()
@@ -450,6 +465,12 @@ func LoneHole() {
 ```diagnostic
 '"{clicks}"' is a text of one value and nothing else: assign the value directly, 'label = clicks'
 ```
+
+The line depends on where the text stands: `declare the value directly, 'var shown = clicks'` for a `var` (a written
+type stays: `'var shown: String = clicks'`), `return the value directly`, `pass the value directly`, `join the
+value directly` beside a `+`, `look it up by the value directly` as a dictionary key, and `write its text as
+'clicks.to_string()'` anywhere else. A text with a written character beside the hole, or with two holes, is
+ordinary text.
 
 ```gdscript title=direct_text/direct_text.spite entry
 var console = Console()
@@ -546,8 +567,12 @@ method table.
 reading with `[]` answers one. A `Boolean?` is the one `T?` that is no condition, since its `false` would read as
 missing; `fallback flag` alone takes one, and asks that it is there and `true`. All of it is in
 [failure.md](failure.md), with the three outcomes a failure can have. Since `null` belongs to `T?` alone, `var target: Monster = null` is an error that asks for `Monster?` (none
-yet) or `Monster()` (a default), and a generic class makes the default of what it is bound to with `$name()`
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#variables-and-values)).
+yet) or `Monster()` (a default), and a generic class makes the default of what it is bound to with `$name()`. For a
+plain value the default is its literal: `0`, `0.0`, `false` or `""`, which the error writes for you.
+
+A `var` may be written again in the same scope, and the new one may hold another type. A `var` in an inner block may
+shadow a local, a parameter or an attribute of the same name for the length of that block; it may never shadow
+a function it can see. A shadowed name that was never read is removed by the compiler and reported as `fixed:`.
 
 ## Enums
 
@@ -589,14 +614,16 @@ An enum declaration takes no `=` and lists one value per line, with no commas (a
 quotes (single quotes mean an enum value and nothing else), and `'mage'` alone resolves without writing
 `Player.Job`, because the parameter, the annotation, the assignment or the comparison it is used in says which
 enum it belongs to. The enum itself belongs to `Player`: inside it, plain `Job`; in any other class, `Player.Job`,
-never plain `Job` ([how it resolves](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
+never plain `Job`. Enums, unions, types and number classes take no `<>`: `Phase<Integer>` is an error that says to write
+`Phase` alone.
 
 An enum is a closed list of values, and `'knight'` is an **enum value literal**: a value the enum does not list
 is a compile error naming the ones it does, and `'orange'` where no enum is expected (`var choice = 'orange'`, with
-nothing to check it against) is an error too. Every enum is its own class with its conversions: `value.to_string()`
+nothing to check it against) is an error too, even when exactly one enum has that value: write it where the enum
+is expected. Every enum is its own class with its conversions: `value.to_string()`
 is its name, `var number: Integer = value` its number, `var part: Bird.Part? = "tail"` and `var part: Bird.Part? = 7`
 read one from a name or a number (`null` when no value has it), and `Part.values` lists the values. At run time an enum value is a small
-integer ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)).
+integer.
 
 Every enum is its own class, and the compiler gives it two **conversions** written the way any class writes one
 ([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)), as if `EnumFromText` declared
@@ -671,7 +698,7 @@ dessert false
 ```
 
 It is all decided while compiling: the walk becomes three calls, and no list of an enum's values exists at run
-time ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#enums-in-full)). An enum is also open to the program that loads it: reopening its
+time. An enum is also open to the program that loads it: reopening its
 class declares the enum again with the whole new list of values
 ([packages.md](packages.md#reopening-an-enum-replaces-it)), and a walk then walks that list.
 
@@ -699,7 +726,8 @@ func NumberedRoles() {
 user true
 ```
 
-`=` because giving a value is assignment, as everywhere else. A value without a number counts on from the one
+The number is a whole number that fits an `Integer`, and it belongs to the declaration alone: written after a value
+anywhere else it is an error. `=` because giving a value is assignment, as everywhere else. A value without a number counts on from the one
 before, so `'user'` is 100, and an enum's first value without a number is 0. Two values with one number are a
 compile error, since the number is the value's identity outside the program:
 
@@ -782,13 +810,17 @@ a monster 6
 alive true
 ```
 
-Like `enum` and `type`, a `union` takes no `=` and lists one member per line. A `switch` may answer several
-members at once with `_:`, and `enemy.class == Monster` asks which member a value is
+Like `enum` and `type`, a `union` takes no `=` and lists one member per line. A `switch` names every
+member, with no `_:` for the rest, so a member added later is an error at every switch, and two members may share
+a one-line case. `enemy.class == Monster` asks which member a value is
 ([control_flow.md](control_flow.md#switch-over-a-union)). `Monster?` is exactly this kind of union: `Monster` and
 `Null`, the class whose only value is `null`.
 
+A union holds objects whose class a `switch` can test, so `String`, a number class, `Boolean` and a generic class
+such as `List<Integer>` are refused as members: make a class of your own that keeps the value in an attribute.
+
 A union costs nothing to hold: the value is the object itself, and a `switch` or a call on it compares the class
-its header already names against the members ([what it costs](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#unions-in-full)).
+its header already names against the members.
 
 ## Inline types and duck typing
 
@@ -834,7 +866,11 @@ answers `Object`.
 This is what makes fast, JSON-shaped code possible: accept a `type`, and both a real class instance and a
 plain `{ key: value }` literal work. The empty `type`, which every object fits, is built in as `Anything`
 (`component: Anything`, `List<Anything>()`; see [functions_and_operators.md](functions_and_operators.md)):
-never declare an empty `type` of your own.
+never declare an empty `type` of your own. A `type`, like an `enum` and a `union`, takes no `=` and no commas.
+
+An attribute of a `type` may itself be a union or a function value. A union-typed attribute is met by that union
+or one of its classes, and a function-typed one by a function value with the same parameter and answer types
+(`on_open: Spite.Function<Integer, Integer>`). Anything else does not fit and the error names the attribute.
 
 A `type` of attributes only has a default like a class does: the object literal with each attribute at its own
 default, whose `.class` answers `Object`. So `var target = $target_type()` in a generic class bound to such a
