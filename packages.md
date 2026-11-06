@@ -18,8 +18,9 @@ func Game() {
   reopened by another root's `engine/physics/physics.spite` like any class. A file and a folder of one name side
   by side, `engine/renderer.spite` beside `engine/renderer/`, would make `Engine.Renderer` both a class and a
   namespace, so that is an error.
-- `load` only ever takes a literal string: a variable or expression there is an error, so the compiler
-  always knows every bundle statically. A `load` may sit under an `if` on a `Build` field the compiler already knows,
+- `load` takes a `Path` or a `GitPath` ([standard_library.md](standard_library.md#paths)), always written as literal
+  text on its own line: an `@` makes it a `GitPath`, and a variable or expression there is an error, so the compiler
+  always knows every bundle statically. `load ""` names no folder and is an error. A `load` may sit under an `if` on a `Build` field the compiler already knows,
   which is how one entry function loads the standard library folder of the system it is built for
   ([programs.md](programs.md#how-a-program-is-loaded)).
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
