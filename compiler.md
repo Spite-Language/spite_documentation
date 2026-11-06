@@ -219,7 +219,7 @@ formatted file. Nothing turns this off, and a file the formatter refuses stops t
 compiled from text that is not in the one style. A refused file is
 `<path>: error: the formatter refuses it, and a program compiles only once formatted: <reason>`, and the compiler
 exits with status 1. A file that does not lex or parse is reported by reading the program, before the formatter
-sees it. The files formatted are the program's folder with every folder below it, never the standard library.
+sees it. The files formatted are the program's folder with every folder below it, never the standard library. Reading a program, or a folder it loads, skips every folder named `.spite`, `.spite-cache` or `.git`, so what a build or a version control tool keeps there is never read as part of the program.
 
 **A file edited during the compile is never overwritten.** Just before writing a formatted file, the compiler reads it
 again; if it no longer holds the text the compile read (another editor or agent changed it meanwhile), it is left
