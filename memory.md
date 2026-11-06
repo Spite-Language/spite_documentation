@@ -8,6 +8,12 @@ is the default. When the last reference to an object goes (a scope ends, a field
 removed), the object's `drop()` runs, if it has one, its own references are released, and it is freed. There is
 no garbage collector and no pause.
 
+A parameter follows the same rule. A number passed to a function is a copy: a callee that adds ten to its `Integer`
+parameter leaves the caller's number alone. An object is passed by reference, so the callee sees and can change the
+caller's object, but assigning the parameter a different object only changes which object the callee's name holds. A
+`Dictionary` that holds an object holds that same object, so a change made through the original shows when the object
+is read back through the dictionary.
+
 What that costs while the program runs is a count in every object and one addition or subtraction each time a
 reference is kept or let go (plain arithmetic, atomic only in a program that starts a thread) and nothing
 else: no collector, no runtime to ship. A singleton is not counted at all, and a number, a `Boolean` or an enum
@@ -82,8 +88,11 @@ func relabel(replacement: Box) {
 ```
 
 The same holds for a name answered by a function that returns an item of a list, such as a lookup that answers
-`values[row]`: the error names the class holding the list and its function that writes it
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#assigning-a-name-read-from-a-list-changes-only-the-name)).
+`values[row]`: the error names the class holding the list and its function that writes it. The compiler follows
+such a function through up to four calls, and a `Dictionary` item is treated like a `List` item. It looks only at
+the last place the local is named, in its own block or in the branches of an `if` or a `switch` that is the last
+statement naming it: a local assigned twice, a local that is read afterwards, one made by a constructor or a
+`copy()`, and an answer from a function that may return something else are all left alone.
 
 ## Do: call `copy()`/`deep_copy()` for an independent object
 
@@ -117,7 +126,9 @@ independent label b
 
 `deep_copy()` copies the shape of what it reaches: an object reached twice in one copy, through a cycle, is copied
 once, so a child's `parent` in the copy is the copied parent, and a back reference in the copy holds the copy of its
-object when the same `deep_copy()` copied it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
+object when the same `deep_copy()` copied it. A copy that starts at the child alone leaves the `parent` on the original
+object, since nobody copied the parent. `copy()` is shallow for a list or a dictionary too: the copy holds the very
+same items, so a change made to an item shows through both.
 
 ## Components in lists, handed to a system
 
@@ -418,7 +429,7 @@ For `Runner<Moving>` the walk is written out as `{entity: Entity(entity), positi
 Column<Position>().values[found[1]], velocity: Column<Velocity>().values[found[2]], trail:
 Column<Trail>().values[found[3]]}`. Each item is counted once for the row and let go at the end of the row's block,
 so a call that removes an entity from its column cannot free a component under the row
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#rows-walked-from-lists)).
+.
 
 ### Arguments filled for one call
 
@@ -505,7 +516,7 @@ For `Runner<Mover>` the call is written out as `system.update_each(Column<Positi
 Column<Velocity>().values[found[1]])`, after the `crash` lines that narrow those reads: `update_each` writes the
 columns' own items, and `made_argument` is not called for it. Called anywhere else, `made_argument` is an
 ordinary function. The template may also fill a whole walked row for an argument that is a `type`
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#rows-walked-from-lists)).
+.
 
 ## `drop()` runs once, right before the object is freed
 
@@ -665,8 +676,11 @@ the family is gone
 A back reference reads `null` once its object is freed, so no read is ever dangling, and the narrowing above is the
 usual one. Everything above is freed when `visit` returns, which is what `--debug-memory`, below, checks: a cycle the
 program links in a way the compiler cannot read keeps its counts and shows up there as leaked objects by class. Then
-clear the `T?` field that closes the loop when you are done with it
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model)).
+clear the `T?` field that closes the loop when you are done with it. The compiler picks the back reference of a cycle
+from how the code links its objects: one function that sets `child.parent = owner` and stores the child in the
+owner's list (or in one of its attributes, or in a dictionary) is the link, and so is a pair of functions that
+together do both, however many calls deep. A singleton or a generic class is never part of that link. There is no
+`Weak<T>` to write, and naming one is an unknown-type error.
 
 ## `--debug-memory`
 
@@ -676,14 +690,24 @@ the program exits. A mismatch means something leaked; when the two do not balanc
 leaked cycle visible instead of an unexplained count. Every program on these pages is run this way, and must
 balance. It also fills every byte it hands out that nobody has written yet with the same pattern, so a program that
 reads memory it never wrote fails the same way on every run and in every environment, instead of reading whatever
-the heap held. The table exists only in a `--debug-memory` build ([what it records](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#--debug-memory)).
+the heap held. The table exists only in a `--debug-memory` build, so the other builds carry none of it. The summary looks like this for
+a cycle of two objects that the code does not link as a back reference:
+
+```
+spite: --debug-memory: 4 allocation(s) leaked
+  String: 2 leaked object(s)
+  Question: 1 leaked object(s)
+  Answer: 1 leaked object(s)
+```
+
+The same program prints the same summary on every run.
 
 ## Memory belongs to the compiler
 
 A program never names an address, an allocator, an allocation count or where an object lives. Memory and threads are
 constructs of the language that each generator implements its own way, so nothing a program could watch ever stands in
 the way of how the compiler places a value: in a register, in the frame when it never leaves its function, together with
-the objects around it, or on the heap. You write the plain version, and the compiler decides ([Placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)).
+the objects around it, or on the heap. You write the plain version, and the compiler decides.
 No class stands for memory, and there is no list of the live instances of a class. Only
 `--debug-memory`, above, reports what leaked, and it does so from outside the program.
 

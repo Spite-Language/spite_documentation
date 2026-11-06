@@ -35,8 +35,6 @@ What that already means in practice:
 - An operand that would be cut to fit is a compile error, in arithmetic and in comparisons
   ([values_and_types.md](values_and_types.md#wider-arithmetic-goes-wider-operand-first)).
 
-The whole list is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule).
-
 ## `T?`: a value that may be null
 
 `Monster?` is a `Monster` or `null`. It is not a special wrapper: it is the union of `Monster` and `Null`, a class
@@ -53,7 +51,7 @@ func find_target(): Monster? {
 ```
 
 A `T?` must be **narrowed** before a member is read, a function is called on it, it is printed, or it is passed
-where a plain value is wanted, a `type` such as `Anything` included ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule)). There is no
+where a plain value is wanted, a `type` such as `Anything` included. There is no
 `value == null`: comparing against `null` is an error naming the forms below:
 
 ```gdscript title=null_comparison_error/null_comparison_error.spite entry error
@@ -407,8 +405,10 @@ loops `while running`, `while not found` or on its real exit test.
 
 An index or a key may not be there, so `names[index]` and `table["key"]` are `T?` and are narrowed like any other
 path. Every `[]` answers this way: a `List`, a `Dictionary`, a `String`, and any
-class of your own, since `a[x]` is only a shortcut for `a.get_at(x)` and every `get_at` answers a `T?`
-([functions_and_operators.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#operators)). The
+class of your own, since `a[x]` is only a shortcut for the class's `get_at(x)` and every `get_at` answers a `T?`
+([functions_and_operators.md](functions_and_operators.md#operators)). Writing the call yourself, `names.get_at(0)`, is a
+compile error that names the operator ("'get_at' is what '[]' calls: write 'names[0]'"), so the answer is always read
+as a path and narrowed like one. The
 compiler also understands the usual proofs for the library's collections, so most reads need nothing extra:
 
 - **A proven count proves the indices below it**: after `crash names.count() == 3`, or `>= 3`, or `> 2`,
@@ -446,12 +446,12 @@ compiler also understands the usual proofs for the library's collections, so mos
   called on it yet: narrow it first with 'crash names[0]', 'fallback names[0]' or 'if names[0] { }', or prove the
   count first, 'crash names.count() > 0'`; a read by a counter names the loop bound instead (`... or read it where a
   bound proves it, inside 'while index < names.count()'`), and a `Dictionary` or a class of your own names the
-  three narrowing lines only (`diagnostics/index_reads`).
+  three narrowing lines only.
 - **A class of your own is proven by what you write.** The compiler knows what `count()` and `get_at` mean for the
   library's collections only, so `while index < shelf.count()` proves nothing about `shelf[index]` when `Shelf`
-  is yours: narrow the read with `crash`, `fallback` or `if` (`conformance/stage6/indexable_class`).
+  is yours: narrow the read with `crash`, `fallback` or `if`.
 
-Every case, with its exact messages, is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule). A proven
+A proven
 read still checks its bounds at run time and halts naming the read when its index was outside the list, so a
 proof removes a line of source, not a safety check.
 
@@ -550,8 +550,7 @@ func is_made(made: Operation?): Boolean {
 }
 ```
 
-Outside a comparison, reading a member through a `T?` still needs it narrowed, and so does assigning through one
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule)).
+Outside a comparison, reading a member through a `T?` still needs it narrowed, and so does assigning through one.
 
 ```gdscript title=nullable_comparison/nullable_comparison.spite entry
 var console = Console()
@@ -1014,7 +1013,9 @@ values in scope without it.
 A `crash` the compiler can decide is not left for the run: one whose condition asks only what is known while
 compiling (a codegen value, `functions["run_each"]`, `is_fixed_size`, ...) and is false, in a function the program reaches,
 is a compile error at the `crash`, since the program would halt there every time
-([metaprogramming.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)).
+([codegen values](metaprogramming.md#generics-and-codegen-values-)). The refusal is narrower than that sentence
+sounds: it holds only where the function reaches the `crash` every time it runs. One under an `if`, a `while` or a
+`switch` case the compile cannot decide is left to the run, and so is one after a way out under such a branch.
 
 ### An answer is used
 
@@ -1163,13 +1164,13 @@ compiler refuse the change: both stop the change, where a message only describes
 Some failures happen below Spite: a foreign library reads through a null pointer, a recursion runs out of stack, a
 driver runs an instruction the processor refuses. The program cannot survive them, but it never ends silently:
 every program installs a fault handler before its first line runs, and a fault writes a
-`spite.fault` line to the error stream, then the fallbacks taken as a crash does, then the Spite functions on the
-stack, and ends the program:
+`spite.fault` line to the error stream, then the Spite functions on the stack, and ends the program. A native fault
+does not list the fallbacks taken before it; only a crash does.
 
 ```
-spite.fault	read-violation	-	-	-	address=0x0	code=0xc0000005	at=fixture.dll+0x1029	foreign=read_integer_at	library=conformance/stage6/native_fault_foreign/fixture.dll	from=conformance/stage6/native_fault_foreign/native_fault_foreign.spite:13
-spite.frame	conformance/stage6/native_fault_foreign/native_fault_foreign.spite:11	NativeFaultForeign	read_nothing
-spite.frame	conformance/stage6/native_fault_foreign/native_fault_foreign.spite:4	NativeFaultForeign	NativeFaultForeign
+spite.fault	stack-overflow	native_fault_stack/native_fault_stack.spite:10	NativeFaultStack	descend	code=0xc00000fd	at=native_fault_stack.exe+0x1029
+spite.function	NativeFaultStack.descend
+spite.caller	NativeFaultStack.descend	repeated=2931
 ```
 
 Read it left to right:
@@ -1177,12 +1178,12 @@ Read it left to right:
 - **What happened**: `read-violation`, `write-violation` or `execute-violation` (on Linux and macOS,
   `access-violation`), `stack-overflow`, `illegal-instruction`, `integer-division-by-zero`, `misaligned-access`,
   `bus-error`, `breakpoint`, `heap-corruption` (the C library's heap found its own bookkeeping overwritten, usually
-  by a double free or a write past a block; the `spite.frame` lines name the Spite function that freed or
-  allocated), `abort` (on Linux and macOS, any other `abort()`), `floating-point-exception`, or `exception` for any
+  by a double free or a write past a block; its line carries `status=` where the others carry `code=`),
+  `abort` (on Linux and macOS, any other `abort()`), `floating-point-exception`, or `exception` for any
   other code the system raises.
 - **Where**, as `path:line`, class and function: the Spite function the faulting instruction is in, with the line
   that function starts on: a fault has no Spite line of its own. `-	-	-` means it is in no Spite function:
-  inside a foreign library or the C library, and the first `spite.frame` is the Spite function that called in.
+  inside a foreign library or the C library.
 - `address=`: the address that could not be read or written. `code=` (Windows) is the exception code, `signal=`
   (Linux, macOS) the signal number.
 - `at=`: the file the faulting instruction is in (the program itself or a foreign library) and its offset from
@@ -1191,12 +1192,13 @@ Read it left to right:
   that called it. It stays set after the call returns, so when `at=` names a library it is the call that went in,
   and when it does not it is the last C that touched the program's data, the fact most worth having when a Vulkan
   or Win32 call goes wrong.
-- Each `spite.frame` is a Spite function on the stack, innermost first; `repeated=` counts the same function called
-  from itself, and `spite.frame	more` says the stack goes deeper than the 256 frames walked or the 16 lines written.
+- `spite.function` names the function that faulted, and each `spite.caller` is a function further up the stack,
+  innermost first, at most 64 of them; `repeated=` counts the same caller called from itself. These lines come from
+  `<program>.functions`, a file every build writes beside the executable. A fault inside a foreign call keeps its
+  `foreign=` and `from=` fields and adds no function lines, and without the file only the `spite.fault` line is
+  printed. A function a `--hot-reload` build swapped in is named like any other.
 
-The program then ends with the status the system gives that fault, exactly as it would have without the report:
-on Windows the exception code (`0xC0000005` for an access violation), on Linux and macOS death by the signal, so
-a core dump is still written where the system keeps them. What the program printed is flushed after the report.
+What the program printed is flushed after the report, and the program ends with a failure status.
 
 ## What it costs at run time
 

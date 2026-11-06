@@ -47,8 +47,9 @@ var empty = List<String>()
 `insert`, `remove_first` and `remove_at` move every later element, and `contains` looks at each in turn. An empty
 list has no buffer; the first element gets one of four slots, and a full buffer is resized to twice its size.
 
-Names say where: `append` and `prepend`, never `add`; `remove_last`, never `pop`
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#listt-additions)).
+Names say where: `append` and `prepend`, never `add`; `remove_last`, never `pop`, and the error says
+which to write. A list keeps its own room: there is no `reserve`, because how much room a list holds is the
+compiler's to decide.
 
 A list has the same members whatever it holds. Bytes from a file or a socket, and the numbers and text laid out in
 them, are a `Buffer`, which still reads like a list of bytes and adds what bytes need
@@ -139,13 +140,19 @@ A key written twice is an error (`"cactus" is written twice in this dictionary: 
 given to a `Dictionary<String, Integer>` parameter. Where nothing names the types, `{}` is an empty object, so write
 `Dictionary<Key, Value>()` there.
 
+A literal may run over several lines: entries are told apart by commas or by line breaks, and a last comma is
+allowed. A literal key is a text or a whole number, and entries are stored in the order written. A brace that opens on
+a name, as in `{x: 1, y: 2}`, is an object, not a dictionary. Two dictionary types are the same type when their key and
+value types are, so a function taking a `Dictionary<String, Integer>` refuses a `Dictionary<Integer, Integer>`.
+
 ### Any type is a key
 
 The key type is what you look up by, and the dictionary finds a key the way that type means it:
 
 - **numbers** by their value: `Dictionary<Integer, String>` stores and hashes the number itself, never text made
   from it, and `keys()` answers the numbers. A fraction is found by its value too, so `0.0` and `-0.0` are one key,
-  and so is every `not_a_number`;
+  and so is every `not_a_number`; every whole-number class (`Tiny`, `Byte`, `Short`, `UnsignedShort`, `Integer`,
+  `UnsignedInteger`, `Long`, `UnsignedLong`) is a key by value too;
 - **text** by its bytes, and a `Boolean` by whether it is `true`;
 - **an enum value** as itself: `Dictionary<Color, Integer>` holds one entry for `'red'`, whatever its name is
   written as;
@@ -204,7 +211,11 @@ ada plays for red team and the other ada is found: false
 A class that declares its own `equals` says two of its objects can be equal without being one object, and a
 dictionary keyed by it would miss the equal one, so it is a compile error: key the dictionary by what `equals`
 compares instead, an id or a name. A key given where its type is not wanted is the same mismatch as any argument,
-and the [specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#dictionarykey-value) lists every rule and error.
+and the error is the one a number given where a text is wanted gets. JSON writes a text key as it is, a whole-number
+key as the number in quotes and an enum key as its name; a `Float` key or an object key has no JSON form, and
+`JsonWriter` and `JsonReader` both refuse such a dictionary, and so does `BinaryWriter` for an object key, naming the key
+type. The key type is part of a dictionary's binary `schema()`, so a dictionary keyed by text and one keyed by numbers
+never share a schema.
 
 The key and value types are what the program means, not how it is stored: the compiler keeps a dictionary however
 is fastest, as long as every lookup answers the same ([write it plainly](write_it_plainly.md#a-class-is-what-you-mean-not-how-it-is-stored)).
@@ -248,7 +259,9 @@ func OneList() {
 1.5 1.5
 ```
 
-The rules are [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#one-list).
+Writing `Vector<Integer>` or `Items<Integer>` is an error that tells you to write `List<Integer>`, and so is `Heap<Integer>`:
+a class, a list and a text are references already, so a class that holds one of its own kind declares an ordinary
+attribute (`var left: Expression? = null`).
 
 ## Removing many at once
 
@@ -327,7 +340,7 @@ not. A test that is not a function of the element alone (a mask read by row) is 
 
 `remove_where` changes the collection it is called on, so it ends no chain: `names.filter(is_short).remove_where(is_long)`
 is an error naming the fix, one test that says everything to remove. Like `remove_at`, all three change which
-element an index names, so a proof about an element is made again after one ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#removing-many-at-once)).
+element an index names, so a proof about an element is made again after one. This holds for `remove_swapping`, `truncate` and `swap` too, and for a function that calls one.
 
 ## Member templates: loops you do not write
 
@@ -337,8 +350,7 @@ the chores whose `done` is true, `items.sum_price()` adds up their prices, and `
 their names. A **member** is an attribute or a function that takes no arguments (the two are the same to a
 template, since reading an attribute already goes through its getter), and a template is compiled only for the
 names a program calls. Text has members too: `names.map_upper_cases()` collects every name in capitals,
-`names.filter_is_empty()` keeps the empty ones and `names.sort_by_length()` sorts them by length
-(`conformance/stage6/text_member_templates`).
+`names.filter_is_empty()` keeps the empty ones and `names.sort_by_length()` sorts them by length.
 
 | Template | Result | The member must |
 |---|---|---|
@@ -516,8 +528,9 @@ but 'count_' needs it to return Boolean (to add up a numeric member use 'sum_sta
 counter walking a list from `0` to its `count()`, doing nothing with each element but what one template does
 with one of its members, or what `each`, `filter`, `count`, `sum`, `find`, `any` or `all` does with a
 function passed the element, on a list of anything, numbers and text included. Loops that need the index, pass
-more than the element, stop early for another reason, or walk state keep their `while`. The exact shape the
-compiler looks for is in [control_flow.md's rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#a-while-that-a-member-template-already-says).
+more than the element, stop early for another reason, or walk state keep their `while`. A function that needs more than the element
+(`print_statement(statement, depth)`) keeps its `while`, and so does a `while` that collects what a function answers for
+each element, since no form collects one.
 
 ```gdscript title=template_loop_error/item.spite
 var price = 0
@@ -647,7 +660,7 @@ name, never for a function of the class the call is written in. A function of yo
 instead: `names.each(say_hello)` calls `say_hello` once for every name, in order, and there is no
 `say_hello_to_everyone` to write. The function is bound to whoever owns it ([functions_and_operators.md](functions_and_operators.md#functions-are-values)):
 `say_hello` alone is this instance's, and `people.each(greeter.greet)` calls `greet` on `greeter`. The library's
-classes are no different: `keys.filter(counts.has)` asks the dictionary `counts`, and
+classes are no different: `keys.filter(counts.contains)` asks the dictionary `counts`, and
 `words.filter(greeting.contains)` asks the text `greeting`.
 
 `each`, `filter`, `any`, `all`, `count`, `find`, `sort_by` and `sum` each take such a function, which takes
@@ -655,7 +668,11 @@ the element as its only argument: `filter`, `any`, `all`, `count` and `find` wan
 answers the first element it is true for, or `null`), `sum` one returning a number, `sort_by` one returning a
 number or text. There is no `map(function)`: a value collected from each element is a member of the element
 ([above](#member-templates-loops-you-do-not-write)), named and collected with `map_<member>()`. This works on a list of anything (numbers included, which
-have no members of their own for a template to name) and on a `Dictionary`, through its values.
+have no members of their own for a template to name). A `Dictionary` takes `each`, `filter` and `sum` directly,
+through its values; for the other forms ask for the values first, as in `team.values().any(is_short)`. A function that
+answers the wrong type is an error naming the form: `any`, `all`, `count` and `find` want `Boolean`, `sum` an
+`Integer`, `sort_by` a number or text. `remove_where(f)` is for a `List` only; a `Dictionary` has no `remove_where`, since
+its templates work on a copy of its values: walk `keys()` and call `remove_at(key)` for each key to remove.
 
 ```gdscript title=passed_function/greeter.spite
 var console = Console()
@@ -818,11 +835,11 @@ func FusedChain() {
 
 Only a call made directly on another template call is part of the chain: `active.map_leads()` above starts a new
 one, because `active` is a list the program named and kept. The steps in the middle are `map_` (to a member that
-is a class) and `filter_`; the last call can be any template, and a chain the compiler cannot write as one loop
+is a class) and `filter_`; the last call can be `sum_`, `count_`, `any_` or `all_`, and a chain the compiler cannot write as one loop
 is run step by step, which means the same. The one visible difference is order: a member function in a fused
 chain runs element by element, where the steps written out would run it on every element before the next step
-starts. Written as three steps, the chain above would make two lists every time it ran; fused, it makes none
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#standard-library-metaprogramming) name the test that pins the count).
+starts. Written as three steps, the chain above would make two lists every time it ran; fused, it makes none: running such chains a thousand times allocates no more than running them once.
+A chain that passes a function of a list or of a library class (`names.filter(is_short).each(seen.append)`) is run step by step.
 
 ## How the member templates are written
 
