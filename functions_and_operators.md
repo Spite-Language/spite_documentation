@@ -239,7 +239,7 @@ nothing until a value is passed to it.
 
 ## Every operator is a function
 
-Every operator is a shortcut for a function a class can define to support it:
+Every operator is a shortcut for a function a class can define to support it, with the parameters the table shows. Any other count is an error where the operator is used: `this operator on a 'Thing' needs it to define 'less_than(other)', and its 'less_than' takes 0 arguments`.
 
 | Operator | Function |
 |---|---|

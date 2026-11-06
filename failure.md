@@ -253,7 +253,8 @@ which attributes it can assign and which lists it can shrink (`clear`, `remove_a
 `remove`). If it may change an attribute the proven path reads through (or the
 list a proven `[]` reads, or anything its index reads), the proof is gone and the read must be proven again; if
 it provably cannot, the proof stands and nothing more is written. There is no `const` to declare: the compiler
-reads the code.
+reads the code. The call counts however its answer is used: in a `var`, or inside a `fallback`, a `crash`, an `if`, a `while` or a `switch`. What the
+list refusal says: `'items[0]' was proven before line 9, where 'trim(...)' may shrink what it reads, so this read may fall outside it: prove 'items[0]' again after that line`.
 
 ```gdscript title=call_undoes_proof_error/monster.spite
 var name = "goblin"
@@ -313,8 +314,7 @@ goblin 1
 ```
 
 What the compiler follows: calls by name, method calls through the receiver's class, constructors, and what a
-class's attribute defaults call. Calling a function value (`change(text)`) may do anything, so it undoes every
-proof that reads an attribute or a list. Inside a `while`, a call that undoes a proof made before the loop and
+class's attribute defaults call. Calling a function value (`change(text)`) reaches every function taken as a value with its signature. A list is told apart by the attribute that holds it; a list reached any other way (a parameter, an item of another list) counts against every list of its class. Inside a `while`, a call that undoes a proof made before the loop and
 read inside it is an error naming the call, the same as an assignment would be.
 
 ### A new name for a new type

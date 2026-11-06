@@ -91,7 +91,7 @@ func is_alive(): Boolean {
   order: a `singleton` line, `generic $name` lines, enums, unions, types, variables, the constructor, conversions, presets, then
   functions (`a file holds declarations and nothing else` for a statement at file level). A file in
   the wrong order is put back in order by the compiler (`fixed: ... moved it up, since a file is ordered`). Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
-  name starting with `_` is private to its class (`'_hidden' is private to 'Secret'`).
+  name starting with `_` is private to its class, for reads and writes alike (`'_hidden' is private to 'Secret'`).
 - The function named like the class is the constructor. Do not write an empty one: a class without a constructor
   is made from its defaults, and `func Monster() { }` is an error (`has an empty constructor: delete it`).
 - A constructed object is kept and used: `Report(text)` written as a statement of its own is an error. A class
@@ -391,6 +391,7 @@ rewritten.
   the entry class. Outside that namespace it is never named. A union value fits another
   union when all its members are members of it, and a caller passes the member value itself. Unions with the same
   members are one type inside a generic (`List<A.Pet>` is `List<B.Pet>`).
+- A `type` or a `union` makes no object: `Tag("favourite")` is an error (`'Tag' is a type, so it makes no object: ...`). Make an object of a class that fits it.
 - `union Enemy { Player Monster }`, written one member per line: `switch enemy { Player: ... Monster: { ... } }`
   must cover every member and narrows `enemy` inside each case; a function or attribute every member has can be
   used on the union directly. Every member is a class of objects: `String`, a number, `Boolean` or `List<Integer>` is
@@ -439,16 +440,16 @@ rewritten.
   `fallback clear(rack)` or `crash rack.item and clear(rack)`, reading `rack.item` is refused when `clear` may write
   it. A side after the call is proven after it: `if clear(rack) and rack.item { rack.item.number }` stands.
 - A call between a proof and a read undoes the proof when the called code (followed all the way down) may assign
-  an attribute the proof reads or shrink a list it reads; prove it again after such a call, or read what you need
-  before it. A call that cannot change it keeps the proof. Calling a function value keeps no proof about
-  attributes or lists.
+  an attribute the proof reads or shrink a list it reads (`'items[0]' was proven before line 9, where 'trim(...)' may shrink what it reads, ...`); that holds however the call's answer is used, `fallback items.remove_first()` and `if trim() { }` included. Prove it again after such a call, or read what you need
+  before it. A call that cannot change it keeps the proof. Calling a function value reaches every function taken as a value with its signature.
+- A `T?` number of any width is narrowed before arithmetic, a comparison, a store or a call: `total + pair` with a `Short?` `pair` is an error (`this value may be null (it is a Short?), but an Integer is needed: ...`), and so is `-pair`. A `Short?` widens into an `Integer?` keeping its null. Only `==` and `!=` need no narrowing.
 - Every proof the compiler makes (narrowing, proven `[]` reads, a proven divisor, frame objects,
   singleton locks) is listed in [proofs.md](https://github.com/Spite-Language/spite_documentation/blob/master/proofs.md), with when it does **not** apply. Read its "Which proofs
   apply to my code" first: where a proof does not hold, you write the check yourself.
 - A `switch` is over a union, a `T?`, an enum or a `Boolean`, and names every member or value: there is no `_:`,
   so a member added later is an error at every switch until it has a case. Cases may share a one-line body
   (`Cat: walk()` and `Dog: walk()`); when all but one share it, write `if value.class == Fish { swim() } else { walk() }`.
-  Value cases are `'red': return 30` or `true:`/`false:`. A `switch` over a number or a text is an error: choose with
+  Value cases are `'red': return 30` or `true:`/`false:`, and a `Boolean` needs both (`this switch over 'count > 2' has no case for false: ...`); for one of them write an `if`. A `switch` over a number or a text is an error: choose with
   `if`s. Three `if`s in a row that each compare one name with one of its enum values and only return are an error that
   writes the switch for you, naming every value; an `else if` chain of three is the same.
 - `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside.

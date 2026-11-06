@@ -102,12 +102,13 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `fallback condition` ends the function with what its answer type builds with no arguments (`null` for a `T?`,
   `0`, `""`, an empty list); answer a `T?` when a caller must tell that from a real answer. `crash condition` halts on
   a developer mistake. Neither takes a message: the crash report shows the values.
-- A narrowing lasts until a write or a call that may undo it (the compiler follows the call). Narrow again after
+- A narrowing, a `[]` proof included, lasts until a write or a call that may undo it or shrink the list (the compiler follows the call, whatever its answer is used for). Narrow again after
   one: the new check stays and tests at run time. A write or a call inside a branch that returns leaves it standing
   below the branch. A call in a condition counts too: `if rack.item and clear(rack)` proves nothing about `rack.item`
   when `clear` may write it; `if clear(rack) and rack.item` does.
 - `while given and turns < 2` narrows `given` in the body like an `if`, and each pass tests it again, so the body may
   write it. An `or` narrows nothing inside; `if amount > 100 or amount < 0 { return 1 }` proves both sides below it.
+- A number that may be null is narrowed before arithmetic, a comparison or a store, whatever its width; only `==` and `!=` take it as it is.
 - Never write defensive code: a check on a value the compiler already proves is removed, and says so.
 - A `crash` whose condition the compiler decides is false, in a function the program always reaches, refuses the build.
 - No lambdas, no destructuring, no overloading, no `async`/`await`. Pass a named function; one name is one

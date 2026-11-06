@@ -577,7 +577,11 @@ real zero. Reading with `[]` is the exception: an index or a key that may not be
 ([failure.md](failure.md#reading-with--answers-t)). See [standard_library.md](standard_library.md) for the full
 method table.
 
+A `type` or a `union` says what a value must have and makes no object: `Tag("favourite")` is an error, `'Tag' is a type, so it makes no object: it says what a value must have; make an object of a class that fits it`.
+
 ## `T?`: values that may be null
+
+A number that may be null never counts as 0: narrow it before `+ - * / %`, `< > <= >=`, a unary `-`, a store or a call, whatever its width. A `Short?` added to an `Integer` is `this value may be null (it is a Short?), but an Integer is needed: narrow it first with ...`. A `Short?` widens into an `Integer?` and keeps its null.
 
 `Monster?` is a `Monster` or `null`, and `null` exists for nothing else. A `T?` is narrowed before it is used
 (`if value { } else { }`, `fallback value`, `crash value`, `while value`, or a `switch` with a `Null:` case), and
