@@ -50,7 +50,9 @@ complicated splits it into functions it calls, and then reads as a table of cont
 
 Nothing reaches the program by position, and a named value is never read by its text (D1775): `--level=3` and a bare `--verbose` reach the program only as the
 `Environment` attributes they set, `var level = 0` and `var verbose = false`, typed, with a default and a name the
-compiler checks ([below](#run-time-settings-environment)).
+compiler checks ([below](#run-time-settings-environment)). `Program` has no `arguments()`, no `argument_named` and no
+`has_flag` to ask the command line anything else, `Environment` has no `unread_settings()`, and a bare `--` is not a
+separator: the built program refuses it, since every value on its command line is a named setting.
 
 ## Run-time settings: `Environment`
 
@@ -92,8 +94,11 @@ compiler and no field of the program's `Build`, and runs the program with no fla
 3. a `.env` file the program loaded with `environment.load_from_file(".env")`;
 4. the declared default.
 
-Only declared fields are read, and every value on the command line must be one: a flag no field declares, or a
-word given by position, stops the program with exit code 1 and an error saying how to declare it. The
+Only declared fields are read: nothing else is loaded, so a process variable that names no setting changes nothing,
+and the command line wins over the process environment, which wins over a `.env` file, as it does in dotenv. Every
+value on the command line must be a setting: a flag no field declares, or a word given by position, stops the
+program with exit code 1 and an error saying how to declare it. A flag written in snake_case (`--worker_count=4`
+for `var worker_count = 1`) is refused the same way, with the kebab-case spelling to write. The
 default's literal is the setting's type: `false` is a `Boolean`, a whole number an `Integer`, `""` a `String`.
 A setting may also be a value of an enum the `Environment` declares, its type written, `var mood: Mood =
 'calm'`, and then only that enum's value names are accepted, the error listing them. Anything else is an error
@@ -103,9 +108,11 @@ and an error naming the setting, the value and the form it takes, since the prog
 is no line of it to point to.
 
 A `.env` file is read the way dotenv reads one, out of the box: `environment.load_from_file(".env")` takes its
-`NAME=value` lines (blank lines and `#` comments skipped), reads every setting again, and answers `false` if the
-file cannot be read. A setting the command line or the process environment already gives keeps that value, and a
-name in the file that no setting declares is reported on the error stream and skipped.
+`NAME=value` lines (spaces around the name and the value are trimmed, blank lines and `#` comments skipped), reads
+every setting again, and answers `false` if the file cannot be read, changing nothing. A setting the command line or
+the process environment already gives keeps that value, and a name in the file that no setting declares is reported
+on the error stream (`warning: 'UNKNOWN_THING' in .env names no setting of Environment, so it was not read`) and
+skipped.
 
 ```gdscript
 var console = Console()
@@ -118,13 +125,20 @@ func Server() {
     }
     console.print(environment.verbose)
 }
-``` The values are read when the program runs, so `if environment.verbose` is an
-ordinary `if`, with both branches compiled in.
+```
+
+The values are read when the program runs, so `if environment.verbose` is an ordinary `if`, with both branches
+compiled in.
 
 That reading is the whole run-time cost: one pass over the command line and one environment lookup per declared
 field, once, when `Environment()` is first made. A program given any argument makes `Environment()` before its
 entry starts, so one that never makes it still refuses a flag it does not declare, and a program given none pays
-nothing ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#program-settings-environment)).
+nothing. A program that loads no standard library, or only `common`, has no such check and reads no argument at all.
+
+A setting may be named like one of the compiler's own options: `var check = "none"` in `environment.spite` is read from
+`--check=yes` on the built program's command line, and the compiler's `--check` is a different flag, given to `spite`.
+A setting named like a field the program's `build.spite` declares is the error below, since a program's `Build` and
+`Environment` names share one set.
 
 ```gdscript title=setting_type_error/environment.spite
 var workers: Integer = 1
@@ -205,7 +219,11 @@ func UnknownFlagError() {
   anything, so what it produces is a default like the rest: `var build = true` only builds it, and
   `var final_classes = "..."` writes its final classes on every build ([compiler.md](compiler.md#choose-the-outputs)).
   Formatting is not an option: every compile formats first, and `format` is not a field a program may declare.
-  `target_operating_system` is the one field only a flag sets ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#build-settings-build)).
+  `target_operating_system` is the one field only a flag sets: declaring it in `build.spite` is a compile error naming
+  the flag, even when it names the system being compiled for. The fields that say what one compile writes (`check`,
+  `build`, `executable_path`, `final_classes`, `optimization_report`, `high_ir`, `low_ir`) keep their declared value
+  inside the program: a flag sets what the compile does, not what `build.low_ir` reads, which is `false` unless
+  `build.spite` says otherwise. `check` and `build` both on, from the flags or from `build.spite`, is an error.
 - A loaded package may declare `Build` fields too, and the program decides: a field the program's own
   `build.spite` declares keeps the program's default even when a package loaded after it declares the same field.
   An engine's `var plugins_folder = "../../plugins"` is only its default for programs that say nothing. The order
@@ -234,7 +252,11 @@ engine ember
 ```
 
 `Build` costs nothing when the program runs: every field is a constant written into the program, and nothing is
-read or decided at run time.
+read or decided at run time. The one exception is a `--hot-reload` build, where a field the program or a package
+declares is read from the `Build` singleton while the program runs and both branches of a condition on it are
+compiled, so a reload that changes `build.spite` takes effect; the standard library's reads of its own fields stay
+constants. `--final-classes` prints `Build` with its declared defaults, not the values the compile folded, so that
+running the printed program takes its flags again.
 
 ### The operating system: `operating_system` and `target_operating_system`
 
@@ -305,7 +327,8 @@ for this machine true
 ```
 
 What the executable does around the entry constructor (handing over the command line, and the teardown after it
-returns) is listed in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#constructors-and-the-entrypoint).
+returns) is small. The executable leaves the command line to `Environment()`, constructs the entry class, releases the
+singletons and class objects, and, built with `--debug-memory`, prints the allocation balance.
 
 ## Configuration is a class
 

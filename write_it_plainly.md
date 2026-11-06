@@ -77,15 +77,6 @@ picks, every lookup answers what yours would.
 This is why you should not shape a class for speed. Group fields by what they mean; the compiler groups them by
 how they are used.
 
-## Learning from a test run
-
-Some choices depend on how a program is really used: how long its lists grow, which branch is taken, which keys a
-dictionary sees. Where the code alone does not settle it, you can run the program once in a profiling build on
-real work. It writes down what it saw, and the next build reads that and picks the forms that fit. Every form it
-can pick is one the compiler has already proven gives the same result, so a profile from another day, another
-machine or no profile at all changes how fast the program runs, never what it does. The shipped program carries
-none of the recording.
-
 ## No runtime, so it runs anywhere
 
 All of that happens while compiling. Nothing ships beside your program to do it while it runs: no scheduler, no
@@ -120,10 +111,11 @@ func step() {
   ([compiler.md](compiler.md#read-what-was-not-optimised)). A fallback is the plain form, never a wrong answer;
   the report names what stopped the proof, so you can change that one thing.
 
-Use what the standard library already has. Timing a loop with the clock where `Benchmark` exists, or adding to
-`Matrix4` what `Matrix4` already does, is an error that names the library form: the compiler learns each of these
-mistakes as it sees them made, and a program written the library's way is one the compiler can make fast with
-confidence.
+Use what the standard library already has. Adding to `Matrix4` a function that rewrites a matrix from two matrices,
+which the library's `*` already answers, is an error that names the library form to write
+(`target = left * right`). The compiler learns each of these mistakes as it sees them made, so the list is short, and
+a piece of code that only looks like one of them is never refused. A program written the library's way is one the
+compiler can make fast with confidence.
 
 The `Memory` classes are documented in [Memory](memory.md). They exist for the standard library and for code
 that measures the compiler against a hand-written form. A plain program does not need them, and should not reach for them to go faster: if the plain

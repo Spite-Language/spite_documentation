@@ -37,9 +37,10 @@ system's file in a class that each system's folder reopens, as the standard libr
 - **Only what is called is bound.** The symbols a program calls are looked up once, when the library opens, so
   every later call is one indirect call. A symbol named only by code the program never reaches is not looked up
   at all ([optimizations.md](optimizations.md#tree-shaking)), except in an inspectable build
-  (`--development`, `--repl`, `--repl-port`, `--hot-reload`), which keeps everything. A missing library or a
-  missing symbol stops the program at that point, naming the file, or the symbol and the Spite function that
-  wanted it.
+  (`--development`, `--repl`, `--repl-port`, `--hot-reload`), which keeps everything. A missing library, or a symbol
+  the library does not export that some reachable code calls, stops the program the moment the library opens,
+  before any call of it has run, naming the file, or the symbol and the Spite function that wanted it. So a typo in
+  a symbol name is found when the class holding the library is first made, not on a rarely taken path.
 - **A foreign call goes through the attribute or variable holding the library**, so the compiler knows which
   table binds it.
 
@@ -61,7 +62,7 @@ Spite name becomes the C one:
 With `'identity'` a name may be written exactly as C spells it, as in `kernel.GetFileAttributesA(path)`, which is
 what the standard library does where Win32's own abbreviations follow no rule. The words of the linter's table
 that Win32 spells out in full (`count`, `buffer`, `window`, `size`, the second table in
-[Style](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations)) are not read backwards, so
+[Style](style.md#names)) are not read backwards, so
 `set_cursor_position` is still `SetCursorPos` but `get_tick_count` stays `GetTickCount`.
 
 ## What crosses
@@ -87,13 +88,15 @@ number-only `type`, whose own memory C writes and whose values come back; an add
 `Long` and handed back to C.
 
 With a header as the third argument, a snake_case read is a constant: `user32.mouseeventf_leftdown` is
-`MOUSEEVENTF_LEFTDOWN`, an `Integer`. Under the `'windows'` rule the compiler also checks that a `type` passed as a
-struct has the size of the header's struct of the derived name (`PointPair` against `POINT_PAIR`), so a missing
-padding field fails the build at the Spite line. A function that wants the struct's size, as `SendInput` does, is
-given `PointPair.size`: the bytes of the struct the call passes, a `Long` the compiler knows while it compiles. The
-reflection members every value has (`.class`,
-`.attributes`, `.functions`) and `DynamicLibrary`'s own members (`file_name`, `handle`) are never read
-as foreign symbols ([what a member of a library means](https://github.com/Spite-Language/spite_spec/blob/master/specs/foreign_libraries.md#what-a-member-of-a-library-means)).
+`MOUSEEVENTF_LEFTDOWN`, an `Integer`. A constant has to come from a header that is a file the compiler can read, named
+by its path from the folder it runs in; a name like `"stdlib.h"` is enough to call functions through the system's
+prototypes, but reading a constant from it is an error that says so. A function that wants a struct's size, as
+`SendInput` does, is given `PointPair.size`: the bytes of the struct the call passes, a `Long` the compiler knows
+while it compiles. The compiler does not compare that size with the header's struct, and C's field names are not
+matched to yours: the fields of a `type` are laid out in the order you declare them, so the layout, padding
+included, is yours to get right. The reflection members every value has (`.class`, `.attributes`, `.functions`) and
+`DynamicLibrary`'s own members (`file_name`, `handle`) are never read as foreign symbols, so a `List<DynamicLibrary>`
+can still `find_by_file_name` and `sort_by_file_name`.
 
 ### Argument widths
 
@@ -101,7 +104,8 @@ as foreign symbols ([what a member of a library means](https://github.com/Spite-
 number of arguments is checked, and each argument is converted to its parameter's type the way C converts one --
 an `Integer` literal where C wants a 64-bit `VkDeviceSize`, a `Double` where it wants a `float`. A `Long` handle goes
 where C wants a pointer, since Spite has no pointer type; that integer-to-pointer conversion is the one C
-complaint the call silences. A C function that returns `void` is called the same way, and its call reads as `0`.
+complaint the call silences. A C function that returns `void` is called the same way, and its call is a statement:
+a `void` function has no answer, so do not read one.
 
 **Without a header**, the compiler knows only the Spite types, so it passes what the platform's calling convention
 passes anyway:
@@ -119,9 +123,6 @@ stack slot, and a C function reads the low bits of the width it declared, so a l
 parameter as a clean zero and a `-1` reaches an `int64_t` one as -1. What a missing header cannot fix: a `Double`
 where C wants a `float` (write a `Float`), and on macOS for ARM, integer arguments after the eighth, which Apple
 passes on the stack at their own width; name the header there.
-
-`conformance/stage6/foreign_library` calls a library of every kind above, built from its own `fixture.c`, with and
-without a header.
 
 ## Calling back into Spite
 

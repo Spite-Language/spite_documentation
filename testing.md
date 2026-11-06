@@ -1,8 +1,8 @@
 # Testing
 
 A test is a function that crashes. Its name is `test` or starts with `test_`, it takes nothing, and `crash` is the
-assertion: when a test is wrong, it halts with the condition, the values of its operands and the file and line
-([failure.md](failure.md#what-a-crash-reports)), which is everything needed to fix it. There is no `expect`, no
+assertion: when a test is wrong, it halts with the file and line and the value of every part of its condition
+(`pieces.count()=3`, [failure.md](failure.md#what-a-crash-reports)), which is everything needed to fix it. There is no `expect`, no
 matcher and nothing to register.
 
 ```gdscript
@@ -20,7 +20,10 @@ func test_append_and_prepend_keep_order() {
 
 A project keeps one entry point, and its tests are a program of their own beside it that `load`s the project. The
 tests sit in classes of a namespace (a folder), and the entry runs them with the library's `Test` class:
-`Test(namespace)` takes the namespace and `run()` runs every test in it.
+`Test(namespace)` takes the namespace and `run()` runs every test in it. A folder's namespace is named alone
+(`Test(Checks)`) or by its dotted path (`Test(Shop.Tools)`, which runs only what is in `Shop.Tools` and below). When
+the tests load a project, the project's own entry class is never constructed, so loading a program to test it does
+not run it.
 
 ```gdscript title=test_package/checks/text_tests.spite
 func test_trim_removes_the_spaces_around_text() {
@@ -95,8 +98,10 @@ pass Bank.AccountTests.test_starts_from_its_own_setup
 
 `run()` runs each test in a run of its own: it starts the same program again with the setting `SPITE_TEST` naming
 one test (`Bank.AccountTests.test_withdraws`), and that run builds the class and calls only that test. So no test
-sees what another left behind, and a failing test does not stop the others. Under each test's line comes whatever
-its run printed, indented. When every test passes, the program exits with status 0; when any fails, the last line
+sees what another left behind, and a failing test does not stop the others: a singleton one test changed is fresh in
+the next. Under each test's line comes whatever its run printed, to the output and the error stream alike, trimmed,
+with the empty lines left out, and indented by four spaces. A test takes no arguments: one that declares a parameter
+fails with an error saying the argument is unfilled, and a value a test returns is dropped. When every test passes, the program exits with status 0; when any fails, the last line
 counts it and the program exits with status 1.
 
 **When a test fails**, its `crash` halts its own run, and the report it writes is shown under its line. Break

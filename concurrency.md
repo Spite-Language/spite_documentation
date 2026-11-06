@@ -21,8 +21,7 @@ else to run its work, because nothing else exists to ask.
 The third is the person choosing. Which calls are independent is a fact about what each one reads and writes, and
 the compiler reads every function a call reaches; a person guesses, and a guess that is wrong is a race. So there
 is no form to ask for threads or for waiting work: `Parallel(...)` and `Concurrent(...)` are not part of Spite, and
-writing either is a compile error that says to call the function itself
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#what-runs-at-once)).
+writing either is a compile error that says to call the function itself.
 
 Whatever the compiler runs at once, the program prints what running it in order prints. Where it cannot yet prove
 work independent, the work simply runs in order.
@@ -59,8 +58,8 @@ volume=7 ada=12
 
 The two reads above ran at once. The rule is deliberately narrow: only reads, only side by side, and only when
 the name read into is not assigned again later, so starting them early cannot change what the program sees. A
-read followed by other work waits where it is written. The exact conditions are in
-[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#what-runs-at-once) ("Reads in a row overlap").
+read followed by other work waits where it is written, and so does a name that is assigned again later, so starting
+a read early never changes what the program sees.
 
 ### Calls in a row run at once
 
@@ -86,15 +85,10 @@ the same state as another call. A call that does little (a few additions, no loo
 thread, since starting it there would cost more than running it. Two objects of one class count as one, unless
 each belongs to its owner: two `Counter`s passed around and counted through any name share the attribute `total`
 as far as this rule sees, so they stay in order, while a `Physics` and an `Audio` that each keep their own
-`var meter = Meter()`, never assigned anything else, overlap, meters and all. The exact conditions are in
-[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#what-runs-at-once) ("Calls in a row run at once"), and
+`var meter = Meter()`, never assigned anything else, overlap, meters and all. A call only takes
+part when it takes and answers numbers, is quiet (it holds no object, text or list, makes no foreign call, is not
+recursive and prints nothing) and weighs at least a million simple steps.
 [optimizations.md](optimizations.md#calls-in-a-row-that-only-compute-a-number-run-at-once) shows one.
-
-A loop over a list of different objects is the same row, built while the program runs: `systems.each_update()`
-over a `List<System>` holding a `Physics`, an `Animation` and an `Audio` runs the three at once when their classes
-share nothing written, and in order otherwise. The compiler decides which classes may run together while compiling;
-the loop only looks at which objects the list holds when it starts. A list holding two objects of one class runs
-in order.
 
 ### `each_` on a long list runs in bands
 
@@ -113,8 +107,8 @@ the call that ran apart.
 ### No lock to write
 
 Work the compiler runs at once never shares anything one of them writes, so it needs no lock, and there is no
-lock, thread-local or atomic class for a program to name; naming anything in `Spite.Internal` is a compile error
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+lock, thread-local, atomic or scheduler class for a program to name (`Lock`, `Atomic<Integer>`, `ThreadLocal<Integer>`
+and `Scheduler` are unknown, as any misspelt class is); naming anything in `Spite.Internal` is a compile error.
 A program that starts a thread counts references with atomic operations, and every other program keeps the plain,
 cheaper counts ([optimizations.md](optimizations.md#plain-counts-where-no-other-thread-counts-a-class)).
 
@@ -212,10 +206,15 @@ seen the text on its first test. Here it returns at its sleep, and the loop draw
 - **No write is lost.** The call and the frame now take turns at their waits, so a value one of them read before
   a wait may be out of date after it. When either side would write such a value back (`var seen = count`, a wait,
   then `count = seen + 1`), the call is not started: it waits where it is written, as it always did, and
-  `--optimization-report` lists it under "Waits that hold the frame". Read the value again after the wait and the
-  call is started.
-
-The exact conditions are in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame).
+  `--optimization-report` lists it under "Waits that hold the frame". The value can be a number, a `Boolean`, an
+  enum value or text; a parameter read before the wait and stored after it counts, so does one statement that
+  reads an attribute, waits and writes it (`total = total + waited()`), and so does handing such a value to a change
+  of a list or dictionary. Writing into an object the call made itself is no hazard, since the frame cannot see
+  it. Read the value again after the wait and the call is started.
+- **Which calls are started.** The receiver is an attribute of the frame loop's class, a path of attributes from
+  it, or an item of a list attribute read by a name or a number, and its class is an ordinary class of the program,
+  not a singleton. A call with arguments, or whose answer is used, or made on the loop's own object, waits where it
+  is written. The frame loop may reach `program.sleep` through any depth of calls to functions of its own class.
 
 ## The REPL answers at the waits
 
