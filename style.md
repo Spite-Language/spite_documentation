@@ -91,6 +91,24 @@ The same goes for anything else with exactly one fix (D1767): the compiler fixes
 `fixed:` line for it, so you read what changed. A mistake whose fix needs a choice stays an error, and a file of
 the standard library or of a package is never rewritten, so there it stays the error.
 
+What the compiler fixes for you, and what it leaves as an error:
+
+- **Dead checks.** A `fallback`, `crash` or `if` on a value that is already narrowed or proven present is removed (an
+  `if` becomes the code it runs, an `if not` its `else`); an `if` or `while` decided while compiling goes, or
+  becomes its body; a `fallback` that is always false goes with the code after it. A `while` that is always true,
+  an `if` that holds only part of a class test and a check that something undid stay errors, and so does a write or
+  a call that may undo a proof, which keeps the check and answers at run time.
+- **Shapes with one short form.** A last `if` that only checks a value becomes `fallback` (except in a constructor,
+  where it is an error), an `if` that only returns the default becomes `fallback`, and an `else if` that only returns
+  is hoisted to a `fallback` above its `if` when one choice fits. A copy made only to narrow goes and its uses name
+  what it copied. Statements after a `return` go.
+- **Unused things with no effect.** An unread local or attribute, or a `load` nothing names, whose value and writes do
+  nothing is removed with every write; one a call makes or writes stays an error.
+- **Names.** A local or parameter with one right spelling is renamed, and a keyword one letter off is corrected.
+- **Placement.** A declaration out of order is moved with the comment lines above it, a comment in the wrong place
+  moves to the top of the file, and a `union` or `type` two classes of one root declare alike moves to the entry
+  class of the lowest namespace, with every use rewritten.
+
 ## Names
 
 A name is never rewritten for you, because renaming a symbol can change what a program means to someone
@@ -101,15 +119,20 @@ searching for the old name. These are errors, each with the fix:
   types.
 - **Never a single letter**, except the axis names `x`, `y`, `z` and `w`, which are the names of what they
   hold and abbreviate nothing: `position.x`, `var x = 0.0`.
-- **Never an abbreviation.** Every word of a name is checked against a list (`msg`, `idx`, `val`, `cfg`, `tmp`,
-  `str`, `len`, `max`, `min`, `init`, `env`, `dir`, `doc`, ...; the full table is in
-  [Naming and abbreviations](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations)),
-  and the error spells the name out. `id` is allowed.
-- **Any word another language reserves is yours too**: `unsigned`, `static`, `stdout` or `near` are ordinary names.
+- **Never an abbreviation.** Every `_`-separated word of a name is checked against a list (`msg`, `idx`, `val`, `cfg`,
+  `tmp`, `str`, `len`, `max`, `min`, `init`, `env`, `dir`, `doc`, `btn`, `cnt`, `addr`, ...), and the error or the fix
+  spells every matching word out (`max_len` is `maximum_length`). The plural of an abbreviation is the same (`msgs`,
+  `idxs`, `bufs`), and so are the language's own words used as names: `int`, `char`, `bool`, `fn`. `id` is allowed.
+- **Any word another language reserves is yours too**: `register`, `short`, `default`, `unsigned`, `static`, `stdout` or
+  `near` are ordinary names for a variable, attribute, parameter or function, and the compiler keeps your spelling in
+  reflection, `--final-classes`, crash traces and errors. `int`, `char`, `bool`, `min` and `max` are still
+  abbreviations, because they are abbreviations here.
 - **One underscore between words**, and at most one in front to make a name private: `hit__count`, `__strike`
   and `strike_` are errors. That is what keeps the names the compiler makes for a class (how it allocates, counts
-  and releases one, under names with `___` in them) out of the way of yours, so `allocate`, `make`, `release`
-  or `class_of` are ordinary function names.
+  and releases one, under names with `___` in them) out of the way of yours, so `allocate`, `make`, `release`,
+  `destroy`, `discard`, `default`, `perform`, `hot`, `slot` or `waiting` are ordinary names. The exceptions are the
+  few words reflection answers for every object: a function or attribute cannot be named `attributes`, `functions`,
+  `instances`, `class` or `memory`.
 - **Never a function's name.** A local, parameter or attribute named like a function of its class is an error,
   since the function's name is already a value ([functions_and_operators.md](functions_and_operators.md#functions-are-values)):
   `var stem = file_stem(path)`, not `var file_stem = file_stem(path)`.
@@ -134,8 +157,15 @@ func LintError() {
 
 A local or a parameter with one right spelling is renamed in its function instead, and the compiler says so: `itemCount` to
 `item_count`, `total__price` to `total_price`, `item_cnt` to `item_count` (`fixed: 'item_cnt' abbreviated, and Spite has no abbreviations
-outside its own keywords; renamed it 'item_count'`). A word that could mean several things stays an error, and you write the one
-you mean: `'temp_file' abbreviates 'temp', which could mean 'temporary' or 'temperature'`. A keyword one letter off at the start of a line is corrected the same way: `retrun` to `return`.
+outside its own keywords; renamed it 'item_count'`). A name that is already taken stays an error, and so does one that would
+become a word of the language. A word that could mean several things stays an error, and you write the one
+you mean: `'temp_file' abbreviates 'temp', which could mean 'temporary' or 'temperature'`. The words with several meanings
+are `temp`, `res`, `dir`, `init`, `ext`, `desc`, `pos`, `cur`, `curr`, `auth`, `proc`, `ver`, `sep`, `conf`, `req`, `prev`,
+`val`, `doc`, `spec`, `calc`, `arr`, `cb`, `int`, `opt`, `lst` and `fmt`. A keyword one letter off at the start of a line is
+corrected the same way: `retrun` to `return`.
+
+The old spellings of the number types are errors that name the new one: `Int` is `Integer`, `Bool` is `Boolean`,
+`UnsignedInt` is `UnsignedInteger`.
 
 ```gdscript title=single_letter/single_letter.spite entry error
 var console = Console()
@@ -167,7 +197,7 @@ assigned and never read is unused too, and there is no spelling that silences it
 is work the program did for nothing. A parameter is the one exception, because a signature can need a parameter
 its body ignores: name it `_name` to say so. A `_name` that *is* read is renamed `name` in the file, since the prefix says it is
 not, and a parameter whose signature is dictated from outside (an operator function's, for one) needs no `_` at
-all ([the exemptions](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#unused-is-an-error)). Everywhere else a leading `_` means private to its
+all (see the exemptions below). Everywhere else a leading `_` means private to its
 class ([reflection.md](reflection.md#reflection-is-read-only)).
 
 ```gdscript title=unused_error/unused_error.spite entry error
@@ -207,7 +237,7 @@ An attribute nothing reads is an error the same way, and goes from the file the 
 exception, since only its own class can read it. Writing an attribute is not reading it, so one that is only
 assigned is still unused. A read is anything that takes the attribute's value: its name in the class's own
 functions, `thing.world` from another class, `x.attributes[attribute]` in a template or a walk (which is how the JSON
-and binary writers and `to_debug()` read), and the rest [in the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#unused-is-an-error). A walk that only looks
+and binary writers and `to_debug()` read), and a union's members or a `type` a class is admitted to. A walk that only looks
 at `attribute.name` or `attribute.class` reads the attribute's description, not the attribute, so an attribute
 kept only as a marker for such a walk is an error:
 
@@ -238,9 +268,8 @@ the attribute 'world' is never read: remove it
 **A package's public attributes are judged where their readers are.** A public attribute is data a class offers
 to code it cannot see, so a folder the program `load`s is not held to what this one program reads of it: a
 `ui` package's `color` that only a `render` package reads is fine in a program that loads `ui` without `render`.
-The check covers the program's own folder, the standard library (always compiled whole, so its reads are the
-same in every program), and every private attribute wherever it lives, since its own class is its only reader
-. A singleton binding is checked everywhere, loaded
+The check covers the program's own folder and the standard library (always compiled whole, so its reads are the
+same in every program). A singleton binding is checked everywhere, loaded
 packages included: `var world = World()` offers nothing another class could not bind itself, so an unread
 one is the error above wherever it is.
 
@@ -254,11 +283,21 @@ reads counts as used; since such a body is not compiled, its `x.name` counts for
 so does one in a function a codegen or `Build` test cuts a branch from. A few attributes are never checked, because the compiler reads them itself: a number
 class's or `String`'s storage, and `Build` and `Environment` settings.
 
+**A parameter that needs no `_`** is one whose signature is dictated from outside: the parameter of an operator function
+(`equals(other)`) and the single parameter of a setter that names a real attribute (`set_age(value)`). A
+two-parameter `set_age` follows the ordinary rule. Every other unread parameter is `the parameter 'amount' is never
+read: remove it, or name it '_amount' if the signature needs it`.
+
+**The check waits for the rest.** The unread-attribute check runs only when the program has no other error, so a
+statement that fails and was the only reader of an attribute gives you its own error first; the same goes for a local
+declared by a statement that failed.
+
 ## Comments are links
 
 A comment is one line that holds nothing but a link to a heading in a markdown file, and it sits right above a
 function or at the top of the file, as the class's heading. The compiler moves one written anywhere else between
-declarations to the top of the file and says so; one inside a body is an error. Prose above a two-line function that explains the compiler instead of the code is the habit this
+declarations (above an attribute, an `enum` or a `type`) to the top of the file and says so; one inside a function is an
+error. Prose above a two-line function that explains the compiler instead of the code is the habit this
 rule ends, and a note that is needed becomes a section somewhere a reader can open:
 
 ```gdscript
@@ -267,7 +306,9 @@ func Game() {
 ```
 
 The path is resolved from the folder of the file the comment is in, as `load` resolves its folder, and the compiler
-checks that the file exists and has that heading, so a link cannot rot silently. Prose in a comment, `//` and `/* */` are errors, and each one asks
+checks that the file exists and has that heading, so a link cannot rot silently. A heading is found the way GitHub
+makes its anchor: lowercase, punctuation dropped, spaces turned into hyphens (`What's new in "version" 2?` is
+`whats-new-in-version-2`). Prose in a comment, `//` and `/* */` are errors, and each one asks
 whether the note is needed at all: if a reader could work it out from the code, delete it; if it is lasting
 knowledge, write the section and link to it; if it warns against a change, a test or a compile error pushes
 harder than prose. A line inside a function that seems to need explaining becomes a named function instead:
@@ -277,8 +318,7 @@ The one other link is the one `--final-classes` writes: in the folder it prints,
 marked with a comment linking the `.spite` file that supplied it (`# ../../game/hero.spite`), with no anchor, so
 the printed classes name where every declaration came from and still compile. Only a file under a folder
 `--final-classes` wrote (it holds a `.final-classes` file) may link a `.spite` file; anywhere else it is `this
-comment links to 'helper.spite', a .spite file, and only a file '--final-classes' wrote may link one`
-(`diagnostics/spite_link_outside_final`).
+comment links to 'helper.spite', a .spite file, and only a file '--final-classes' wrote may link one`.
 
 ```gdscript title=prose_comment_error/prose_comment_error.spite entry error
 var console = Console()
@@ -311,8 +351,8 @@ func days_of(cycles: Integer, remaining: Integer): Integer {
 The rule starts narrow and grows: today it covers a whole number of three or more digits that is neither a power of
 ten nor a power of two, and a decimal that is a preset of the library (`3.14159` is refused, naming `Float.Pi()`).
 An attribute's default is where the number may stand, and so is the body of a preset. The name costs nothing: an
-attribute nothing writes is read as its default where it is read, a constant as the number was. The rule
-is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#named-numbers).
+attribute nothing writes is read as its default where it is read, a constant as the number was
+([values_and_types.md](values_and_types.md#named-numbers)).
 
 ## The file content budget
 
@@ -344,7 +384,7 @@ Each of the exceptions is there for a reason:
 
 It is an error and not something the formatter rewrites, because where to split a file is a design choice the
 compiler cannot make. Get back within the budget by cleaning up, not by cutting the file in two at the number: group
-state into an object, name the concerns, and give each one a file of its own. The rule is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#the-file-content-budget).
+state into an object, name the concerns, and give each one a file of its own.
 
 ## A function body holds no empty lines
 
@@ -403,8 +443,11 @@ spite
 ```
 
 A method called on a call's result (`source.split(" ").count()`) and the holes of a text
-(`"{names.count()} names"`) are not arguments. Every case is
-[in the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#one-call-per-line-and-nothing-said-twice).
+(`"{names.count()} names"`) are not arguments, and neither is a call in an `if` or `while` condition, a `return` or an
+assignment. Anything inside an argument counts: `counts.append(count_words(text) + 1)` and
+`print(names[index_of(name)])` each put a call in an argument. A call in a hole that is itself an argument of another
+call (`"{shout(count_words(text))} words"`) is an error. A method called on a call's result and then passed on is an
+error for the call it is passed to.
 
 **A constructor call is not an argument either.** An object is made on a line of its own and passed by
 name, however short the line:
@@ -432,12 +475,18 @@ func ConstructorArgumentError() {
 ```
 
 A constructor is a call whose last name starts with an upper-case letter, so this covers a constructor inside
-another constructor's arguments (`Label(Font())`) and a collection made for a call
-(`buffers.set(List<String>())`). An object made to be read at once is not an argument: `JsonWriter<Order>().write(order)` is
+another constructor's arguments (`Label(Font())`), a generic or dotted constructor (`List<String>()`,
+`Game.Player()`) and a collection made for a call (`buffers.set(List<String>())`), in every place an argument list
+appears: a `var`, an assignment, a call standing alone, a `return`, a `fallback` or `crash`, an `if`, `while` or
+`switch`, an attribute's default and a text's hole. An object made to be read at once is not an argument: `JsonWriter<Order>().write(order)` is
 fine, and so is `var label = Label("new")` itself.
 
 **An `if` and its `else` do not repeat the same work.** When both branches compute the same call, it is
-computed once before the `if`:
+computed once before the `if`. It stays narrow: only a call with at least one argument counts (a constructor does not),
+that prints identically in every branch of an `if`/`else` or of a whole `else if` chain ending in `else`, at the start
+of the branches. A call that stands alone as a statement, differing arguments, a call that mentions a name the branch
+declared, assigned or asserted before it, anything after the branch's first nested `if`, `while` or `switch`, and the
+right side of `and` or `or` are not reported.
 
 ```gdscript title=repeated_branch_error/repeated_branch_error.spite entry error
 var console = Console()
@@ -478,8 +527,9 @@ func ComputedReceiverError() {
 '(first + second).maximum(...)' calls a function on a value computed in place: name it first ('var named = first + second') and call 'named.maximum(...)', since only a name calls a function
 ```
 
-Write `var total = first + second`, then `total.maximum(5)`. A negative number written out (`(-2.5).floor()`) is a
-literal, not a computation, and may be called on.
+Write `var total = first + second`, then `total.maximum(5)`. The same holds for `(not done).to_string()` and
+`(-offset).absolute()`. A negative number written out (`(-2.5).floor()`) is a literal, not a computation, and may be
+called on, and so may a text with holes.
 
 ## The short form is the only form
 

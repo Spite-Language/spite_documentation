@@ -548,122 +548,34 @@ watcher has swapped the save in.
 | You change | What happens |
 |---|---|
 | a function's body | the next call runs the new body; a call already running finishes the old one |
-| a new function on an existing class | the new code calls it, the REPL's `functions` lists it and the prompt can call it |
-| a function's parameters or return type | it becomes a new function: the rebuilt class and every class that calls it are rebuilt too |
-| a function you deleted | whatever still holds it (a function value, the REPL) keeps its last code; the answer says `removed Monster.roar` |
+| a new function on an existing class | the new code calls it, and the REPL's `functions` lists it and the prompt can call it |
+| a function you deleted | whatever still holds it (a function value, the REPL) keeps its last code; the answer says `removed Greeter.old` |
 | an attribute's default value | instances made after the reload get the new default |
-| a class's attributes: added, removed, renamed or retyped | every live object of the class moves to the new attributes ([below](#changing-a-classs-attributes)); the answer says what each class's objects kept |
-| an enum's values: added, removed or reordered | the whole program is compiled again, and every value a running object holds keeps its meaning; a `switch` that meets a value the reload removed halts naming it |
+| an enum: a value added after the others | taken; the objects that hold the enum keep their values |
+| an enum: a value inserted before the others, removed or reordered | refused: `the reload changes the values of Gauge.Mood other than adding new ones last ... start the program again, or add the new values after the others` |
+| a class's attributes: added, removed, renamed or retyped | refused: `the reload changes the attributes of Counter (total is new), and the objects the program holds keep the attributes they were made with: start the program again to take the new attributes` |
 | a file that does not compile | refused with the compiler's error, and the program keeps all of its code |
 | a function of a class the program reopens, a class of the standard library or a number (`func doubled(): Integer` in `integer.spite`) | the whole program is compiled again and every function whose code changed is swapped in, the standard library's and the compiler's helpers included |
-| `environment.spite`: a setting added, removed or given a new default | the whole program is compiled again, `Environment` moves to its new attributes, and every setting is read again the way it is when the program starts: from the command line it was started with, the environment, or the new default |
-| `build.spite`: a field added, removed or given a new default | the whole program is compiled again, and the program's code sees the new value: in a `--hot-reload` build a `Build` field the program declares is read while it runs, and the standard library's reads of its own fields (the compiler's options) stay constants |
-| a file deleted | the program is compiled without it, as for any other change |
-| a function, attribute or constructor that a later `load` reopens ([monkey patching](packages.md#monkey-patching-mods)) | the reload keeps load order, as a fresh start would: an edit to the earlier declaration changes nothing while the later one replaces it, an edit to the later one goes live, deleting the later one (or its file) brings the earlier one back, and a replacement a later load gains goes live; a `Build` field the program's own `build.spite` declares stays the program's ([Build options](compiler.md#build-options)). When nothing the program runs changed, the answer says `no code the program runs changed, so nothing was rebuilt` |
-| a new class | its functions are compiled into the new code, and `classes` and `describe` see it: the REPL's tables of classes, singletons and enums are swapped in with the code |
+| nothing the program runs | `unchanged`, or, when a file changed but no code the program runs did, `no code the program runs changed, so nothing was rebuilt` |
 
 A refused reload leaves the program exactly as it was, so a save that caught a file half-written is harmless: the
 next save reloads.
 
 ### Changing a class's attributes
 
-Add an attribute to a class, remove one, rename one or change its type, and save: the reload moves every object of
-the class the running program holds to the new attributes, and the program carries on with the same objects: the
-same identity, the same references to them. An attribute that
-kept its name and its type keeps its value. A new attribute, or one whose type changed, holds its default, as it
-would in an object made now. A removed attribute is released, once every object has moved. The answer names every
-class it moved and what its objects kept, so nothing changes silently.
-
-```gdscript title=live_party/hero.spite
-var name = ""
-var level = 1
-
-func Hero(starting_name: String) {
-    name = starting_name
-}
-
-func describe(): String {
-    return "{name} at level {level}"
-}
-```
-```gdscript title=live_party/step.spite
-var distance = 0.0
-
-func Step(new_distance: Float) {
-    distance = new_distance
-}
-```
-```gdscript title=live_party/live_party.spite entry
-var console = Console()
-var hero = Hero("Ann")
-var steps = List<Step>()
-
-func LiveParty() {
-    load "../spite_standard_library/windows"
-    var first = Step(1.5)
-    steps.append(first)
-    var second = Step(2.5)
-    steps.append(second)
-    var described = describe()
-    console.print(described)
-}
-
-func describe(): String {
-    return "{hero.describe()}, walked {walked()}"
-}
-
-func walked(): Float {
-    var total = 0.0
-    var index = 0
-    while index < steps.count() {
-        total = total + steps[index].distance
-        index = index + 1
-    }
-    return total
-}
-```
-```output
-Ann at level 1, walked 4
-```
-
-This session runs against a copy of the program, built with `--hot-reload --repl-port`. The `Step`s the list holds
-move too, wherever the compiler chose to keep them:
+A reload swaps functions. It does not move the objects the running program holds to a new layout, so a save that adds,
+removes, renames or retypes an attribute of a class is refused as a whole, the program keeps all of its code, and the
+answer names the class and the attributes:
 
 ```text
-$ spite --connect=4000 --command="program.hero.level = 7"
-{"ok":true,"value":"7","type":"Integer"}
-
-# hero.spite: a new attribute, 'var health = 100', and describe() says "{name} at level {level} with {health}"
-# step.spite: a new attribute, 'var pace = 2.0', before 'distance'
-$ spite --connect=4000 --command="reload"
-{"ok":true,"value":"rebuilt Hero, Step, ...\nmoved every Hero to its new attributes: health is new and holds its default\nmoved every Step to its new attributes: pace is new and holds its default","type":""}
-
-$ spite --connect=4000 --command="describe()"
-{"ok":true,"value":"Ann at level 7 with 100, walked 4","type":"String"}
+spite> reload
+error: the reload was refused, and the program keeps all of its code: the reload changes the attributes of Counter (total is new), and the objects the program holds keep the attributes they were made with: start the program again to take the new attributes
 ```
 
-**A renamed attribute keeps its value** through a map given at the prompt, never in the program's code. A save
-where, in one class, an attribute is gone while another is new could be a rename or a removal and an addition,
-and a reload never guesses: it holds the change, swaps in nothing, and says what it holds. Rename `level` to
-`rank` in `hero.spite` and save:
-
-```text
-$ spite --connect=4000 --command="wait_reload"
-{"ok":false,"error":"...the reload of Hero is held, since it would lose data: level is gone and rank is new, ... reload {Hero.attributes["level"]: \"rank\"}; to let what level holds be released: reload {}"}
-
-$ spite --connect=4000 --command="reload {Hero.attributes["level"]: \"rank\"}"
-{"ok":true,"value":"rebuilt Hero, ...\nmoved every Hero to its new attributes: level is now rank","type":""}
-```
-
-The map pairs an attribute of the running class with the name of the new one, the same shape as a serializer's
-map of names ([json.md](json.md#a-key-that-is-not-an-attributes-name)), and applies to that one reload. `rank`
-holds the 7 `level` held. `reload {}` lets the old values go instead. An attribute of the map that the running
-class lacks, of another type than the new one, or one that the reload does not rename is refused by name.
-
-What it costs: a change to a class's attributes compiles the whole program, since every class that reads them is
-compiled again: about 40 seconds for a large game's server, against a few for a change to function bodies alone.
-The saves after it are fast again: a reload that compiled the whole program becomes what the next one is compared
-with ([How it works](#how-it-works)).
+Start the program again to take the new attributes. An attribute's *default value* is not a layout change: instances
+made after the reload get the new default, and the ones already made keep what they hold. An enum is the same: a value
+added after the others is taken, and any other change to an enum's values is refused, since every value the program
+holds keeps the number it was made with.
 
 ### Knowing what a reload rebuilt
 
@@ -705,7 +617,6 @@ worked out while compiling, so the check folds away with the branch it guards.
   re-point: the program's own, the standard library's, and the helpers the compiler writes. The function the rest
   of the code calls is a one-line forwarder to its slot. A normal build is untouched: direct calls, and tree
   shaking. The slot costs about a nanosecond per call, one indirect call the C compiler cannot inline
-  ([measured](https://github.com/Spite-Language/spite_spec/blob/master/specs/repl.md#live-reload-in-detail)),
   and only in a `--hot-reload` build.
 - **Only what changed is compiled again.** The build writes two files beside the executable: `game.reload_host`,
   what the running program holds (every function with its C prototype, its classes and their layouts, and the
@@ -725,7 +636,7 @@ worked out while compiling, so the check folds away with the branch it guards.
   which attributes something reads, the call effects that decide whether a value must be counted, how a
   dictionary is keyed, which functions the program made for a class (a setter, a template instance, a `to_debug`).
   The build records these in the manifest and a reload starts from them. When the changed code changes one of
-  them (or a parameter list, or the layout of a class), code in other classes compiled against the old one would
+  them (or a parameter list), code in other classes compiled against the old one would
   be stale, so the reload compiles the whole program instead, and says why on the compiler's error output
   (`spite: compiling the whole program, since outside HotCounter changed`). A whole compile compares every function
   it writes with the running program's, and every function whose C changed is swapped in, whatever class it
@@ -746,18 +657,6 @@ worked out while compiling, so the check folds away with the branch it guards.
   which swapping a library in writes, so a reload waits to compile until the library before it has been swapped in
   (or refused): the watcher and the prompt never compile against the code before a swap that is still on its way,
   and never read those files while a swap writes them.
-- **Every object of a program class can move.** In a `--hot-reload` build each object of the program's own classes
-  carries two hidden words after its header: where its attributes live when they have moved, and its place in a
-  list of the class's live objects, which each allocation adds to and each release takes from. Code reads an
-  attribute through `Monster___fields(object)`, which in the build is the object itself. When a reload changes a
-  class's attributes, the new code reads through a function instead (the moved attributes when there are some,
-  the object otherwise), and the reload lays each live object's attributes out anew in a block of their own and
-  points the object at it: the object stays where it was, so every reference to it (a local of a function
-  running now, a list, another object) still holds it. The functions that read a class's
-  attributes without being its own (its allocation, release and copy, the REPL's reflection, a union's dispatch,
-  a template of the standard library made for it, `List<Step>`) are called through slots too, so they move
-  with it. A reload moves nothing until it has installed every slot, and releases nothing a removed attribute held
-  until every object has moved. All of it is in a `--hot-reload` build only.
 - **The swap happens where the program waits**, or at the end of a pass of one of its
   loops. A call that waits, such as `console.read_line()`, a `File` read or write, or a socket's receive, is a
   place to swap just before and just after it, and `Program.sleep` swaps while it sleeps, so a program with no loop picks up a save before its next

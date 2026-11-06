@@ -26,8 +26,11 @@ spite --high-ir                     also write the high representation, .spite/b
 spite --low-ir                      the same for the low representation, .spite/build/<name>.low_ir.txt
 ```
 
-Every command and flag, with exactly what it does, is listed under [Command line](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#command-line). Flags mix
-freely, and the outputs combine: one compile can build the executable and write its final classes.
+Every flag is a `Build` field, listed under [Build options](#build-options). Flags mix
+freely, and the outputs combine: one compile can build the executable and write its final classes. `--optimized` is a
+release build (`Build.optimized` is true, and the program is compiled with optimisations), `--optimized=false` stays
+allowed and switches it off even where the program's `build.spite` says `true`, and a target is chosen with
+`--target-operating-system=linux`. There is no `--mode`, no `--output` and no `--format`: each is an unknown flag.
 
 How the compiler is built from source, and how it is put together, is in
 [spite_compiler](https://github.com/Spite-Language/spite_compiler)'s
@@ -50,7 +53,7 @@ Nothing on the command line is given by position: every value is a named setting
 The folder supplies the program's other classes, and the entry class's constructor takes no arguments: the
 program reads its command line through `Environment()` and what its build decided through `Build()`. A folder
 with no entry file named after it is an error naming the file it looked for
-([the texts](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program)). The
+(`error: 'game' holds no program: a program is a folder holding an entry file named after it, 'game/game.spite'`). The
 compiler compiles itself the same way, `cd spite_compiler` then `spite`, whose entry is
 `spite_compiler/spite_compiler.spite`.
 
@@ -63,8 +66,8 @@ The compiler follows the `load` lines of the program's entry file in order, then
 
 `spite` runs the program attached to the terminal: its output appears as it is printed, its standard input
 is yours, and the compiler exits with the program's exit code, so a script can run `spite` where it would
-run the executable. The program receives every flag that names a setting its `Environment` declares, in the
-order given; the compiler's own flags are not passed ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#flags-and-settings)).
+run the executable. The program is given no flag at all: it reads its settings from the environment and from the
+`.env` file of the folder, like any program run by hand ([programs.md](programs.md#run-time-settings-environment)).
 
 The program the compiler builds runs in the folder you ran it from, its own: a relative path the program opens
 (`File("save.txt")`, `Directory("levels")`, a cache folder) is relative to that folder, not to the compiler's
@@ -94,7 +97,8 @@ spite --check    # only check that it compiles
 
 A build never leaves an old executable behind. `spite` and `spite --build` first remove the executable
 an earlier build left at their path, so when the build fails, nothing is left there that still runs the old code:
-the executable at that path is always the one the last build made, or none.
+the executable at that path is always the one the last build made, or none. That holds when the program cannot be
+read too: a program with a text that never closes removes the old executable, and builds nothing.
 
 Whole-program steps (tree shaking, the constants `Build` folds, which templates are made) run on the complete
 program before any output is written, so every output describes the program that was built.
@@ -120,8 +124,10 @@ spite --build --executable-path=build/game.exe
 `.spite/git/` holds the checkouts of the repositories a program's `load`s pin to a commit
 ([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)).
 
-A folder the path names is created. `--executable-path` given with `--check`, which builds no executable, is an
-error ([the texts](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#outputs)), so a path never passes silently. Every `Build`
+A folder the path names is created for a final-classes folder and a report, but not for the executable: the folder of
+`--executable-path` has to exist. `--executable-path` given with `--check`, which builds no executable, is an
+error (`'--executable-path' says where the executable goes, and '--check' builds none: leave out --check to build it`),
+so a path never passes silently. Every `Build`
 field is a constant in the built program, the paths included.
 
 Beside every executable the compiler writes `<name>.functions`: one line per function of the code, with its start
@@ -210,7 +216,10 @@ type is an error naming the forms it takes, so typos never pass silently.
 each of the program's own files whose formatted text differs from what is on disk is rewritten, printing
 `formatted <path>`, and the program is read again, so what is compiled, and every line an error names, is the
 formatted file. Nothing turns this off, and a file the formatter refuses stops the compile: a program is never
-compiled from text that is not in the one style ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#formatting-before-compiling)).
+compiled from text that is not in the one style. A refused file is
+`<path>: error: the formatter refuses it, and a program compiles only once formatted: <reason>`, and the compiler
+exits with status 1. A file that does not lex or parse is reported by reading the program, before the formatter
+sees it. The files formatted are the program's folder with every folder below it, never the standard library.
 
 **A file edited during the compile is never overwritten.** Just before writing a formatted file, the compiler reads it
 again; if it no longer holds the text the compile read (another editor or agent changed it meanwhile), it is left
@@ -229,8 +238,9 @@ branch, a template exists only for the names called, and reflection only where i
 
 An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every generated
 function instead, every function of your classes compiled even when nothing calls it, so live reload has all of them to swap and the REPL can reach every internal, and the
-singletons that hold nothing, such as `Build`, are ordinary objects that `.instances` lists. Every other build
-is a production build ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#inspectable-and-production-builds)). Conditions on
+singletons that hold nothing, such as `Build`, are ordinary objects. A `false` form (`--development=false`) does not
+make a build inspectable, and `--optimized` together with a REPL flag is still an inspectable build. Every other
+build is a production build, where unused things are tree-shaken, down to the classes nothing reachable uses. Conditions on
 codegen values and `Build` fields fold in both: they are facts of the build, not values the running program could
 change. Which optimisation applies in which build is in [optimizations.md](optimizations.md).
 
@@ -343,14 +353,18 @@ checks kept.
 
 ## Errors and usage
 
-With no program, the compiler prints its usage text and exits unsuccessfully. A `.spite` file named instead of
-its folder, a folder with no entry file, an entry constructor that takes arguments, an entry class with a `generic` line, `--check` given with `--build` or
-`--executable-path`, a flag the compiler no longer has (`--run`, `--executable`), a flag with an underscore, a `--name=value` that names no field of `Build` or `Environment`, and a bare `--` are errors
-too, each naming the fix; their texts are [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#naming-a-program).
+A word given by position (`spite game`, `spite format`), a folder with no entry file, an entry constructor that takes
+arguments, an entry class with a `generic` line, `--check` given with `--build` or `--executable-path`, a flag
+the compiler no longer has (`--run`, `--executable`, `--tune-for-this-machine`, `--translation-units`), a flag given
+twice, a flag with an underscore, a `--name=value` that names no field of `Build` or `Environment`, and a bare `--`
+are errors, each naming the fix. The underscore one reads `'--player_name' is written '--player-name': flags and
+settings are kebab-case on the command line, and the field they set is 'player_name'`, and it is checked before
+anything is read. `--target-operating-system` is read from the flag alone: a `var target_operating_system` in
+`build.spite` is an error naming the flag.
 
-A program's own errors come first. When a package it loads is broken too (a game engine package halfway through a
-migration, say), its errors are listed after the program's, so they never hide the program's own; how many of each
-are listed is [in the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/compiler.md#how-many-errors-are-listed).
+An error is `<path>:<line>: error: <message> (in <Class>.<function>)`, with the function's name even when the error
+is in its signature, and `(in <Class>.)` for one among a class's attributes and types. The compiler stops at the
+first error it finds and prints it; fixes it made on the way are printed before it.
 
 ---
 
