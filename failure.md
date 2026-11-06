@@ -238,6 +238,8 @@ the 'if' and kept the code it runs". In a `while` condition it is an error with 
 
 A write through another object undoes a proof when it could break it: after `fallback shelf.item`, `alias.item = null` means `shelf.item` must be proven again, since `alias` may be `shelf`. `alias.item = other` leaves it proven, since whichever object it reached, the attribute still holds an item.
 
+Proving it again is a check like any other: `fallback`, `crash` or `if` on the same path after that line tests the value at run time and narrows it again. With nothing that undoes the proof between, the same check is a repeat, and the compiler removes it.
+
 A write to an earlier attribute of the path undoes the proof whatever it writes, since it changes which object is read: after `fallback rack.shelf.item`, `alias.shelf = empty` means `rack.shelf.item` must be proven again, and so does a call that may assign `shelf`.
 
 A write to an object made in the same function reaches nothing proven until that object has been handed on: stored, copied, passed, called a function on, or returned. Fill it first, hand it on after. `var fresh = Shelf()`, `fresh.item = first`, `kept = fresh` is free; a later `fresh.item = null` undoes what was proven about `kept.item`.
