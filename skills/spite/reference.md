@@ -820,7 +820,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `angle.pi`, `Float.pi()` | `'pi' is a constant of the class Float, not of a value` | `Float.Pi()` |
 | `count++`, `count += 1` | `Spite has no '++': write 'count = count + 1'` | `count = count + 1` |
 | `condition ? a : b` | `Spite has no 'condition ? a : b'` | an `if` with an `else`, or a function that returns one or the other |
-| `int`, `Int`, `bool`, `Bool`, `to_int()` | `'Int' is spelled 'Integer'`, `'int' abbreviates: write 'integer'` | `Integer`, `Boolean`, `to_integer()`: no name is abbreviated, the language's own included |
+| `int`, `Int`, `bool`, `Bool`, `to_int()` | `'Int' is spelled 'Integer'`, `'int' abbreviates 'int', which could mean 'integer' or 'internal'` | `Integer`, `Boolean`, `to_integer()`: no name is abbreviated, the language's own included |
 | `LocalDate`, `PlainDate`, `NaiveDate` | `'LocalDate' is spelled 'Date'` | `Date`, `Time`, `DateTime`: a calendar reading with no zone |
 | `let x = 1`, `const x = 1` | `Spite has no 'let': a variable is declared 'var name = value'` | `var value = 1`: every `var` has a default, and there is no `const` |
 | `var total: Integer` | `expected '=' (every variable needs a default value)` | `var total = 0` |
