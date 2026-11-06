@@ -356,9 +356,10 @@ func Ranged(): Long {
 ### A `crash` that folds false is a compile error
 
 - **Proves**: generic code that cannot work for a class is refused for it.
-- **Rule**: a `fallback` or `crash` that asks only compile-time questions folds. A `crash` that folds false in a
-  function the program reaches is refused, naming the instance; a `fallback` that folds false answers its default
-  and the rest of its block is not compiled.
+- **Rule**: a `fallback` or `crash` that asks only compile-time questions folds, reflection names, classes and counts over
+  known classes among them. A `crash` that folds false in a
+  function the program reaches, on the path the function always takes, is refused, naming the instance; under a condition only the run decides it is left to the
+  run. A `fallback` that folds false answers its default and the rest of its block is not compiled.
 - **Falls back**: refused: `'crash ...' always halts in ...: its condition is decided while compiling and is false`.
 
 ### Whether a function waits

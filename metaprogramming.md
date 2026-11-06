@@ -216,7 +216,8 @@ var read_count = update.reads.count()
 ```
 
 **A question that means a program is wrong is a `crash`**, and a `crash` whose condition is decided while compiling
-and is false is a compile error where the program reaches it ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)). A library writes the
+and is false is a compile error where the program reaches it every time the function runs ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)). One under a condition only the run decides is
+left to the run. A library writes the
 rule it keeps, and a class that breaks it fails the build at the line that breaks it, not the run:
 
 ```gdscript
@@ -226,6 +227,20 @@ func run_between_frames(system: $system_type) {
     crash not update.arguments[0].is_mutated
 }
 ```
+
+A program checks its own shape the same way: names, classes and counts over known classes fold, so a walk over the
+program's folders that finds a broken one fails the build, and one that finds none costs nothing at run time:
+
+```gdscript
+func check_a_folder(namespace: Spite.Namespace) {
+    fallback namespace.name_with_namespaces.starts_with("Rules.")
+    var names = namespace.classes.map_names()
+    var has_a_validator = names.contains("Validator")
+    crash has_a_validator
+}
+```
+
+with `Spite.Namespace.instances.each(check_a_folder)` where the program starts.
 
 In a generic class, `$T` is a constant too, so a question on it folds for each class the generic is given, and the
 branch it rules out may call what that class does not have:

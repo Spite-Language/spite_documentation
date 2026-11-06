@@ -535,7 +535,8 @@ func is_alive(): Boolean {
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
   so keep one generic class with a helper per kind, not one class per kind.
-- `fallback`/`crash` on such a condition folds too, and a `crash` that folds to false in a function the program calls
+- Names, classes and counts over known classes fold (`Part.name`, `Part.classes.count()`, `Part.classes.map_names().contains("X")`, `namespace.name_with_namespaces.starts_with("Y.")`, `Spite.Namespace.instances.each(check)`), so a `crash` on them is decided.
+- `fallback`/`crash` on such a condition folds too (a `crash` under a condition only the run decides is left to the run), and a `crash` that folds to false in a function the program calls
   is a compile error naming the instance (`Slot<List<String>>`): write a library's rules as `crash $row_type.functions["update_each"]`
   and a class that breaks one fails the build.
 - A getter with no setter makes a read-only attribute: `get_fahrenheit()` answers `.fahrenheit`, and assigning
