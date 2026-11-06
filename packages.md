@@ -17,36 +17,45 @@ func Game() {
   folder is an ordinary class inside it, so `package/engine/physics/physics.spite` is `Engine.Physics.Physics()`,
   reopened by another root's `engine/physics/physics.spite` like any class. A file and a folder of one name side
   by side, `engine/renderer.spite` beside `engine/renderer/`, would make `Engine.Renderer` both a class and a
-  namespace, so that is an error ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+  namespace, so that is an error.
 - `load` only ever takes a literal string: a variable or expression there is an error, so the compiler
   always knows every bundle statically. A `load` may sit under an `if` on a `Build` field the compiler already knows,
   which is how one entry function loads the standard library folder of the system it is built for
   ([programs.md](programs.md#how-a-program-is-loaded)).
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
-  `window-plugin`, and a folder that is not is an error before anything compiles. Of the folders a `load` names,
-  only the last one becomes a namespace, so only it is held to the rule: `load "../../Old Tools/render_vulkan"`
-  is fine, and `load "../../plugins/RenderVulkan"` is refused for `RenderVulkan`
-  ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+  `window-plugin`, and a folder that is not is an error before anything compiles, naming the spelling to use
+  (`the folder 'BadFolder' is not named in snake_case: ... so rename it 'bad_folder'`). A name is `snake_case` when it is
+  a lowercase letter, then lowercase letters, digits and single `_`, not ending in `_`: `kit_2` is fine, and
+  `kit__x`, `kit_` and `2kit` are not. The rule covers the program's folder and every folder inside it, and the
+  same inside a loaded folder. Of the folders a `load` names, only the last
+  one becomes a namespace, so only it is held to the rule: `load "../../Old Tools/render_vulkan"` is fine, and
+  `load "../../plugins/RenderVulkan"` is refused for `RenderVulkan` at the line that writes it, before the
+  folder is looked for. `.` and `..` are not folder names, so the last folder is the last one that is neither.
 - Resolving a bare `Name` from inside a class tries, in order: what that class declares (its `enum`, `union`
   and `type`), its folder, each parent folder, then the whole program. A dotted `Component.Requested` is looked up the same way, and so is
   every name wherever it is written: a constructor call, a parameter, a return type, an attribute or local
   annotation, a generic argument (`Remove<Component.Requested>`), a `type` or `union` member, a `==` class test
   and an enum inside a class (`Component.Requested.Size`), so from `window/system/` the name reaches
-  `window/component/requested.spite` without writing `Window.` (`conformance/stage6/relative_namespaces`).
+  `window/component/requested.spite` without writing `Window.`.
   A class's folder is where the walk starts, so `click_test/click_test.spite` (`ClickTest.ClickTest`) reaches
-  `click_test/system/verify.spite` as `System.Verify()` (`conformance/stage6/folder_class_namespace`).
+  `click_test/system/verify.spite` as `System.Verify()`.
 - A namespace holds classes and namespaces, nothing else. An `enum`, a `union` and a `type` belong to the class
   that declares them, like its attributes and functions: plain `Job` inside `player.spite`, and `Player.Job` (or
   `Game.Player.Job` from outside `game/`) everywhere else. A plain `Job` in another class is an error naming
-  `Player.Job`, and so is `Game.Job`, which looks for it in the namespace `Game` instead of its class
-  ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+  `Player.Job` (when two classes declare a `Job`, it names both and the name to write for each), and so is
+  `Game.Job`, which looks for it in the namespace `Game` instead of its class.
+- A name the walk does not find is `unknown type 'Server.Component.Eye'` at the line that writes it, wherever a type is
+  written. When dropping the leading parts names a class, or a plain name is the last part of exactly one class, the
+  error says which: `unknown type 'Eye': did you mean 'Component.Eye'?`. The usual slip is the folder of the machine
+  or the repository written into the name. Two roots that make a class of the same name at the same level are never
+  an ambiguity error: they are one class, reopened.
 - A generic class is found the same way, so it may live in any folder: `Asset.Pack<Asset.Texture>("textures")`
-  and, from inside `game/`, `Pack<Rule>("rules")` for `game/pack.spite` both work
-  (`conformance/stage6/namespaced_generics`). A generic name that finds nothing is one error, and the lines that
-  use what it would have made are not reported again (`diagnostics/failed_constructor`).
+  and, from inside `game/`, `Pack<Rule>("rules")` for `game/pack.spite` both work.
+  A generic name that finds nothing is one error, and the lines that
+  use what it would have made are not reported again.
 - What the using class declares comes first, before every class. So `type Healing` in
-  `system/regenerate.spite` is what `Healing` means there, even when the program's entry class is also `Healing`
-  (`conformance/stage6/nearest_type`). The library is held to the same rule, so a program's own class `Entry` does
+  `system/regenerate.spite` is what `Healing` means there, even when the program's entry class is also `Healing`.
+  The library is held to the same rule, so a program's own class `Entry` does
   not hide the union `Entry` that `Directory` declares, which the program names `Directory.Entry`:
 
 ```gdscript title=own_entry_class/entry.spite
@@ -139,8 +148,8 @@ loaded folder declares, put the replacement in a folder loaded after it, as `mod
 own files and a pinned copy declare the same name, the program's declaration stays.
 
 The program's entry class is the one class nothing reopens: a loaded `bundle/potion.spite` in the program
-`potion/` would otherwise become part of the entry class `Potion`, so it is an error naming both files
-(`diagnostics/entry_class_reopened`).
+`potion/` would otherwise become part of the entry class `Potion`, so it is an error naming both files and the two ways out: rename the loaded file,
+or the program's folder and its entry file.
 
 The standard library is loaded before the program, so a program's own file reopens any class of it the same way:
 `environment.spite` adds settings to `Environment` ([programs.md](programs.md#run-time-settings-environment)),
@@ -218,7 +227,7 @@ running render
 ```
 
 A value the reopening leaves out is gone: code that still names it is a compile error, the same `'fog' is not
-a value of this enum` as for any value the enum never had (`diagnostics/enum_reopening_replaces`). One
+a value of this enum` as for any value the enum never had. One
 declaration is the whole truth about an enum, so a reader never has to add up several files to know its values.
 Since the values are walked while compiling, a new one costs nothing at run time beyond what walking it
 generates.
@@ -267,16 +276,21 @@ func SpiteNamespaceError() {
 
 `Spite.Internal` is the one namespace of the standard library that a program may not name at all: it holds the
 machinery under the library (raw memory, threads, locks), and the library offers plain forms instead, such as
-`Buffer` and `BinaryReader` for bytes. Naming it from your own code is a compile error that says which plain form
-to use.
+`Buffer` and `BinaryReader` for bytes. The compiler's own classes, `Spite.Fault`, `Spite.Asserts`,
+`Spite.CopyTable`, `Spite.Prompt`, `Spite.PromptPath` and `Spite.Settings`, are refused the same way. Naming any of them
+from your own code is a compile error that says which plain form to use, wherever the name is written: a type, a
+call, a member of a `union` or of a `type`, a class written in a `spite/internal/` folder, or inside the `{}` of a
+text. The message names the class written, or `Spite.Internal` alone when no class follows. A text that merely
+holds the words is only text, and a class of your own named like one of the library's internal classes is
+yours: the bare name means your class.
 
 ## `load` is a bundle boundary
 
-`load` marks where a dynamic library or lazy-loaded bundle can split, the way an async `import()` does in
-webpack. A `load` line compiles to nothing at run time. So a `load` costs nothing when the program runs; what it loads is
-tree-shaken like the rest of the program.
+`load` is read while compiling and nothing else: the line compiles to nothing, so it costs nothing when the
+program runs, and what it loads is tree-shaken like the rest of the program. Nothing is loaded lazily when the
+line runs, because the line never runs.
 `load` is a keyword written without parentheses, on a line of its own, and nothing else may be named `load`: a
-function that loads something says what, `load_texture` ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+function that loads something says what, `load_texture`.
 
 ```gdscript title=load_parentheses_error/load_parentheses_error.spite entry error
 func LoadParenthesesError() {
@@ -306,10 +320,21 @@ Each path is relative to the folder of the file it is written in, and only relat
 `load "D:/projects/engine/core"` would build only on a machine that has that folder, so it is an error that names
 the relative path to write instead, like `load "../../engine/core"`. A package from another repository is loaded
 by where it sits beside yours, or pinned to a commit (below). A condition the compiler cannot decide, such as
-one that reads a setting of `Environment()`, is an error rather than a folder that is quietly left out.
+one that reads a setting of `Environment()`, is an error rather than a folder that is quietly left out, and so is
+a `load` inside a `while` or a `switch`: a `load` goes on a line of its own in the function, or under an `if`
+the build decides. The `if` itself stays in the program, where `Build` folds it again. `Build` is read before the
+first package is loaded, so a package cannot add a field that decides a `load`. A field the program's own
+`build.spite` declares is never replaced by a package's declaration of it: the program decides its build, and a
+package's field is only a default.
 
-Each loaded root can become a separate dynamic library, tree shaking is computed per bundle, and a `load` inside an
-`if` is loaded lazily when that line runs ([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/packages.md#packages-namespaces-and-loading)).
+Two `load`s whose folders lie one inside the other would read the same files twice, so the later one is an error
+that says to load only the outer folder, whose subfolders are already its namespaces. Loading one folder again by
+another path, as two packages that both load a third do, loads it once.
+
+A package that wants something only the program knows, the folder its assets live in, calls a function the
+program declares in its own `build.spite` (`build.base_folder()`). That is an error when the program does not
+declare it, unless the package gives a default behind `Build.functions["base_folder"]`.
+
 
 ## Why a dependency is a line in `load`
 
@@ -342,13 +367,23 @@ Nothing else is a repository, so `load "engine@6c7dca9"` is an error that shows 
 without an `@` is an ordinary folder.
 
 The commit is required, and it is a commit: 7 to 40 lowercase hexadecimal digits. A branch or a tag moves, and a
-pin must not, so `@main` is an error, and so is a URL without an `@`. A pinned commit never changes silently: the
-compiler checks the commit out once, then compiles from that copy.
+pin must not, so `@main` is an error, and so is a URL without an `@`. The compiler also asks git what the digits
+name, so a branch or tag that happens to be spelled in hexadecimal is refused too. A pinned commit never changes
+silently: the compiler checks the commit out once, then compiles from that copy.
+
+A repository on this machine must be the repository's own top folder. `load "../../tests@26e6476/namespaces_load/package"`
+names a folder inside a repository, and the error says to name the repository's own folder and the folder inside it
+after the commit. The folder after the commit may not start with `..` or be absolute.
+
+**When a pin fails**, the error is on the `load` line and says which step: there is no `git` on the `PATH`, the
+repository does not exist or is not one, a URL could not be cloned (git's own first line is quoted), the repository
+holds no such commit (`../.. has no commit 0123456`), or the commit has no such folder.
 
 **Where the copy lives.** The first compile that meets a pin checks the commit's files out into `.spite/git/` in the
 folder `spite` was run from ([compiler.md](compiler.md#where-the-outputs-go)), as
 `.spite/git/<repository name>_<number>/<commit>/`, the number worked out from the repository's whole path or URL,
 and prints `fetched <repository>@<commit> into <folder>`. Every later compile finds it there and runs no git at all.
+Two compiles started at once take turns at `.spite/git/fetching.lock`, so the second reads the finished copy.
 The copy is plain files, with no `.git` in it, kept out of the program's folders, so nothing mistakes it for source
 to edit. From a repository on this machine the files are written straight from its objects: its working files, its
 index, its branches and its worktrees are left exactly as they were, so the repository you are working in can be
@@ -437,7 +472,17 @@ program that asks that way carries the paths of its class objects.
 
 Because patching is dangerous to read silently, `--final-classes=folder` writes every class as it ended up, after
 every root is merged and every reopening resolved, as a program that runs the same as the one it was printed from
-([compiler.md](compiler.md#inspect-merged-classes)). This is the file to read when you are not sure which mod won.
+([compiler.md](compiler.md#inspect-merged-classes)). Each winning function and attribute is preceded by a `#` comment
+naming the root it came from, so this is the file to read when you are not sure which mod won. The folder holds the
+standard library's classes too, platform functions included, and the instances a template made for the names
+a program called (and only those).
+
+Some members have no body in the library's source because the compiler supplies it: the raw writes of `Console`,
+the allocation of `Memory.Heap`, a number's casts and bit operations, the state machines of waiting work. They are
+merged into their classes right after the library's folders, as a later root would, so a program can still reopen
+them. A function written with a signature and no block marks such a member, and that is how `--final-classes`
+prints it; reading the printed folder back compiles. Anywhere the compiler supplies nothing by that name, a
+function with no block is an error, "give it a body".
 
 ---
 

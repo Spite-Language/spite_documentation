@@ -216,7 +216,7 @@ var read_count = update.reads.count()
 ```
 
 **A question that means a program is wrong is a `crash`**, and a `crash` whose condition is decided while compiling
-and is false is a compile error where the program reaches it every time the function runs ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)). One under a condition only the run decides is
+and is false is a compile error where the program reaches it every time the function runs. One under a condition only the run decides is
 left to the run. A library writes the
 rule it keeps, and a class that breaks it fails the build at the line that breaks it, not the run:
 
@@ -227,6 +227,13 @@ func run_between_frames(system: $system_type) {
     crash not update.arguments[0].is_mutated
 }
 ```
+
+A `fallback` on a condition decided while compiling folds the same way, in every build, `--development`,
+`--hot-reload` and the REPL builds included. When it holds, nothing is written for it. When it does not, the
+`fallback` answers what the function's answer type builds with no arguments, as any `fallback` does
+([failure.md](failure.md#a-fallback-returns-what-its-answer-type-builds-with-no-arguments)), and the statements after
+it in that block are not compiled for that class. So `fallback $slot_type == Entity` followed by `return value.id`
+works in a function answering `Integer?` or `Integer` alike.
 
 A program checks its own shape the same way: names, classes and counts over known classes fold, so a walk over the
 program's folders that finds a broken one fails the build, and one that finds none costs nothing at run time:
@@ -314,8 +321,22 @@ The **class a template walks is not written on the parameter: the body says it**
 body reads the declaration on, so `monster[attribute]` makes this a template over `Monster`, and a body that reads it
 on a `Label` and a `Monster` walks the attributes they both have. The value must be known from its declaration: a
 parameter, an attribute, or a local declared with its type or made by a constructor. A value whose class is not
-known that way, or a body that reads the declaration on nothing, is an error that says what to write
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#templates)).
+known that way, or a body that reads the declaration on nothing, is an error that says what to write.
+
+The rest of the rules for which class a body means are few:
+
+- A value counts as known when it is a parameter, an attribute, a local declared with its type or made by a
+  constructor, an own function's answer, or an element of a list so known.
+- Reads on parameters count before the others, so when a body reads a parameter `monster` and a local `rock`, the
+  declaration (and `attribute.class`) is `Monster`'s. When it reads several classes, the template walks the
+  attributes they all have, in the first class's order; two classes with nothing in common is an error.
+- A body that only hands the declaration to another function takes the class that function reads it on, and with no
+  such function it is an error, even if the template has a parameter of a class: nothing is guessed from it.
+- A nullable parameter (`Monster?`) is walked as nothing: the template answers no name.
+- A class reads its own members as `attributes[attribute]`; `this.attributes[attribute]` is refused, as `this.name` is
+  anywhere in a class.
+- Writing the class on the parameter, `attribute: Spite.AttributeDeclaration<Monster>` or `Spite.Attribute<Monster>`,
+  is an error saying to read the declaration on a value of `Monster` instead.
 
 ```gdscript title=name_templates/label.spite
 var text = "fragile"
@@ -526,6 +547,12 @@ goes in attributes. It may be a function of another object, `Shop.Tools.classes.
 then made in that object's class and called on it. A parameter typed `Spite.Namespace` is an instance of one, so `class.namespace.classes` and
 `Spite.Namespace.instances` are the lists to walk ([reflection.md](reflection.md#known-while-compiling)).
 
+In a copy, `part.has_function("name")` and `part.function_waits("name")` are decided for that class, so the branch
+that does not apply is never compiled and may call what the class lacks. A namespace the program has no folder for is
+an unknown name, like any other. Inside a copy, a call of a function of the class with a constant argument is compiled
+once for that argument, up to eight calls deep, so a check split into helper functions decides as one written in a single
+function does. A walk over an empty list calls nothing.
+
 ### Member templates
 
 The standard library's list functions `filter_<member>()`, `sum_<member>()`, `count_<member>()` and the rest are
@@ -560,7 +587,7 @@ back. Every other template keeps the member singular, because its name asks a qu
 | `find_by_<member>`, `sort_by_<member>` | singular | "find by name", "sort by health" |
 
 The plural comes from `String.pluralize()`, the rules every English plural follows plus a table of irregular and
-uncountable words a program can add to ([standard_library.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#the-string-class)): `map_names` is
+uncountable words a program can add to by reopening `String`: `map_names` is
 `name`, `map_people` is `person`, and `map_health` is `health`, its own plural. A question is never collected:
 `monsters.map_is_alive()` is an error pointing at `filter_is_alive()`, `count_is_alive()`, `any_is_alive()` and
 `all_is_alive()`, which are what a question is asked for. A value worth collecting that is not already a member
@@ -641,10 +668,13 @@ every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, I
 assigns `left` at once; anywhere else `null` belongs to `T?` alone, and `var left = $left_type()` makes
 the default of whatever `$left_type` is bound to.
 
+The program's entry class cannot declare a `generic` line: a generic class has no one object, and the entry class is the
+one that runs.
+
 Only a class has codegen values. A function never lists its own (`func pick<$value_type>(...)` is an error), and
 there are no generic functions to write instead: a function that takes any class takes a
 `type`, such as the built-in empty `Anything` ([reflection.md](reflection.md#known-only-at-run-time)), or it belongs to a
-generic class. The exact forms and error texts are in [Codegen values](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-).
+generic class.
 
 A codegen value is always a type, never a value like `true` or `10`. A value that picks a branch is an ordinary
 constructor argument kept in an attribute: when every object made at a call site is given the same value and nothing
@@ -794,13 +824,18 @@ var weight = 3
 'Rock' does not fit type 'Singer', which 'Chorus' requires of $singer_type: it has no function 'sing'
 ```
 
-The constraint is optional and names a `type` the class declares itself or its namespace's entry class holds:
-outside those a `type` is never named, so `Shelf` declares its own `Printable`, the same as `Console`'s. What fits is what the `type` would accept anywhere, so
-`Shelf<Integer>` above is fine, and so is a `T?` (`null` prints as `null`), while a `T?` against a `type` that needs
-more than printing, or a function value, is not. It is checked wherever a class is given,
-written out or read from the constructor's arguments, and it costs nothing at run time: the check is the
-compiler's, and the class made is the one an unconstrained line would make
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)).
+The constraint is optional and names a `type` the class declares itself, or its namespace's entry class holds:
+another class's `type` is never named outside it, so `Shelf` declares its own `Printable`, the same as `Console`'s
+(naming `Other.Printable` is an error saying so). What fits is what the `type` would accept anywhere: a class with
+the functions and attributes listed, `String`, a number, an enum, a `List` or `Dictionary` that has what the `type`
+needs (a `count(): Integer` is enough for either), and the `type` itself. Each member is compared by its type as well
+as its name, so a `weight` that answers a `String` does not fit a `type` that needs an `Integer`. A `T?` is refused
+(`it may be null, and null has none of what the type needs`), and so is a function value. A constraint names a `type`
+and nothing else: `generic $count_type: Integer` is an error on the `generic` line.
+
+The check runs once for each class given, wherever the class is made: written between `<` and `>`, or read from the
+constructor's arguments (`Label(pet)` is checked as `Label<Pet>` would be). It costs nothing at run time, because the
+check is the compiler's, and the class made is the one an unconstrained line would make.
 
 ### Asking what a generic was given
 
@@ -808,13 +843,13 @@ When a codegen value is a type, `if $value_type == String { }` asks which type i
 the class is made, so only the branch taken is compiled, and each branch may use what only that type has. Besides
 naming a type exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Enum` (any enum),
 and a `type` name asks whether the type fits it. `$value_type.is_number` asks whether it is a number class, `Tiny` to
-`Double`.
-The table is in [the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-).
+`Double`. A union name is true for any of its members. Such a test always folds, in a `--development` build too,
+because the branch it rules out would not compile.
 
 What the branch ruled out is not compiled at all, and neither is what only it reaches. Below, `Field<Integer>`
 compiles `write` without the `List` branch, never compiles `write_list`, and so never checks its `.count()`
 against an `Integer`; the statements after a taken branch that returns are left out the same way. One generic
-class can therefore keep a helper per kind (`conformance/stage6/folded_helpers`):
+class can therefore keep a helper per kind:
 
 ```gdscript
 func write(value: $value_type): String {
@@ -922,7 +957,7 @@ false true
 
 A codegen value that is a type reads as its class wherever a class name would: `$component_type.name` is the
 bound class's name the way `Health.name` is, and `$component_type.attributes` its attributes, with no value of
-the type made to ask. On its own, `$name` is still not a value: only a member read through it is.
+the type made to ask.
 
 ```gdscript title=codegen_class_name/column.spite
 generic $component_type
@@ -1039,8 +1074,7 @@ An inspectable build (`--development`, `--hot-reload`, `--repl` or `--repl-port`
 program generated instead of only the ones reachable from `main`, so live reload has all of them to swap and the REPL
 can reach them, along with the run-time tables of every class
 ([compiler.md](compiler.md#development-builds-and-tree-shaking)). What is decided while compiling is decided there
-too: templates are still generated only for the names called, and [conditions on codegen values](https://github.com/Spite-Language/spite_spec/blob/master/specs/metaprogramming.md#codegen-values-)
-still fold. Every optimisation the compiler makes on its own, and the builds it applies in, is listed in
+too: templates are still generated only for the names called, and conditions on codegen values still fold. Every optimisation the compiler makes on its own, and the builds it applies in, is listed in
 [optimizations.md](optimizations.md).
 
 ---

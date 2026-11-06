@@ -207,13 +207,20 @@ Nothing runs until `call.call()`. `system` must be a `MoveSystem`, or the line i
 way to build a call; a bound function, `system.functions["run_each"]`, is for passing the function as a value and
 calling it. When the function is named in the code (`MoveSystem.functions["run_each"]`, or a `var` holding it that is
 never assigned again), the whole thing is the plain call `system.run_each(position, velocity)`, with no object made.
-An argument left unfilled is a compile error at `call.call()`; so is filling one twice, or naming one the function
-does not have. A call built from a function known only at run time is a real object, and `call()` halts when the
-instance is not of the class that declares the function, or when an argument is missing, of another type, or one the
-function does not have. A parameter that takes a function value is given the function bound to its object,
+An argument left unfilled is a compile error at `call.call()` (`'call' leaves the argument 'velocity' of 'hurt'
+unfilled`); so is filling one twice (`'call.arguments["amount"]' is already set`), naming one the function does not
+have (`'hurt' has no argument 'speed', so 'call.arguments["speed"]' fills nothing`), and using the call as a value,
+since it is only the direct call (`'call' is a call known while compiling ... has no object to pass on`). An instance of
+another class than the one declaring the function is a compile error too. A call built from a function known only at
+run time is a real object, and `call()` halts, naming what it found, when the instance is not of the class that
+declares the function, or when an argument is missing, of another type than the parameter's (a number, a `String`,
+an enum, an object, a nullable one, a `type` or a union), or one the function does not have (the first extra key
+in the order they were filled, and the names it does take, or "it takes no arguments"). A parameter that takes a function value is given the function bound to its object,
 `call.arguments["change"] = doubler.functions["doubled"]`, and `call()` halts when its signature is another. Calling a class known only at run time
 makes an object of it, typed `Anything`, wherever the class object is held: `part()` with `part: Spite.Class`, an
-attribute `kind()`, or a member read, `thing.class()` or `argument.class()`.
+attribute `kind()`, or a member read, `thing.class()` or `argument.class()`. It halts, saying why, for the program's
+entry class (made once when the program starts), for a class whose constructor takes arguments, and for a
+singleton, an enum or a union: write the class's name where the compiler can see it to make one of those.
 
 ## Reaching a reflection object
 
@@ -237,7 +244,8 @@ always means one thing.
 A class name given where a `Spite.Class` is wanted (an argument, a `var` declared `Spite.Class`, a `return`) is
 its class object, and `==` between a `Spite.Class` and a class name compares the two objects. Anywhere else a bare
 class name is the error that says to write `Health()`, since making one is nearly always what was meant, and
-`var kind = Health` with no type is that error too:
+`var kind = Health` with no type is that error too, as is an argument whose parameter is a `type` such as `Anything`
+(a file is a class named after the file, so `class Health {` at the top of one is "there is no 'class' keyword"):
 
 ```gdscript title=passing_a_class/ui/pressed.spite
 func count(): Integer {
@@ -324,6 +332,28 @@ too after `fallback described.namespace.parent` ([failure.md](failure.md#narrowi
 Each class below is ordinary Spite in `library/spite/`. Every member is a get-only attribute named for what it
 answers: a question is `is_...` and answers `Boolean`, a collection is a `List` named in the plural. A question
 that would take an argument is a collection indexed or filtered instead, so there is one way to ask it.
+
+### What a reflection object always has
+
+A reflection object is made whole, so almost nothing in it is nullable: an attribute's `.declaration`, `.class` and
+`.owner`, a function's `.declaration` and `.owner`, a declaration's `.source_file` and the `.owner` of an enum, a union
+or a type are always there. A function that answers nothing `.returns` `Nothing`, and an argument or attribute
+whose type is not a class (a function type, a `type`) has `.class` `Nothing`. Only what can really be absent is
+nullable: `Spite.Class.namespace` and `Spite.Namespace.parent`, because the chain of namespaces ends and there is no
+root object, and a bound attribute's `.value`, which is `null` when the instance's field is. A declaration's
+`.returned_literal` exists only for a function whose body is one `return` of a text literal, and reading it of another
+halts, naming it.
+
+A class's `.functions` lists the functions it declares and the template instances generated for it, once compiling
+ends and in the order they were made, so it does not depend on the order classes were compiled in. A constructor is
+not one of them: it makes an instance, it does not answer on one. A class of the standard library describes its members
+the same way, `Console.functions` included.
+
+A number's, a `Boolean`'s and a `String`'s `.attributes` is empty, because the compiler stores those values itself,
+and a `List`'s or `Dictionary`'s attributes are its entries, named by index or by key, not the fields of the class that
+stores them. A name starting with `_` is private to its class, reflection's own fields (`_name`) included: from outside,
+the error names the getter that reads it. A walk over another class's attributes still sees its private ones, so a
+serializer or a column built from a walk is never silently incomplete; naming `_x` outside its class stays the error.
 
 ### `Spite.Class`
 
@@ -545,7 +575,7 @@ A function named without calling it (`troll.alive`) given where a `Spite.Functio
 | `.index` | its place in declaration order, 0 for the first | `Monster.attributes["health"].index` is `1` |
 | `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
 | `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
-| `.camel_case_name`, `.pascal_case_name` | its name as other systems spell it | `buy_price` is `buyPrice`, `BuyPrice` |
+| `.pascal_case_name` | its name as other systems spell it | `buy_price` is `BuyPrice` |
 | `.is_singleton` | its class is a singleton | `ReflectionObjects.attributes["console"].is_singleton` |
 | `.source_file` | on a declaration: the `File` it is written in | `Monster.attributes["health"].source_file` |
 | `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes["health"].value` |
@@ -714,6 +744,17 @@ reflection on it is ordinary code that costs nothing at run time:
   `monster.attributes[attribute]` is a plain read of the field.
 - **A constant class is a type and makes its own instances**: `part()` makes one, `Column<part>()` a column of
   them.
+- **Asking a constant list is a constant too**: `Part.classes.is_empty()` and `Part.namespaces.is_empty()` fold, as
+  do `count()`, `filter(...)` over the list and `map_names()`, so an `if` on them keeps one branch and the branch
+  not taken is never compiled. `[]` with a name or number written in the code answers a constant `T?`:
+  present, a narrowing `if`, `fallback` or `crash` on it costs nothing and narrows the path after it; absent, the
+  branch it guards is never compiled.
+- **A name that is both an enum and a class is the enum**: inside the class that declares `enum Shade`, `Shade` is
+  the enum even when a `shade.spite` exists, and `Shade.values` is its values.
+- **A walk over an instance's attributes reads the class's declaration** of what it stands for:
+  `attribute.declaration.name`, `.index`, `.class` and `.pascal_case_name` fold in each copy as `attribute.name` does,
+  and in a template over functions `phase.returns`, `phase.is_resumable`, `phase.returned_literal`, `phase.reads`
+  and `phase.writes` are what `Mover.functions["update_each"]` answers for the function the copy stands for.
 
 ```gdscript title=constant_namespaces/part/wheel.spite
 var size = 3
@@ -762,8 +803,9 @@ Wheel Wheel { size: 3 }
 Every folder named `part` anywhere is found by this filter over every namespace, with nothing registered. The filter
 runs when the program does, so `make` is compiled once and `part()` makes whichever class it is handed. Walked from a
 namespace the code names, `Part.classes.each(make)`, `make` is compiled once for each class instead
-(`make_over_Part_Axle` and `make_over_Part_Wheel` in `--final-classes`), and `part()` is `Part.Axle()` in one copy and
-`Part.Wheel()` in the other.
+(an error inside a copy names it, as `make_over_Part_Axle`), and `part()` is `Part.Axle()` in one copy and
+`Part.Wheel()` in the other. A copy is not one of the class's `.functions`; the function itself is compiled only
+when something calls it with an object known at run time or takes it as a value.
 
 ## Known only at run time
 
@@ -845,7 +887,11 @@ func fresh(attribute: Spite.Attribute): attribute.class {
 
 One function body serves both: called with a constant it is typed and unrolled, and called from the REPL with a
 live object it takes the run-time path. A `--repl`, `--repl-port` or `--development` build keeps the tables for
-every class, so the prompt can ask anything the program can:
+every class, so the prompt can ask anything the program can. Outside those builds the tables hold only what some code
+reads: a run-time function's `.reads` and `.writes` come from a table of the functions the program makes an object
+for, a standard library function, a function value taken through a `type` and every function of a `--hot-reload`
+build are not in it and asking them halts, and so does `.returned_literal` of a function whose body is not one
+`return` of a text literal.
 
 ```gdscript
 > Monster.attributes.map_names()
@@ -858,7 +904,8 @@ Boolean
 ## Every class in the program
 
 `Spite.Class.instances` is every class of the program, its own folder and every package it loads but not the
-standard library, in the order of their dotted names, because a class is an instance of `Spite.Class`. Walking a namespace's
+standard library and not a generic class, in the order of their dotted names, because a class is an instance of
+`Spite.Class`. Walking a namespace's
 `.classes` the same way is how the library's `Test` class finds the tests of a namespace without being told about them ([testing.md](testing.md)). Memory and threads are not
 reflected: a program cannot ask where a value lives, how many objects exist or which are alive, so nothing it
 could watch ever stands in the way of how the compiler places them.
@@ -916,7 +963,11 @@ func ReflectionNames() {
 the attribute 'attributes' has a name reflection gives every object: 'value.attributes' lists its attributes, and JsonReader, JsonWriter and every attribute walk read through it, and one of its own would hide it. Name it something else, like 'reflection_names_attributes'
 ```
 
-A local variable or a parameter may still use any of these names, since nothing reads it through an object.
+The same goes for an attribute named `class` or `functions`, and for `get_class`, `get_functions` and the `set_`
+forms of all three: the message names the member the function would be read as, and suggests the name with the
+class's own name in it (`set_table_attributes`). The classes of the `Spite` namespace are exempt, since they are
+reflection, and a local variable or a parameter may still use any of these names, since nothing reads it through an
+object.
 
 ## Reflection is read-only
 
@@ -951,8 +1002,9 @@ and declaring it in a class is an error that says to write the `singleton` line 
 is a constant that names one instance of `Spite.Class`; a class file's functions are its instances' functions, never
 its class object's, so no class answers a class question its own way. Reopening `Spite.Class` is the one way to
 change what a class object answers, and it changes it for every class in the program. It is a foot you are allowed
-to shoot, and one that shows in `--final-classes`
-([the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/reflection.md#functions-of-spiteclass-and-why-there-are-no-static-functions)).
+to shoot, and one that shows in `--final-classes`: the class is printed with the function or default you changed,
+and a comment above it names the root it came from. The compiler has no warnings, so visible output is the whole
+mitigation.
 
 ---
 
