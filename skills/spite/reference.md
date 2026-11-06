@@ -431,8 +431,12 @@ rewritten.
   tests the value at run time and narrows again. With nothing undoing the proof between, the same check is a repeat
   and the compiler removes it.
 - A write or a call in a branch that always leaves (a `return`, a bare `crash`) does not reach what follows the
-  branch, so the proof below it stands. A write to the narrowed path itself still undoes it below the branch:
-  check again after the branch.
+  branch, so the proof below it stands, a write to the narrowed path itself included (`rack.shelf.item = null`,
+  `return`). In a loop no next pass reads it either. A branch that may fall through still undoes it, and inside the
+  branch a read after the write is refused.
+- A call in a condition counts like one on the line before the next read: after `if rack.item and clear(rack)`,
+  `fallback clear(rack)` or `crash rack.item and clear(rack)`, reading `rack.item` is refused when `clear` may write
+  it. A side after the call is proven after it: `if clear(rack) and rack.item { rack.item.number }` stands.
 - A call between a proof and a read undoes the proof when the called code (followed all the way down) may assign
   an attribute the proof reads or shrink a list it reads; prove it again after such a call, or read what you need
   before it. A call that cannot change it keeps the proof. Calling a function value keeps no proof about

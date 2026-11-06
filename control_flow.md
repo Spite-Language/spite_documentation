@@ -238,7 +238,7 @@ beta
 stopped at 2
 ```
 
-`while value` on a `T?` narrows the body the way `if value` does, which is how a linked chain is walked
+`while value` on a `T?`, or any side of its `and`, narrows the body the way `if value` does, which is how a linked chain is walked
 ([failure.md](failure.md#narrowing-a-path)).
 
 A loop states the condition it runs under, so `while true` is an error, like any condition the compiler knows

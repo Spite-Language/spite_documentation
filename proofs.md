@@ -108,7 +108,8 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
   beneath it: after `target = Monster()`, `target.weapon` is unproven again. A store through a setter undoes its
   path, and `list[i] = value` undoes what was proven below the items. Assigning a value that cannot be null keeps the
   path's own narrowing. Inside a `while`, assigning a value that may be null to a path narrowed before the loop and
-  read in it is an error.
+  read in it is an error. An assignment in a block that always leaves undoes nothing below that block, and no next
+  pass reads it.
 - **Buys**: a narrowed read has no run-time test.
 - **Falls back**: after the assignment a read is refused until it is proven again. In a loop the error says:
   `assigning to '...' inside this loop undoes a narrowing made before the loop, and the next pass would read it
@@ -122,6 +123,8 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
   wait writes nothing in a program in which the compiler starts no waiting work, and anything in one where it does; a call
   through a function value reaches every function taken as a value with its signature; a `drop()` that may run is
   followed too. Inside a loop, a call anywhere in the body undoes a narrowing made before the loop for the next pass.
+  A call in a condition counts: a side of an `and` is proven before a call on a later side, and after one on an
+  earlier side. A call in a `fallback` or a `crash` counts for what was proven before it.
   A `[]` or count proof is undone by a call that shrinks the list, and a proven read that finds its list changed
   halts (see [a proven read halts outside its list](#a-proven-read-halts-outside-its-list)).
 - **Buys**: no re-check after a harmless call, and a call that may null what was proven is never read past.
@@ -295,7 +298,8 @@ func Proven(): Integer {
 
 - **Proves**: an operation cannot overflow.
 - **Rule**: every whole-number local and parameter has a range, from literals, assignments and the conditions in
-  force; `count()`, `length()`, `%`, `minimum`, `maximum` and `clamp` bound their answers; loops widen counters and
+  force (each side of an `and` that holds, each side of an `or` that does not, as after `if amount > 100 or
+  amount < 0 { return 1 }`); `count()`, `length()`, `%`, `minimum`, `maximum` and `clamp` bound their answers; loops widen counters and
   count their passes; a total assigned once per pass holds at most as many terms as there are passes. So a `Long`
   total of `Integer` terms over a list carries no check. An attribute, a list item or a call's answer has its
   type's range.
