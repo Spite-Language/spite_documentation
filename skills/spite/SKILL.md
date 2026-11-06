@@ -7,13 +7,13 @@ description: Use when writing, reviewing, fixing or explaining Spite code (.spit
 
 Spite is a small language with one way to do each thing. The compiler is also its formatter and its linter, it
 never warns, and every error names the fix. So the fastest way to write correct Spite is to write the plain
-version, compile, and do exactly what the compiler says.
+version, compile, and do exactly what the compiler says. Where a mistake has exactly one fix, the compiler makes it
+in your file and prints a `fixed:` line.
 
 The whole language, every rule the compiler enforces and the habits from other languages it rejects, is in
 [reference.md](reference.md) beside this file. Read it before writing more than a few lines of Spite: each habit
 it lists costs a compile round trip to rediscover. The full documentation is
-[docs/](https://github.com/Spite-Language/spite_documentation/blob/master/README.md), and every rule with its exact error
-text is in the specification, [specs/](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md).
+[docs/](https://github.com/Spite-Language/spite_documentation/blob/master/README.md).
 
 ## How to iterate: keep the program running
 
@@ -49,7 +49,7 @@ It keeps running, even after its entry constructor returns, until a client sends
 Leave the loop only when you need to:
 
 - `spite --check` formats and compiles without building or running, for a program that cannot stay running,
-  or to see every error of the program in one run; `spite --build` writes the executable without running it.
+  or to see the errors; `spite --build` writes the executable without running it.
   Every compile formats first; there is no `spite format`.
 - A full run from a fresh start, and the tests (`spite` in `tests`, [docs/testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)),
   before you call the work done.
@@ -74,7 +74,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Open it once beside the attributes: `var library = DynamicLibrary("libpack.so", 'identity', "")`, and call its
   functions as members (`library.pack_block(...)`; `_as_long`, `_as_double`, `_as_text` for wider results).
 - Wrap it in a class of its own, and let nothing else touch the `DynamicLibrary`. Only Spite shapes come out: full
-  word snake_case names, a Spite enum for each status (map each C number in a `switch` whose `_:` is a bare
+  word snake_case names, a Spite enum for each status (map each C number with an `if` per number, then a bare
   `crash`, so a number it does not list halts at the boundary), `T?` instead of a null handle or a not-found code,
   an object that holds the handle and gives it back in `drop()`, and `String` for text.
 - What crosses is numbers, `Boolean`, text, lists of numbers and number-only `type`s; a class instance never does.
@@ -86,7 +86,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 ## Rules that matter most
 
 - A file is a class named after the file; a program is a folder whose entry file is named after the folder. A file
-  holds declarations only, in a fixed order; every `var` has a default.
+  holds declarations only, in a fixed order, and at most 1200 statements (its file content budget: split a concern
+  into a file of its own, never cut at the number); every `var` has a default.
 - Full words only: `message`, never `msg`; `Integer`, never `Int`. `snake_case` values and functions, `PascalCase`
   types. No single letters except the axis names `x`, `y`, `z`, `w`.
 - No `for`, `break` or `continue`. Prefer the list templates (`monsters.filter_alive().sum_health()`,
@@ -95,21 +96,33 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `describe(attribute: Spite.AttributeDeclaration)`. A function with a parameter named by a word of its own name is a
   template over that kind of member: `Spite.AttributeDeclaration` (read as `monster[attribute]`),
   `Spite.FunctionDeclaration` (called as `system.phase_each(...)`) or `Spite.Argument` (spread as
-  `system.update_each(made_arguments(row))`). There is no `Symbol<...>`, and the class is never written on the type: the
-  body says it.
+  `system.update_each(made_arguments(row))`); the body says which class. A class's `.name` is always its short name
+  and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it.
 - No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `fallback`, `crash`, `switch`).
-  `fallback condition` returns "nothing" where that is a fine answer; `crash condition` halts on a developer
-  mistake. Neither takes a message: the crash report shows the values.
-- Never write defensive code: no checks the compiler already proves (proving the proven is an error), no default
-  that a caller could mistake for a real answer.
+  `fallback condition` ends the function with what its answer type builds with no arguments (`null` for a `T?`,
+  `0`, `""`, an empty list); answer a `T?` when a caller must tell that from a real answer. `crash condition` halts on
+  a developer mistake. Neither takes a message: the crash report shows the values.
+- A narrowing lasts until a write or a call that may undo it (the compiler follows the call). Narrow again after
+  one: the new check stays and tests at run time. A write or a call inside a branch that returns leaves it standing
+  below the branch, unless it writes the narrowed path itself.
+- Never write defensive code: a check on a value the compiler already proves is removed, and says so.
+- A `crash` whose condition the compiler decides is false, in a function the program always reaches, refuses the build.
 - No lambdas, no destructuring, no overloading, no `async`/`await`. Pass a named function; one name is one
-  function; the compiler decides what runs at once, and `Parallel(...)` and `Concurrent(...)` are not part of Spite.
+  function; the compiler decides what runs at once.
 - A call or a constructor is never an argument of another call: compute it into a named `var` first.
 - A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
   blank lines: name the part and call it.
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
   children) are plain references: the compiler finds the back reference and frees the cycle.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
+- Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
+  entry class is never generic; put what needs `generic` lines in a class it makes.
+- A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class
+  named like the folder); the other classes write `Bunda.Pet`, only the entry class writes `Pet`.
+- The compiler fixes what has one fix, and prints `fixed:` for each: declarations out of order, a local or parameter
+  with one right spelling, a keyword one letter off, a local or attribute that does nothing and is never read, a
+  check on a proven value, an `if` or `while` decided while compiling, statements after a `return`. A choice stays
+  an error. It never rewrites the library or a package.
 
 ## Installing this skill in a project
 
