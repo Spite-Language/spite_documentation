@@ -402,6 +402,8 @@ func is_alive(): Boolean {
   Narrow the name or the path itself (`fallback target`, `fallback target.weapon`), never a local copied from it,
   which is an error. Comparing needs no narrowing: `target.name == "rat"` needs `target` narrowed, but
   `maybe_name == "rat"` is simply false when it is null.
+- A write or a call that may assign an earlier attribute of a proven path undoes the proof whatever it writes. A new
+  object stays out of this only until it is stored, copied, passed, called on or returned: fill it first.
 - A call between a proof and a read undoes the proof when the called code (followed all the way down) may assign
   an attribute the proof reads or shrink a list it reads; prove it again after such a call, or read what you need
   before it. A call that cannot change it keeps the proof. Calling a function value keeps no proof about
