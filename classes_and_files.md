@@ -136,7 +136,9 @@ thing, and a union with fewer members is a different one too.
 Nothing moves between the program, a package and the library; each keeps its own. The compiler refuses, with
 every declaring class named, what it cannot move: two different unions of one name landing in one entry class, a
 name that already means a class there (a union `Bunda` repeated inside `bunda/`), an entry class that is generic,
-a copy in files the compiler does not write (the library, a pinned package), and an entry class whose new file
+a copy in files the compiler does not write (the library, a pinned package, or any package loaded by the leading `load`
+lines of the entry function, which count as library: a pair of classes in one of those that repeats a union is told to
+move it by hand), and an entry class whose new file
 would take a name the namespace already reaches. The fix for the refusal is a rename or moving the union by hand.
 A class outside the namespace cannot write the plain name, and neither can a side class of the same namespace:
 `'Pet' is a union of 'Bunda.Bunda', the entry class of this class's namespace, and only that class names it
@@ -352,7 +354,12 @@ ones its attributes make are made before it and outlive it. At exit the calls a 
 the output is flushed, the singletons are destroyed, and last of all every `DynamicLibrary` is unloaded, so a
 `drop()` may call a library. A `drop()` that fetches a singleton made after its own, which is already gone, halts
 with `spite: a drop() at exit used the singleton Archive after it was destroyed`, and says to keep that singleton
-in an attribute of the one whose `drop()` uses it. Nothing is read from freed memory either way: a singleton's
+in an attribute of the one whose `drop()` uses it. A singleton first made inside a `drop()` is destroyed right after
+that `drop()`. Singletons are never counted, so a leaked object that still points at one does not keep it alive: the
+singleton is destroyed at exit all the same, and a `--debug-memory` build still reports the leaked object. A singleton
+that holds nothing (no attributes the compiler cannot fold, no `drop()`) is one static object in a production build, and
+in an inspectable build an ordinary one that may be made again if something destroyed after it still asks for it, so
+it never halts with the message above. Nothing is read from freed memory either way: a singleton's
 memory is given back only after all of them are destroyed. What one costs at run time is a static slot, filled the first
 time it is asked for: fetching it is one load, it is never reference counted, and a program never pays for a
 singleton it does not reach ([optimizations.md](optimizations.md#a-singleton-is-made-on-first-use-by-a-function-of-its-own)).
@@ -452,8 +459,7 @@ function's own metaprogramming (`Query<argument.class>()`) stays a local too, si
 Reading or calling a member on the constructor call itself is an error, and so is passing it (`greet(Console())`),
 returning it, assigning it, using it in an operation, writing it as a statement of its own (a bare `Console()`) or
 storing it anywhere but a `var` of its own. The error names the fix. It covers a generic singleton such as
-`Column<Health>()` the same way, and only in code the compiler generates, so a function nothing calls is not
-checked. A binding nothing reads is an error everywhere, a loaded package included: `the attribute 'world' is never
+`Column<Health>()` the same way. The error is given in a function nothing calls too. A binding nothing reads is an error everywhere, a loaded package included: `the attribute 'world' is never
 read: remove it`.
 
 ```gdscript title=singleton_inline_error/singleton_inline_error.spite entry error
