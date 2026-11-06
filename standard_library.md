@@ -227,6 +227,22 @@ separator goes, so `"./a/b/../c/"` is `a/c`, and a path that starts at the root 
 and `Process`'s `working_directory` all take a `Path`. They hand the system the path as it was
 written, and `File(...).path` reads it back that way.
 
+A `GitPath` is a place in a git repository, a commit pinned: `var engine: GitPath = "github.com/example/engine@a3f2c91/core"`
+([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)). It stays apart from `Path`, so a git address
+cannot reach `File`. The text before the last `@` is the repository, then the commit, then optionally `/` and a folder.
+Its conversion answers `null` when the text names no repository, when the commit is not 7 to 40 lowercase hexadecimal
+digits, and when the folder leaves the repository.
+
+| Member | Result | Notes |
+|---|---|---|
+| `repository`, `commit` | `String` | `github.com/example/engine`, `a3f2c91` |
+| `folder` | `String` | the folder inside the repository, `core`; empty when there is none |
+| `is_local` | `Boolean` | the repository is a path on this machine: it starts with `./`, `../`, `/`, `\` or a drive |
+| `is_remote`, `is_a_url` | `Boolean` | it is fetched: a URL, or a first piece with a dot, as a host has; a URL opens with its protocol |
+| `has_a_repository`, `has_a_commit`, `stays_inside` | `Boolean` | the three things the conversion asks |
+| `read(text)` | | takes the pieces of `text` with nothing asked, for a program that says which piece is wrong |
+| `to_string()` | `String` | the text it was read from |
+
 ## Read and write a file
 
 `File(path)` is a value, a path, and several may exist at once.
