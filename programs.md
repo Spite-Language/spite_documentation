@@ -211,7 +211,7 @@ func UnknownFlagError() {
 }
 ```
 ```diagnostic
-'--verbos' is not a compiler option, and this program declares no setting 'verbos'
+'--verbos' is not a compiler option, and this program's Build declares no 'verbos'
 ```
 
 - A program's own `build.spite` may give a compiler option a different default: `var optimized = true` builds it
