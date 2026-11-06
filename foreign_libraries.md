@@ -104,8 +104,10 @@ can still `find_by_file_name` and `sort_by_file_name`.
 number of arguments is checked, and each argument is converted to its parameter's type the way C converts one --
 an `Integer` literal where C wants a 64-bit `VkDeviceSize`, a `Double` where it wants a `float`. A `Long` handle goes
 where C wants a pointer, since Spite has no pointer type; that integer-to-pointer conversion is the one C
-complaint the call silences. A C function that returns `void` is called the same way, and its call is a statement:
-a `void` function has no answer, so do not read one.
+complaint the call silences. A C function the header declares `void` is called the same way, and its call is a statement:
+a `void` function has no answer, so reading one is a compile error (`'Forget' answers nothing, since 'fixture.h' declares it
+'void', so it has no answer to read: call it on a line of its own`). Without a header the compiler cannot know, so do not
+read one.
 
 **Without a header**, the compiler knows only the Spite types, so it passes what the platform's calling convention
 passes anyway:

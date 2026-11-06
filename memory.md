@@ -127,7 +127,9 @@ independent label b
 `deep_copy()` copies the shape of what it reaches: an object reached twice in one copy, through a cycle, is copied
 once, so a child's `parent` in the copy is the copied parent, and a back reference in the copy holds the copy of its
 object when the same `deep_copy()` copied it. A copy that starts at the child alone leaves the `parent` on the original
-object, since nobody copied the parent. `copy()` is shallow for a list or a dictionary too: the copy holds the very
+object, since nobody copied the parent. A class that holds such a graph, in a list or in attributes, gets the same
+shape: a `Group` listing the child before its parent copies them as one graph, in either order. `copy()` is shallow
+for a list or a dictionary too: the copy holds the very
 same items, so a change made to an item shows through both.
 
 ## Components in lists, handed to a system

@@ -240,7 +240,7 @@ rewritten.
   `nan`, and `nan` passes on through `minimum`, `maximum` and `clamp` (`nan.minimum(0.0)` is `nan`).
 - Everything that is not a number, a `Boolean` or an enum value is a reference: passing, assigning and storing share
   the same object. `copy()` copies one level, `deep_copy()` all the way down (through unions and `type` shapes by
-  the class each value holds; a union value has `deep_copy()` too; never on a cycle). `drop()` runs when the last reference
+  the class each value holds; a union value has `deep_copy()` too; an object reached twice through a cycle is copied once, back references included; on a `String` both answer a new text). `drop()` runs when the last reference
   goes. Two objects that refer to each other (`parent.adopt(child)` where `Child(name, this)` stores the parent, and the parent keeps the child) are plain references: the compiler picks the back reference from how the program links them, reads it as `null` once its object is freed, and frees the cycle; a cycle it cannot read this way leaks, so clear one side.
 - `var item = list[index]` names the stored item: `item.x = 1` writes it, but `item = made` only renames the local,
   and an assignment nothing reads after is an error; replace an item with `list[index] = made`. Writing back
@@ -762,7 +762,7 @@ IANA identifier. Text reads ISO 8601 through each type's conversion (`var read: 
 with `var read: Date? = text`, which answers `null`, as a leap second and a bracketed zone that disagrees with the offset
 do ([time.md](https://github.com/Spite-Language/spite_documentation/blob/master/time.md)).
 `DynamicLibrary("ucrtbase.dll", 'identity', "")` calls a native library's functions as members
-(`c_runtime.strlen(text)`, `_as_long`/`_as_double`/`_as_text` for wider results); the standard library's
+(`c_runtime.strlen(text)`, `_as_long`/`_as_double`/`_as_text` for wider results; one instance per file, naming rule and header, a singleton like any other; a `void` function named by the header is called on a line of its own, and reading its answer is a compile error); the standard library's
 `library/windows/`, `linux/` and `mac/` folders reopen the classes each system changes (docs/foreign_libraries.md).
 C calls back into Spite without any C written: a function value given as a foreign call's argument is a C function
 pointer for that call only (`c_runtime.qsort(values, count, 4, ascending)`); a function C keeps or calls from its

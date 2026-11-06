@@ -558,8 +558,8 @@ no `drop()`. What you can observe: fewer allocations.
 ### A deep copy is written per class
 
 The compiler writes each class's `copy()` and `deep_copy()` when the class declares none: a new object made with no
-defaults, with every attribute assigned from the original. Only a class whose attributes can reach the class itself
-again copies through a table that remembers every object copied, so a graph is copied with its shape; every other
+defaults, with every attribute assigned from the original. Only a class whose attributes reach a class that can reach itself
+copies through a table that remembers every object copied, so a graph is copied with its shape; every other
 class's copy is a plain sequence of copies and stores. A class that declares its own `deep_copy()` is copied through
 it.
 

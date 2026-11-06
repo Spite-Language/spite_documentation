@@ -79,7 +79,8 @@ gzip ([below](#bytes-base64-compression-hashes-and-passwords)). TLS belongs to i
 Immutable. Text of up to 15 bytes is kept inside the `String` value itself and allocates nothing; longer text is
 one reference-counted block ([optimizations.md](optimizations.md#short-text-lives-inside-the-string)), and none of
 it changes what a program means. A value is placed inside written text, `"hello {name}"`, and two values join
-with `+` ([values_and_types.md](values_and_types.md#string)). `==`, `!=`, `<` and `>` compare by content.
+with `+` ([values_and_types.md](values_and_types.md#string)). `==`, `!=`, `<` and `>` compare by content. `copy()` and
+`deep_copy()` both answer a new text with the same bytes.
 
 A `String` answers where it can: `text[index]` is the whole character that starts at byte `index`, a `String?`
 that is `null` past the end, before the start or inside a character of several bytes, and `index_of` answers an
