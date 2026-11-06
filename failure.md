@@ -236,7 +236,7 @@ the 'if' and kept the code it runs". In a `while` condition it is an error with 
 
 ### A call may undo a proof
 
-A write to the attribute through another object undoes a proof about it: after `fallback shelf.item`, `alias.item = null` means `shelf.item` must be proven again, since `alias` may be `shelf`.
+A write through another object undoes a proof when it could break it: after `fallback shelf.item`, `alias.item = null` means `shelf.item` must be proven again, since `alias` may be `shelf`. `alias.item = other` leaves it proven, since whichever object it reached, the attribute still holds an item.
 
 A call between a proof and a read undoes the proof only when the call may change what the proof depends on. The compiler follows the called function, and everything it calls, to see
 which attributes it can assign and which lists it can shrink (`clear`, `remove_at`, `remove_first`,
