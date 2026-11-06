@@ -329,7 +329,7 @@ that would take an argument is a collection indexed or filtered instead, so ther
 
 | Member | Answers | Example |
 |---|---|---|
-| `.name` | the class's own name, a `String` | `Monster.name` is `Monster` |
+| `.name` | the class's own name, a `String`, without its namespaces however the class was reached (`.name_with_namespaces` has them) | `Monster.name` is `Monster`, and `Part.Axle.name` and a walk's `part.name` are `Axle` |
 | `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
 | `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes["health"]` |
 | `.functions` | a `Dictionary<String, Spite.FunctionDeclaration>` keyed by name, in the order they were made | `Monster.functions["alive"]` |

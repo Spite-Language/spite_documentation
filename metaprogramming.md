@@ -520,7 +520,7 @@ says to spread it into a call. A walker over arguments, called by `each`, may ta
 
 Walks over the classes of a namespace and the values of an enum are ordinary code on the reflection objects, unrolled
 while compiling. `Shop.Tools.classes.each(make)` makes one copy of `make` for each class of the folder, in which
-`part` is the class itself: a type (`Column<part>()`), a constant for `part.name`, and the class object where a value
+`part` is the class itself: a type (`Column<part>()`), a constant for `part.name` (the short name; `part.name_with_namespaces` is the dotted one), and the class object where a value
 is wanted. `Phase.values.each(run)` calls `run` once for each value. A walker takes one parameter, and state it needs
 goes in attributes. It may be a function of another object, `Shop.Tools.classes.each(registry.add)`: the copies are
 then made in that object's class and called on it. A parameter typed `Spite.Namespace` is an instance of one, so `class.namespace.classes` and
