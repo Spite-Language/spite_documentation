@@ -77,6 +77,21 @@ it does not fit (`var small: Byte = 300`) is a compile error. The compiler leave
 prove the answer fits ([proofs.md](proofs.md#arithmetic-that-does-not-fit-halts)): from the ranges your locals can
 hold, a counter under its loop's bound, a remainder, a clamp, and a total that adds one term a pass over a list
 ([proofs.md](proofs.md#a-range-proves-arithmetic-fits)), so what remains costs little.
+
+Which checks stay is not a guess: build with `--optimization-report=.spite/reports/name.md` and the report lists every
+operation that `keeps its overflow check` with the range it saw for each side. What the compiler knows about a
+number: an attribute, a list item or a call's answer can be anything its type holds; `count()` and `length()` run
+from 0 to the type's top; dividing by a constant divides the range, and dividing by a name gives a result no larger in
+size than the dividend; `minimum` and `maximum` with a written number bound the answer; a cast to a wider type keeps
+the range. A condition narrows a number in its block with `<`, `<=`, `>`, `>=` and `==` (either way round), after a
+`fallback` or `crash` that states it, on the right of an `and`, and after an `if` that leaves. An `or`, a `!=` and an
+`else` narrow nothing, and neither does an `if` that leaves under an `or` (write two `if`s). A local assigned in the
+branches of an `if` or a `switch` holds everything it could have been; one assigned in a loop holds what it entered
+with and every value the loop gives it. A `Long` total of `Integer` terms added over a list cannot overflow, and
+arithmetic on constants is worked out while compiling and never reported. Reading the report from a `--repl`,
+`--repl-port` or `--hot-reload` build shows the same checks. A divisor proved non-zero stops being proved when an
+attribute is assigned, when the local its path starts from is assigned, when anything is made, or when a loop starts
+its next pass; the division then checks again.
 The fix is a wider type written first (`Long` for a total of `Integer`s), or, when wrapping is what you meant, the
 function that says so:
 
@@ -622,7 +637,12 @@ is a compile error naming the ones it does, and `'orange'` where no enum is expe
 nothing to check it against) is an error too, even when exactly one enum has that value: write it where the enum
 is expected. Every enum is its own class with its conversions: `value.to_string()`
 is its name, `var number: Integer = value` its number, `var part: Bird.Part? = "tail"` and `var part: Bird.Part? = 7`
-read one from a name or a number (`null` when no value has it), and `Part.values` lists the values. At run time an enum value is a small
+read one from a name or a number (`null` when no value has it), and `Part.values` lists the values. The class that declares the enum may add its own conversions, named by the enum alone
+(`func Job(from: Float): Job?`); a value of that type meeting the enum goes through it, and one from `String` replaces
+the compiler's reading of a name: with `func Course(from: String): Course?` answering `'soup'` for `"starter"`, the text
+`"main"` is read as `null`, because the function now decides. One from `Integer` does the same for numbers. A reload
+(`--hot-reload`) of a file that declares an enum replaces the enum whole, so a value added to the list is there for the
+program that keeps running. At run time an enum value is a small
 integer.
 
 Every enum is its own class, and the compiler gives it two **conversions** written the way any class writes one
