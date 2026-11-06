@@ -347,6 +347,9 @@ the compiler reads, because each distinct argument list is its own instance of '
 is asked for" (`diagnostics/singleton_arguments`). `DynamicLibrary` follows the same rule: one library per file,
 naming rule and header ([foreign_libraries.md](foreign_libraries.md)).
 
+Only a generic class takes a type in `<>`. An enum, a union, a `type` or a number written with one is refused:
+`var phase: Phase<Integer> = 'idle'` is "'Phase' is not a generic class, so it takes no type in '<>': write 'Phase' alone".
+
 A singleton with `generic` lines has one instance per set of codegen values, the way `DynamicLibrary` has one
 per argument list: `Column<Health>()` is the same object everywhere, and `Column<Label>()` is a second one. This
 is what per-type storage is written with.
