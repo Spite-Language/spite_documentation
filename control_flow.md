@@ -500,7 +500,7 @@ func count(): Integer {
 ```
 ```gdscript title=generic_class_test_doc/generic_class_test_doc.spite entry
 type Counted {
-    count(): Integer
+    count: Spite.Function<Integer>
 }
 
 var console = Console()

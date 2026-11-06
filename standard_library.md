@@ -666,7 +666,7 @@ A printed line is the one write that answers nothing: if the system refuses it (
 went away), the line is lost, since the place a failure would be reported is the output that just failed.
 
 `print`, `write` and `error` are ordinary functions of `Console`, taking
-`...values: List<Printable>`, where `Printable` is a `type` that requires `to_string(): String`. Every number,
+`...values: List<Printable>`, where `Printable` is a `type` that requires `to_string: Spite.Function<String>`. Every number,
 `Boolean`, `String`, enum value, `Spite.Class` and `Spite.Namespace` answers it, and a class of yours
 prints once it declares `to_string()`. Passing one that does not is a compile error naming `to_string`; a `List`
 or `Dictionary` has none either, so `console.print(ages)` is "'Dictionary<String, Integer>' does not fit type
@@ -704,7 +704,7 @@ next: A12 for 3 boarding true 2.5 Ticket
 ```
 
 `debug` is for reading a program's state rather than for its output. It takes
-`...values: List<Debuggable>` (`to_debug(): String`), and every value answers that without writing anything: a
+`...values: List<Debuggable>` (`to_debug: Spite.Function<String>`), and every value answers that without writing anything: a
 class shows its name and every attribute, nesting into the attributes that are classes, a `List` shows `[a, b]`, a
 `Dictionary` `{"key": value}`, text is quoted, an enum value is written `'like_this'`, and an absent
 `T?` is `null`. An object already being shown further up is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown

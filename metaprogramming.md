@@ -758,7 +758,7 @@ generic's body, the first time some function happens to call what the class lack
 generic $item_type: Printable
 
 type Printable {
-    to_string(): String
+    to_string: Spite.Function<String>
 }
 
 var items = List<$item_type>()
@@ -817,7 +817,7 @@ func GenericConstraintError() {
 generic $singer_type: Singer
 
 type Singer {
-    sing(): String
+    sing: Spite.Function<String>
 }
 
 var singers = List<$singer_type>()

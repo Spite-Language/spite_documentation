@@ -954,7 +954,7 @@ registers them, and its `run` calls them.
 
 ```spite
 type Step {
-    applied(Integer): Integer
+    applied: Spite.Function<Integer, Integer>
 }
 
 var steps = List<Step>()

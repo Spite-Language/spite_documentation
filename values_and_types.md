@@ -384,7 +384,7 @@ compiling, whether a type is a number class, which is how a walk over types tell
 generic $number_type: Measure
 
 type Measure {
-    greater_than(Measure): Boolean
+    greater_than: Spite.Function<Measure, Boolean>
 }
 
 func largest(values: List<$number_type>): $number_type {
@@ -449,7 +449,7 @@ a number not a number
 
 `Statistics<Boolean>` is refused while compiling, since `Boolean` has no `greater_than`. An operator on a value read
 as a `type` of your own that requires the operator's function, `left + right` on two values read as
-`type Addable { sum(Addable): Addable }`, calls the `sum` of the left side's class, and a right side of another
+`type Addable { sum: Spite.Function<Addable, Addable> }`, calls the `sum` of the left side's class, and a right side of another
 class halts with `which is not one`.
 
 ## `String`
@@ -890,18 +890,20 @@ plain `{ key: value }` literal work. The empty `type`, which every object fits, 
 (`component: Anything`, `List<Anything>()`; see [functions_and_operators.md](functions_and_operators.md)):
 never declare an empty `type` of your own. A `type`, like an `enum` and a `union`, takes no `=` and no commas.
 
-An attribute of a `type` may itself be a union or a function value. A union-typed attribute is met by that union
-or one of its classes, and a function-typed one by a function value with the same parameter and answer types
-(`on_open: Spite.Function<Integer, Integer>`). Anything else does not fit and the error names the attribute.
+An attribute of a `type` may itself be a union, met by that union or one of its classes. Anything else does not
+fit and the error names the attribute.
 
 A `type` of attributes only has a default like a class does: the object literal with each attribute at its own
 default, whose `.class` answers `Object`. So `var target = $target_type()` in a generic class bound to such a
 `type` holds a real object, and what is written through it stays written.
 
-A `type` may require functions as well as attributes. A required function names the types it takes and returns,
-never the names of its parameters (`render(Integer): String`), because the name a class gives its own parameter
-does not matter to the shape. Any class with a function of that signature fits, which is how a list holds "any
-class that can render" without a union naming every class in advance:
+A `type` may require functions as well as attributes, and a member has one form: `render: Spite.Function<Integer, String>`
+takes an `Integer` and answers a `String`, and `finish: Spite.Function<Nothing>` answers nothing. It names the types
+it takes and returns, never the names of its parameters, because the name a class gives its own parameter does not
+matter to the shape. The compiler rewrites the old `render(Integer): String` to this form with a `fixed:` line.
+
+Any class with a function of that signature fits, which is how a list holds "any class that can render" without a
+union naming every class in advance:
 
 ```gdscript title=shape_functions_doc/badge.spite
 var label = ""
@@ -921,7 +923,7 @@ func render(columns: Integer): String {
 ```
 ```gdscript title=shape_functions_doc/shape_functions_doc.spite entry
 type Renderable {
-    render(Integer): String
+    render: Spite.Function<Integer, String>
 }
 
 var console = Console()
@@ -951,6 +953,12 @@ program runs (a value read from a `List<Anything>`, say), the call tests the val
 program ever gives that `type` and runs the matching copy. A class that never reaches the function gets no copy,
 so nothing is compiled for it.
 
+A class with an attribute holding such a function fits as well, and `item.render(12)` is written the same whichever
+one met it: a `type` does not care. Only an attribute can be assigned, so a program that assigns `item.render = other`
+through the `type` needs every class that fits to hold one, and a class with the function is refused (`this program
+assigns 'render' through the type, and only an attribute holding a function can be assigned`). An attribute that may
+hold nothing, `Spite.Function<Integer, String>?`, meets a member written with the `?`.
+
 A `type` can also be the element of a variadic parameter, `...items: List<Renderable>`, so a call takes any number
 of values of any classes that fit ([functions_and_operators.md](functions_and_operators.md#variadic-arguments)).
 
@@ -975,7 +983,7 @@ func finish() {
 type Work {
     name: String
     done: Boolean
-    finish()
+    finish: Spite.Function<Nothing>
 }
 
 var console = Console()

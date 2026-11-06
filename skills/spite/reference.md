@@ -394,13 +394,13 @@ rewritten.
   must cover every member and narrows `enemy` inside each case; a function or attribute every member has can be
   used on the union directly. Every member is a class of objects: `String`, a number, `Boolean` or `List<Integer>` is
   refused as a member, so wrap it in a class of your own that keeps it in an attribute.
-- A `type` declares a shape (`label: String` and `render(Integer): String`, one per line, a required function
+- A `type` declares a shape (`label: String` and `render: Spite.Function<Integer, String>`, one per line, with `Spite.Function<Nothing>` for no answer and never a call form `render(Integer): String`, which the compiler rewrites; a function of the class or an attribute holding such a function meets it, and `item.render(12)` calls either; a required function
   naming the *types* it takes and never the names) and accepts any class, or
   object literal `{ label: "x" }`, with those attributes and functions.
 - `Anything` is the built-in empty `type`, the counterpart of `Nothing`: `component: Anything` and
   `List<Anything>()` accept any object (a number keeps its class, with no allocation). Never declare an empty `type` of your own.
 - No `type` stands for every number. Write number code as a generic class that declares the `type` its codegen
-  value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum(Measure): Measure }`);
+  value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum: Spite.Function<Measure, Measure> }`);
   every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,
   `less_than`, `greater_than`. Ask `$value_type.is_number` (never ten comparisons) to tell a number apart in a walk.
   Inside a `type`, its own name in a signature is the class that fits.
