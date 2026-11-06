@@ -601,8 +601,7 @@ class shows its name and every attribute, nesting into the attributes that are c
 `Dictionary` `{"key": value}`, text is quoted, an enum value is written `'like_this'`, and an absent
 `T?` is `null`. An object already being shown further up is written `Name {...}`, so a cycle ends. A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:
-the automatic one is `Spite.Debug<$value_type>`, compiled only for the classes a
-program debugs.
+the compiler writes the automatic one only for the classes a program debugs.
 
 ```gdscript title=debug_doc/crew.spite
 var captain = ""
