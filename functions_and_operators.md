@@ -7,7 +7,8 @@ func function_name(first: Reference, second: Value): Tiny {
 ```
 
 The return type follows a colon, `return` is always written out, and a function with no return type returns
-nothing ([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#functions)). Forgetting the colon is a parse error that shows the form:
+nothing. A function with a return type whose body can reach its end without a `return` is a compile error that names
+the path that falls off. Forgetting the colon is a parse error that shows the form:
 
 ```gdscript title=missing_colon_error/missing_colon_error.spite entry error
 func add_one(value: Integer) Integer {
@@ -18,14 +19,34 @@ func add_one(value: Integer) Integer {
 a function's answer is written after a ':', as in 'func total(): Integer', and found 'Integer'
 ```
 
+## What a parameter shares
+
+A number, a `Boolean` or an enum value is copied into the parameter: assigning to it inside the function changes
+the function's copy and nothing else. Everything else (a class instance, a `List`, a `Dictionary`, a union, an
+object literal, a `String`) is the very object the caller holds, so a function that changes it through the
+parameter changes it for the caller too. There is nothing to write at the call or in the type. There are no value
+classes: when you want a copy, ask for it with `copy()` or `deep_copy()` ([memory.md](memory.md)).
+
+Writing `&Monster` for "by reference" is a parse error that says the type alone is enough, since every class,
+list and text is passed by reference already. A lone `&` anywhere else is an error too: there are no bit
+operators, bits are functions on the whole numbers (`flags.bits_and(mask)`, see
+[values_and_types.md](values_and_types.md#bitwise-functions)).
+
 ## Functions are values
 
 Naming a function without calling it gives a value: the function bound to the instance it was named on, so it
 runs exactly as that instance would have run it. There are no free functions and no closures. The value holds
-its owner and nothing else. Its type is written like any generic, with the return last:
-`Spite.Function<String, String>` takes a `String` and returns a `String`, and `Spite.Function<Nothing>` takes
-nothing and returns nothing. Calling it is `change(text)` or `change.call_function(text)`, which are the same
-call; and the value is also its own reflection, with `.name`, `.arguments` and `.returns`.
+its owner and nothing else. Its type is written like any generic, with the return last and everything before it
+an argument: `Spite.Function<String, String>` takes a `String` and returns a `String`,
+`Spite.Function<String, Integer, Boolean>` takes a `String` and an `Integer` and returns a `Boolean`,
+`Spite.Function<Boolean>` takes nothing and returns a `Boolean`, and `Spite.Function<Nothing>` takes nothing and
+returns nothing (`Nothing` is how "returns nothing" is written, so `<String>` can only mean "returns a `String`").
+Calling it is `change(text)` or `change.call_function(text)`, which are the same call, with the arguments checked
+like any call; and the value is also its own reflection, with `.name`, `.arguments` (all but the last type),
+`.returns` (the last) and `.owner`, the instance it runs on. A typed value goes where a plain `Spite.Function`
+is expected, never the other way round. `Nothing` is also what `.returns` reports for a function declared without
+a return type. A function that is a text's or a number's (`greeting.contains`) is bound to a copy of the value.
+A function value whose answer may be null answers it as null wherever it is held.
 
 ```gdscript title=function_values_doc/shouter.spite
 func shout(text: String): String {
@@ -60,8 +81,9 @@ shout AGAIN!
 ```
 
 A function value read from a list is called where it is read: `steps[index](value)` calls the function in slot
-`index`. Like every `[ ]` read it answers a value that may be missing, so the index is proven first, here by the loop's
-own condition:
+`index`. Like every `[ ]` read it answers a value that may be missing, so an index the compiler has not proven is
+the same error as for any `[ ]` read (`narrow it first with 'crash steps[index]'`...); here the loop's own condition
+proves it:
 
 ```gdscript title=function_list/function_list.spite entry
 var console = Console()
@@ -92,12 +114,15 @@ func add_one(number: Integer): Integer {
 11
 ```
 
-An ordinary call, `shouter.shout("hi")`, is a direct call and builds no function value; only a function
-used *as a value* costs anything, and little
-([what it costs](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#functions-are-values-always-bound-to-an-instance)). A value that holds
-a function bound to the instance holding it is a cycle, and leaks like any other: clear one side (see
-[memory.md](memory.md)). A function that returns nothing returns `Nothing`, which is what its type and its
-`.returns` say.
+An ordinary call, `shouter.shout("hi")`, is a direct call and builds no function value, and neither does a
+function passed by name to `each`, `filter` and the other list functions; only a function held as a value costs
+anything, and little: one small object and one indirect call. A program that holds none carries none. You
+cannot name a function of the class itself: `Monster.is_alive` is an error, since `Monster` as a value is its
+reflection; pass `monster.is_alive`, or use a member template such as `filter_is_alive()`.
+
+An attribute may hold a function value (`var on_press: Spite.Function<Nothing>? = null`, set later). One whose
+default names its own class's function is bound to the object itself, which is a cycle that leaks like any other
+until one side is cleared (see [memory.md](memory.md)).
 
 **A variable never has the name of a function it can see.** Since a function's
 name is already a value, a local, parameter or attribute named like a function of its class would make that name
@@ -122,7 +147,8 @@ func file_stem(path: String): String {
 the variable 'file_stem' has the name of a function of this class, and a function is a value passed by its name: give the variable a name of its own
 ```
 
-Written `var stem = file_stem("notes/today.txt")`, it compiles.
+Written `var stem = file_stem("notes/today.txt")`, it compiles. The check covers every class, generic ones included,
+and a function nothing calls.
 
 ## Variadic arguments
 
@@ -175,8 +201,13 @@ hello Bram
 ```
 
 Only the last parameter can take `...`, and it always receives a `List`. The values are passed one by one, so
-passing a whole list to it is an error; a parameter written without `...` takes a list as it is. Each call
+passing a whole list to it is an error, and so is a `...` that is not on the last parameter or is not typed `List<Type>`; a parameter written without `...` takes a list as it is. Each call
 builds the `List` its function receives, exactly as if the caller had built it, and nothing more.
+
+Each value casts toward the element type like any argument (`Integer` values into a `...values: List<Float>` arrive
+as `Float`s), and like any argument it is never a call or a construction: compute it on a line of its own and pass
+the name. A function value keeps the spread, so naming `log` and calling the value with `("x", "y")` gathers them
+the same way. `console.print`, `write` and `error` are ordinary variadic functions over `...values: List<Printable>`.
 
 ```gdscript title=variadic_not_a_list/variadic_not_a_list.spite entry error
 var console = Console()
@@ -193,6 +224,18 @@ func shout(...words: String) {
 ```diagnostic
 '...words' receives the arguments as a list: write '...words: List<Type>'
 ```
+
+## Anything, and plain values where a `type` is wanted
+
+`Anything` is a built-in `type` that requires nothing, so every object fits it: `component: Anything` takes any
+value and `List<Anything>()` holds any. Do not declare an empty `type` of your own. A function taking `Anything`
+(or any `type`) is compiled once for each class that reaches it, so a number, a `Boolean` or an enum value passed to
+it arrives as itself; stored in a `List<Anything>` it keeps its class beside it, and `if component.class == Health`
+narrows it back. A value of a union passed where a `type` is wanted brings the union's members into the shape, so
+a function the members share can be called on it. An enum value answers `to_string()` (its name) and `to_debug()`,
+which is all a shape can ask of it, and `.class` read through the shape names the value's real class (`Integer`,
+the enum). `Spite.Attribute.value`, the value an attribute holds, is typed `Anything?`. An empty `type` costs
+nothing until a value is passed to it.
 
 ## Every operator is a function
 
@@ -221,10 +264,16 @@ another missing one, and a chain read through one (`made.kind == "make"`) is mis
 comparison is simply `false` when there is no `made`. Write the comparison you mean, in a `return` as in an `if`
 ([Comparing needs no narrowing](failure.md#comparing-needs-no-narrowing)).
 
-`not`/`and`/`or` stay built-in keywords, never functions. On numbers, `Boolean`, enums, `String`, `List<T>` and
-`Dictionary<Key, Value>` the operators are built in (on numbers, the machine's own arithmetic); number arithmetic is done in the left side's
-type, so a wider right side is an error that says to write the wider operand first
-([Wider arithmetic goes wider operand first](values_and_types.md#wider-arithmetic-goes-wider-operand-first)).
+`not`/`and`/`or` stay built-in keywords, never functions, and `and`/`or` short-circuit: in `false and check()` the
+call never runs. On numbers, `Boolean`, enums, `String`, `List<T>` and `Dictionary<Key, Value>` the operators are
+built in (on numbers, the machine's own arithmetic; on whole numbers a zero divisor halts for `/` and for `%`).
+The library declares the operators its classes answer as ordinary functions, so `Integer.functions["sum"]` and
+`String.functions["get_at"]` are there to read. A class without `equals` compares by identity under `==`; the
+`equals` it declares must take its own class (`func equals(other: Money): Boolean`), or the compiler says so.
+Number arithmetic is done in the left side's type, so a wider right side is an error that says to write the wider
+operand first ([Wider arithmetic goes wider operand first](values_and_types.md#wider-arithmetic-goes-wider-operand-first));
+a comparison is refused the same way, naming the comparison turned around (`'count < total' ... write the Long
+first ('total > count')`).
 For a class of your own, the operator is a direct call of the matching function (nothing more at run time),
 and the right side casts toward the parameter's type like any other argument:
 
@@ -354,7 +403,12 @@ interception only applies to `receiver.field` written from outside. A getter may
 `String` or `List` as safely as it returns a field. It costs nothing hidden: an intercepted access is a direct
 call, and every other access a plain field read or write.
 
-**A getter with no setter makes a read-only attribute** ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#operators)). That is how
+A setter may stand without any attribute behind it: `ticket.id = 4` calls the class's own `set_id(value)` beside a
+private `_id`, and a getter without an attribute answers the read. Only a function the class itself declares does
+this; a template never answers a write to a name the class has no attribute for (`account.ghost = 5` is an error
+saying an `Account` has no attribute or function `ghost`).
+
+**A getter with no setter makes a read-only attribute**. That is how
 reflection keeps `Spite.Class.name` from being overwritten
 ([reflection.md](reflection.md#reflection-is-read-only)):
 
@@ -410,8 +464,7 @@ way and a reader never wonders whether `get_x()` and `.x` differ:
 |---|---|
 | `point.get_x()` | `point.x` |
 | `point.set_x(4)` | `point.x = 4` |
-| `shelf.get_at(0)` / `shelf.set_at(0, book)` | `shelf[0]` / `shelf[0] = book` |
-| `names.get("ann")` / `names.set("ann", 3)` on a `Dictionary` | `names["ann"]` / `names["ann"] = 3` |
+| `shelf.get_at(0)` / `names.get_at("ann")` on a `List` or a `Dictionary`, and the `set_at` of both | `shelf[0]` / `names["ann"]`, and `shelf[0] = book` / `names["ann"] = 3` |
 | `a.sum(b)`, `a.subtract(b)`, `a.multiply(b)`, `a.divide(b)`, `a.remainder(b)` | `a + b`, `a - b`, `a * b`, `a / b`, `a % b` |
 | `a.equals(b)` / `not a.equals(b)` | `a == b` / `a != b` |
 | `a.less_than(b)` / `a.greater_than(b)` | `a < b` / `a > b` |
@@ -450,6 +503,16 @@ always a member name**, never a keyword, so a getter named after a keyword is re
 is read as `thing.return`. `type` and `singleton` are the exceptions: they are reserved and never a name, after a
 `.` or anywhere else.
 
+The rule holds on every class (built in, library or your own), through a `type` or a union value (when every
+member offers the operator), and inside the class itself: `negate()` inside `Duration` is refused, write `-this`.
+Inside a class, a bare `set_turns(3)` is refused the same way (`'set_turns' is what writing 'turns' calls: write
+'turns = 3'`), and so is a bare `get_largest()`. The exception is a class with an attribute of that name, or a local
+that hides it: there a bare `turns = 3` writes the attribute itself, so the call is the only way to the setter. A
+bare name that no local and no attribute holds reads through `get_<name>()` and writes through `set_<name>(value)`.
+Two calls are not refused: `get_attribute`/`set_attribute` called with an attribute that is a value, such as one a
+walk hands you, and a getter called with no receiver where the class holds the attribute, since the bare name
+there is the raw field.
+
 ## One name, one function
 
 There is no overloading: one name is one function. An argument is cast to its parameter's type by the ordinary
@@ -481,21 +544,22 @@ signature is dictated from outside ([style.md](style.md#nothing-unused)).
 
 ## Functions the compiler calls by name
 
-Some functions are never called by the program's own code: the compiler calls them itself, so their signatures are
-fixed. `drop()` runs when the last reference to an object goes ([memory.md](memory.md)), `to_string()` wherever an
-object is used as text, `to_debug()` wherever it is shown for debugging, and `equals`, `less_than` and
-`greater_than` for `==`, `<` and `>`. Declaring one with another signature is an error that writes the one it must
-have, since a `drop` with a parameter could never run and an `equals` with two would leave `==` comparing identity:
+Some functions are never called by the program's own code: the compiler calls them itself. `drop()` runs when the
+last reference to an object goes ([memory.md](memory.md)), `to_string()` wherever an object is used as text,
+`to_debug()` wherever it is shown for debugging, and `equals`, `less_than` and `greater_than` for `==`, `<` and
+`>`. Three have a signature the compiler enforces, and declaring one with another is an error that writes the one
+it must have, since a `drop` with a parameter could never run and an `equals` with two would leave `==` comparing
+identity; the parameter of `equals` must be the class itself, because an `equals` for another type is never the
+one `==` calls:
 
 | Function | Signature |
 |---|---|
 | `drop` | `func drop()` |
 | `to_string` | `func to_string(): String` |
-| `to_debug` | `func to_debug(): String` |
 | `equals` | `func equals(other: Class): Boolean` |
-| `less_than` | `func less_than(other: Class): Boolean` |
-| `greater_than` | `func greater_than(other: Class): Boolean` |
 
+Write `to_debug(): String`, `less_than(other: Class): Boolean` and `greater_than(other: Class): Boolean` the same
+way; the compiler calls them with exactly those shapes.
 ```gdscript title=drop_with_parameter/handle.spite
 var open = true
 
