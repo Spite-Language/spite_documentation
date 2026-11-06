@@ -841,6 +841,10 @@ false
 fixed: this 'if' only returned 'null', which is what 'fallback' returns when its condition fails; wrote 'fallback not names.is_empty()' in its place
 ```
 
+The same rewrite applies when the guard returns an object made with no arguments (`return Mark()`) and when the `if` sits
+inside another `if`. An `if` that holds a comment is the one case that stays an error, since the rewrite would lose the
+comment: it says "write 'fallback not wanted' and let the rest run unindented", and moving the comment is yours to do.
+
 The file then reads top to bottom:
 
 ```gdscript title=default_guard_fixed/default_guard_fixed.spite entry
