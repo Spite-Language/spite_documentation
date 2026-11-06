@@ -88,9 +88,10 @@ the text or backwards, never a shorter text that would read like the one asked f
 `byte_at`, on a byte below 0 or past the end, since it answers a number and a `0` there reads like a real byte; it
 names the index and the length. Reading a number is the one that can find nothing to answer, so
 each number's conversion from text answers a `T?`: `null` when the text is not a number that fits the type.
-Assigning text to a number calls it, so it is allowed only into a `T?`: `var age: Integer? = "42"` is `42`, and
-`var age: Integer = "42"` is an error ("text is not an Integer until it is read as one"), which is how a number
-that may fail to parse is never mistaken for one that cannot.
+Assigning text to a number calls it, so it goes only into a `T?`: `var age: Integer? = text` reads it, and
+`var age: Integer = text` is an error ("text is not an Integer until it is read as one"), which is how a number that may
+fail to parse is never mistaken for one that cannot. A literal is read while compiling: `var age: Integer = "42"` is
+`42`, and `var age: Integer = "forty two"` is a compile error.
 
 The operators are the functions: `==`, `!=`, `<`, `>` and `+` call `equals`, `less_than`, `greater_than` and `sum`, and
 writing those names yourself is an error that points back at the operator (`word.equals("tea")` is "'equals' is
@@ -109,8 +110,7 @@ func StringMembers() {
     var first = names.first()
     crash first
     var shouted = first.upper_case()
-    var count: Integer? = "3"
-    crash count
+    var count: Integer = "3"
     var missing = line.index_of("barbara")
     var first_length = first.length()
     var tail = first.slice(1, first_length)
@@ -824,14 +824,11 @@ var console = Console()
 
 func IpAddressForms() {
     load "../spite_standard_library/windows"
-    var read: IpAddress? = "2001:DB8:0:0:0:0:0:7"
-    crash read
+    var read: IpAddress = "2001:DB8:0:0:0:0:0:7"
     var is_ipv6 = read.is_ipv6()
     console.print("{read} {is_ipv6}")
-    var mapped: IpAddress? = "::ffff:10.0.0.1"
-    var plain: IpAddress? = "10.0.0.1"
-    crash mapped
-    crash plain
+    var mapped: IpAddress = "::ffff:10.0.0.1"
+    var plain: IpAddress = "10.0.0.1"
     var same = mapped == plain
     console.print("{mapped} {same}")
     var name: IpAddress? = "localhost"
@@ -866,9 +863,8 @@ localhost resolves first to 127.0.0.1
 
 An IPv4 address inside `::ffff:` is that IPv4 address, so a datagram a dual-stack server receives from `127.0.0.1`
 comes from `127.0.0.1`. There is no constructor that takes text, and no network call takes text: text becomes an address through
-`to_ip_address()`, which can answer `null`, and every call that says where to go takes an `IpAddress`. Once the compiler casts text where an `IpAddress` is wanted and folds a
-literal it can read (spite_compiler#228, #229), `client.connect("127.0.0.1", 8080)` needs nothing written; until
-then a program narrows `var read: IpAddress? = "127.0.0.1"` first.
+`to_ip_address()`, which can answer `null`, and every call that says where to go takes an `IpAddress`. A literal address is read while compiling, so `client.connect("127.0.0.1", 8080)` needs nothing written and
+`client.connect("300.0.0.1!", 8080)` is a compile error. A host name needs a run to resolve, so `"localhost"` stays an `IpAddress?` a program narrows.
 
 ## TCP
 
@@ -963,8 +959,7 @@ func UdpPing() {
     var client = Udp.Client()
     crash client.open()
     var ping = "ping".to_buffer()
-    var server_address: IpAddress? = "127.0.0.1"
-    crash server_address
+    var server_address: IpAddress = "127.0.0.1"
     crash client.send_to(server_address, _ping_port, ping)
     var arrived = server.receive()
     crash arrived
@@ -1101,8 +1096,7 @@ func talk() {
     var socket = WebSocket.Client()
     var request = Http.Request()
     request.path = "/chat"
-    var server_address: IpAddress? = "127.0.0.1"
-    crash server_address
+    var server_address: IpAddress = "127.0.0.1"
     crash socket.connect(server_address, _chat_server_port, request)
     fallback socket.send_string("hello")
     var answer = socket.receive()

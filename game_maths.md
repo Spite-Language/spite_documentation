@@ -271,13 +271,12 @@ colours one step apart in one channel are different.
 var console = Console()
 
 func GameColorsBasics() {
-    var tomato: Color? = "tomato"
-    crash tomato
+    var tomato: Color = "tomato"
     console.print("{tomato} {tomato.to_rgb_string()} {tomato.to_hsl_string()}")
-    var faded: Color? = "hsl(210, 50%, 40%, 0.25)"
-    crash faded
+    var faded: Color = "hsl(210, 50%, 40%, 0.25)"
     console.print("{faded} {faded.to_rgb_string()}")
-    var wrong: Color? = "#12"
+    var written = "#12"
+    var wrong: Color? = written
     if wrong {
         console.print("read")
     } else {

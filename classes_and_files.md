@@ -281,8 +281,7 @@ func Distances() {
     load "../spite_standard_library/windows"
     var run = Meters.Marathon()
     console.print(run.amount)
-    var walked: Meters? = "1200"
-    crash walked
+    var walked: Meters = "1200"
     console.print(walked.amount)
 }
 ```
@@ -293,7 +292,11 @@ func Distances() {
 
 **A conversion** lives in the class it builds, so `String` knows nothing of `Meters`, `IpAddress` or `Color`. Its
 `?` says it can fail: `Meters(from: String): Meters?` answers `null` for text that isn't a number, and the caller
-narrows it. A conversion without `?` can't fail. A class has at most one conversion from each type. It is never
+narrows it. A literal needs no narrowing: `var walked: Meters = "1200"` is read while compiling, and
+`var walked: Meters = "far"` is a compile error (`the literal "far" does not convert: 'Meters(from: String)' answers null
+for it`). Text held in a local, or with a hole in it, is read at run time. A conversion that does more than work out its
+answer (it prints, reads the system, changes a singleton) always runs at run time, literal or not, and stays a `T?`. A
+conversion without `?` can't fail. A class has at most one conversion from each type. It is never
 called by name: where a `String` is given and a `Meters?` is wanted, the compiler calls it, and writing the call
 yourself is an error. `var walked: Meters? = Meters("1200")` is refused with "'Meters("1200")' is what writing
 '"1200"' here already does: the compiler casts a value to the class its place wants, so write '"1200"'", and

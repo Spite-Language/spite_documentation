@@ -197,10 +197,14 @@ rewritten.
   `UnsignedLong`, `Float` (the default for decimals), `Double`. `Boolean`. `String` (double quotes only; escapes
   `\n`, `\t`, `\r`, `\\`, `\"` and `\{` for a literal brace, in any order: `"\\\{"` is a backslash and a brace; a
   text inside a hole keeps its own escapes and holes).
-- No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer? = "12"` reads
-  it. A value meeting another class is cast through that class's conversion, `func Color(from: String): Color?`
-  declared in `Color`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = "#ff8000"` calls
-  it, and the cast answers what the conversion answers (a `T?` is narrowed before a plain `T`); a conversion is never
+- No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer = "12"` reads
+  it while compiling. A value meeting another class is cast through that class's conversion, `func Color(from: String): Color?`
+  declared in `Color`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = text` calls
+  it, and the cast answers what the conversion answers (a `T?` is narrowed before a plain `T`). A literal at that place
+  (text with no hole, a number with its sign) is worked out while compiling in every build: `var paint: Color = "#ff8000"`
+  needs no narrowing, one that answers `null` is a compile error (`the literal "x" does not convert: 'Color(from: String)'
+  answers null for it`), a `T?` holding one is proven present so a check of it is refused, and a conversion that needs a
+  run (asks the system, prints, a singleton) stays a `T?`; a local holding a literal is not one. A conversion is never
   called by name (`Color("#ff8000")`, `Integer(text)` and `Float(count)` are errors: write the value where the class is
   wanted), and a class with no such conversion is an error naming it (`IpAddress declares no
   'IpAddress(from: Point)'`). A class is built three ways: its constructor, a conversion (`func X(from: Y): X?`) and a
@@ -484,11 +488,12 @@ rewritten.
     trace, unless the program is built with `--trace-fallbacks`, which prints each one as it fails.
 - Narrowing tests presence, never the value: `crash keys[index]` passes on an element holding `0.0`, and `if count`
   runs on an `Integer?` holding `0`.
-- Reading a number from text answers a `T?`: `var read: Integer? = "42"` is an `Integer?`, `null` for `"forty two"`,
+- Reading a number from text answers a `T?`: `var read: Integer? = text` is an `Integer?`, `null` for `"forty two"`,
   `"12abc"`, `""` or a number the type cannot hold, so narrow it (`crash count` where the text is yours, `if`/`fallback`
-  where it came from outside). `var age: Integer = "42"` is an error; `var age: Integer? = "42"` reads it.
-- Text is read as an enum value the same way: `var mood: Cat.Mood? = "calm"`, `null` when no value is spelled that
-  way; `var mood: Mood = text` is an error, and `var mood: Mood? = text` reads it.
+  where it came from outside). `var age: Integer = text` is an error; `var age: Integer? = text` reads it, and a literal is read while compiling
+  (`var age: Integer = "42"`; `"forty two"` is a compile error).
+- Text is read as an enum value the same way: `var mood: Cat.Mood? = text`, `null` when no value is spelled that
+  way, and a literal is decided while compiling (`var mood: Cat.Mood = "calm"`); `var mood: Mood = text` is an error, and `var mood: Mood? = text` reads it.
 - A function that declares a result ends every path with a `return` (or a bare `crash`): a path that reaches the
   closing `}` is an error naming it (`'sign_of' answers a String, but when 'value < 0' is false (line 12, an 'if'
   with no 'else') it reaches its end without a 'return'`). An `if`/`else` whose branches both return, a `switch`
@@ -649,11 +654,11 @@ as `var console = Console()`.
 `print`, `error` and `debug` write their line out at once, so a log redirected to a file shows every line as it
 happens; `write` waits for the next line end, the next `read_line()` or the exit. There is no `flush()`: lines from
 two threads never split each other, and everything is out before an exit, a crash report or a read.
-An address is an `IpAddress` (IPv4 or IPv6 only, the port a number beside it): `var read: IpAddress? = "::1"`
+An address is an `IpAddress` (IPv4 or IPv6 only, the port a number beside it): `var read: IpAddress = "::1"` (a literal address is read while compiling)
 reads one from text or resolves a host name (`var read: IpAddress? = "example.com"`, its first address, IPv4 first, keeping
 the name for HTTP's `host`; `null` when neither), `"example.com".resolve_ip_addresses(): List<IpAddress>` gives every
 address (IPv4 first), `to_string()` writes it as RFC 5952 does, `==` compares; no constructor and no network call
-takes text, so a program narrows `var read: IpAddress? = "127.0.0.1"` and passes the `IpAddress`.
+takes text, so a program writes the literal (`var read: IpAddress = "127.0.0.1"`) or narrows a read `IpAddress?` and passes the `IpAddress`.
 TCP is `Tcp.Server()` (`listen_locally(port)`, `listen_everywhere(port)`, `listen_at(address, port)`,
 `accept(): Tcp.Connection?`) and `Tcp.Client()` (`connect(address, port)`, `connect_locally(port)`); a client and a `Tcp.Connection` talk alike: lines
 (`read_line(): String?`, `write_line(text)`), text (`read_as_string(): String?`, `write_string(text)`) or bytes as a
@@ -780,7 +785,7 @@ parts `column_0_row_0` to `column_3_row_3`. Each answer is a new object, so one 
 highest)`, `Plane()` with `set_point_normal`, `Frustum()` with `set_from_view_projection(matrix)` then
 `intersects_box`/`intersects_sphere`, and `Ray(origin, direction)` whose `hit_plane`, `hit_box` and `hit_triangle`
 answer a `Float?` distance, `null` for a miss. Colours: `Color(0.2, 0.5, 0.9, 1.0)` holds `red`, `green`, `blue`, `alpha` from 0 to 1, its one
-constructor; text becomes one only through `var read: Color? = "#ff6347"`, a `Color?` (also `rgb()`, `rgba()`, `hsl()`,
+constructor; text becomes one only through a conversion, `var read: Color? = text`, a `Color?` (a literal needs no narrowing, `var read: Color = "#ff6347"`) (also `rgb()`, `rgba()`, `hsl()`,
 `hsla()` and CSS names; `null` for text naming none, so `crash` it), written with `to_hexadecimal_string()`, `to_rgb_string()`, `to_hsl_string()`, converted with
 `to_linear()` and `to_standard_rgb()`. Animation and shading: `CubicBezier(start, first_handle, second_handle, end)`
 with `y_at_x(x)`, `var easing = Easing()` then `easing.in_out_cubic(amount)` and the rest, `Noise(seed)` with

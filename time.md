@@ -404,12 +404,11 @@ func TimeTextReading() {
     load "../spite_standard_library/windows"
     var exact: Instant? = "2024-03-10T03:00:00-04:00[America/New_York]"
     crash exact
-    var local: DateTime? = "2024-03-10 02:30"
-    crash local
-    var lap: Duration? = "PT90M"
-    crash lap
+    var local: DateTime = "2024-03-10 02:30"
+    var lap: Duration = "PT90M"
     console.print(exact, local, lap)
-    var no_offset: Instant? = "2024-03-10T02:30:00"
+    var no_offset_text = "2024-03-10T02:30:00"
+    var no_offset: Instant? = no_offset_text
     if no_offset {
         console.print("unexpected")
     } else {
@@ -421,7 +420,8 @@ func TimeTextReading() {
     } else {
         console.print("New York was not five hours behind")
     }
-    var no_such_day: Date? = "2023-02-29"
+    var no_such_day_text = "2023-02-29"
+    var no_such_day: Date? = no_such_day_text
     if no_such_day {
         console.print("unexpected")
     } else {

@@ -259,7 +259,9 @@ function named after the class with one parameter `from`
 reads the text through `func Color(from: String): Color?`, and a `Meters` passed where a `Feet` is wanted goes
 through `func Feet(from: Meters): Feet` when `Feet` declares it. The cast answers what the conversion answers, so
 text read as an `IpAddress` is an `IpAddress?`, narrowed like any other `T?` before it goes where a plain `IpAddress`
-is wanted. A class with no such conversion is an error naming the conversion it would need:
+is wanted. A literal is read while compiling: `var host: IpAddress = "127.0.0.1"` needs no narrowing, and
+`var host: IpAddress = "not a host!"` is a compile error naming the literal and the conversion. A conversion that needs
+a run to answer (one that asks the system, as `"localhost"` does, or prints) stays a `T?`. A class with no such conversion is an error naming the conversion it would need:
 `a Point cannot be used where an IpAddress is needed: ... IpAddress declares no 'IpAddress(from: Point)'`.
 
 `this` works in every class, not only numbers, to hand the object itself to something:
@@ -548,10 +550,10 @@ func StringBasics() {
     console.print("parts count", parts_count)
     var joined_parts = parts.join(" - ")
     console.print("joined", joined_parts)
-    var age: Integer? = "42"
-    crash age
+    var age: Integer = "42"
     console.print("parsed", age)
-    var not_a_number: Integer? = "not a number"
+    var typed = "not a number"
+    var not_a_number: Integer? = typed
     if not_a_number {
         console.print("parsed", not_a_number)
     } else {

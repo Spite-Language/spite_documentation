@@ -30,8 +30,8 @@ What that already means in practice:
   line of input that is not UTF-8, a path the system cannot give, the machine's time zone ICU cannot open, each is
   an answer, a `T?` that is `null` or a `Boolean`, and the program decides what it means with `fallback` (carry on)
   or `crash` (a bug) ([standard_library.md](standard_library.md)).
-- Text that is not a number reads as `null`, never as a `0`: `var read: Integer? = "forty two"` is an `Integer?`
-  ([standard_library.md](standard_library.md#string)).
+- Text that is not a number reads as `null`, never as a `0`: `var read: Integer? = text` is an `Integer?`
+  ([standard_library.md](standard_library.md#string)), and the literal `"forty two"` there is a compile error.
 - An operand that would be cut to fit is a compile error, in arithmetic and in comparisons
   ([values_and_types.md](values_and_types.md#wider-arithmetic-goes-wider-operand-first)).
 
