@@ -706,7 +706,7 @@ reflection on it is ordinary code that costs nothing at run time:
 - **A question folds.** `Monster.is_singleton`, `update.is_resumable` or `argument.is_mutated` is a `true` or a
   `false` in the generated code, and an `if` on it keeps only the branch taken.
 - **`each` over a constant list is unrolled.** `Monster.attributes.each(show)` calls `show` once for `name` and
-  once for `health`; no list is made. So is a walk over a class's `.enums`, `.unions` or `.types` and over a union's
+  once for `health`; no list is made. A list you write naming only classes or only namespaces is such a list, `[Part, Part.Inner].each(check)`, as long as nothing writes to it. So is a walk over a class's `.enums`, `.unions` or `.types` and over a union's
   `.members`, where each member class is a constant: `Shelter.unions["Pet"].members.each(adopt)` can make one with
   `member()`. A filter or a member template over a constant list is a constant list.
 - **A function handed a constant is compiled once for it.** Inside that copy the parameter is the constant
