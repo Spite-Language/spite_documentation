@@ -20,8 +20,7 @@ That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum, a 
 
 Conditions are `Boolean`s, joined with `and`, `or` and `not`, which short-circuit. An `if` on a `T?` narrows it in
 place: inside the block it is a plain value, and the `else` runs exactly when it is null
-([failure.md](failure.md#narrowing)). `else if` is written on one line; the formatter joins an `else { if }` into
-it.
+([failure.md](failure.md#narrowing)). `else if` is written on one line.
 
 ```gdscript title=if_chains/if_chains.spite entry
 var console = Console()
@@ -141,8 +140,15 @@ func stamp_of(path: String): String {
 }
 ```
 
-Write `if modified and size`, not `if modified { if size { ... } }`. The rules are in
-[the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#an-if-that-only-holds-an-if).
+Write `if modified and size`, not `if modified { if size { ... } }`. The error reads `this 'if' only contains
+another 'if' and neither has an 'else': write one condition, 'if modified and size'`. It is only refused when the outer
+`if` holds nothing else and neither `if` has an `else` or an `else if`: an inner `if` beside other statements, or
+under an `else`, is fine.
+
+An `if`/`else` written directly inside a branch of another `if`/`else` (the `else if` links count as branches) is
+refused as well, when both test which member of a union or which value of an enum a value is: use one `switch`.
+A flat `else if` chain is fine, and so is an `if`/`else` inside a `while` or a `switch` inside the branch, or an `if`
+with no `else` inside it.
 
 ## `while` is the only loop
 
@@ -161,14 +167,24 @@ func ForRejected() {
 }
 ```
 ```diagnostic
-Spite only has 'while' loops
+Spite has no 'for'
 ```
 
 A loop over a list of objects that only does what a
 [member template](collections.md#member-templates-loops-you-do-not-write) does (calling, collecting, keeping,
 counting, adding up or finding a member of each element) is an error naming the template
-([the exact shape](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#a-while-that-a-member-template-already-says)). To call one of your own
-functions with each element, pass it: `items.each(restock)`
+(`this 'while' walks every element of 'items' only to add up 'price': write 'var total = items.sum_price()'`).
+The compiler only recognises the plain shape: `var index = 0` right before the loop, the condition
+`index < items.count()`, a last statement `index = index + 1`, and one statement in between that reads
+`items[index]` (directly, or through one `var item = items[index]` first). The index may be read nowhere else in the
+loop, and not after it. The one statement is a call of a member of the element (`item.restock()`), an `append` of the
+element or of a member to a list you declared just before, an `if` on a member or on a function that does the same
+with `append`, a count or a `return`, an addition into a total declared as `0`, or a call of a function of the same
+class taking the element (`say_hello(item)`, answering a `Boolean` where the loop tests it). The members must be
+public; a `T?` answered by the tested function is a presence test, which no template says, so that loop stays.
+A loop that passes extra arguments, needs the index, walks two lists, scans text, starts anywhere but 0 or
+stops early any other way is left alone. To call one of your own functions with each element, pass it:
+`items.each(restock)`
 ([Passing a function for each element](collections.md#passing-a-function-for-each-element)).
 
 When you do need to walk a list by hand (because you need the index, walk two lists, or stop early), index
@@ -196,7 +212,10 @@ func WhileBasics() {
 3. gamma
 ```
 
-There is no `break` and no `continue`. A loop that stops early says so in its own condition, with a flag or with
+There is no `break` and no `continue`: writing either is an error (`Spite has no 'break': a loop stops in its own
+condition`), though both stay usable as names. A word left on the line after a statement is a parse error at that
+word (`'console' is left over after the '}' that closes this statement: a statement ends with its line, so remove it,
+or put it on a line of its own`). A loop that stops early says so in its own condition, with a flag or with
 the bound itself:
 
 ```gdscript title=early_exit/early_exit.spite entry
@@ -232,9 +251,17 @@ call, could only spin, so it is an error too: `'while running' never ends: nothi
 calls nothing and has no 'return', 'fallback' or 'crash', so the program would spin here for good: change 'running'
 inside the loop, or leave it with a 'return'`.
 
+A condition the compiler knows is fixed in your file instead when one fix exists: an `if` that is always true becomes its
+body, one that is always false becomes its `else` or goes, and a `while` that is always false goes
+([style.md](style.md)). Only a `while` that is always true, which could never end, stays an error: `while 1 == 1`
+is refused just like `while true`.
+
+A condition that reads an attribute, a member or a call is not judged this way: only a condition made of locals and
+parameters can be known to spin.
+
 None of this costs anything at run time beyond the branches and loops it compiles to: every rule on this page
-is checked while compiling. Only a REPL build adds a check point to each loop
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#control-flow-in-full) say which builds).
+is checked while compiling. Only a build with `--repl-port` or `--hot-reload` adds a check point at the end of each
+pass of a `while` in your own code, where a waiting REPL command or a reload is answered. Other builds have none.
 
 ## `switch` over a union
 
@@ -306,15 +333,20 @@ something that says meow
 every switch until it has a case, so nothing takes a body written before it existed. Two cases may share a one-line
 body, `Cat: show_sound(creature)` and `Dog: show_sound(creature)`. When every case but one shares its body, the switch
 is an `if` instead: `if creature.class == Fish { swim(creature) } else { walk() }` (the error writes it out). A `_:`
-is an error naming the cases to write
-([the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#unions-in-full)).
+is an error: `'_:' answers for what the switch does not name, so a value added later slips past it: name every
+value with a case of its own`. A case of the switch is one statement (a call, an assignment, a `return` or a `crash`),
+alone on its line or alone inside `{ }`; two statements are `this case runs 2 statements: a case is one statement,
+so move them into a function named for what they do and call it here`, in every kind of switch. The exception to the
+shared body is a body that reads the switched value, which stays a `switch`.
 
 ## `switch` over values
 
 A `switch` also takes an enum value or a `Boolean`, and then each case is one value written out: an enum's `'value'`,
 `true` or `false`. It covers every value, so a value added to the enum later cannot be forgotten. A number or a text
 has more values than any switch could list, so choosing among them is an `if`, and `switch count` on a number is an
-error saying so.
+error saying so. The subject is evaluated once, and the cases are tried in order. A value named twice, a value that
+the enum does not have, a name or a call in place of a value, a class as a case, a value case on a union, and a
+value case on a `T?` (narrow it first) are errors too. A `_:` is refused here as well.
 
 ```gdscript title=value_switch_doc/value_switch_doc.spite entry
 enum Light {
@@ -393,8 +425,9 @@ this switch over 'light' has no case for 'amber'
 
 **Three `if`s that only compare one value with its enum values and return are a `switch`.** Each is a compile error
 that shows the switch to write, naming every value. A chain over numbers or text stays a chain of `if`s, since no
-switch can list every number
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#a-chain-of-ifs-on-one-enum-value-is-a-switch)).
+switch can list every number. Two such `ifs` are left alone; the error starts at three. The compared thing must be a
+name or a member path without a call, and each block exactly one `return`; links may compare several values joined
+by `or`.
 
 ## `value.class == Class`
 
@@ -500,8 +533,8 @@ against `$wanted_type` bound to `Health`, or a union that does not hold the boun
 while compiling, and it is never the "never true" error, since another binding may make it true. The same goes
 for any class test inside a generic class: one that can never be true for one instantiation (`held.class == Health` in
 a `Box<Label>`) folds to `false` and its branch is removed from that copy, while outside a generic it stays the
-error. The full rules for class tests are with
-[unions](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#unions-in-full).
+error. The rules for class tests are with
+[unions](values_and_types.md#unions).
 
 ```gdscript title=codegen_class_test_doc/find.spite
 generic $wanted_type
