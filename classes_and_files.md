@@ -5,6 +5,37 @@ Every `.spite` file is exactly one class, named by PascalCasing the file name: `
 put two classes in one file. Every other file of the program is another class, and a folder is a namespace
 ([packages.md](packages.md)).
 
+## Names
+
+The shape of a name says what it is. `lower_snake_case` names a variable, an attribute, a function or a folder;
+`PascalCase` names a class, a `type` or an enum, and the whole standard library is written that way. Text is
+`"in double quotes"` and nothing else: single quotes are for enum values (`'mage'`), and a `'text'` written for a
+string is refused. A comment starts with `#` and runs to the end of the line. A newline ends a statement and
+separates the entries of a list, an enum, a union or a `type`; on one line, commas do.
+
+A `$name` is a codegen value, replaced when the code is generated ([metaprogramming.md](metaprogramming.md)). A
+name starting with `_` is private ([below](#private-names)).
+
+The keywords are `var func return if else while switch type enum union generic fallback crash and or not null true
+false this`, and none of them can name anything. `load` is a keyword only at the start of a statement, written
+without parentheses (`load "engine"`), and it cannot name a function, a variable or a parameter. `singleton` is a
+keyword only as the first line of a file, and `type` and `singleton` are never a name, so `var union = 1` stops at
+"expected the name of a variable and found 'union'". `generics` is reserved only so that a header list gets an
+error that shows the right form: `there is no 'generics' list: a class declares each codegen value on its own line
+at the top of the file, like 'generic $damage_type'`.
+
+Words from other languages get an error that shows the Spite form, and stay usable as names:
+
+| Written | Error says |
+|---|---|
+| `do` | an `if` on a value that may be null narrows it in place, `if value { ... } else { ... }` |
+| `let total = 1`, `const` | `Spite has no 'let': a variable is declared 'var name = value'` |
+| `class Name {` | `there is no 'class' keyword: a file is a class, named after the file, and its attributes and functions are written at the top of that file` |
+
+Reflection gives every object a few names, so no attribute or function of yours may be called `class`,
+`attributes`, `functions`, `instances` or `memory`: one of its own would hide the one reflection gives
+([reflection.md](reflection.md)). `class` written bare inside a function is the instance's own `Spite.Class`.
+
 ## What a file holds
 
 A file contains only declarations, in this order:
@@ -23,8 +54,8 @@ A file contains only declarations, in this order:
 6. the other `func`s.
 
 Anything out of that order is an error naming what came before it ([style.md](style.md#a-file-is-ordered)).
-There are **no file-level statements**: no loop, `if` or call outside a function
-([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#files-are-classes)):
+There are **no file-level statements**: no loop, `if` or call outside a function. Move the statement into a
+function, or into the constructor:
 
 ```gdscript title=file_scope_error/file_scope_error.spite entry error
 var console = Console()
@@ -90,6 +121,27 @@ func OrderedFile() {
 7 by_name
 ```
 
+### A union or type two classes declare
+
+Declare a union or a `type` in the class that takes, holds or switches on it, and leave it there. When two classes
+of one namespace declare the same union, with the same name and the same members (in any order), the compiler
+moves it for you: it goes to the entry class of the namespace, the class named like its folder (`Bunda.Bunda` in
+`bunda/bunda.spite`), it creates that file if the namespace has none, and each class that used the union now names
+it through the entry class, `Bunda.Snack`. Each move is a `fixed:` line, and the entry class writes the plain name.
+A union declared by classes in different folders goes to the lowest namespace that holds every copy, and an outside
+class that needs one declares a copy of its own, which the fix then moves up with the others. Only the same name
+with the same content counts: the same members under another name are another union, since they may mean another
+thing, and a union with fewer members is a different one too.
+
+Nothing moves between the program, a package and the library; each keeps its own. The compiler refuses, with
+every declaring class named, what it cannot move: two different unions of one name landing in one entry class, a
+name that already means a class there (a union `Bunda` repeated inside `bunda/`), an entry class that is generic,
+a copy in files the compiler does not write (the library, a pinned package), and an entry class whose new file
+would take a name the namespace already reaches. The fix for the refusal is a rename or moving the union by hand.
+A class outside the namespace cannot write the plain name, and neither can a side class of the same namespace:
+`'Pet' is a union of 'Bunda.Bunda', the entry class of this class's namespace, and only that class names it
+plainly: write 'Bunda.Pet'`.
+
 ## Constructors
 
 A function named exactly like its class is the constructor:
@@ -115,7 +167,7 @@ age 30
 ```
 
 A class with no constructor is made from its defaults with `Member()`, and writing an empty one is an error,
-because it says nothing:
+because it says nothing. A generic class needs no constructor either:
 
 ```gdscript title=team_roster/member.spite
 var name = "unnamed"
@@ -157,7 +209,7 @@ func EmptyConstructorError() {
 }
 ```
 ```diagnostic
-'Holder' has an empty constructor: delete it
+'Holder' has an empty constructor: delete it, since a class without one is made from its defaults
 ```
 
 Every `var` is written with its default, so an object made with no arguments is already complete: a fresh
@@ -166,12 +218,15 @@ Every `var` is written with its default, so an object made with no arguments is 
 it says something is a bug ([failure.md](failure.md#fallback-is-not-allowed-in-a-constructor)). There is no `new`:
 `Person(30)` makes one.
 
-There is one function per name. A file declaring a name twice is an error, and there is no overloading: an
-argument is cast to the parameter's type instead ([functions_and_operators.md](functions_and_operators.md)).
+There is one function per name. A file declaring a name twice is an error, `'DuplicateFunction' declares 'twice'
+twice: a later file may reopen a class and replace a declaration, but one file declares each name once`, and there
+is no overloading: an argument is cast to the parameter's type instead
+([functions_and_operators.md](functions_and_operators.md)).
 
 A constructed object is kept and used. A constructor call written as a statement of its own, `Report(text)`,
 makes an object and throws it away. The construction was the whole point, so it is an error saying to write a
-function instead ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#a-constructed-object-must-be-kept-and-used)):
+function instead. `Box<Integer>(3)` on a line of its own is the same error. An object stored in a variable that
+nothing reads is already the unused-name error, and a singleton is exempt, since it is bound as an attribute:
 
 ```gdscript title=dropped_report/report.spite
 var console = Console()
@@ -256,7 +311,7 @@ A conversion and a preset answer with `return` and never assign `this`. Only the
 A file whose first line is `singleton` has one instance: calling its constructor anywhere answers that same
 instance, made the first time it is asked for (one instance *per argument values* when the constructor takes
 arguments, [below](#one-instance-per-argument-values)). `Console`, `Program`,
-`Environment`, `Build` and `Console` are singletons; `File`, `Directory` and `Process` are not, since
+`Environment`, `Build` and `Clock` are singletons; `File`, `Directory` and `Process` are not, since
 several may exist at once.
 
 ```gdscript title=singleton_basics/scoreboard.spite
@@ -287,15 +342,23 @@ func SingletonBasics() {
 
 Call sites never change: `var console = Console()` reads the same whether or not the class is a singleton, and
 the class file is where that is said. `is_singleton()` is answered by `Spite.Class` for every class, from the
-line.
+line. Writing a `func is_singleton()` in a class of your own is an error that tells you to write `singleton` as
+the file's first line. A later file may reopen a class and add the `singleton` line, and the class is then a
+singleton everywhere.
 
 A singleton lives until the program ends, and its `drop()` runs then, newest singleton first, so a `drop()` may
-use any singleton its class keeps in an attribute. What one costs at run time is a static slot, filled the first
+use any singleton its class keeps in an attribute. A singleton counts as made when its constructor finishes, so the
+ones its attributes make are made before it and outlive it. At exit the calls a frame loop started finish first,
+the output is flushed, the singletons are destroyed, and last of all every `DynamicLibrary` is unloaded, so a
+`drop()` may call a library. A `drop()` that fetches a singleton made after its own, which is already gone, halts
+with `spite: a drop() at exit used the singleton Archive after it was destroyed`, and says to keep that singleton
+in an attribute of the one whose `drop()` uses it. Nothing is read from freed memory either way: a singleton's
+memory is given back only after all of them are destroyed. What one costs at run time is a static slot, filled the first
 time it is asked for: fetching it is one load, it is never reference counted, and a program never pays for a
 singleton it does not reach ([optimizations.md](optimizations.md#a-singleton-is-made-on-first-use-by-a-function-of-its-own)).
 Work the compiler runs at once never shares a singleton one of them writes, so a singleton needs nothing written
-for threads ([concurrency.md](concurrency.md#no-lock-to-write)). The details are in
-[the rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#singleton-rules).
+for threads ([concurrency.md](concurrency.md#no-lock-to-write)). The sections below
+give the rest.
 
 ### One instance per argument values
 
@@ -340,19 +403,17 @@ list. The constructor runs once per argument values, the first time those values
 lives until the program ends like any singleton.
 
 **The arguments are literals** the compiler reads while compiling: strings, numbers (a leading minus
-included), `true`, `false` and enum values. Each distinct argument list is its own instance, made once and found
+included, decimals too), `true`, `false` and enum values. Each distinct argument list is its own instance, made once and found
 again without looking anything up at run time. Anything else is an error that names the rule:
 `var registry = Registry(starting_name)` is "'starting_name' is not a literal: a singleton's arguments are literals
 the compiler reads, because each distinct argument list is its own instance of 'Registry', made the first time it
-is asked for" (`diagnostics/singleton_arguments`). `DynamicLibrary` follows the same rule: one library per file,
-naming rule and header ([foreign_libraries.md](foreign_libraries.md)).
+is asked for".
 
 Only a generic class takes a type in `<>`. An enum, a union, a `type` or a number written with one is refused:
 `var phase: Phase<Integer> = 'idle'` is "'Phase' is not a generic class, so it takes no type in '<>': write 'Phase' alone".
 
-A singleton with `generic` lines has one instance per set of codegen values, the way `DynamicLibrary` has one
-per argument list: `Column<Health>()` is the same object everywhere, and `Column<Label>()` is a second one. This
-is what per-type storage is written with.
+A singleton with `generic` lines has one instance per set of codegen values: `Column<Health>()` is the same object
+everywhere, and `Column<Label>()` is a second one. This is what per-type storage is written with.
 
 ```gdscript title=generic_singleton/column.spite
 singleton
@@ -381,8 +442,19 @@ true 2 0
 ```
 
 A singleton is bound once, as an attribute beside the others, and used through that name, so every singleton a
-class uses is visible at the top of its file. Reading or calling a member on the constructor call itself is an
-error, and so is passing it, returning it or storing it anywhere but a `var` of its own:
+class uses is visible at the top of its file. Binding it as a local inside a function is an error, `'Build' is a
+singleton, bound here as a local: bind it once beside the attributes`. The one exception is a class that is a
+value, `String`, the numbers, `List` and `Dictionary`: an attribute there would be carried by every text or list,
+so a function you add to one of them binds the singleton as a local `var`, and it is made when the object that
+binds it is made, not when the function first runs. A generic singleton whose codegen values come from the
+function's own metaprogramming (`Query<argument.class>()`) stays a local too, since no attribute can name that type.
+
+Reading or calling a member on the constructor call itself is an error, and so is passing it (`greet(Console())`),
+returning it, assigning it, using it in an operation, writing it as a statement of its own (a bare `Console()`) or
+storing it anywhere but a `var` of its own. The error names the fix. It covers a generic singleton such as
+`Column<Health>()` the same way, and only in code the compiler generates, so a function nothing calls is not
+checked. A binding nothing reads is an error everywhere, a loaded package included: `the attribute 'world' is never
+read: remove it`.
 
 ```gdscript title=singleton_inline_error/singleton_inline_error.spite entry error
 var console = Console()
@@ -395,6 +467,16 @@ func SingletonInlineError() {
 ```diagnostic
 'Build' is a singleton: bind it once beside the attributes, 'var build = Build()', and use 'build.target_operating_system'
 ```
+
+Singletons never wait for each other in a circle. When the attributes of singletons make one another, directly,
+through a generic singleton or through an ordinary object whose attributes bind one, the compiler cannot finish
+making any of them, and it says so at the attribute that begins the circle: `singleton 'World' binds 'Column<Entity>',
+which binds 'World': singletons initialise each other in a circle, so one of them has to reach the other some other
+way`. ("makes" replaces "binds" where the link is an ordinary object.) A circle only a constructor body closes is
+not followed at compile time; it halts the program when it runs, naming the singletons, as `spite: singleton
+'Registry' binds 'Catalog', which binds 'Registry': singletons initialise each other in a circle`; one singleton reaching itself reads `singleton 'Solo' binds
+'Solo'`. The fix is to bind one of them in the class that uses both, or to reach it some other way. A program that starts threads still
+makes a singleton once, whichever thread asks first.
 
 ## Classes are references
 
@@ -459,7 +541,7 @@ independent level 9
 
 A class reads and calls its own members by name: `level`, `score(2)`. There is no `self.` to write, and writing
 `this.level` is an error that says `level`. What `this` is for, in every class, is handing the instance itself
-to something else or returning it ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#numbers-are-classes-and-this)):
+to something else or returning it:
 
 ```gdscript title=this_basics/registry.spite
 var names = List<String>()
@@ -536,9 +618,10 @@ Lamp { room: "hall", lit: false }
 
 ## Private names
 
-A name starting with `_` is private: it is read, written or called only inside its own class (a reopening of
+A name starting with `_` is private: it is read or called only inside its own class (a reopening of
 the class counts as inside), and using it from anywhere else is an error that names the getter when there is
-one ([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#lexical-structure)). On a parameter, and only there, the prefix says
+one: `'_hidden' is private to 'Secret': a name starting with '_' is used only inside its own class, and 'hidden'
+reads it from outside`. A private function with no getter gets the same error without that last clause. On a parameter, and only there, the prefix says
 instead that the body ignores it on purpose; a private attribute nothing reads is an error like any other, and
 no spelling silences it ([style.md](style.md#nothing-unused)).
 
@@ -548,16 +631,19 @@ A second file with the same name, in a later loaded root, **reopens** the class 
 its functions and attributes replace the earlier ones of the same name and add the rest. That is how a program
 adds settings to `Environment`, a member template to `List`, a function to `Integer`, and how a mod changes a game
 ([packages.md](packages.md#monkey-patching-mods)). The program's entry class is the one class nothing may
-reopen.
+reopen, and it cannot declare a `generic` line, since it is the class that runs.
 
 An attribute replaced this way keeps its type: a reopening changes its default, never its type, however each file
 gives it (`var level: Integer = 1`, then `var level = "one"`, is `'level' is an Integer where the class first
-declares it, and this reopening makes it a String: ...`). Give a new attribute a name of its own.
+declares it, and this reopening makes it a String: a reopening replaces an attribute's default, never its type, so
+give the new attribute a name of its own`). The check runs on the program's own reopenings of a library class as
+well, and, like the other rules that refuse code that would otherwise build, it is told once the program is built,
+after any mistake of a type or a name. A reopening may also add the `singleton` line.
 
 Reopening a class of the standard library adds what it lacks; it does not copy what it has. A function that
 rewrites the object from two values of its own class, beside the library's `*`, is an error that tells you to write
-`target = left * right`: the compiler builds that answer in `target`'s place
-([rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md)).
+`target = left * right`: the compiler builds that answer in `target`'s place. A function that only reads the object,
+or that takes no other value of its class, stays legal.
 
 ## There is no `static`
 
@@ -571,8 +657,13 @@ for a keyword to say, so there is no keyword.
 A class may not hide another class. If `physics/plugin.spite` (`Physics.Plugin`) sat beside a root
 `plugin.spite` (`Plugin`), the name `Plugin` would mean one class inside `Physics` and the other everywhere else,
 and a reader would have to work out which one each line reaches. So that is an error naming both, asking for a
-clearer name. It holds against the classes of a package the program loads, and against the standard library: a
-class of your own named like a library class is an error naming the library's class, since a `Vector3` or a `Color`
+clearer name: `the class 'Physics.Plugin' hides the class 'Plugin': inside 'Physics' the name 'Plugin' would mean
+this class, so give one of them a clearer name`. It holds against the classes of a package the program loads, between
+two packages, and against the standard library (`game/tcp/connection.spite` would hide the library's `Tcp.Connection`). Two classes of one name in namespaces side by side, `Physics.Plugin` and `Audio.Plugin`, hide
+nothing, and neither does an `enum`, a `union` or a `type` declared inside a class, which is named through that
+class.
+
+A class of your own named like a library class is an error naming the library's class, since a `Vector3` or a `Color`
 of your own is most likely one the library already has. To add what the library's class lacks, reopen it. A
 library class that is always written with its namespace, `Spite.Function` or `Spite.Call`, cannot be mistaken for
 yours, so a `Function` or a `Call` of your own is fine: the name is refused only where a reader could not tell at
@@ -582,7 +673,9 @@ Names that all start with the same word say the same thing: `HighBlock`, `HighFu
 namespace written into each name. Make it a folder instead, `high/block.spite` and the rest, and the classes are
 `High.Block`, `High.Function` and `High.Value` outside it and `Block`, `Function` and `Value` inside it, where a
 reader already knows which namespace they are in. Three or more such names in one folder are an error naming the
-folder to move them into ([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#files-are-classes)). A class named for its own folder
+folder to move them into, listing the first three and `(and 9 more)` for the rest. The shared word must be a whole
+word of each name: `Higher` and `Highway` beside `HighBlock` and `HighValue` are not four matches, and two matches
+are allowed. A class named for the word alone, `High`, counts as one of them. A class named for its own folder
 (the folder's entry class, `backend/backend.spite` beside `BackendBlock` and `BackendValue`) does not count: its name
 is the namespace itself, not a word repeated in it. And name the namespace for what it holds: `High` alone does not
 say high what.
