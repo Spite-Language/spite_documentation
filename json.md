@@ -586,7 +586,7 @@ All four are ordinary Spite, and reading them is the best way to learn the two m
 
 ```gdscript
 func write_attribute(attribute: Spite.Attribute) {
-    if not attribute.name.starts_with("_") and not attribute.is_singleton {
+    if not attribute.name.starts_with("_") and not attribute.class.is_singleton {
         var attribute_json = JsonWriter<attribute.class>()
         attribute_json.path = "{$value_type.name}.{attribute.name}"
         var attribute_text = attribute_json.write(attribute.value)

@@ -43,7 +43,7 @@ an argument: `Spite.Function<String, String>` takes a `String` and returns a `St
 returns nothing (`Nothing` is how "returns nothing" is written, so `<String>` can only mean "returns a `String`").
 Calling it is `change(text)` or `change.call_function(text)`, which are the same call, with the arguments checked
 like any call; and the value is also its own reflection, with `.name`, `.arguments` (all but the last type),
-`.returns` (the last) and `.owner`, the instance it runs on. A typed value goes where a plain `Spite.Function`
+`.returns` (the last), `.declaration` and `.owner`, the instance it runs on. A typed value goes where a plain `Spite.Function`
 is expected, never the other way round. `Nothing` is also what `.returns` reports for a function declared without
 a return type. A function that is a text's or a number's (`greeting.contains`) is bound to a copy of the value.
 A function value whose answer may be null answers it as null wherever it is held.

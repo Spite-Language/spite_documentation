@@ -74,7 +74,7 @@ receiver says which one is meant: `Monster` is the class, `troll` an instance.
 | | The class, `Monster` | An instance, `troll` |
 |---|---|---|
 | `.attributes` | information: a `Spite.AttributeDeclaration` for each attribute, with its `.name`, `.class`, `.index`, and no value | data: a `Spite.Attribute` **bound to `troll`**, with everything the declaration has plus `.value`, read and written, typed as the attribute, and `.owner`, which is `troll` |
-| `.functions` | information: a `Spite.FunctionDeclaration` for each function, with its `.name`, `.arguments`, `.returns` and the class that declares it | a `Spite.Function` bound to `troll`: its `.declaration`, read through for everything the declaration has, plus `.owner`, which is `troll`, and `call_function()` |
+| `.functions` | information: a `Spite.FunctionDeclaration` for each function, with its `.name`, `.arguments`, `.returns` and the class that declares it | a `Spite.Function` bound to `troll`: its `.name` and `.declaration`, which answers everything else the function is, plus `.owner`, which is `troll`, and `call_function()` |
 | `.class` | `Spite.Class`, the class every class is an instance of | `Monster`, so `troll.class == Monster` |
 | What a read costs | nothing: it is known while compiling and folds | a read or write of `troll`'s own field, typed, the same as `troll.health` |
 
@@ -541,9 +541,9 @@ An object's `.functions` is a `Dictionary<String, Spite.Function>`: each functio
 
 | Member | Answers | Example |
 |---|---|---|
-| `.declaration` | its `Spite.FunctionDeclaration` | `troll.functions["alive"].declaration.returns` |
+| `.declaration` | its `Spite.FunctionDeclaration`, which answers `.arguments`, `.returns`, `.is_resumable`, `.returned_literal`, `.reads`, `.writes` and `.source_file` | `troll.functions["alive"].declaration.returns` |
 | `.owner` | the object it is bound to | `troll.functions["alive"].owner` is `troll` |
-| `.name`, `.arguments`, `.returns`, `.is_resumable`, `.returned_literal`, `.reads`, `.writes`, `.source_file` | read through its declaration | `troll.functions["hurt"].arguments.count()` |
+| `.name` | its name | `troll.functions["hurt"].name` is `hurt` |
 | `call_function()` | calls it on its owner when it takes no arguments, dropping what it answers; on one that takes arguments it halts | `troll.functions["roar"].call_function()` |
 
 A function named without calling it (`troll.alive`) given where a `Spite.Function` is wanted is the same bound function.
@@ -576,12 +576,11 @@ A function named without calling it (`troll.alive`) given where a `Spite.Functio
 | `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
 | `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
 | `.pascal_case_name` | its name as other systems spell it | `buy_price` is `BuyPrice` |
-| `.is_singleton` | its class is a singleton | `ReflectionObjects.attributes["console"].is_singleton` |
 | `.source_file` | on a declaration: the `File` it is written in | `Monster.attributes["health"].source_file` |
 | `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes["health"].value` |
 
 A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index`, the case spellings,
-`.is_singleton` and `.source_file`, never a `.value`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
+and `.source_file`, never a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
 declaration, plus `.value` and `.owner`. Which one a function takes depends on what it is for: a template, or a walk of the
 class, takes the declaration, and a walk of an instance's data takes the bound attribute.
 

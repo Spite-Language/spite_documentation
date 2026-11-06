@@ -527,7 +527,7 @@ rewritten.
   (`Runner.functions["run_each"]`); a selection is a member template (`Runner.functions.filter_name_ends_with("_each")`).
   A name is selected, never built from text. A walk sees private `_` attributes and
   reads and writes them through the walked attribute; a serializer skips them, and attributes holding a singleton,
-  with `if not attribute.name.starts_with("_") and not attribute.is_singleton`, which folds. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
+  with `if not attribute.name.starts_with("_") and not attribute.class.is_singleton`, which folds. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
 - A **template** is a function with a parameter that is a word of its name, typed by what it ranges over:
   `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument` (the class is never written on the type:
   the body says it). `func show_attribute(attribute: Spite.AttributeDeclaration, label:
@@ -617,7 +617,7 @@ rewritten.
   the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
   `.namespaces`), `.functions`, and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
   `value.attributes`
-  (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`), `value.functions` (`.name`, `.arguments`, `.returns`, `call_function()` for
+  (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`), `Monster.instances` (live instances), and
   `Spite.Class.instances` (every class of the program and the packages it loads, not the standard library's). `class`, bare inside a class's function, is the class
