@@ -226,7 +226,7 @@ func record() {
 }
 ```
 
-That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`. A copy read after a call that may write `tracker` is another thing, since it keeps the value the call may take away: it stays as written.
+That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`. A copy read after a call or a write through another object that may change `tracker` is another thing, since it keeps the value the call may take away: it stays as written.
 
 A check on something that cannot be null proves nothing: `fallback tracker` written twice, or a `fallback` on a
 plain `Tracker`. On a line of its own the compiler removes it and names the check that already proved it ("fixed:
@@ -235,6 +235,8 @@ numbers included. An `if` on it becomes the code it runs, "fixed: 'number' was a
 the 'if' and kept the code it runs". In a `while` condition it is an error with the same words, ending in "remove this check".
 
 ### A call may undo a proof
+
+A write to the attribute through another object undoes a proof about it: after `fallback shelf.item`, `alias.item = null` means `shelf.item` must be proven again, since `alias` may be `shelf`.
 
 A call between a proof and a read undoes the proof only when the call may change what the proof depends on. The compiler follows the called function, and everything it calls, to see
 which attributes it can assign and which lists it can shrink (`clear`, `remove_at`, `remove_first`,
