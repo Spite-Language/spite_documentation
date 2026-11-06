@@ -91,8 +91,8 @@ four parts of a column sit next to each other in memory, as Vulkan, OpenGL and g
 column the matrix multiplies from the left. `a * b` is `a` applied after `b`: with `var both = a * b`, `both.transform_point(point)` is
 `a.transform_point(b.transform_point(point))`. A matrix is set to a transform in place, the usual
 way. The three that take one value are written as assignments, `matrix.translation = offset`, `matrix.scale = factor`
-and `matrix.rotation = rotation` (writing `set_translation(offset)` is an error that says so), each changing only its
-part of the matrix; `set_identity()` goes back to the identity; and `set_transform(translation, rotation, scale)`
+and `matrix.rotation = rotation` (writing `set_translation(offset)` is an error that says so), each writing
+only the parts of the matrix it names; `set_identity()` goes back to the identity; and `set_transform(translation, rotation, scale)`
 (scale first, then rotation, then translation), `set_look_at(eye, target, up)`,
 `set_perspective(field_of_view, aspect, near, far)` and `set_orthographic(left, right, bottom, top, near, far)`
 are calls.
