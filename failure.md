@@ -238,6 +238,8 @@ the 'if' and kept the code it runs". In a `while` condition it is an error with 
 
 A write through another object undoes a proof when it could break it: after `fallback shelf.item`, `alias.item = null` means `shelf.item` must be proven again, since `alias` may be `shelf`. `alias.item = other` leaves it proven, since whichever object it reached, the attribute still holds an item.
 
+A write or a call in a branch that returns does not reach what follows the branch, so it leaves the proof alone there.
+
 Proving it again is a check like any other: `fallback`, `crash` or `if` on the same path after that line tests the value at run time and narrows it again. With nothing that undoes the proof between, the same check is a repeat, and the compiler removes it.
 
 A write to an earlier attribute of the path undoes the proof whatever it writes, since it changes which object is read: after `fallback rack.shelf.item`, `alias.shelf = empty` means `rack.shelf.item` must be proven again, and so does a call that may assign `shelf`.
