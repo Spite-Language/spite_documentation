@@ -219,8 +219,8 @@ in the order they were filled, and the names it does take, or "it takes no argum
 `call.arguments["change"] = doubler.functions["doubled"]`, and `call()` halts when its signature is another. Calling a class known only at run time
 makes an object of it, typed `Anything`, wherever the class object is held: `part()` with `part: Spite.Class`, an
 attribute `kind()`, or a member read, `thing.class()` or `argument.class()`. It halts, saying why, for the program's
-entry class (made once when the program starts), for a class whose constructor takes arguments, and for a
-singleton, an enum or a union: write the class's name where the compiler can see it to make one of those.
+entry class (made once when the program starts) and for a class whose constructor takes arguments: write the
+class's name where the compiler can see it to make one of those.
 
 ## Reaching a reflection object
 
