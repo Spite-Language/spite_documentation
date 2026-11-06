@@ -29,7 +29,7 @@ REPL can look at any of it.
 |---|---|---|
 | `String` | immutable text | [below](#string) |
 | `Integer`, `Long`, `Float`, `Double`, `Boolean`, ... | numbers, as classes, with their maths (`square_root()`, `sine()`, `Float.Pi()`, ...) | [values_and_types.md](values_and_types.md#numbers-are-classes), [maths](values_and_types.md#maths-functions) |
-| `Nothing`, `Anything` | what a function returns when it returns nothing; the empty `type` every class fits | [functions_and_operators.md](https://github.com/Spite-Language/spite_spec/blob/master/specs/functions_and_operators.md#calling-one) |
+| `Nothing`, `Anything` | what a function returns when it returns nothing; the empty `type` every class fits | [functions_and_operators.md](functions_and_operators.md) |
 | `List<T>`, `Dictionary<Key, Value>` | containers, and the member templates | [collections.md](collections.md) |
 | `Console` | the terminal: print, read a line | [below](#console) |
 | `File`, `Directory` | files and folders | [below](#read-and-write-a-file) |
@@ -44,7 +44,6 @@ REPL can look at any of it.
 | `Reload` | how many reloads a `--hot-reload` program has swapped in, and which classes they rebuilt | [repl.md](repl.md#knowing-what-a-reload-rebuilt) |
 | `JsonWriter<T>`, `JsonReader<T>` | any value to JSON text and back | [json.md](json.md) |
 | `Buffer` | bytes, and the numbers and text laid out in them, in either byte order, read at a position | [below](#bytes-are-a-buffer) |
-| `ForeignBytes` | memory a C library hands out, read and written by position with every access checked | [below](#bytes-are-a-buffer) |
 | `BinaryWriter<T>`, `BinaryReader<T>` | any value to compact bytes (a `Buffer`) and back, for Spite programs talking to each other and for files | [json.md](json.md#write-and-read-bytes) |
 | `Vector2`, `Vector3`, `Vector4`, `Matrix3`, `Matrix4`, `Quaternion`, `AxisAlignedBox`, `Plane`, `Frustum`, `Ray`, `Color`, `CubicBezier`, `Easing`, `Noise` | game maths: points, directions, transforms, rotations, culling and picking, colours in the web's formats, curves, easings and noise | [game_maths.md](game_maths.md) |
 | `IpAddress` | an IPv4 or IPv6 address, read from text, resolved from a host name, written back as text | [below](#ipaddress) |
@@ -90,8 +89,15 @@ the text or backwards, never a shorter text that would read like the one asked f
 names the index and the length. Reading a number is the one that can find nothing to answer, so
 each number's conversion from text answers a `T?`: `null` when the text is not a number that fits the type.
 Assigning text to a number calls it, so it is allowed only into a `T?`: `var age: Integer? = "42"` is `42`, and
-`var age: Integer = "42"` is an error. Every member,
-with what it answers at the edges, is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#the-string-class).
+`var age: Integer = "42"` is an error ("text is not an Integer until it is read as one"), which is how a number
+that may fail to parse is never mistaken for one that cannot.
+
+The operators are the functions: `==`, `!=`, `<`, `>` and `+` call `equals`, `less_than`, `greater_than` and `sum`, and
+writing those names yourself is an error that points back at the operator (`word.equals("tea")` is "'equals' is
+what '==' calls: write 'word == "tea"'"). Text built in a loop is linear: `text = text + piece`,
+`text = "{text}{piece}"` and any longer join that starts with the variable it is stored back into append in place when
+nothing else holds the text, and copy it once, with room to grow, when something does, so a `String` shared by two
+names never changes under the other one.
 
 ```gdscript title=string_members/string_members.spite entry
 var console = Console()
@@ -123,6 +129,70 @@ ADA 3 null da d
 2 Ada, grace, linus
 ```
 
+### Plural and singular
+
+`pluralize()` and `singularize()` inflect English the way Rails' ActiveSupport does, so a name and its collection
+read as a pair: `"active_quest".pluralize()` is `"active_quests"` and `"map_names".singularize()` is `"map_name"`.
+Only the last word changes: the text after the last `_` or space, or from the last capital that follows a lower-case
+letter (`"ActiveQuest"` is `"ActiveQuests"`). The word is inflected in lower case and handed back in the case it came
+in: `"Person"` is `"People"` and `"ACTIVE_QUEST"` is `"ACTIVE_QUESTS"`. A whole last word that is **uncountable**
+stays as it is (`data`, `equipment`, `health`, `information`, `rice`, `money`, `species`, `series`, `fish`, `sheep`,
+`news`, `software` and the rest of a list the library keeps); an **irregular** one swaps with its pair (`person` and
+`people`, `man` and `men`, `child` and `children`, `foot` and `feet`, `cactus` and `cacti`, `leaf` and `leaves`,
+`hero` and `heroes`, `potato` and `potatoes`, `criterion` and `criteria` and the rest of a dictionary the library keeps);
+otherwise the first ending rule that matches applies (`box` and `boxes`, `enemy` and `enemies`, `wolf` and `wolves`,
+`knife` and `knives`, `analysis` and `analyses`, `medium` and `media`, `index` and `indices`, `matrix` and `matrices`,
+`vertex` and `vertices`, `mouse` and `mice`, `ox` and `oxen`, `octopus` and `octopi`, `quiz` and `quizzes`, `status`
+and `statuses`), and a word no rule names takes or loses an `s`. A word already in the number asked for is left
+alone (`"quests".pluralize()` is `"quests"`), and `""` answers `""`.
+
+The two tables are attributes of `String` itself: `irregulars`, a dictionary from each singular to its plural, and
+`uncountables`, a list. A program adds a word by reopening `String` ([classes_and_files.md](classes_and_files.md#a-class-name-means-one-class)):
+a file `string.spite` in the program that declares `irregulars` or `uncountables` replaces that list whole, so it
+restates the library's words it keeps. The compiler reads the same table where it inflects the name of a member
+(`map_sheaves()`, [metaprogramming.md](metaprogramming.md)), and a call on a literal, `"cactus".pluralize()`, is
+worked out while compiling.
+
+```gdscript title=inflection_words/string.spite
+var irregulars = {"person": "people", "sheaf": "sheaves"}
+```
+```gdscript title=inflection_words/inflection_words.spite entry
+var console = Console()
+
+func InflectionWords() {
+    load "../spite_standard_library/windows"
+    var sheaf = "sheaf".pluralize()
+    var back = "sheaves".singularize()
+    var people = "person".pluralize()
+    var quests = "ActiveQuest".pluralize()
+    var foot = "foot".pluralize()
+    console.print(sheaf, back, people, quests, foot)
+}
+```
+```output
+sheaves sheaf people ActiveQuests foots
+```
+
+`foot` is `foots` here because the program's `irregulars` replaced the library's whole; adding `"foot": "feet"` to it
+brings the library's word back.
+
+## Maths
+
+The maths of a game or a renderer are members of the number classes, spelled out in full
+([values_and_types.md](values_and_types.md#maths-functions) teaches them): `square_root()`, `sine()`, `arc_tangent_over(run)`,
+`power(exponent)`, `logarithm()`, `ceiling()`, `absolute()`, `minimum(other)`, `is_not_a_number()`. Another language's short
+name is an error that gives the Spite one, on the class that lacks it: `side.sqrt()` is "Float has no function 'sqrt':
+Spite spells it 'square_root', since no name is abbreviated", and so are `sin`, `cos`, `tan`, `asin`, `acos`, `atan`,
+`atan2`, `pow`, `exp`, `log`, `ln`, `log2`, `log10`, `ceil`, `trunc`, `fabs`, `min`, `max`, `isnan`, `isinf` and
+`isfinite`. There is no `fused_multiply_add`: without a processor flag telling the C compiler the machine has the
+instruction it is a slow exact routine, a cost a reader would not expect from one multiply and add.
+
+Floats keep infinity and not-a-number, so every edge answers the IEEE 754 value (`(-1.0).square_root()` is
+not-a-number) and nothing halts. Not-a-number is never dropped on the way: `minimum`, `maximum` and `clamp` answer it
+when an operand is it, where C's `fmin` would answer the other operand as if nothing were wrong. The whole numbers have
+`absolute()`, `minimum`, `maximum` and `clamp` too, and the smallest signed value has no positive counterpart, so its
+`absolute()` halts as its negation does, naming the class: "'zero - value' does not fit in an Integer (0 - -2147483648)".
+
 ## Paths
 
 A `Path` is a place in the file system. It is made from text by a conversion, so a program writes the text and the
@@ -142,7 +212,7 @@ separator goes, so `"./a/b/../c/"` is `a/c`, and a path that starts at the root 
 | `==`, `to_string()` | | two paths are equal when their tidied text is |
 
 `File`, `Directory`, `move_to`, `FileSystemWatcher`'s `watch_folder` and `watch_file`, `Environment.load_from_file`
-and `Process`'s `working_directory` all take a `Path` (`tests/paths`). They hand the system the path as it was
+and `Process`'s `working_directory` all take a `Path`. They hand the system the path as it was
 written, and `File(...).path` reads it back that way.
 
 ## Read and write a file
@@ -161,9 +231,9 @@ written, and `File(...).path` reads it back that way.
 | `byte_count()` | `Long?` | how many bytes it holds; `null` when it cannot be opened |
 | `last_written()` | `Instant?` | when it was last written ([time.md](time.md)); `null` when it does not exist |
 | `read_as_buffer()` | `Buffer?` | the whole file; `null` when it cannot be read, and an empty buffer for an empty file |
-| `read_buffer_at(position, count)` | `Buffer?` | up to `count` bytes starting `position` bytes in: fewer at the end, none past it; `null` when it cannot be opened |
+| `read_buffer_at(position, count)` | `Buffer?` | up to `count` bytes starting `position` bytes in: fewer at the end, none past it; `null` when it cannot be opened; a negative `position` or `count` halts |
 | `write_buffer(buffer)` | `Boolean` | replaces the content with the buffer's bytes |
-| `append_buffer(buffer)` | `Long?` | adds the buffer's bytes to the end; answers the position they start at, `null` when they could not all be written |
+| `append_buffer(buffer)` | `Long?` | adds the buffer's bytes to the end; answers the position they start at, `null` when the file could not be opened or the bytes could not all be written |
 
 A file is one holder with two reads: `read_as_string()` when it is text and `read_as_buffer()` when it is bytes,
 and the two writes match them. Nothing about a file halts the program: every write, `remove()` and `move_to(path)`
@@ -238,10 +308,11 @@ the second record starts at 8 and holds 2222 of 16 bytes
 ### Lock a file
 
 `file.lock()` waits until no other process holds a lock on the file, and answers a `LockedFile` you hold until you
-call `unlock()` or let it go. It is how two programs take turns on one file, such as a cache both write. If the
-program ends or crashes the system releases the lock, so it is never left held. `lock()` answers `null` when
-the path cannot be opened or the system refuses the lock. There is nothing to write for the operating system: the same call works on Windows,
-Linux and macOS. The rules are in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes).
+call `unlock()` or let it go. It is how two programs take turns on one file, such as a cache both write. The lock is
+let go by `unlock()`, when the last reference to the `LockedFile` goes (a function that takes the lock and returns
+without keeping it has let it go), and when the program ends or crashes, so it is never left held. `lock()` creates
+the file empty when it is missing, and answers `null` when the path cannot be opened or the system refuses the lock.
+There is nothing to write for the operating system: the same call works on Windows, Linux and macOS.
 
 ### Rename or move a file or folder
 
@@ -304,7 +375,7 @@ Everything else, `Process.run()` included, blocks the thread that calls it.
 |---|---|---|
 | `path` | `String` | |
 | `folder_name` | `String` | the last piece of the path: `Directory("levels/forest").folder_name` is `forest` |
-| `entries()` | `List<Directory.Entry>` | every folder and file inside it, as `Directory` and `File` values, each kind sorted by name with a merge sort (`n log n`), so a folder of thousands of files lists quickly |
+| `entries()` | `List<Directory.Entry>?` | every folder and file inside it, as `Directory` and `File` values, each kind sorted by name with a merge sort (`n log n`), so a folder of thousands of files lists quickly; an empty folder gives an empty list, and `null` means it could not be listed |
 | `exists()` / `create()` | `Boolean` | |
 | `move_to(path)` | `Boolean` | renames or moves it with everything inside ([below](#rename-or-move-a-file-or-folder)) |
 
@@ -491,13 +562,15 @@ an argument with no space, tab, quote or `& | < > ^` is written as it is; one wi
 with a `"` inside written `\"` and the backslashes before a quote doubled; and one shaped `key=value` quotes only
 its value, so `-script=a b` reaches the child's command line as `-script="a b"` (the form Unreal and other
 programs that read `-key=value` themselves expect) and still splits back into `-script=a b`
-(`conformance/stage4/process_settings`). A `%` is still read by the Windows shell.
+A `%` is still read by the Windows shell.
 
 `working_directory` and `environment_variables` are set by the shell line itself, before the command: a
 `cd` into the folder and one assignment per variable, so a relative command or path is read from that folder, and
 a folder that does not exist fails the run with the shell's exit code. The output is read as it arrives, up to 64 KiB at a time, and each
 piece appended in place, so reading 50 MB takes as long as the child takes to write it. It is kept as bytes, and
 read as text only when asked, so a child that writes bytes is never forced through a `String`.
+
+The output is the child's bytes as written: a `0x1A` in it is ordinary data, a line ends `\r\n` on Windows and stays two bytes, and bytes that are not UTF-8 make `read_output_as_string()` `null` while `read_output_as_buffer()` still has them. A command that does not exist is not a child that could not start: the shell starts and answers its own exit code (1 on Windows) with its complaint in its error stream, so `run()` answers `null` only for a child that was stopped at its `time_limit`, or when the shell itself could not be started. With both `with_errors` and `keeps_errors_apart`, the error stream is in the output and what is read apart is empty; a stopped child's output until then can still be read. `run_attached()` flushes what the program printed first, so it comes out before what the child writes.
 
 The output includes the child process's own trailing newline, which is why the example above calls `.trim()`.
 What the child writes to its error stream goes to the program's own error stream, unless `with_errors` reads it into the output or `keeps_errors_apart` reads it on its own:
@@ -551,8 +624,7 @@ printed is out before the program exits and before a crash report; and text writ
 input, a prompt, is visible before the read. `print`, `error` and `debug` end a line and hand it to the operating
 system at once, whether the output is a terminal, a file or a pipe, so a server's log redirected to a file shows
 each line when it happens rather than when the program ends. `write` leaves its text for the next line end, the
-next read of input or the end of the program
-([the rule and its measurement](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes)). There is no `flush()` to call.
+next read of input or the end of the program. There is no `flush()` to call.
 
 A printed line is the one write that answers nothing: if the system refuses it (a closed pipe, a terminal that
 went away), the line is lost, since the place a failure would be reported is the output that just failed.
@@ -561,8 +633,8 @@ went away), the line is lost, since the place a failure would be reported is the
 `...values: List<Printable>`, where `Printable` is a `type` that requires `to_string(): String`. Every number,
 `Boolean`, `String`, enum value, `Spite.Class` and `Spite.Namespace` answers it, and a class of yours
 prints once it declares `to_string()`. Passing one that does not is a compile error naming `to_string`; a `List`
-or `Dictionary` has none either, so show it with `debug` or `join` it first
-([the exact errors](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#system-classes)).
+or `Dictionary` has none either, so `console.print(ages)` is "'Dictionary<String, Integer>' does not fit type
+'Printable': it has no function 'to_string'": show it with `debug` or `join` it first.
 
 ```gdscript title=printable_doc/ticket.spite
 enum Stage {
@@ -599,7 +671,8 @@ next: A12 for 3 boarding true 2.5 Ticket
 `...values: List<Debuggable>` (`to_debug(): String`), and every value answers that without writing anything: a
 class shows its name and every attribute, nesting into the attributes that are classes, a `List` shows `[a, b]`, a
 `Dictionary` `{"key": value}`, text is quoted, an enum value is written `'like_this'`, and an absent
-`T?` is `null`. An object already being shown further up is written `Name {...}`, so a cycle ends. A class that
+`T?` is `null`. An object already being shown further up is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
+as the class it is, and an attribute that holds a singleton is shown too (`Holder { ledger: Ledger { entries: 4 }, label: "kept" }`). A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:
 the compiler writes the automatic one only for the classes a program debugs.
 
@@ -661,14 +734,20 @@ name? no input
 |---|---|
 | `exit(code)` | flushes what was printed and ends the process with `code` |
 | `sleep(duration)` | waits the `Duration`'s whole milliseconds; other waiting work runs meanwhile ([concurrency.md](concurrency.md)). A duration under a millisecond, zero or negative only lets other work have its turn |
-| `environment(name)` | the process environment variable, as a `String?`: `null` when it is not set |
+| `environment(name)` | the process environment variable, of any length, as a `String?`: `null` when it is not set |
 | `executable_path()` | the path of the running executable, as the operating system gives it, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
 | `working_directory()` | the folder the program runs in, as a `String?`: `null` when the system refuses or the path is not UTF-8 |
 | `live_allocations()` | how many allocations are alive |
 | `live_bytes()` | how many bytes the live allocations asked for |
 
 A program that calls `live_allocations()` or `live_bytes()` counts every allocation and free it makes, as a
-`--debug-memory` build does; one that calls neither carries none of the counting.
+`--debug-memory` build does; one that calls neither carries none of the counting. Both answer a `Long`, the
+difference between two calls is what a stretch of code left alive, and an object that goes out of its function counts
+as freed again.
+
+A program's command line is not a list to pick apart: every value on it is a named setting, `--name=value`, declared
+as an attribute of the program's `Environment` ([programs.md](programs.md#run-time-settings-environment)), which is
+also how a program starts a copy of itself with one.
 
 The entry constructor returning normally is exit code `0`.
 
@@ -706,7 +785,7 @@ slept
 Each system reads its own clock, in its own folder of the library (`QueryPerformanceCounter`,
 `GetSystemTimeAsFileTime` on Windows, `clock_gettime` with `CLOCK_MONOTONIC` and
 `CLOCK_REALTIME`), through `DynamicLibrary`. The operating system writes a reading into a slot in the calling function's frame
-([placement](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#placement-the-compiler-decides-where-memory-lives)),
+([memory.md](memory.md#where-a-value-lives-memory)),
 and Windows' counter frequency, fixed at boot, is read once when `Clock()` is first made. A reading is a `Duration`,
 two `Long`s, exact to the nanosecond on every system; the resolution is the hardware's (100 ns for Windows' usual
 10 MHz counter, 1 ns on Linux and macOS). `clock.elapsed() - started` is the time since `started`, and
@@ -860,7 +939,9 @@ because the program asks whether anything has arrived. Resolving a host name and
 
 **A closed peer is an answer, not a failure.** A read answers `null` when the connection has ended, and sets
 `closed`; `read_line()` answers `null` too for a line whose bytes are not UTF-8, and the next call reads the line
-after it, so a peer's bytes never ride inside a `String`. A write to a closed connection sends nothing, answers `false`, and sets `closed` too; nothing crashes.
+after it, so a peer's bytes never ride inside a `String`. A write to a closed connection sends nothing, answers `false`, and sets `closed` too; nothing crashes. A `Tcp.Client` that was
+never connected is closed from the start, so its reads answer `null` and its writes `false` without asking the system, and so
+is one after `close()`. A write that fails because the peer went away closes the connection.
 Every read answers a buffer of its own, as a `Udp.Datagram`'s does, and the numbers in it are read from it
 ([below](#bytes-are-a-buffer)). UDP, HTTP and WebSocket are [below](#udp).
 
@@ -956,7 +1037,8 @@ closes when either side says `connection: close` (a request that sets that heade
 close), when an HTTP/1.0 client does not ask for `keep-alive`, when a response's body ends with the connection,
 and when it has been idle too long: a server closes one after `idle_limit`, a `Duration` (5 seconds), without a request,
 and keeps at most `largest_waiting` (64) open, closing each further one after its answer; a client keeps at most
-`largest_idle` (8). A kept connection the server has closed meanwhile is noticed when the client's next request
+`largest_idle` (8). A server accepts a body of up to `largest_body` (1 MiB) and a client a response body of up to its
+own `largest_body` (16 MiB). A kept connection the server has closed meanwhile is noticed when the client's next request
 gets no answer at all, and that request is sent once more over a new connection. Requests on one connection are
 answered in order, and requests a client sent before reading the answers (pipelining) are read one at a time.
 A response to `HEAD`, and a `204` or `304`, carries no body. A server still refuses a request with a chunked body.
@@ -1005,7 +1087,10 @@ func serve() {
 ```
 
 `accept` answers `null` when the upgrade is malformed, after answering it itself (`400 Bad Request`, or `426 Upgrade
-Required` for a version other than 13), so a request is never answered twice. A client asks with an
+Required` with `sec-websocket-version: 13` for a version other than 13), so a request is never answered twice. A
+good upgrade is a `GET` over HTTP/1.1 with `upgrade: websocket` (in any case), a `connection` header that lists
+`upgrade`, `sec-websocket-version: 13` and a `sec-websocket-key` that is 16 bytes in base64; the answer is `101` with
+the matching `sec-websocket-accept`, and the server picks no subprotocol and no extension, whatever the client offered. A client asks with an
 `Http.Request`, whose `path` and headers (an `origin`, a cookie, the subprotocols it speaks in
 `sec-websocket-protocol`) go out with the handshake:
 
@@ -1049,8 +1134,16 @@ received is a `WebSocket.Message`, one holder with two reads: `is_text()`, `read
 | `last_pong: Buffer?` | what the latest pong carried, `null` until one arrives |
 | `largest_message: Integer` | on a `WebSocket.Connection`: the longest message `receive()` takes, 16 MiB unless set |
 
-**What arrives is checked, and a broken connection says so.** Pings are answered with a pong while `receive()`
-waits, and a message sent in pieces arrives whole. Anything the protocol forbids ends the connection instead of
+A message goes out as one frame whose length is written in 7, 16 or 64 bits, whichever is the fewest; a client masks
+every frame with four bytes from `SecureRandom` and a server none. A client sends a fresh random key, the `host`
+(with the port when it is not 80), and the request's headers, and a request that is not a `GET`, has a body or sets
+`host`, `upgrade`, `connection`, `content-length` or a `sec-websocket-` header other than `sec-websocket-protocol`
+halts. Calling `connect` twice halts, and so does `accept` on a request that does not ask to upgrade.
+
+**What arrives is checked, and a broken connection says so.** Pings are answered with a pong of the same bytes while `receive()`
+waits (not once this side has sent its close), a pong is kept in `last_pong`, and a message sent in pieces arrives whole.
+Answering a close sends the same code back (or none for none) and ends the connection after reading away what had already
+arrived. Anything the protocol forbids ends the connection instead of
 being skipped: the side that sees it sends a close with the code that names the problem, and its `receive()`
 answers `null` with `close_code` set to that code. The codes are the protocol's own:
 
@@ -1058,11 +1151,11 @@ answers `null` with `close_code` set to that code. The codes are the protocol's 
 |---|---|
 | `1000` | a normal close, by either side |
 | `1001` | the other side went away (a connection dropped without `close()` sends it) |
-| `1002` | a frame the protocol forbids: one a client did not mask (or a server did), a reserved bit or opcode, a piece of a message that was never started, a ping or close too long or in pieces, a close code nobody may send |
+| `1002` | a frame the protocol forbids: one a client did not mask (or a server did), a reserved bit or opcode, a length not written in the fewest bytes or with its top bit set, a piece of a message that was never started or a new message started before the last ended, a ping or close too long or in pieces, a close of one byte, a close code nobody may send |
 | `1005` | the other side closed without giving a code |
 | `1006` | the connection broke without a close at all |
 | `1007` | a text message, or a close's reason, that is not valid UTF-8 |
-| `1009` | a message longer than `largest_message` |
+| `1009` | a message longer than `largest_message`, refused before its payload is read |
 | `1003`, `1008`, `1010` to `1014`, `3000` to `4999` | whatever the other side closed with |
 
 Inside a state machine the compiler writes, `receive()`, `accept` and `connect` wait the way a `Tcp.Connection` does
@@ -1077,14 +1170,16 @@ position the format puts them.
 
 A `Buffer` is still a run of bytes, and everything a list of bytes does it does the same way: `count()`,
 `is_empty()`, `buffer[index]` (a `Byte?`), `buffer[index] = byte`, `append(byte)`, `truncate(count)`, `clear()`,
-`copy()`, and the templates and passed functions a list is walked with
-([collections.md](collections.md#listt)). It keeps the bytes themselves in one block, so a read is one load and there
-is no list hiding inside it. How much room it keeps is the library's and the compiler's.
+`copy()`, with the meanings they have on a list: `truncate(count)` keeps the first `count` bytes and ignores a count
+past the end, `clear()` empties it and keeps the room, and `copy()` is independent of the original. It has not the
+list's templates (`each`, `map`): walk it with a `while` and an index. It keeps the bytes themselves in one block, so a
+read is one load and there is no list hiding inside it. How much room it keeps is the library's and the compiler's.
 
-**There is no list of bytes.** `List<Byte>` is a compile error wherever it is written, and wherever the compiler
-would make one: a run of bytes has one class, so there is one way to hold it, and it is the class that can read
-the numbers in it. Write `Buffer(size)` instead
-([the rule](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#bytes-are-a-buffer)).
+**A run of bytes is a `Buffer`, not a list.** Every holder of bytes above answers a `Buffer`, and a list has none of the
+buffer's reads and writes whatever it holds: `numbers.read_as_string()` is the error "List has no method
+'read_as_string': bytes are a Buffer, which has it: make them with 'Buffer()'", and so is `append_buffer`. A run of
+bytes has one class, so there is one way to hold it, and it is the class that can read the numbers in it. Write
+`Buffer(size)`.
 
 **Byte order is said in each name.** A number of two bytes or more is read and written through a function that
 names its order after the number: `_little_endian`, the order of every machine Spite compiles for and of Spite's own
@@ -1094,7 +1189,8 @@ while compiling. A `byte` and a `tiny` are one byte and have no order. A buffer 
 `Buffer(size)`, for the bytes the program knows it will write (`Buffer(0)` when nothing is known): the size is a
 suggestion for room, never a limit, and the buffer grows past it as always. The one place the room matters is a
 foreign function that writes into it: pass `Buffer(4096)`, then `take_written(count)` says how many bytes it
-wrote ([foreign_libraries.md](foreign_libraries.md)).
+wrote ([foreign_libraries.md](foreign_libraries.md)); `take_written(count)` halts for a negative count or one past the
+room.
 
 **Every read says where.** A buffer has no reading position of its own: each read names its position, and a
 program walking a message keeps its own, `var at = 0`, moved past what it read. There is one way to read a number.
@@ -1104,15 +1200,17 @@ program walking a message keeps its own, `var at = 0`, moved past what it read. 
 | `read_<number>_at(position)` | `<number>?` | the number whose bytes start at `position`; `null` unless every byte is in the buffer |
 | `append_<number>(value)` | | adds the number's bytes at the end |
 | `write_<number>_at(position, value)` | | replaces the bytes at `position`; a position whose bytes are not all in the buffer halts |
-| `read_buffer_at(position, count)` | `Buffer?` | a new buffer of the `count` bytes at `position`; `null` unless every byte is there |
-| `append_buffer(other, start, count)` | | copies `count` bytes of `other`, from `start`, to the end; a run not inside `other` halts |
+| `read_buffer_at(position, count)` | `Buffer?` | a new buffer of the `count` bytes at `position`; `null` unless every byte is there; a negative `count` halts |
+| `append_buffer(other, start, count)` | | copies `count` bytes of `other`, from `start`, to the end (`other` may be the buffer itself); a negative `start` or `count`, or a run not inside `other`, halts |
 | `read_string_at(position, count)` | `String?` | the text the `count` bytes at `position` spell, `null` when they are not valid UTF-8 |
 | `read_as_string()` | `String?` | the text all the bytes spell, `null` when they are not valid UTF-8 ([below](#bytes-base64-compression-hashes-and-passwords)) |
 
 `<number>` is `tiny`, or one of `short`, `unsigned_short`, `integer`, `unsigned_integer`, `long`, `unsigned_long`,
 `float` or `double` followed by `_little_endian` or `_big_endian`, so the functions are `read_integer_little_endian_at(0)`,
 `read_unsigned_short_big_endian_at(4)`, `append_double_little_endian(value)`, and so on; one byte anywhere is
-`buffer[position]` and one more at the end is `append(byte)`. A `List` has none of these functions, whatever it holds: calling one on a list is a compile
+`buffer[position]` and one more at the end is `append(byte)`, so `append_byte`, `read_byte_at` and `write_byte_at` do not
+exist, and neither does a read that names no order (`read_integer_at`) or one that takes its position first
+(`read_integer(0)`). A `List` has none of these functions, whatever it holds: calling one on a list is a compile
 error that says to keep the bytes in a `Buffer`.
 
 A read answers a `T?` because the bytes came from outside: narrow it, or prove it. One bound proves every `_at` read
@@ -1162,22 +1260,14 @@ a read past the end is null: true
 A whole value (a class, a `type`, a list of them) is not read number by number: `BinaryReader<T>` reads it from a
 buffer and `BinaryWriter<T>` writes it into one, the way `JsonReader<T>` and `JsonWriter<T>` do with text
 ([json.md](json.md#write-and-read-bytes)). Their format is Spite's own; a format someone else defined is read with
-the buffer's numbers, as above. The rules, the edge cases and the error texts are in
-[the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/standard_library.md#bytes-are-a-buffer).
-
-**Memory C hands out.** A foreign library sometimes answers an address and a size, such as a GPU buffer mapped for the
-program to fill. `ForeignBytes(address, count)` wraps it: `count()`, `foreign[position]` and `foreign[position] =
-value` for one byte, the same `read_<number>_at` and `write_<number>_at` functions, with their byte order in the name, as a `Buffer`
-(each read a `T?`, each write halting outside the memory), `read_buffer_at(position, count): Buffer?` and
-`write_buffer_at(position, buffer)`. It has no position of its own. The memory stays C's: `ForeignBytes` never frees
-it, and it is only as alive as the library says it is.
+the buffer's numbers, as above.
 
 ## Bytes: base64, compression, hashes and passwords
 
 These classes take and answer a `Buffer`, and `text.to_buffer()` gives a text's bytes as one. `bytes.read_as_string()`
 turns bytes back into text: it answers a `String?`, `null` when the bytes are not valid UTF-8 (a stray continuation
 byte, a cut sequence, an overlong form, a surrogate or a value past U+10FFFF), so bytes from outside are never
-taken for text they do not spell (`conformance/stage6/utf8_text`). Each is written in Spite, so a program that uses none of them
+taken for text they do not spell. Each is written in Spite, so a program that uses none of them
 carries none of them.
 
 | Class | Member | Does |

@@ -70,7 +70,8 @@ Ada "the" first shipped tea 2
   value, and writes `null` for an empty `T?`. One writer writes any number of values, one call each: every
   attribute has a type the compiler knows. Attributes are written in
   the order the class declares them. The one thing it cannot write is a `Float` or `Double` that is infinity or
-  not-a-number, which JSON cannot hold, and there it crashes naming the attribute and the value (see below).
+  not-a-number, which JSON cannot hold, and there it crashes naming the attribute and the value
+  ([below](#infinity-and-not-a-number)).
 - `JsonReader<T>()` names the type it makes and takes nothing, and `read(text: String): T?` answers `null` when the
   text is not JSON, or not this class's JSON; one reader reads any number of texts. Narrow it like any other `T?`: `crash` when bad input is a bug, `fallback` when the program should carry on,
   `if` when absence is a case.
@@ -81,7 +82,11 @@ A reader makes each object it reads one of two ways, and the class says which. *
 (no constructor, or one without parameters) is made that way and its attributes are filled from the text, as
 `Order` and `Item` are above. **A class whose constructor takes arguments** is read through its conversion
 ([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)): the reader reads the value the
-conversion takes, then converts it, and a conversion that answers `null` makes the read `null`. A class with
+conversion takes, then converts it, and a conversion that answers `null` makes the read `null`. The value can be any
+type the reader reads itself, not only a `String`: a class with `func Level(from: Integer): Level?` is read from a JSON
+number, and one with `func Weight(from: Float): Weight?` from a decimal one. A class with several conversions is read
+through the first one it declares, so a JSON text where that one expects a number is `null` even when a later
+conversion takes text. A class with
 neither is a compile error at the line that makes the reader, naming both forms. `BinaryReader` makes a class only
 the first way: bytes hold its attributes, never what a conversion takes.
 
@@ -194,7 +199,8 @@ The same `Order` is 23 bytes here and 104 as JSON: `id` and `total` (a `Float`) 
 `"Ada"` a length byte and three, the empty `note` one, and there are no keys, quotes or commas at all. [The binary format](#the-binary-format)
 says exactly what each type becomes.
 
-- `write(value): Buffer` answers a new buffer holding the value.
+- `write(value): Buffer` answers a new buffer holding the value. It takes a `T`, not a `T?`: a value that may be empty
+  is narrowed first, and writing a `T?` is a compile error that says to.
 - `read(bytes): T?` reads one value that fills the bytes exactly. It answers `null` when the bytes run out in the
   middle of the value, when they are not a `T` (a `Boolean` byte that is neither 0 nor 1, an enum index the enum
   does not have, a count larger than the bytes left), and when bytes are left over after it, as JSON's `read`
@@ -208,7 +214,21 @@ var reader = BinaryReader<Move>()
 var move = reader.read(received)
 ```
 
-Infinity and not-a-number are ordinary bytes: only JSON cannot hold them, so `BinaryWriter` never crashes.
+Infinity and not-a-number are ordinary bytes: only JSON cannot hold them, so `BinaryWriter` never crashes, and a
+`Float` or `Double` that was infinity or not-a-number is read back as it was.
+
+### Infinity and not-a-number
+
+JSON (RFC 8259) holds neither, and a float becomes one through a division by zero or an overflow the program did not
+guard. `JsonWriter` does not write `null` in its place or a made-up number: it crashes, showing the value and the
+attribute it was in, `Class.attribute`, with `[index]` or `["key"]` after it for a list element or a dictionary entry:
+
+```text
+spite: the program stopped at json_writer.spite:115 in JsonWriter_of_Double.written_decimal (shown=inf, path=Order.prices["cup"])
+```
+
+Negative infinity is `-inf` and not-a-number `nan`, in a `Float` as in a `Double`. A program that wants `null` there
+checks the number first.
 
 ### Several values in one buffer
 
@@ -244,7 +264,9 @@ bytes: 15
 ada bo cy 12
 ```
 
-A part of a buffer someone else laid out is taken first with `read_buffer_at(position, count)` and read from that.
+A part of a buffer someone else laid out is taken first with `read_buffer_at(position, count)` and read from that: a
+buffer that holds a point and then a name is read with one `read_buffer_at` for each, and reading the whole buffer as a
+point fails, since bytes are left over.
 
 ## What each type becomes
 
@@ -270,7 +292,11 @@ so each writer and reader goes as deep as the class does. A `union`, a `type` su
 value anywhere in what they see has no form in either, and making one is a compile error at your line, naming the
 attribute: `JsonWriter cannot write 'Owner': 'Owner.pet' is the union Pet, and JSON does not say which member a
 value is`, or `BinaryReader cannot read 'Owner': 'Owner.pet' is the union Pet, and the bytes do not say which
-member a value is` (`diagnostics/json_unwritable`). Keep what they see to the types in this table.
+member a value is`. A `type` such as `Anything` or a function value is refused the same way, with a reason that ends
+`has no JSON form` or `has no binary form`. The compiler looks everywhere the walk goes (through a `T?`, a list's
+elements, a dictionary's values and every attribute of every class it reaches) and names the attribute that holds the
+trouble, `Owner.pet`, so a union inside a list is found where the list is. Keep what they see to the types in this
+table.
 
 **Private attributes are left out** by both formats: an attribute whose name starts with `_` is the class's own
 business ([style.md](style.md)), as `to_debug()` leaves it out, so it is neither written nor read and keeps its
@@ -344,9 +370,10 @@ true false
 
 `Place` has exactly `Point`'s bytes, but it is another class, so its hash differs. The hash is the 64-bit FNV-1a
 of a text the compiler writes, and which a program never sees: `Point{across:Integer;down:Integer}`, lists as
-`List<...>`, dictionaries as `Dictionary<...>` (followed by `by` and the key's type when it is keyed by numbers),
-`T?` with a `?`, an enum as its name and its values in brackets, and a class already being written, a recursive
-one, by its name alone. The same classes give the same hash in
+`List<...>`, dictionaries as `Dictionary<String, Integer>` (the key's type, then the value's),
+`T?` with a `?`, an enum as its qualified name and its values in brackets (`Holder.Mood(calm,angry)`), and a class
+already being written, a recursive one, by its name alone. Private attributes and attributes holding a singleton are
+not in the text. The same classes give the same hash in
 every build and on every machine; renaming, adding, removing, reordering or retyping an attribute changes it.
 
 ## Reading input you did not write
@@ -446,7 +473,8 @@ writer.keys = {MeshRecord.attributes["minimum_level_of_detail"]: "min_lod", Mesh
 ```
 
 The key is the one way to write that attribute: `minimum_level_of_detail` and `minimumLevelOfDetail` are then
-unknown keys, skipped like any other. Every serializer takes the same kind of map. A map written as a literal
+unknown keys, skipped like any other, and so are the camelCase and PascalCase spellings of that attribute: only the
+key reads into it. An attribute with no key in the map keeps all its spellings. Every serializer takes the same kind of map. A map written as a literal
 costs nothing: its keys are literal text in the code the serializer is compiled to, and reading matches them as it
 matches an attribute's own name. A map made while the program runs (filled in a loop, or answered by a
 function) is copied when the `keys` is set, and the compiler turns the copy into a table of one key per attribute
@@ -467,8 +495,10 @@ writer.keys = keys
 ```
 
 A serializer whose `keys` is never set has no map, and writes and reads every attribute under its own name. A
-written-out map naming an attribute the class does not have, a private one or one holding a singleton is an
-error, and a map made while the program runs that does so halts where it is set. Mixing the two is fine: where
+written-out map naming an attribute the class does not have, a private one or one holding a singleton is a compile
+error ("'MeshRecord' has no attribute '_cache' to give a key: name one of its public attributes that holds a value"),
+and a map made while the program runs that names an attribute of another class halts where it is set. `remove_at`
+and `clear` on the map change it as an index assignment does, and a removed attribute goes back to its own name. Mixing the two is fine: where
 one serializer of a class gets a literal and another a map made while the program runs, or two get different
 literals, or a key is changed later (`writer.keys[detail] = "lod"`), or the map is held in a local or handed to a
 function, the compiler stops folding that class's map and each serializer reads its own map as it runs, so every
@@ -572,9 +602,9 @@ the object it is filling the same way, `created.attributes.each(read_attribute)`
 `_key`; the attribute whose name matches parses the value into `attribute.value`, and only a key no name matched
 walks again, comparing the camelCase and PascalCase spellings. A class of the `Spite` namespace, a reflection
 object, is not walked (`if $value_type.namespace != Spite`): its attributes are all private, and its own
-`.attributes` would be the members it describes. `--final-classes` does not print these copies (a
-generic class's file is shared by all of its instances), but they are ordinary typed functions in the program
-the compiler builds.
+`.attributes` would be the members it describes. `--final-classes` prints the generic class once, as the template, and
+each copy as a `type` listing the signatures it made under `instantiated/` (`json_writer_order.spite`); the copies
+are ordinary typed functions in the program the compiler builds.
 
 The binary pair walks the value inside `BinaryWriter<T>` and `BinaryReader<T>` themselves, with no helper class: a nested class, list element or dictionary entry is walked by a `BinaryWriter<attribute.class>()` (or `BinaryReader<attribute.class>()`) of its own that continues in the same buffer at the same position, and `write_attribute` is the one above with that in place of the `JsonWriter`. An enum is walked the same way, over its values, to find its index. Its numbers are written and read with the buffer's own appends and reads of numbers. `JsonReader<T>` reads the text the same way, a nested value by a `JsonReader` of its own that continues at the same place, and it remembers the first thing that went wrong.
 

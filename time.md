@@ -25,6 +25,11 @@ compiler places it ([memory.md](memory.md#where-a-value-lives-memory)).
 | `Clock()` | `now()` for the wall clock, and elapsed time for measuring | |
 | `Benchmark(work)` | one run of a function, timed | what it answered and a `Duration` |
 
+The zone-less types are spelled `Date`, `Time` and `DateTime`. The `Local` spellings other libraries use are errors that
+name the right one: `LocalDate` is "'LocalDate' is spelled 'Date'", and the same for `LocalTime` and `LocalDateTime`.
+Their parts are attributes: `year`, `month` and `day` of a `Date`; `hour`, `minute`, `second`, `nanosecond` and
+`second_of_day` of a `Time`; `date` and `time` of a `DateTime`. All three compare with `==`, `<` and `>`.
+
 What cannot happen, by construction:
 
 - **A local reading is never an instant.** `DateTime` has no function that answers an `Instant`, and
@@ -62,7 +67,9 @@ a DateTime cannot be used where an Instant is needed
 them, and to go back you add a negative `Duration`: `moment + -hour`. An `Instant` prints in UTC, with a `Z`.
 
 `Duration(amount, unit)` takes `'nanoseconds'`, `'microseconds'`, `'milliseconds'`, `'seconds'`, `'minutes'` or
-`'hours'`. `total(unit)` is the whole length in one unit, and `part(unit)` is one component of it written as
+`'hours'`, and never days: `Duration(1, 'days')` is the error "'days' is not a value of the enum 'Unit', whose values
+are 'nanoseconds', 'microseconds', 'milliseconds', 'seconds', 'minutes', 'hours'", which is how every enum refuses a
+value it does not have. `total(unit)` is the whole length in one unit, and `part(unit)` is one component of it written as
 hours, minutes, seconds and a fraction; both round toward zero and keep the sign.
 
 ```gdscript title=time_instants/time_instants.spite entry
@@ -141,7 +148,9 @@ What the work answered is kept, so the work is never left out as unused. Work th
 `Benchmark<Nothing>`, and what it computes is whatever it stores, read once the line has run. `Benchmark` is
 library code like the rest: a program that never names it carries none of it, and the work is called once, through
 its function value, between the two readings. To print the time, ask the `Duration` for the unit you want:
-`benchmark.duration.total('microseconds')` ([spec](https://github.com/Spite-Language/spite_spec/blob/master/specs/time.md#time-one-stored-instant-zones-for-presentation)).
+`benchmark.duration.total('microseconds')`. The class takes the type of the answer from the function it is given, so
+`Benchmark(sum_to_a_million)` is a `Benchmark<Long>`, and that is why the measuring is a class and not a call on the
+clock: there is no `clock.benchmark(work)`, since only a class carries a type along with it.
 In a program in which the compiler runs work on another thread, the work is treated as code another thread may
 run, so the objects it counts are counted atomically; to measure exactly what counting costs, read the clock twice
 around the code instead.
@@ -154,8 +163,14 @@ builds one from its own numbers has a bug; text from outside is read with `var r
 answers `null` ([Text](#text)). `Time(hour, minute, second, nanosecond)` is the same for a clock reading, and
 `DateTime(date, time)` joins the two.
 
-A `Period` adds to a date by months first and then by days, and a day of the month that the new month does not
-have becomes its last day: January 31 plus one month is February 29 in a leap year. `period_until` answers the
+A `Period(amount, unit)` counts `'days'`, `'weeks'` (seven days), `'months'` or `'years'`, and has no hours:
+`Period(1, 'hours')` is the same error as an unknown unit, listing those four. `years`, `months` and `days` read what
+it holds, and `is_zero` is true when all three are 0, whichever unit made it. A `Period` adds to a date by months
+first and then by days, and a day of the month that the new month does not
+have becomes its last day: January 31 plus one month is February 29 in a leap year. A `Period` that holds both is
+still added in that order, once: January 30 plus one month and one day is March 1, because the month lands on
+February 29 first, while adding the day first and the month after would end on February 29. A `Period` adds to
+`Date` and `DateTime` only; to an `Instant` it is a type error, since an instant has no calendar to count it in. `period_until` answers the
 years, months and days between two dates the same way, so adding it back lands on the later date.
 
 ```gdscript title=time_calendar/time_calendar.spite entry
@@ -347,7 +362,9 @@ transitions it read. UTC and fixed offsets need neither.
 `zones.read_tzif(identifier, data)` reads a TZif file you bring, its bytes as `File.read_as_buffer()` gives them,
 which is the answer for a machine with no database (a
 bare container) or a program that must pin one version of the rules. It is the same reader Linux and macOS use,
-so it runs on Windows too.
+so it runs on Windows too. It reads RFC 8536 versions 1 to 4; a version 1 file has only the 32-bit transitions and no
+footer, so it knows nothing after its last one. A file it cannot make sense of is `null`, and so is one whose footer
+names a daylight zone without saying when it starts and ends (`EST5EDT` alone), which would otherwise be read as standard time all year.
 
 A TZif file has the transitions its zone has had, and a POSIX rule for the years after them
 (`EST5EDT,M3.2.0,M11.1.0`), which is how the reader answers for 2100. A time zone's rules are only
@@ -373,8 +390,10 @@ drop the one fact that makes it exact, while text without one is a local reading
 instant. A bracketed zone after the offset must agree with it: `-04:00[America/New_York]` is read, while
 `-05:00[America/New_York]` on a day New York is four hours behind, a zone the database does not have, and a
 second zone are `null`, since one of the two would be wrong and the text does not say which. After `Z`, which
-says the offset is not known, any zone the database has agrees. The one other annotation read is the ISO
-calendar, `[u-ca=iso8601]`; any other is `null`, since Spite has no other calendar. A leap second (`23:59:60`)
+says the offset is not known, any zone the database has agrees. A zone may be written critical, `[!America/New_York]`, and is checked the same way. A zone comes first and once:
+`[u-ca=iso8601][America/New_York]` is `null`, and so is a second zone. The one other annotation read is the ISO
+calendar, `[u-ca=iso8601]` or `[!u-ca=iso8601]`; any other, critical or not, is `null` (`[u-ca=hebrew]`, `[x=y]`), since
+Spite has no other calendar. A leap second (`23:59:60`)
 is `null` too: no type holds it, and reading it as `23:59:59` would change the value read. `T` may be written
 `t` or a space, and a fraction may follow `,` as well as `.`.
 
