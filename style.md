@@ -103,7 +103,7 @@ searching for the old name. These are errors, each with the fix:
   hold and abbreviate nothing: `position.x`, `var x = 0.0`.
 - **Never an abbreviation.** Every word of a name is checked against a list (`msg`, `idx`, `val`, `cfg`, `tmp`,
   `str`, `len`, `max`, `min`, `init`, `env`, `dir`, `doc`, ...; the full table is in
-  [Naming and abbreviations](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations-compile-errors-not-auto-fixed)),
+  [Naming and abbreviations](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations)),
   and the error spells the name out. `id` is allowed.
 - **Any word another language reserves is yours too**: `unsigned`, `static`, `stdout` or `near` are ordinary names.
 - **One underscore between words**, and at most one in front to make a name private: `hit__count`, `__strike`
@@ -131,6 +131,11 @@ func LintError() {
 ```diagnostic
 'msg' abbreviates: write 'message' instead of 'msg'
 ```
+
+A local or a parameter with one right spelling is renamed in its function instead, and the compiler says so: `itemCount` to
+`item_count`, `total__price` to `total_price`, `item_cnt` to `item_count` (`fixed: 'item_cnt' abbreviated, and Spite has no abbreviations
+outside its own keywords; renamed it 'item_count'`). A word that could mean several things stays an error, and you write the one
+you mean: `'temp_file' abbreviates 'temp', which could mean 'temporary' or 'temperature'`. A keyword one letter off at the start of a line is corrected the same way: `retrun` to `return`.
 
 ```gdscript title=single_letter/single_letter.spite entry error
 var console = Console()
@@ -160,7 +165,7 @@ A name should say where and what without a comment to disambiguate it. `add` doe
 A local variable that is never read is an error: remove it. Only reading counts, so a variable that is
 assigned and never read is unused too, and there is no spelling that silences it: a variable nobody reads
 is work the program did for nothing. A parameter is the one exception, because a signature can need a parameter
-its body ignores: name it `_name` to say so. A `_name` that *is* read is an error, since the prefix says it is
+its body ignores: name it `_name` to say so. A `_name` that *is* read is renamed `name` in the file, since the prefix says it is
 not, and a parameter whose signature is dictated from outside (an operator function's, for one) needs no `_` at
 all ([the exemptions](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#unused-is-an-error)). Everywhere else a leading `_` means private to its
 class ([reflection.md](reflection.md#reflection-is-read-only)).
@@ -180,8 +185,9 @@ func UnusedError() {
 ```
 
 An unread local whose value does nothing, a literal, a text with no hole or a name, has one fix, so the compiler
-removes it from the file and says so: `fixed: 'forgotten' was never read, and making it does nothing; removed it`.
-One made by a call stays an error, since removing it would drop the call.
+removes it from the file and says so: `fixed: 'forgotten' was never read, and making it does nothing; removed it`. It
+removes one only ever assigned such values the same way, with every write. One made or written by a call stays an error, since
+removing it would drop the call.
 
 ```gdscript title=written_not_read/written_not_read.spite entry error
 var console = Console()
@@ -189,7 +195,7 @@ var console = Console()
 func WrittenNotRead() {
     load "../spite_standard_library/windows"
     var total = 1
-    total = 2
+    total = "hello".length()
     console.print("hello")
 }
 ```
@@ -197,7 +203,7 @@ func WrittenNotRead() {
 'total' is never read: remove it
 ```
 
-An attribute nothing reads is an error the same way: remove it. A private `_name` attribute is no
+An attribute nothing reads is an error the same way, and goes from the file the same way when its value and everything written to it in its class do nothing. A `load` in the entry class of a folder no class outside it names is removed too. A private `_name` attribute is no
 exception, since only its own class can read it. Writing an attribute is not reading it, so one that is only
 assigned is still unused. A read is anything that takes the attribute's value: its name in the class's own
 functions, `thing.world` from another class, `x.attributes[attribute]` in a template or a walk (which is how the JSON

@@ -136,7 +136,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
   check), a divisor already proven, a class test the type already answers, the same call-free condition on the next
   line, or a `fallback` or `crash` that folds true is refused, naming where it was proven.
 - **Buys**: no dead checks in the source.
-- **Falls back**: delete the repeated check.
+- **Falls back**: delete the repeated check; the compiler does when it is a `crash`, a `fallback` or an `if` of a program's own file.
 
 ### A value proven present is a `T`
 

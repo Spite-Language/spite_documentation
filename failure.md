@@ -200,8 +200,8 @@ the next pass. Inside a `while`, undoing a narrowing that was made *before* the 
 error, because the next pass would read it unproven: narrow it inside the loop instead. A body that narrows it
 again after what undid it, before reading it, reads it narrowed on every pass, and is accepted.
 
-Narrow the name or the path itself, never a copy of it: a local that only copies a value so it can be narrowed
-is an error.
+Narrow the name or the path itself, never a copy of it: the compiler drops a local that only copies a value so it can be narrowed, and
+its uses name what it copied.
 
 ```gdscript title=copy_to_narrow_error/tracker.spite
 var drops = 0
@@ -210,7 +210,7 @@ func note_a_drop() {
     drops = drops + 1
 }
 ```
-```gdscript title=copy_to_narrow_error/copy_to_narrow_error.spite entry error
+```gdscript title=copy_to_narrow_error/copy_to_narrow_error.spite entry
 var tracker: Tracker? = null
 
 func CopyToNarrowError() {
@@ -225,14 +225,14 @@ func record() {
     watcher.note_a_drop()
 }
 ```
-```diagnostic
-'watcher' only copies 'tracker' so it can be narrowed: narrow 'tracker' itself
-```
+
+That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`.
 
 A check on something that cannot be null proves nothing: `fallback tracker` written twice, or a `fallback` on a
 plain `Tracker`. On a line of its own the compiler removes it and names the check that already proved it ("fixed:
 'tracker' was already narrowed by 'fallback tracker' on line 8; removed this check"), whatever the type, text and
-numbers included. Inside an `if` condition it is an error with the same words, ending in "remove this check".
+numbers included. An `if` on it becomes the code it runs, "fixed: 'number' was already narrowed by 'if number' on line 18; removed
+the 'if' and kept the code it runs". In a `while` condition it is an error with the same words, ending in "remove this check".
 
 ### A call may undo a proof
 
@@ -371,7 +371,7 @@ troll
 
 Checking such a name again proves nothing: a `crash found` line above is removed by the compiler, "fixed: 'found'
 was already narrowed by the proof that every value it can hold is present; removed this check", and an `if found`
-is the error "'found' is already narrowed by the proof that every value it can hold is present: remove this check". The proof does not reach a `T?` parameter,
+becomes the code it runs the same way. The proof does not reach a `T?` parameter,
 an attribute with no default, or what the standard library answers: those are narrowed as usual. What the
 library answers is the type its signature gives, the same on every target, so a program that compiles on one
 target compiles on all. The same holds for a value that was never a `T?`: `crash` on any local that cannot be null,
@@ -883,9 +883,9 @@ func size(): Integer {
 ### The last `if` of a function
 
 A function whose *last* statement is `if value { ... }` with no `else` (wrapping the rest of the function only
-to check that something exists) is a compile error too, naming the `fallback` that lets the rest run unindented:
+to check that something exists) is rewritten with the `fallback` that lets the rest run unindented:
 
-```gdscript title=terminal_if_error/terminal_if_error.spite entry error
+```gdscript title=terminal_if_error/terminal_if_error.spite entry
 var console = Console()
 
 func TerminalIfError() {
@@ -904,9 +904,8 @@ func announce() {
     }
 }
 ```
-```diagnostic
-write 'fallback maybe_name' and let the rest of the function run unindented
-```
+
+The compiler writes the file as below and says `fixed: ...; wrote 'fallback maybe_name' and moved the code it ran left`:
 
 ```gdscript title=terminal_if_fixed/terminal_if_fixed.spite entry
 var console = Console()

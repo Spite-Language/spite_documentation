@@ -61,7 +61,7 @@ Spite name becomes the C one:
 With `'identity'` a name may be written exactly as C spells it, as in `kernel.GetFileAttributesA(path)`, which is
 what the standard library does where Win32's own abbreviations follow no rule. The words of the linter's table
 that Win32 spells out in full (`count`, `buffer`, `window`, `size`, the second table in
-[Style](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations-compile-errors-not-auto-fixed)) are not read backwards, so
+[Style](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#naming-and-abbreviations)) are not read backwards, so
 `set_cursor_position` is still `SetCursorPos` but `get_tick_count` stays `GetTickCount`.
 
 ## What crosses
