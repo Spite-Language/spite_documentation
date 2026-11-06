@@ -494,13 +494,13 @@ generic $item_type
 
 var items = List<$item_type>()
 
-func count(): Integer {
+func held_count(): Integer {
     return items.count()
 }
 ```
 ```gdscript title=generic_class_test_doc/generic_class_test_doc.spite entry
 type Counted {
-    count: Spite.Function<Integer>
+    held_count: Spite.Function<Integer>
 }
 
 var console = Console()

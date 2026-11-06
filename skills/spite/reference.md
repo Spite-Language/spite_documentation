@@ -136,6 +136,7 @@ func is_alive(): Boolean {
   (`message` not `msg`, `index` not `idx`, `value` not `val`). A local or parameter with one right spelling is renamed in the file (`fixed: 'msg' abbreviated, ...; renamed it 'message'`, `myValue` to `my_value`); the rest are errors: `the variable 'n' is a single letter`,
   `'temp_file' abbreviates 'temp', which could mean 'temporary' or 'temperature': write the word you mean`. The language's own
   type names follow the rule: `Integer`, `Boolean`, never `Int`, `Bool`. Folder names are snake_case too.
+- A function whose whole body answers a same-named member of an attribute a caller can reach is an error (`'get_name' only answers 'owner.name': remove it, and write 'token.owner.name' where it is called`), and so is a `get_` function reading another object's attribute under any name. An attribute private with no getter (`_connection`), a differently named question (`is_atomic`) and a call passing anything but its own parameters are allowed.
 - A local that is never read is an error (`'total' is never read: remove it`); one never assigned whose value is a
   literal or a name is removed by the compiler (`fixed: ... removed it`). Assigning is not reading, and no
   spelling silences it. A parameter the signature needs but the body ignores is named `_name` (`the parameter

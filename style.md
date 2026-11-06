@@ -386,6 +386,25 @@ It is an error and not something the formatter rewrites, because where to split 
 compiler cannot make. Get back within the budget by cleaning up, not by cutting the file in two at the number: group
 state into an object, name the concerns, and give each one a file of its own.
 
+## A function does not only answer a member
+
+A function that only hands on a member of the same name from one of its attributes says nothing a caller could not
+say more plainly, so it is a compile error, and the error names what to write:
+
+```text
+token.spite:3: error: 'get_name' only answers 'owner.name': remove it, and write 'token.owner.name' where it is called
+```
+
+A `get_` function that reads another object's attribute is refused under any name too, so renaming it does not help.
+Three things are not an alias, and stay:
+
+- **The attribute is private with no getter**, so there is no other way in: `Tcp.Client.read_line` over `_connection`.
+  Keep a thing to yourself by naming it `_connection`, and wrap what you choose to show.
+- **The name adds something**: `is_atomic` over `atomic_singletons.contains(key)` is a question with a name of its own.
+- **The call passes something else**: `rack.scale(size, 2)`, or the parameters in another order.
+
+The rule is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#a-function-that-only-answers-a-member).
+
 ## A function body holds no empty lines
 
 A blank line inside a function is where a second function wants to be: the part below it is a step with a
