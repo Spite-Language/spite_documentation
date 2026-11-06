@@ -165,7 +165,9 @@ the answer is a `true` or `false` in the generated code. An `if` on it keeps onl
 var loaded = List<String>()
 
 func load_each(path: String, into: List<String>) {
-    var file = File(path)
+    var file_path: Path? = path
+    crash file_path
+    var file = File(file_path)
     var text = file.read_as_string()
     fallback text
     into.append(path)

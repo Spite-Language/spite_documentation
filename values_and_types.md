@@ -257,7 +257,7 @@ The same rule casts between any two classes. Where a value meets a place that wa
 function named after the class with one parameter `from`
 ([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)): `var paint: Color? = "#ff8000"`
 reads the text through `func Color(from: String): Color?`, and a `Meters` passed where a `Feet` is wanted goes
-through `func Feet(from: Meters): Feet` when `Feet` declares it. The cast answers what the conversion answers, so
+through `func Feet(from: Meters): Feet?` when `Feet` declares it. The cast answers what the conversion answers, so
 text read as an `IpAddress` is an `IpAddress?`, narrowed like any other `T?` before it goes where a plain `IpAddress`
 is wanted. A literal is read while compiling: `var host: IpAddress = "127.0.0.1"` needs no narrowing, and
 `var host: IpAddress = "not a host!"` is a compile error naming the literal and the conversion. A conversion that needs

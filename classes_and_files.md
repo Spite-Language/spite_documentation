@@ -254,7 +254,7 @@ A class is built in three ways, and each has a fixed shape so it can't be mistak
 | Kind | Shape | Who calls it |
 |---|---|---|
 | **constructor** | named after the class, no return type, fills `this` | the program: `Meters(42195)` |
-| **conversion** | named after the class, one parameter named `from`, returns the class or its `?` | the compiler, wherever a value of the `from` type meets the class |
+| **conversion** | named after the class, one parameter named `from`, returns its class's `?` | the compiler, wherever a value of the `from` type meets the class |
 | **preset** | a PascalCase name of its own, no parameters, returns exactly the class | the program: `Meters.Marathon()` |
 
 ```gdscript title=distances/meters.spite
@@ -290,13 +290,13 @@ func Distances() {
 1200
 ```
 
-**A conversion** lives in the class it builds, so `String` knows nothing of `Meters`, `IpAddress` or `Color`. Its
-`?` says it can fail: `Meters(from: String): Meters?` answers `null` for text that isn't a number, and the caller
-narrows it. A literal needs no narrowing: `var walked: Meters = "1200"` is read while compiling, and
+**A conversion** lives in the class it builds, so `String` knows nothing of `Meters`, `IpAddress` or `Color`. It
+always answers its class's `?`, and one written without it is a compile error: `Meters(from: String): Meters?` answers
+`null` for text that isn't a number, and the caller narrows it. A literal needs no narrowing: `var walked: Meters = "1200"` is read while compiling, and
 `var walked: Meters = "far"` is a compile error (`the literal "far" does not convert: 'Meters(from: String)' answers null
 for it`). Text held in a local, or with a hole in it, is read at run time. A conversion that does more than work out its
 answer (it prints, reads the system, changes a singleton) always runs at run time, literal or not, and stays a `T?`. A
-conversion without `?` can't fail. A class has at most one conversion from each type. It is never
+conversion with no `null` path needs no narrowing. A class has at most one conversion from each type. It is never
 called by name: where a `String` is given and a `Meters?` is wanted, the compiler calls it, and writing the call
 yourself is an error. `var walked: Meters? = Meters("1200")` is refused with "'Meters("1200")' is what writing
 '"1200"' here already does: the compiler casts a value to the class its place wants, so write '"1200"'", and

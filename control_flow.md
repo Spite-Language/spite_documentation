@@ -129,7 +129,7 @@ An `if` with nothing in its body but another `if`, and no `else` on either, is o
 compiler refuses it:
 
 ```gdscript
-func stamp_of(path: String): String {
+func stamp_of(path: Path): String {
     var file = File(path)
     var modified = file.last_written()
     var size = file.byte_count()

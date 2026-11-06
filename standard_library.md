@@ -198,7 +198,18 @@ when an operand is it, where C's `fmin` would answer the other operand as if not
 
 A `Path` is a place in the file system. It is made from text by a conversion, so a program writes the text and the
 compiler casts it wherever a `Path` is wanted: `File("levels/forest.txt")` and `var level: Path = "levels/forest.txt"`
-both read the text as a path ([conversions](classes_and_files.md#constructors-conversions-and-presets)). Reading it
+both read the text as a path ([conversions](classes_and_files.md#constructors-conversions-and-presets)). Text that
+every system refuses as a path is not one: the conversion answers `null` for empty text and for text holding a zero
+byte, so `File("")` is a compile error, and a path worked out while the program runs is a `Path?` narrowed first:
+
+```gdscript
+var level: Path? = "{folder}/forest.txt"
+crash level
+var file = File(level)
+```
+
+Text a system refuses for its own reasons, such as `a|b` on Windows, is a `Path`, and fails where it is used:
+`exists()` is `false` and a read is `null`. Reading a path
 tidies it: `.` and empty pieces go, `..` takes back the piece before it, both separators become `/`, and a trailing
 separator goes, so `"./a/b/../c/"` is `a/c`, and a path that starts at the root never climbs above it.
 
@@ -419,12 +430,18 @@ var console = Console()
 func DirectoryWalk() {
     load "../spite_standard_library/windows"
     var root = Directory(".spite/documentation_walk")
-    var inner = Directory("{root.path}/inner")
+    var inner_path: Path? = "{root.path}/inner"
+    crash inner_path
+    var inner = Directory(inner_path)
     crash root.create()
     crash inner.create()
-    var top = File("{root.path}/top.txt")
+    var top_path: Path? = "{root.path}/top.txt"
+    crash top_path
+    var top = File(top_path)
     crash top.write_string("top")
-    var deep = File("{inner.path}/deep.txt")
+    var deep_path: Path? = "{inner.path}/deep.txt"
+    crash deep_path
+    var deep = File(deep_path)
     crash deep.write_string("deep")
     walk(root)
 }
@@ -486,7 +503,9 @@ func WatchFolder() {
     crash folder.create()
     var watcher = FileSystemWatcher()
     crash watcher.watch_for_changes(folder)
-    crash File("{folder.path}/level.txt").write_string("three goblins")
+    var level_path: Path? = "{folder.path}/level.txt"
+    crash level_path
+    crash File(level_path).write_string("three goblins")
     var changed = watcher.changes()
     var tries = 0
     var twenty_milliseconds = Duration(20, 'milliseconds')
