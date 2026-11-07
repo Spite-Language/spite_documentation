@@ -297,8 +297,8 @@ the compiler decides which one of the cycle holds no count, and decides what run
 
 The compiler is written in Spite and builds itself. It writes machine code directly (Windows on x64 today), so a
 program needs no C compiler, linker or toolchain beside it, and a build is one program doing one job from source to
-executable. Compilation speed and live reload matter more than anything else in the toolchain: `--check` reports
-every error without building, and `--hot-reload` swaps changed classes into a running program.
+executable. Compilation speed and live reload matter more than anything else in the toolchain: `--check` lists
+the errors without building, and `--hot-reload` swaps changed classes into a running program.
 [docs/compiler.md](compiler.md)
 
 ## A running program that answers questions
@@ -346,8 +346,8 @@ the compiler makes fast, so write it plainly and let the compiler do the rest. L
 [skills/spite/SKILL.md](skills/spite/SKILL.md) before writing Spite: it is the whole language on one page, with the
 habits from other languages the compiler rejects.
 
-- **Iterate by compiling.** `spite --check` reports every error in one run; apply each message literally,
-  since it says what to write.
+- **Iterate by compiling.** `spite --check` lists the errors of a stage in one run; apply each message literally,
+  since it says what to write. Fixing them lets the next stage run: reading, then types, then what needs the whole build.
 - **Re-read a file after compiling it.** Every compile formats the files first, so what is on disk may differ from
   what you wrote.
 - **Do not write guards the compiler enforces.** Narrow a `T?` once (`if`, `fallback`, `crash`, `switch`); checking a

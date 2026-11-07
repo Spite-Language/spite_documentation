@@ -84,7 +84,7 @@ executable without running it. `final_classes` writes the program back out as Sp
 else the build does ([below](#inspect-merged-classes)), and `optimization_report` writes what the compiler could not
 optimise into a file ([below](#read-what-was-not-optimised)); the defaults are in [Build options](#build-options).
 
-`--check` still reads and compiles the whole program and reports every error, and writes nothing but the
+`--check` still reads and compiles the whole program and reports [its errors](#how-many-errors-are-listed), and writes nothing but the
 formatting, which is not an output: every compile does it first ([below](#formatting)). It writes no executable
 and never touches one an earlier build left, so checking while the program runs is safe:
 
@@ -363,8 +363,29 @@ anything is read. `--target-operating-system` is read from the flag alone: a `va
 `build.spite` is an error naming the flag.
 
 An error is `<path>:<line>: error: <message> (in <Class>.<function>)`, with the function's name even when the error
-is in its signature, and `(in <Class>.)` for one among a class's attributes and types. The compiler stops at the
-first error it finds and prints it; fixes it made on the way are printed before it.
+is in its signature, and `(in <Class>.)` for one among a class's attributes and types.
+
+## How many errors are listed
+
+A compile lists its errors together, so one compile tells you what to fix. A failure stops its own check, and the
+checks go on to the rest:
+
+- A file that does not lex or parse stops that file; the other files are still read and checked. If it is the entry
+  file, the compile stops there.
+- Each rule on a read file reports what it finds and goes on, so two unread locals are two errors. A line is told once:
+  a second mistake on it waits for the next compile.
+- A function that does not type-check stops that function, and every other reached function is still built. Functions
+  reached only through it are not, so errors there wait for the next compile.
+- A stage whose input is broken does not run: errors in reading leave out the types, and a type error leaves out the
+  proofs that need the whole build (unread names, values that may be null, the rest of the build's facts), which come
+  once it builds. An error from an earlier stage never echoes as a false one in a later stage.
+
+The errors in the program's own files come first, in the order found, at most 25, followed by `and N more in the
+program` when there were more. Then come the errors in loaded packages, at most 25 together, followed by one
+`and N more in <package>` per package that had more. Finding a type error takes one more pass over the program, so
+past 25 of those the compile stops looking and the list ends `and possibly more in the program`.
+
+Fixes the compiler made on the way are printed before the errors, and the exit code is 1.
 
 ---
 

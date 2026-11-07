@@ -57,7 +57,10 @@ Leave the loop only when you need to:
 
 Every compile, a reload included, rewrites your files into the one style first: read a file back before editing it
 again. Every error comes as `path:line: error: message (in Class.function)` and says what to write instead: write
-that, and nothing cleverer. A failure at run time is a `spite: the program stopped at ...` or `spite.fault` line naming the file, the line
+that, and nothing cleverer. A compile lists its errors together, at most 25 in the program, followed by `and N more in
+the program`, so fix them all before compiling again. A later stage does not run on a broken input: type errors come
+once every file reads clean, and the errors that need the whole build (unread names, proven checks, a value that may
+be null) once it builds, so a clean list can be followed by a new one. A failure at run time is a `spite: the program stopped at ...` or `spite.fault` line naming the file, the line
 and the values there: open that line, and do not add logging. The commands are in
 [docs/repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
