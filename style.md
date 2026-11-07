@@ -97,7 +97,10 @@ What the compiler fixes for you, and what it leaves as an error:
   `if` becomes the code it runs, an `if not` its `else`); an `if` or `while` decided while compiling goes, or
   becomes its body; a `fallback` that is always false goes with the code after it. A `while` that is always true,
   an `if` that holds only part of a class test and a check that something undid stay errors, and so does a write or
-  a call that may undo a proof, which keeps the check and answers at run time.
+  a call that may undo a proof, which keeps the check and answers at run time. A local taken from a narrowed path
+  is proven too: after `crash thing.store`, `var held = thing.store` and `if held` loses its `if`. These fixes rest
+  on what was narrowed, and a later proof may still take that back (a call between the check and a read, a loop's
+  next pass): when one does, the compile fails with those lines as you wrote them.
 - **Shapes with one short form.** A last `if` that only checks a value becomes `fallback` (except in a constructor,
   where it is an error), an `if` that only returns the default becomes `fallback`, and an `else if` that only returns
   is hoisted to a `fallback` above its `if` when one choice fits. A copy made only to narrow goes and its uses name

@@ -108,7 +108,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - A narrowing, a `[]` proof included, lasts until a write or a call that may undo it or shrink the list (the compiler follows the call, whatever its answer is used for). Narrow again after
   one: the new check stays and tests at run time. A write or a call inside a branch that returns leaves it standing
   below the branch. A call in a condition counts too: `if rack.item and clear(rack)` proves nothing about `rack.item`
-  when `clear` may write it; `if clear(rack) and rack.item` does.
+  when `clear` may write it; `if clear(rack) and rack.item` does. A proof made before a `while` and read in its
+  body is undone by such a call anywhere in the body, since the next pass reads after it: prove it inside the loop.
 - Only a path with no call in it narrows: `if thing.pop().held` proves nothing about a second `thing.pop().held`
   (it calls again); write `var held = thing.pop().held` and narrow `held`. A getter path (`thing.reading`, running
   `get_reading()`) narrows while the getter only reads; if it may write anything, a second read after the check is an
@@ -133,7 +134,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - The compiler fixes what has one fix, and prints `fixed:` for each: declarations out of order, a local or parameter
   with one right spelling, a keyword one letter off, a local or attribute that does nothing and is never read, a
   check on a proven value, an `if` or `while` decided while compiling, statements after a `return`. A choice stays
-  an error. It never rewrites the library or a package.
+  an error. It never rewrites the library or a package. A check or `if` it would remove because of a narrowing
+  stays when a later call or loop pass takes that narrowing back: the compile fails on that instead.
 
 ## Installing this skill in a project
 
