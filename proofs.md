@@ -184,7 +184,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 
 - **Proves**: one name per value.
 - **Rule**: a `var` that holds a bare name or path of a `T?`, is never assigned again, whose source is not assigned
-  in the function, and that is then narrowed, is refused: narrow the source itself. A local read past a call that may write its source keeps a value and is left alone, and so does one holding a call's answer (`var held = thing.pop().held`, `var reading = thing.reading` through a getter), since naming the source again calls again. A snapshot taken before its
+  in the function, and that is then narrowed, is refused: narrow the source itself. A local read past a call that may write its source keeps a value and is left alone, and so does one holding a call's answer (`var held = thing.pop().held`), or a getter's that may write something (`var reading = thing.reading`), since naming the source again calls again. A snapshot taken before its
   source changes is allowed.
 - **Falls back**: narrow the original name.
 
