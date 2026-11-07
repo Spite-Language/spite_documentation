@@ -376,7 +376,9 @@ func get_owner(): String {
 }
 ```
 `balance` has no exact `set_balance`/`get_balance`, so a template answers reads and writes to it from
-outside the class. `owner` has exact functions instead, which always win over a template, so every name
+outside the class. Every read calls the getter again, so a check of a getter that may write something
+(`if account.next_owner { }`) proves nothing about a second read: hold it in a `var` and narrow the `var`
+([failure.md](failure.md#narrowing-a-path)). `owner` has exact functions instead, which always win over a template, so every name
 written through `set_owner` is capitalized.
 
 The templates answer `account.balance = 5` and `account.balance`. Calling one with the attribute written out, `account.set_attribute('balance', 5)`, is an error that tells you to write `account.balance = 5`, since a write has one spelling; a template is called with an attribute only when the attribute is a value, such as the one a walk over the attributes hands you.

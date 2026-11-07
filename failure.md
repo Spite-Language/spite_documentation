@@ -148,8 +148,11 @@ found kal
 
 One `fallback` proves a whole chain of nullable links, not only the last one: after `fallback start.next.next`,
 both `start.next` and `start.next.next` are plain values for the rest of the block. It narrows the path and its
-prefixes and nothing else: a sibling path stays a `T?`. `while current` narrows its body the same way, and is how a
-linked chain is walked:
+prefixes and nothing else: a sibling path stays a `T?`. Only a path with no call in it narrows: after
+`if thing.pop().held`, `thing.pop().held` below calls `pop` again and is still a `T?`, so hold the answer in a `var`
+and narrow that. A path read through a getter (`thing.reading`, which calls `get_reading()`) narrows while the getter
+only reads; when it may write something, reading it again after the check is an error that says to hold it in a
+`var`. `while current` narrows its body the same way, and is how a linked chain is walked:
 
 ```gdscript title=path_narrowing_doc/node.spite
 var name = ""
@@ -224,7 +227,7 @@ func record() {
 }
 ```
 
-That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`. A copy read after a call or a write through another object that may change `tracker` is another thing, since it keeps the value the call may take away: it stays as written.
+That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`. A copy read after a call or a write through another object that may change `tracker` is another thing, since it keeps the value the call may take away: it stays as written. So does a local holding what a call answers, `var held = thing.pop().held` or a getter's `var reading = thing.reading`: naming the source again would call again.
 
 A check on something that cannot be null proves nothing: `fallback tracker` written twice, or a `fallback` on a
 plain `Tracker`. On a line of its own the compiler removes it and names the check that already proved it ("fixed:

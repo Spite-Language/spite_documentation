@@ -109,6 +109,10 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   one: the new check stays and tests at run time. A write or a call inside a branch that returns leaves it standing
   below the branch. A call in a condition counts too: `if rack.item and clear(rack)` proves nothing about `rack.item`
   when `clear` may write it; `if clear(rack) and rack.item` does.
+- Only a path with no call in it narrows: `if thing.pop().held` proves nothing about a second `thing.pop().held`
+  (it calls again); write `var held = thing.pop().held` and narrow `held`. A getter path (`thing.reading`, running
+  `get_reading()`) narrows while the getter only reads; if it may write anything, a second read after the check is an
+  error: hold it in a `var` the same way. `thing.pop().class == Thing` still calls `pop` once.
 - `while given and turns < 2` narrows `given` in the body like an `if`, and each pass tests it again, so the body may
   write it. An `or` narrows nothing inside; `if amount > 100 or amount < 0 { return 1 }` proves both sides below it.
 - A number that may be null is narrowed before arithmetic, a comparison or a store, whatever its width; only `==` and `!=` take it as it is.

@@ -68,7 +68,10 @@ accepted or refused whatever the optimisation settings.
 - **Buys**: member reads, calls and stores through the value are accepted, with no further test.
 - **Falls back**: reading through an unproven `T?` is refused: `this value may be null (it is a Monster?), so
   'name' cannot be read from it yet: narrow it first with 'if value { }', 'fallback value' or 'crash value'`. A
-  condition with a call (`if find(name) { }`) is not a path: keep the result in a `var` and narrow the `var`.
+  condition with a call (`if find(name) { }`) is not a path, and neither is a path holding one (`if thing.pop().held`,
+  `if not thing.items().is_empty()`): writing it again calls again, so it narrows nothing. A `[]` read through one
+  (`crash Store<$item>().values[index]`) still narrows, since the proven read tests what it finds. Keep the result in a `var`
+  and narrow the `var`.
 
 ```spite title=proofs/narrowing.spite entry
 func Narrowing(): Integer {
@@ -132,6 +135,22 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
   again, so this read would use what the call left there, unproven: prove 'keeper.target' again after that line`.
   Prove it again after the call.
 
+### A getter narrows while it only reads
+
+- **Proves**: a path read through a getter (`thing.reading`, which runs `get_reading()`) answers the same on its
+  second read.
+- **Rule**: such a path narrows like an attribute, and every read runs the getter again. A getter that reaches a
+  write of any attribute, or a foreign call, may change what it answers, so reading it again after its check is
+  refused, under `if`, `while`, `crash`, `fallback` and `switch` alike. One that only reads keeps the proof until a
+  call or a write between the check and the read may assign an attribute it reads.
+- **Buys**: a getter that only reads needs no `var`; one with an effect is never trusted on a second answer.
+- **Falls back**: refused: `'thing.reading' calls 'get_reading' again here, and 'get_reading' may change what it
+  answers, so the check before proves nothing about this read: hold it once with 'var held = thing.reading' and
+  narrow 'held'`, or `'thing.plain' was proven before line 8, where 'clear(...)' may assign 'store', which
+  'get_plain' reads, so this read would call it again unproven: prove 'thing.plain' again after that line`. A read
+  whose getter still answers nothing halts: `spite: 'thing.plain' was proven present, but reading it again answered
+  nothing, since what it reads changed after the check, at ...`.
+
 ### Proving what is proven is an error
 
 - **Proves**: nothing is checked twice.
@@ -165,7 +184,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
 
 - **Proves**: one name per value.
 - **Rule**: a `var` that holds a bare name or path of a `T?`, is never assigned again, whose source is not assigned
-  in the function, and that is then narrowed, is refused: narrow the source itself. A local read past a call that may write its source keeps a value and is left alone. A snapshot taken before its
+  in the function, and that is then narrowed, is refused: narrow the source itself. A local read past a call that may write its source keeps a value and is left alone, and so does one holding a call's answer (`var held = thing.pop().held`, `var reading = thing.reading` through a getter), since naming the source again calls again. A snapshot taken before its
   source changes is allowed.
 - **Falls back**: narrow the original name.
 
@@ -354,7 +373,8 @@ func Ranged(): Long {
 - **Rule**: an `if` on a `Build` field, a codegen value, a type test, a walk's `attribute.class` or name test, a
   class test the value's type answers, or a compile-time question (and `not`, `and`, `or`, `==`, `!=` over them)
   keeps only its taken branch. Only what survives is compiled.
-- **Buys**: generic code compiles only the branch its class takes.
+- **Buys**: generic code compiles only the branch its class takes. A test of something holding a call
+  (`thing.pop().class == Thing`) still makes the call once; only the answer is known.
 - **Falls back**: a run-time test of a constant, removed later by folding; both branches must compile.
 
 ### A `crash` that folds false is a compile error

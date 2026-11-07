@@ -423,7 +423,12 @@ rewritten.
   `fallback target`, `crash target`, `while target { }`, or `switch target { Monster: ... Null: ... }`. One
   `fallback a.b.c` narrows the whole path. `null` is never compared against: `value == null` is an error. Two `T?` values compare without narrowing, and two missing ones are equal.
   Narrow the name or the path itself (`fallback target`, `fallback target.weapon`), never a local copied from it,
-  which is an error. Comparing needs no narrowing: `target.name == "rat"` needs `target` narrowed, but
+  which is an error. Only a path with no call in it narrows: after `if thing.pop().held`, a second `thing.pop().held`
+  calls again and is still a `T?`, so write `var held = thing.pop().held` and narrow `held` (a local holding a call's
+  answer is not a copy). A getter path (`thing.reading`) narrows while `get_reading` only reads, until a call or a
+  write may assign what it reads; a getter that may write anything is refused on its second read
+  (`'thing.reading' calls 'get_reading' again here, and 'get_reading' may change what it answers, ...: hold it once
+  with 'var held = thing.reading' and narrow 'held'`). Comparing needs no narrowing: `target.name == "rat"` needs `target` narrowed, but
   `maybe_name == "rat"` is simply false when it is null.
 - A write or a call that may assign an earlier attribute of a proven path undoes the proof whatever it writes
   (`alias.shelf = empty` after `fallback rack.shelf.item`). A write through another object to the last attribute
@@ -454,6 +459,8 @@ rewritten.
   writes the switch for you, naming every value; an `else if` chain of three is the same.
   The subject runs once however many cases there are, whatever it holds (a call, a chain through a call, an index, a getter). A subject holding a call narrows nothing in its cases, since writing it again calls again: `var held = thing.pop().target`, then `switch held`.
 - `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside.
+  A `.class` known while compiling of something holding a call (`thing.pop().class == Thing`, `count().class.name`)
+  still makes the call once; only the answer folds.
   In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every

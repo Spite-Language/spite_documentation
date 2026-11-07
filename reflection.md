@@ -78,6 +78,10 @@ receiver says which one is meant: `Monster` is the class, `troll` an instance.
 | `.class` | `Spite.Class`, the class every class is an instance of | `Monster`, so `troll.class == Monster` |
 | What a read costs | nothing: it is known while compiling and folds | a read or write of `troll`'s own field, typed, the same as `troll.health` |
 
+An instance's `.class` folds too when its type has one class: `troll.class == Monster` costs nothing. When the
+instance is something a call answers, `next_monster().class == Monster` still calls `next_monster` once, and only the
+class is known.
+
 ```gdscript title=class_and_instance/monster.spite
 var name = "troll"
 var health = 10

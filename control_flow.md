@@ -341,7 +341,8 @@ shared body is a body that reads the switched value, which stays a `switch`.
 
 **The subject runs once.** However many cases there are, and whatever it holds: `switch thing.pop().shade` calls `pop`
 one time, and so does a subject that ends in an index or reads a getter. A subject holding a call narrows nothing in
-its cases, since writing it again calls again. To read the narrowed value, hold it in a `var` and switch on the name.
+its cases, since writing it again calls again, and a getter that may write something is not trusted on a second
+read in a case either. To read the narrowed value, hold it in a `var` and switch on the name.
 
 ## `switch` over values
 
