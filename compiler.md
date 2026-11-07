@@ -27,10 +27,12 @@ spite --low-ir                      the same for the low representation, .spite/
 ```
 
 Every flag is a `Build` field, listed under [Build options](#build-options). Flags mix
-freely, and the outputs combine: one compile can build the executable and write its final classes. `--optimized` is a
-release build (`Build.optimized` is true, and the program is compiled with optimisations), `--optimized=false` stays
-allowed and switches it off even where the program's `build.spite` says `true`, and a target is chosen with
-`--target-operating-system=linux`. There is no `--mode`, no `--output` and no `--format`: each is an unknown flag.
+freely, and the outputs combine: one compile can build the executable and write its final classes. `--optimized`
+marks a release build: `Build.optimized` is true, which the program's own code can read. A production build is
+optimised the same way with it or without it, so `--optimized` does not make the program faster. `--optimized=false` stays allowed and switches it off even where
+the program's `build.spite` says `true`. `--target-operating-system=linux` (or `windows`, or `mac`) sets
+`Build.target_operating_system`, which a program reads to choose its own code; the executable is a Windows x64 one
+whatever it says. There is no `--mode`, no `--output` and no `--format`: each is an unknown flag.
 
 How the compiler is built from source, and how it is put together, is in
 [spite_compiler](https://github.com/Spite-Language/spite_compiler)'s
@@ -133,7 +135,9 @@ field is a constant in the built program, the paths included.
 Beside every executable the compiler writes `<name>.functions`: one line per function of the code, with its start
 and end as offsets from the start of the code section and its key. Nothing of it is in the executable. When a native
 fault halts the program, the crash report reads that file to name the function that faulted and the functions that
-called it ([failure.md](failure.md)); without the file it prints only the fault line.
+called it ([failure.md](failure.md)); without the file it prints only the fault line. Beside it goes
+`<name>.crashes` too, one line per `crash` and `fallback` site, which a crash report's identity is looked up in
+([failure.md](failure.md#what-a-crash-reports)).
 
 ## Build options
 
@@ -199,7 +203,12 @@ spite --debug-memory --player-count=2
 ```
 
 `--debug-memory` is the compiler's and `--player-count=2` sets `Build.player_count`, written into the build as a
-constant; a field no flag sets is also read from its variable, `PLAYER_COUNT=2`. Any other flag is an error,
+constant. A field of the program's own `build.spite` that no flag sets is read from its variable,
+`PLAYER_COUNT=2`, then from a `PLAYER_COUNT=2` line of a `.env` file in the folder built, the variable winning, and
+else keeps its default ([programs.md](programs.md#compile-time-settings-build)). A value read there that does not
+fit the field's type is an error naming where it was read: `'VOLUME=many' in .env sets 'Build.volume', which is an
+Integer: a whole number, like VOLUME=3`. The compiler's own settings are read from the environment too:
+`OPTIMIZED=true` is `--optimized`. Any other flag is an error,
 a setting of the program's `Environment` too: that one is given to the executable,
 `.spite/build/game.exe --volume=7`, or read from the environment by the program `spite` runs, which is given no
 flags. Nothing is given by position: a word that is not a flag (`spite ada`) is an error naming the setting form.
@@ -360,7 +369,24 @@ twice, a flag with an underscore, a `--name=value` that names no field of `Build
 are errors, each naming the fix. The underscore one reads `'--player_name' is written '--player-name': flags and
 settings are kebab-case on the command line, and the field they set is 'player_name'`, and it is checked before
 anything is read. `--target-operating-system` is read from the flag alone: a `var target_operating_system` in
-`build.spite` is an error naming the flag.
+`build.spite` is an error naming the flag, and it takes only `windows`, `linux` or `mac`.
+
+A few more, each with the words it prints:
+
+- `--operating-system` and `--program` cannot be given: the compiler supplies both. `'--program' cannot be given:
+  the program is the folder the compiler runs in, 'cd folder' then 'spite', and Build.program is set from it`.
+- A value of the wrong type: `the setting Environment.optimized was given 'maybe', which is not a Boolean, 'true'
+  or 'false': write --optimized=true on the command line, or OPTIMIZED=true in the environment or a .env file` for
+  one of the compiler's own settings, and `'--volume=many' was given to the compiler, but 'Build.volume' is an
+  Integer: a whole number, like --volume=3` for a field of the program's `Build`. A text setting given bare
+  (`--optimization-report` with no `=file`) is refused the same way.
+- `--repl-port` takes a port from 1 to 65535: `--repl-port takes a port number from 1 to 65535: spite
+  --repl-port=4000`.
+- An unknown flag lists every field the program's `Build` declares and shows both places a setting can belong:
+  `'--nothing' is not a compiler option, and this program's Build declares no 'nothing' (it declares check, build,
+  ...). To decide it when compiling, reopen Build in the program's build.spite with 'var nothing = ...'; to read it
+  when the program runs, declare it in environment.spite with 'var nothing = ...' and give it to the program's
+  executable`.
 
 An error is `<path>:<line>: error: <message> (in <Class>.<function>)`, with the function's name even when the error
 is in its signature, and `(in <Class>.)` for one among a class's attributes and types.

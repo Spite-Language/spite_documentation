@@ -88,11 +88,14 @@ number-only `type`, whose own memory C writes and whose values come back; an add
 `Long` and handed back to C.
 
 With a header as the third argument, a snake_case read is a constant: `user32.mouseeventf_leftdown` is
-`MOUSEEVENTF_LEFTDOWN`, an `Integer`. A constant has to come from a header that is a file the compiler can read, named
+`MOUSEEVENTF_LEFTDOWN`, an `Integer`. Without a header a library has functions and nothing else, and reading a
+constant is an error that says to name the header as `DynamicLibrary`'s third argument. A constant has to come from a header that is a file the compiler can read, named
 by its path from the folder it runs in; a name like `"stdlib.h"` is enough to call functions through the system's
 prototypes, but reading a constant from it is an error that says so. A function that wants a struct's size, as
 `SendInput` does, is given `PointPair.size`: the bytes of the struct the call passes, a `Long` the compiler knows
-while it compiles. The compiler does not compare that size with the header's struct, and C's field names are not
+while it compiles. Only a `type` whose attributes are all numbers is a C struct, so `.size` on any other `type` is a
+compile error, and so is passing a `type` with a `String`, a list, a dictionary or an object in it to a foreign
+call: the error names the type (`a Labelled cannot cross into C`), not the field. The compiler does not compare that size with the header's struct, and C's field names are not
 matched to yours: the fields of a `type` are laid out in the order you declare them, so the layout, padding
 included, is yours to get right. The reflection members every value has (`.class`, `.attributes`, `.functions`) and
 `DynamicLibrary`'s own members (`file_name`, `handle`) are never read as foreign symbols, so a `List<DynamicLibrary>`
@@ -338,7 +341,7 @@ library is later written in Spite, the binding is the only thing that changes.
   a `0` the caller has to know to compare with.
 - **A handle is an object.** The binding's class holds the handle, and its `drop()` gives it back to the library, so
   the library's memory is released when the last reference goes, like every other object's.
-- **Text is a `String`**, read with `_as_text` or `terminated_text()`, never an address the caller has to read.
+- **Text is a `String`**, read with `_as_text`, never an address the caller has to read.
 
 A binding for a library that compresses blocks, whose C side answers `0` for success, `1` when the output is too
 small and `2` when the input is corrupt:

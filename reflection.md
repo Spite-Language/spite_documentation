@@ -237,7 +237,7 @@ class's name where the compiler can see it to make one of those.
 | `class` inside a function | the class the function answers on |
 | `namespace` inside a function | that class's namespace, or `null` at the root of a program |
 | `$T` in a generic class | the class it was given ([metaprogramming.md](metaprogramming.md#asking-what-a-generic-was-given)) |
-| `value.class` | the class `value` really is, through a `type` or a union too; an enum value's is its `Spite.Enum` |
+| `value.class` | the class `value` really is, through a `type` or a union too; an enum value's is its `Spite.Enum`, and an object literal's is `Object` |
 | `Spite.Class.instances` | every class of the program |
 | `Spite.Namespace.instances` | every namespace of the program |
 
@@ -431,7 +431,9 @@ value, `phase.class` on one of its values, or the class that declares it asked f
 | `.owner` | the `Spite.Class` that declares it | `Phase.owner` is `Game` |
 | `.values` | a `Dictionary<String, Spite.EnumValue>` keyed by name, in declaration order | `phase.class.values["update"].number` |
 
-`Phase.values` written on the enum itself stays the list of its values as `Phase`s, the list `each` walks; the
+`Phase.values` written on the enum itself stays the list of its values as `Phase`s, the list `each` walks. Like
+every `[ ]`, `Phase.values[0]` answers a `Phase?`, even with a number written in the code, so narrow it with
+`crash Phase.values[0]` before use; `Phase.values.find_by_name(text)` reads text as the enum, also a `Phase?`. The
 declarations are the `.values` of the `Spite.Enum`, reached through a value (`phase.class.values`) or a variable
 that holds one. A value's own conversions are not reflection: `var number: Integer = phase` and
 `var phase: Phase? = text` are the casts every enum has ([values_and_types.md](values_and_types.md#enums)).
@@ -570,6 +572,9 @@ An object's `.functions` is a `Dictionary<String, Spite.Function>`: each functio
 | `call_function()` | calls it on its owner when it takes no arguments, dropping what it answers; on one that takes arguments it halts | `troll.functions["roar"].call_function()` |
 
 A function named without calling it (`troll.alive`) given where a `Spite.Function` is wanted is the same bound function.
+What the function is (`.arguments`, `.returns` and the rest) is asked of its `.declaration`: `function.returns` is
+the error `a Spite.Function has no 'returns' of its own: write 'function.declaration.returns'`. In the same way,
+whether an attribute's class is a singleton is `attribute.class.is_singleton`, never `attribute.is_singleton`.
 
 ### `Spite.Call`
 
@@ -605,7 +610,11 @@ A function named without calling it (`troll.alive`) given where a `Spite.Functio
 A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index`, the case spellings,
 and `.source_file`, never a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
 declaration, plus `.value` and `.owner`. Which one a function takes depends on what it is for: a template, or a walk of the
-class, takes the declaration, and a walk of an instance's data takes the bound attribute.
+class, takes the declaration, and a walk of an instance's data takes the bound attribute. Mixing them up is an error
+that names both ways out: `Monster.attributes.each(describe)` with `describe(attribute: Spite.Attribute)` is `'describe'
+takes a 'Spite.Attribute', an attribute bound to an instance, and 'health' here is a declaration of 'Monster', which
+has no value: declare the parameter 'Spite.AttributeDeclaration', or walk an instance's attributes`, and the other
+way round names `Spite.Attribute`.
 
 ### What a function reads and writes
 

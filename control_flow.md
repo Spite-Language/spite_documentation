@@ -62,7 +62,8 @@ for the rest of the block, so `if not found { return -1 }` narrows `found`
 **An `if`/`else` directly inside a branch of another `if`/`else` is an error.**
 Two stacked decisions are two things to hold in your head at once, so the inner one gets a name: move it into a
 function named for what it decides, or, when both test which member of a union or which value of an enum a value
-is, use one `switch`. A flat
+is, use one `switch`. The body of an `else if` counts as a branch too, so an `if`/`else` inside it is refused the
+same way. A flat
 `else if` chain is fine, and so is an `if` with no `else` inside a branch, or an `if`/`else` inside a `while` or a
 `switch` inside the branch, since the loop or the switch is the unit.
 
@@ -145,11 +146,6 @@ another 'if' and neither has an 'else': write one condition, 'if modified and si
 `if` holds nothing else and neither `if` has an `else` or an `else if`: an inner `if` beside other statements, or
 under an `else`, is fine.
 
-An `if`/`else` written directly inside a branch of another `if`/`else` (the `else if` links count as branches) is
-refused as well, when both test which member of a union or which value of an enum a value is: use one `switch`.
-A flat `else if` chain is fine, and so is an `if`/`else` inside a `while` or a `switch` inside the branch, or an `if`
-with no `else` inside it.
-
 ## `while` is the only loop
 
 There is no `for`, so that people favor metaprogramming over hand-written loops. Writing `for` is a
@@ -183,7 +179,10 @@ with `append`, a count or a `return`, an addition into a total declared as `0`, 
 class taking the element (`say_hello(item)`, answering a `Boolean` where the loop tests it). The members must be
 public; a `T?` answered by the tested function is a presence test, which no template says, so that loop stays.
 A loop that passes extra arguments, needs the index, walks two lists, scans text, starts anywhere but 0 or
-stops early any other way is left alone. To call one of your own functions with each element, pass it:
+stops early any other way is left alone. The function in such a loop may be one of your class (`say_hello(item)`,
+named `names.each(say_hello)`), a function of an attribute or a local (`evaluator.process_line(item)`, named
+`lines.each(evaluator.process_line)`), or a local or attribute holding a function value; the loop over a list of
+numbers or text is caught the same way. To call one of your own functions with each element, pass it:
 `items.each(restock)`
 ([Passing a function for each element](collections.md#passing-a-function-for-each-element)).
 
@@ -266,7 +265,11 @@ pass of a `while` in your own code, where a waiting REPL command or a reload is 
 ## `switch` over a union
 
 A `switch` is over a union (or a `T?`, which is the union of a type and `Null`) and must cover every member.
-Inside each case the value is narrowed to that member. A case is one statement: when a member needs more than
+Inside each case the value is narrowed to that member. A switch over a `T?` therefore needs a `Null:` case beside
+the class (or every member of the union), so a null cannot be forgotten: leaving it out is `this switch over
+'target' has no case for Null`. A switch whose every case leaves the function (a `return` or a `crash` in each)
+leaves too: it may end a function that answers a value, and `if not found { switch ... }` with every case
+returning narrows `found` below it. A case is one statement: when a member needs more than
 that, the case calls a function named for what it does, so a switch reads as a list of what happens to each member.
 
 ```gdscript title=switch_cases/cat.spite
@@ -430,7 +433,8 @@ this switch over 'light' has no case for 'amber'
 
 **Three `if`s that only compare one value with its enum values and return are a `switch`.** Each is a compile error
 that shows the switch to write, naming every value. A chain over numbers or text stays a chain of `if`s, since no
-switch can list every number. Two such `ifs` are left alone; the error starts at three. The compared thing must be a
+switch can list every number. Two such `ifs` are left alone; the error starts at three, and an `if`/`else if` chain
+of three such links is the same error. The compared thing must be a
 name or a member path without a call, and each block exactly one `return`; links may compare several values joined
 by `or`.
 

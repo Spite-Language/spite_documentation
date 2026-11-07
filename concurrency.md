@@ -63,21 +63,24 @@ a read early never changes what the program sees.
 
 ### Calls in a row run at once
 
-When two or more calls in a row share nothing one of them writes, the compiler runs them on threads at once and
-waits for all of them before the next statement:
+When two or more declarations in a row each keep the number a call answers, and the calls share nothing one of
+them writes, the compiler runs them on threads at once:
 
 ```gdscript
 func tick() {
-    physics.update_each()
-    animation.update_each()
-    audio.update_each()
-    renderer.draw_all()
+    var physics_steps = physics.simulate(frame)
+    var animation_steps = animation.simulate(frame)
+    var audio_steps = audio.simulate(frame)
+    console.print(physics_steps, animation_steps, audio_steps)
 }
 ```
 
-If `physics`, `animation` and `audio` each read and write only their own state, the first three run at once, and
-`renderer.draw_all()` starts after all three have finished, as written. The program reads as one step after
-another and runs as fast as the machine allows. The compiler decides it all while compiling, from what each call
+If each `simulate` only computes a number from its arguments, the first two run on threads of the program's pool
+and the third on the calling thread, and each is waited for right before the first statement that reads its
+name (or that holds a `return` or a `crash`), here the `console.print`. A call whose argument reads the name an
+earlier one of the row declared stays in order. The receiver is `this` or an attribute of it, and the shape is
+exactly this one: a `var` per call, with no written type. The program reads as one step after another and runs as
+fast as the machine allows. The compiler decides it all while compiling, from what each call
 reads and writes through every function it reaches, so a program with nothing to overlap carries none of it.
 
 Calls whose order can be seen stay in order: anything that prints, touches a file or a socket, or reads and writes
@@ -89,6 +92,17 @@ as far as this rule sees, so they stay in order, while a `Physics` and an `Audio
 part when it takes and answers numbers, is quiet (it holds no object, text or list, makes no foreign call, is not
 recursive and prints nothing) and weighs at least a million simple steps.
 [optimizations.md](optimizations.md#calls-in-a-row-that-only-compute-a-number-run-at-once) shows one.
+
+### A loop over different classes runs them at once
+
+A list of a `type` holds objects of several classes, and `systems.each_update()` (or `systems.each(update_one)`,
+where `update_one`'s whole body is `system.update()`) calls the same function on each. When `update` takes nothing,
+answers nothing, and the compiler proves the `update`s of two classes touch nothing the other writes (the same
+reckoning as calls in a row, and neither writes the list), those elements run at once on threads, and all of them
+finish before the next statement. When the statement runs, it looks at the classes the list holds: only when no
+two elements are of one class does it run them at once, and otherwise it runs the loop in order, as written. Two
+objects of one class never run at once. A list whose classes could never run together is the plain loop, with
+nothing of this in the program.
 
 ### `each_` on a long list runs in bands
 
@@ -125,7 +139,7 @@ could not carry:
 | The program writes | While it waits |
 |---|---|
 | `program.sleep(duration)` | the state machine returns, and is run again once its time has come |
-| `Console.read_line()`, reading or writing a `File`, a `Tcp.Server`'s `accept`, a TCP connection's `connect`, `read_line`, `read_as_string` or `read_as_buffer`, a UDP `receive` | the one blocking system call runs on a short-lived helper thread, and the state machine is run again, on the program's thread, once it has returned |
+| `Console.read_line()`, reading or writing a `File`, a `Tcp.Server`'s `accept`, a TCP connection's `connect`, `read_line`, `read_as_string` or `read_as_buffer`, a UDP `receive` | the one blocking system call runs on a helper thread of the program's thread pool, and the state machine is run again, on the program's thread, once it has returned |
 
 Code that is not inside a state machine waits where it is: its wait runs the event loop itself, so the state
 machines keep going around it until it is done. Only one piece of Spite code runs on the program's thread at a
@@ -306,7 +320,7 @@ nothing carries none of it; the compiler's side of each is on
 | The program | Carries at run time |
 |---|---|
 | has nothing the compiler overlaps | nothing: no scheduler, no state machine, no helper thread, no thread pool, plain reference counts; every wait is the plain blocking call |
-| has a wait the compiler lets other work run past (a frame's call, two reads in a row) | the scheduler and its event loop; a second, resumable copy of each function that work reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside it; one short-lived operating-system thread per blocking call made while something else could run; atomic reference counts for the classes another thread can count |
+| has a wait the compiler lets other work run past (a frame's call, two reads in a row) | the scheduler and its event loop; a second, resumable copy of each function that work reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside it; the thread pool, whose threads run each blocking call made while something else could run (a new thread is started only when none is waiting, and stays in the pool); atomic reference counts for the classes another thread can count |
 | has calls in a row, a loop over classes or a loop in bands that the compiler runs at once | the thread pool, one start per call or band handed to it and a small, fixed number of allocations |
 | is built with `--repl-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
 

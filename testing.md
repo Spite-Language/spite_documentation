@@ -50,7 +50,9 @@ pass Checks.TextTests.test_split_keeps_empty_pieces
 ```
 
 `run()` walks the namespace's classes, then every namespace below it, and in each class every function named
-`test` or `test_...`, in the order they are declared. For each test it **builds the class with its constructor**, so
+`test` or `test_...`, in the order they are declared. The name must be exactly `test` or start with `test_`:
+`testing_is_not_a_test` is not run. Keep tests out of the program's entry class: reflection sees no functions
+there, so a test written in it is never found. Put them in classes of a folder of their own. For each test it **builds the class with its constructor**, so
 a class's constructor is the setup its tests share: whatever it makes, each test starts from it. Then it calls the
 test. A test program is never part of the program it tests, so tests take no room in what a hot reload rebuilds.
 

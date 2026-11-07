@@ -107,7 +107,8 @@ true true
 `Clock()` keeps its monotonic reading, `elapsed()`, for measuring a frame or a request: the wall clock can jump
 when the machine's time is corrected, and a monotonic clock cannot. A reading is a `Duration` from an arbitrary
 start, so two readings subtract into the time between them (`var taken = clock.elapsed() - started`), and every
-wait the library takes is a `Duration` too: `program.sleep(duration)`, an `Http.Server`'s `idle_limit`.
+wait the library takes is a `Duration` too: `program.sleep(duration)`, an `Http.Server`'s `idle_limit`, and the
+quiet time a `FileSystemWatcher` waits for after the last change (100 milliseconds).
 `now()` is the wall clock, and each system reads it its own way (`GetSystemTimeAsFileTime` on Windows,
 `clock_gettime` on Linux and macOS).
 
@@ -206,7 +207,13 @@ P33Y9M24D 12353 true 31
 ```
 
 A `Period` is not compared with `<`: whether one month is longer than 30 days depends on the month. Two periods
-are equal when their years, months and days are.
+are equal when their years, months and days are. Periods add to each other with `+`, and `-period` turns one
+around, so a date goes back with `day + -month`.
+
+What a `Date` answers: `year`, `month`, `day`, `weekday`, `day_of_year`, `days_in_month`, `days_in_year`,
+`is_leap_year` and `days_since_1970` (a `Long`), and `days_until(other)` and `period_until(other)` between two
+dates. A `Time` that does not exist halts like a date does: `Time(24, 0, 0, 0)` is a bug, and the text `24:00`
+reads as `null`.
 
 ## Time zones
 

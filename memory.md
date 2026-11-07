@@ -128,9 +128,15 @@ independent label b
 once, so a child's `parent` in the copy is the copied parent, and a back reference in the copy holds the copy of its
 object when the same `deep_copy()` copied it. A copy that starts at the child alone leaves the `parent` on the original
 object, since nobody copied the parent. A class that holds such a graph, in a list or in attributes, gets the same
-shape: a `Group` listing the child before its parent copies them as one graph, in either order. `copy()` is shallow
-for a list or a dictionary too: the copy holds the very
+shape: a `Group` listing the child before its parent copies them as one graph, in either order. An object reached
+twice through classes that can never lead back to themselves (two attributes holding the same leaf) is copied
+twice, once for each attribute. `copy()` is shallow for a list or a dictionary too: the copy holds the very
 same items, so a change made to an item shows through both.
+
+An attribute typed as a union or a `type` is deep copied as the class it holds when the program runs, so a `Cargo`
+holding a `Crate` gets a new `Crate`, and a union or `type` value answers `deep_copy()` itself. A `String`, a number,
+an enum value and a singleton are shared by the copy, since nothing can change them through it. A class that
+declares its own `func deep_copy()` is copied through that function wherever a deep copy reaches it.
 
 ## Components in lists, handed to a system
 
@@ -430,8 +436,7 @@ body reads its parameter on no value is an error, even when one of its parameter
 For `Runner<Moving>` the walk is written out as `{entity: Entity(entity), position:
 Column<Position>().values[found[1]], velocity: Column<Velocity>().values[found[2]], trail:
 Column<Trail>().values[found[3]]}`. Each item is counted once for the row and let go at the end of the row's block,
-so a call that removes an entity from its column cannot free a component under the row
-.
+so a call that removes an entity from its column cannot free a component under the row.
 
 ### Arguments filled for one call
 
@@ -517,8 +522,7 @@ func FilledArgumentsDoc() {
 For `Runner<Mover>` the call is written out as `system.update_each(Column<Position>().values[found[0]],
 Column<Velocity>().values[found[1]])`, after the `crash` lines that narrow those reads: `update_each` writes the
 columns' own items, and `made_argument` is not called for it. Called anywhere else, `made_argument` is an
-ordinary function. The template may also fill a whole walked row for an argument that is a `type`
-.
+ordinary function. The template may also fill a whole walked row for an argument that is a `type`.
 
 ## `drop()` runs once, right before the object is freed
 
@@ -676,7 +680,12 @@ the family is gone
 ```
 
 A back reference reads `null` once its object is freed, so no read is ever dangling, and the narrowing above is the
-usual one. Everything above is freed when `visit` returns, which is what `--debug-memory`, below, checks: a cycle the
+usual one. A back reference holds no count, so a proof that it is present lasts only until a call that may let its
+object go: after `child.parent.leave()` drops the last other holder of the parent, a later `child.parent.name`
+that leans on the earlier `crash child.parent` stops the program with `'Child.parent' was proven present, but its
+object was freed since, and a back reference holds no count: prove it again after the call that lets it go`. A call
+on the back reference itself, `child.parent.leave()`, always runs on a live object, which is freed when the call
+returns. Everything above is freed when `visit` returns, which is what `--debug-memory`, below, checks: a cycle the
 program links in a way the compiler cannot read keeps its counts and shows up there as leaked objects by class. Then
 clear the `T?` field that closes the loop when you are done with it. The compiler picks the back reference of a cycle
 from how the code links its objects: one function that sets `child.parent = owner` and stores the child in the

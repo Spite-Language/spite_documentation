@@ -25,7 +25,9 @@ the program again, so what it compiles is the formatted file. Nothing turns this
 that only formats: `--check` formats and checks without building ([compiler.md](compiler.md#formatting)):
 
 - 4 spaces per level, never a tab; no trailing whitespace; one line break at the end of the file.
-- K&R braces: `func name() {`, `} else {`, `} else if other {`. An empty body is `{ }`.
+- K&R braces: `func name() {`, `} else {`, `} else if other {`. An empty body is `{ }`, and an empty `else` is
+  dropped.
+- A comment is `# text`, one space after `#`. What is between a text's quotes is never touched, escapes and all.
 - One space around binary operators and after `,` and `:`; none inside `( )` and `[ ]`.
 - The fewest parentheses that keep the meaning: `1 + 2 * 3`, not `1 + (2 * 3)`.
 - A list, object or call that fits in 120 columns goes on one line with `, `; a longer one is broken one entry
@@ -88,7 +90,9 @@ fixed: a variable came after the constructor here; moved it up, since a file is 
 ```
 
 The same goes for anything else with exactly one fix (D1767): the compiler fixes it in the file and prints a
-`fixed:` line for it, so you read what changed. A mistake whose fix needs a choice stays an error, and a file of
+`fixed:` line for it on the error output, `<path>:<line>: fixed: <what was wrong>; <what it did> (in
+<Class>.<function>)`, the line being the one the mistake was on, so you read what changed. Then it compiles the
+fixed file. A mistake whose fix needs a choice stays an error, and a file of
 the standard library or of a package is never rewritten, so there it stays the error.
 
 What the compiler fixes for you, and what it leaves as an error:
@@ -242,7 +246,8 @@ assigned is still unused. A read is anything that takes the attribute's value: i
 functions, `thing.world` from another class, `x.attributes[attribute]` in a template or a walk (which is how the JSON
 and binary writers and `to_debug()` read), and a union's members or a `type` a class is admitted to. A walk that only looks
 at `attribute.name` or `attribute.class` reads the attribute's description, not the attribute, so an attribute
-kept only as a marker for such a walk is an error:
+kept only as a marker for such a walk is an error, and so is one kept only for what its constructor starts
+(`var server = Server()` that nothing reads), whatever its name:
 
 ```gdscript title=unused_marker/world.spite
 singleton
@@ -287,8 +292,12 @@ so does one in a function a codegen or `Build` test cuts a branch from. A few at
 class's or `String`'s storage, and `Build` and `Environment` settings.
 
 **A parameter that needs no `_`** is one whose signature is dictated from outside: the parameter of an operator function
-(`equals(other)`) and the single parameter of a setter that names a real attribute (`set_age(value)`). A
-two-parameter `set_age` follows the ordinary rule. Every other unread parameter is `the parameter 'amount' is never
+(`equals(other)`, `sum(other)`, `get_at(index)`), the single parameter of a setter that names a real attribute
+(`set_age(value)`), and every parameter of a template over members, a function with a parameter named by a word of
+its own name and typed `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument`
+(`save_attribute(attribute: Spite.AttributeDeclaration)`), whose signature is the template's
+([metaprogramming.md](metaprogramming.md)). A two-parameter `set_age` follows the
+ordinary rule. Every other unread parameter is `the parameter 'amount' is never
 read: remove it, or name it '_amount' if the signature needs it`.
 
 **The check waits for the rest.** The unread-attribute check runs only when the program has no other error, so a
@@ -406,7 +415,10 @@ Three things are not an alias, and stay:
 - **The name adds something**: `is_atomic` over `atomic_singletons.contains(key)` is a question with a name of its own.
 - **The call passes something else**: `rack.scale(size, 2)`, or the parameters in another order.
 
-The rule is in [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#a-function-that-only-answers-a-member).
+"The whole body" is one statement: `return` of the member, or the call alone, with or without `return`; a `get_name`
+answers `name`, so `get_name` returning `owner.name` or `owner.get_name()` is the same alias. An attribute a caller
+can reach is a public one, or a private one with a getter in the same file, which the error names by its public
+name. The rule reads each file on its own, so it runs on every file a program loads, used or not.
 
 ## A function body holds no empty lines
 
@@ -551,7 +563,8 @@ func ComputedReceiverError() {
 
 Write `var total = first + second`, then `total.maximum(5)`. The same holds for `(not done).to_string()` and
 `(-offset).absolute()`. A negative number written out (`(-2.5).floor()`) is a literal, not a computation, and may be
-called on, and so may a text with holes.
+called on, and so may a text with holes, an index (`names[0].length()`) and a member path. Reading an attribute of a
+computed value, `(first + second).x`, is not a call, and is allowed.
 
 ## The short form is the only form
 

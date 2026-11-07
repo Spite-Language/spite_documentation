@@ -601,12 +601,13 @@ caller handles it like any other value.
 
 `fallback condition` is a production feature, not a debug one: when the condition is false, the function stops
 there and answers "nothing", and no code after it runs. A failed one is remembered for the crash report
-([below](#what-a-crash-reports)). "Nothing" has to be something the caller can see, so a guard `fallback` is
-allowed only where the function's result can say it:
+([below](#what-a-crash-reports)). "Nothing" is what the function's answer type builds with no arguments
+([below](#a-fallback-returns-what-its-answer-type-builds-with-no-arguments)):
 
 - a function that returns nothing just returns;
 - a function returning a `T?` answers `null`;
-- a function returning a `List` or a `Dictionary` answers an empty one.
+- a function returning a `List` or a `Dictionary` answers an empty one;
+- a number answers `0`, a `Boolean` `false`, a `String` `""`, and a class made with no arguments a fresh object.
 
 ```gdscript title=assert_guard/assert_guard.spite entry
 var console = Console()
@@ -1058,7 +1059,15 @@ crash  file.write_string(text)     # a lost write is a bug: halt here, with the 
 
 An answer that is not a `Boolean` or a `T?` is kept, passed, returned or compared: `var score_count = scores.count()` is a
 name that must then be read. A function that answers nothing is untouched, and a constructor is covered by
-its own rule (a made object is kept and used).
+its own rule (a made object is kept and used). The rule holds for your functions as much as the library's, and for
+a function value you call. A call into a foreign library is the one exception: a `DynamicLibrary` function declares
+no answer, so the compiler cannot tell whether it answers.
+
+A walk drops answers the same way: `speeds.each_described()` runs `described` on every item and keeps nothing, so
+when `described` answers a value the line is an error, "'speeds.each_described()' runs 'described', which answers a
+'String', and drops each answer: an answer must be used, so keep the answers with a 'map_' over 'described', or walk
+a member that answers nothing". Collect the answers with `speeds.map_described()`, or give `each_` a member that
+answers nothing.
 
 ### What a crash reports
 
@@ -1134,7 +1143,7 @@ carrying on, and a long run fails thousands of them, which would bury the one li
 report instead. To watch them as they fail, build with `--trace-fallbacks` (a `Build` field, `trace_fallbacks`): each
 failed `fallback` of the program then also writes its `spite.fallback` line to the error stream at once, after flushing
 what the program printed, and still enters the ring.
-The trace keeps only the latest fallbacks taken, in a fixed-size ring, so it never allocates and never grows. An
+The trace keeps only the latest fallbacks taken, in a fixed-size ring, so it never allocates and never grows. A
 `fallback` that fails again right after itself adds to its last line instead of taking a new one, which then ends in
 `repeated=<count>`: a guard that fails every frame is one line, and the 32 lines are 32 steps of the trail, not one
 step 32 times.
@@ -1149,7 +1158,7 @@ guard that narrows failed because something was not there, and one that tests a 
 line, while the crash that ends the run prints every value at its own site. A `fallback` of several parts joined by `and`
 is a site per part, so its line names the part that failed; the map gives each part's column, and each value a
 report names the line and column it was read at.
-It holds the fallbacks of the program and of every package it `load`s, never those of the standard library: an
+It holds the fallbacks of the program and of every package it `load`s, never those of the standard library: a
 `fallback` in `library/` is how the library answers routine questions (a key that is not there, text that does not
 match, a read past the end), and those would push the program's own entries out of the ring. The compiler leaves
 the record out of a library `fallback` altogether, so it costs what an `if` costs. A crash inside the library still

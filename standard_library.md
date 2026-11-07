@@ -130,6 +130,25 @@ ADA 3 null da d
 2 Ada, grace, linus
 ```
 
+| Member | Result | Notes |
+|---|---|---|
+| `length()`, `is_empty()` | `Integer`, `Boolean` | the length counts bytes of UTF-8 |
+| `slice(start, end)` | `String?` | the bytes from `start` up to `end`; `start == end` is `""`; `null` for a `start` below 0 or after `end`, or an `end` past the length |
+| `text[index]` | `String?` | the whole character that starts at byte `index`; `null` below 0, past the end, or inside a character of several bytes |
+| `byte_at(index)` | `Integer` | the byte itself; below 0 or past the end halts, naming the index and the length |
+| `contains(text)`, `starts_with(text)`, `ends_with(text)` | `Boolean` | |
+| `index_of(text)` | `Integer?` | the byte where `text` first starts; `null` when it is absent |
+| `replace(from, to)` | `String` | replaces every occurrence |
+| `trim()`, `upper_case()`, `lower_case()` | `String` | |
+| `split(separator)` | `List<String>` | an empty separator, `split("")`, gives one text per character |
+| `lines()` | `List<String>` | the text split at each line break |
+| `pluralize()`, `singularize()` | `String` | the English plural or singular of the last word ([below](#plural-and-singular)) |
+| `to_string()`, `to_debug()` | `String` | the text itself; the text quoted, with `"`, `\` and a line break escaped |
+| `to_buffer()` | `Buffer` | the text's UTF-8 bytes ([Bytes are a Buffer](#bytes-are-a-buffer)) |
+
+There is no `to_integer()` or `to_float()`: text becomes a number by its conversion, `var count: Integer? = text`
+([values_and_types.md](values_and_types.md#numbers-are-classes)).
+
 ### Plural and singular
 
 `pluralize()` and `singularize()` inflect English the way Rails' ActiveSupport does, so a name and its collection
@@ -194,6 +213,27 @@ when an operand is it, where C's `fmin` would answer the other operand as if not
 `absolute()`, `minimum`, `maximum` and `clamp` too, and the smallest signed value has no positive counterpart, so its
 `absolute()` halts as its negation does, naming the class: "'zero - value' does not fit in an Integer (0 - -2147483648)".
 
+What each one answers at its edges, on a `Float` or a `Double`:
+
+| Member | At the edges |
+|---|---|
+| `square_root()` | not-a-number below zero; `-0` for `-0` |
+| `arc_sine()`, `arc_cosine()` | not-a-number outside -1 to 1 |
+| `arc_tangent()` | between -pi/2 and pi/2 |
+| `rise.arc_tangent_over(run)` | the angle of the point `(run, rise)`, between -pi and pi, in the right quadrant; `0` for `(0, 0)` |
+| `exponential()` | infinity once it overflows |
+| `logarithm()`, `logarithm_base_2()`, `logarithm_base_10()` | minus infinity at `0`, not-a-number below it |
+| `floor()`, `ceiling()`, `truncate()` | a whole value, still a `Float` or `Double`: for `-2.5`, `-3`, `-2` and `-2` |
+| `round()` | half away from zero: `2.5` is `3`, `-2.5` is `-3` |
+| `minimum(other)`, `maximum(other)` | not-a-number when either side is it |
+| `clamp(low, high)` | not-a-number when any operand is it; `high` wins when `low` is above it |
+
+The sine, cosine and tangent take an angle in radians. On a whole number, `clamp(low, high)` also lets `high` win
+when `low` is above it, and `minimum(other)` and `maximum(other)` cast `other` to the receiver's type first, like any
+argument, so a `Byte`'s `minimum(300)` is a compile error and a value that does not fit halts. A call whose operands
+are all constants, `(0.5).sine()` or `Float.Pi().cosine()`, is worked out while compiling, with the same answer the
+program would have computed.
+
 ## Paths
 
 A `Path` is a place in the file system. It is made from text by a conversion, so a program writes the text and the
@@ -231,7 +271,8 @@ A `GitPath` is a place in a git repository, a commit pinned: `var engine: GitPat
 ([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)). It stays apart from `Path`, so a git address
 cannot reach `File`. The text before the last `@` is the repository, then the commit, then optionally `/` and a folder.
 Its conversion answers `null` when the text names no repository, when the commit is not 7 to 40 lowercase hexadecimal
-digits, and when the folder leaves the repository.
+digits, and when the folder leaves the repository. It is a value a program reads and asks; a `load` line does not
+take one yet, and is still written as literal text.
 
 | Member | Result | Notes |
 |---|---|---|
@@ -652,7 +693,7 @@ meanwhile ([which calls wait](#read-and-write-a-file)).
 | `write(...values)` | the same without the line break |
 | `error(...values)` | like `print`, to the error stream |
 | `debug(...values)` | each value's `to_debug()`, separated by a space, then a line break |
-| `read_line()` | one line of input without its line break, however long, as a `String?`: `null` at the end of the input, and for a line whose bytes are not UTF-8 (the next call reads the line after it) |
+| `read_line()` | one line of input without its line break (a `\r` before it goes too), however long, as a `String?`: `null` at the end of the input, and for a line whose bytes are not UTF-8 (the next call reads the line after it) |
 
 **You never flush.** The compiler chooses how printed output reaches its destination, and whatever it chooses,
 three things hold: a line is never split, nor mixed with a line another thread prints at the same time; everything
@@ -710,7 +751,8 @@ class shows its name and every attribute, nesting into the attributes that are c
 `T?` is `null`. An object already being shown further up is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
 as the class it is, and an attribute that holds a singleton is shown too (`Holder { ledger: Ledger { entries: 4 }, label: "kept" }`). A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:
-the compiler writes the automatic one only for the classes a program debugs.
+the compiler writes the automatic one only for the classes a program debugs. The automatic one leaves out private
+attributes (a name starting with `_`), which are the class's own business; declare `to_debug()` to show them.
 
 ```gdscript title=debug_doc/crew.spite
 var captain = ""
@@ -899,7 +941,8 @@ localhost resolves first to 127.0.0.1
 
 An IPv4 address inside `::ffff:` is that IPv4 address, so a datagram a dual-stack server receives from `127.0.0.1`
 comes from `127.0.0.1`. There is no constructor that takes text, and no network call takes text: text becomes an address through
-`to_ip_address()`, which can answer `null`, and every call that says where to go takes an `IpAddress`. A literal address is read while compiling, so `client.connect("127.0.0.1", 8080)` needs nothing written and
+its conversion, `var read: IpAddress? = text`, which can answer `null`, and every call that says where to go takes an
+`IpAddress`. A literal address is read while compiling, so `client.connect("127.0.0.1", 8080)` needs nothing written and
 `client.connect("300.0.0.1!", 8080)` is a compile error. A host name needs a run to resolve, so `"localhost"` stays an `IpAddress?` a program narrows.
 
 ## TCP

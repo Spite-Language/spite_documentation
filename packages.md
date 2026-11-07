@@ -17,10 +17,19 @@ func Game() {
   folder is an ordinary class inside it, so `package/engine/physics/physics.spite` is `Engine.Physics.Physics()`,
   reopened by another root's `engine/physics/physics.spite` like any class. A file and a folder of one name side
   by side, `engine/renderer.spite` beside `engine/renderer/`, would make `Engine.Renderer` both a class and a
-  namespace, so that is an error.
-- `load` takes a `Path` or a `GitPath` ([standard_library.md](standard_library.md#paths)), always written as literal
-  text on its own line: an `@` makes it a `GitPath`, and a variable or expression there is an error, so the compiler
-  always knows every bundle statically. `load ""` names no folder and is an error. A `load` may sit under an `if` on a `Build` field the compiler already knows,
+  namespace, so that is an error. Every root merges into the same namespaces, so a file in one root and a folder in
+  another clash the same way, and so does a folder named like a class of the standard library: `game/color/` is
+  `'Color' is a class of the standard library and also the namespace of the folder 'game/color': a dotted name
+  means one thing, so rename the folder`.
+- A `load` works in any file, not only the entry file: every file of the program's folder and of a loaded folder
+  has its `load` lines followed, the entry file's first, so a sibling file's `load "tools"` loads `tools/` as a
+  package. A folder that some file names in a `load` is a root of its own and is never also a namespace of the
+  folder around it: a `kitchen/` whose file loads `"garnish/pepper"` gets `kitchen/garnish/pepper/` as a package,
+  not as `Garnish.Pepper`, so its `topping.spite` is `Topping` and `Garnish.Pepper.Topping` is an unknown type. That holds even for a `load` under an `if` the build decides the other way, which leaves
+  the folder neither a package nor a namespace.
+- `load` takes literal text on its own line: a folder's path relative to the file it is written in, or, with an
+  `@` in it, a repository pinned to a commit ([below](#loading-a-repository-pinned-to-a-commit)). A variable or
+  expression there is an error, so the compiler always knows every bundle statically. `load ""` names no folder and is an error. A `load` may sit under an `if` on a `Build` field the compiler already knows,
   which is how one entry function loads the standard library folder of the system it is built for
   ([programs.md](programs.md#how-a-program-is-loaded)).
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never

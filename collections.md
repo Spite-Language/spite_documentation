@@ -51,6 +51,10 @@ Names say where: `append` and `prepend`, never `add`; `remove_last`, never `pop`
 which to write. A list keeps its own room: there is no `reserve`, because how much room a list holds is the
 compiler's to decide.
 
+`contains` and `index_of` compare with `==`, so a list of a class has neither: an object of a class is not compared
+that way, and the error says to ask with `any(f)` or `find_by_<member>` instead (and `find_index_by_<member>` for
+its place, [below](#member-templates-loops-you-do-not-write)).
+
 A list has the same members whatever it holds. Bytes from a file or a socket, and the numbers and text laid out in
 them, are a `Buffer`, which still reads like a list of bytes and adds what bytes need
 ([standard_library.md](standard_library.md#bytes-are-a-buffer)).
@@ -70,9 +74,13 @@ entry down, as `remove_at` does on a list.
 | `dictionary[key]` | `Value?` | `null` when the key is absent; it calls `get_at(key)`, which is only called through `[]` |
 | `contains(key)` | `Boolean` | |
 | `remove_at(key)` | | nothing happens when the key is absent |
-| `count()` | `Integer` | |
+| `count()` / `is_empty()` | `Integer` / `Boolean` | |
+| `clear()` | | removes every entry |
 | `keys()` / `values()` | `List<Key>` / `List<Value>` | a fresh list, in insertion order |
-| `copy()` / `deep_copy()` | `Dictionary<Key, Value>` | |
+| `copy()` / `deep_copy()` | `Dictionary<Key, Value>` | `deep_copy()` copies the values and keeps the same keys, so an object key stays that one object |
+
+`Dictionary` always names both types, in a written type and in `Dictionary<Key, Value>()` alike: `Dictionary<String>`
+is an error that says a dictionary names two types, its keys' and then its values'.
 
 ```gdscript title=dictionary_tasks/dictionary_tasks.spite entry
 var console = Console()
@@ -134,6 +142,11 @@ func DictionaryLiterals() {
 ```output
 cacti 9 50
 ```
+
+A dictionary literal held in a local and read only by keys written out is known while compiling, so asking for a
+key it does not hold with `crash` (`crash points["platinum"]`) is a compile error: that `crash` would stop the
+program every time, and the error says the dictionary holds no key `platinum`. A read of a missing key without a
+`crash` is `null`, as every `[]` read of something absent is.
 
 A key written twice is an error (`"cactus" is written twice in this dictionary: keep one entry for each key`), and
 `{}` is an empty dictionary where its type is declared: `var scores: Dictionary<String, Integer> = {}`, or `{}`
@@ -210,8 +223,17 @@ ada plays for red team and the other ada is found: false
 
 A class that declares its own `equals` says two of its objects can be equal without being one object, and a
 dictionary keyed by it would miss the equal one, so it is a compile error: key the dictionary by what `equals`
-compares instead, an id or a name. A key given where its type is not wanted is the same mismatch as any argument,
-and the error is the one a number given where a text is wanted gets. JSON writes a text key as it is, a whole-number
+compares instead, an id or a name.
+
+Not everything is a key: a nullable type (`Integer?`), a union, a shape and a function value are refused with `a
+Dictionary cannot be keyed by 'Integer?': a key is a number, a Boolean, a String, an enum value or an object of a
+class`. Key by a plain number, text, enum value or object instead.
+
+A key is an ordinary argument of type `Key`: `dictionary[key]` is the call `get_at(key)` and `dictionary[key] =
+value` the call `set_at(key, value)`, so a key is cast to the key type the way any argument is cast to its
+parameter's type ([casting](values_and_types.md#numeric-types-and-the-casting-rule)). In a `Dictionary<String, Integer>`, `scores[7] = 3` stores
+the key `"7"`, and `scores["7"]` and `scores[7]` both find it. A key that cannot be cast is the ordinary mismatch
+error any argument gets. JSON writes a text key as it is, a whole-number
 key as the number in quotes and an enum key as its name; a `Float` key or an object key has no JSON form, and
 `JsonWriter` and `JsonReader` both refuse such a dictionary, and so does `BinaryWriter` for an object key, naming the key
 type. The key type is part of a dictionary's binary `schema()`, so a dictionary keyed by text and one keyed by numbers
@@ -223,7 +245,7 @@ is fastest, as long as every lookup answers the same ([write it plainly](write_i
 ## One list
 
 `List<T>` is the only list: there is no `Vector` and no `Items` to choose between. You say what you keep, and
-how it is stored is the compiler's business. Numbers, `Boolean`, enums and `Memory.Address` already sit flat in
+how it is stored is the compiler's business. Numbers, `Boolean` and enums already sit flat in
 the list's buffer, and a list whose items are never held anywhere else may keep them inline, one after another
 the way the processor's cache likes to read them ([spite_compiler#205](https://github.com/Spite-Language/spite_compiler/issues/205)).
 Nothing a program can see changes with that choice: an item read from a list is the item itself, so a change
@@ -652,6 +674,11 @@ integers per element, and a chain of them fuses like any other ([below](#chains-
 lists only its files the other way, by class: `directory.entries()` is a list of the union of `Directory` and `File`,
 and `filter_files()` keeps the `File` items as a `List<File>` ([metaprogramming.md](metaprogramming.md#member-templates),
 [standard_library.md](standard_library.md#list-a-directory)).
+
+Only `filter_`, `count_`, `any_`, `all_` and `remove_where_` take an enum value as their name; the others already
+compare or read a member (`find_by_stage('draft')`, `map_stages()`, `sort_by_stage()`). The compiler never guesses: when two members' enums both list the value, or a member is
+named like a value of another member's enum (a `published` attribute beside `stage`), it is an error saying which
+two it could read. Write the comparison as a `Boolean` member, pass a function, or rename the member.
 
 ## Passing a function for each element
 

@@ -131,7 +131,9 @@ it through the entry class, `Bunda.Snack`. Each move is a `fixed:` line, and the
 A union declared by classes in different folders goes to the lowest namespace that holds every copy, and an outside
 class that needs one declares a copy of its own, which the fix then moves up with the others. Only the same name
 with the same content counts: the same members under another name are another union, since they may mean another
-thing, and a union with fewer members is a different one too.
+thing, and a union with fewer members is a different one too. A `type` moves the same way: two classes of one
+namespace declaring a `type` of one name, with the same fields and functions of the same types (in any order),
+share one in the entry class.
 
 Nothing moves between the program, a package and the library; each keeps its own. The compiler refuses, with
 every declaring class named, what it cannot move: two different unions of one name landing in one entry class, a
@@ -225,6 +227,8 @@ twice: a later file may reopen a class and replace a declaration, but one file d
 is no overloading: an argument is cast to the parameter's type instead
 ([functions_and_operators.md](functions_and_operators.md)).
 
+### A constructed object is kept and used
+
 A constructed object is kept and used. A constructor call written as a statement of its own, `Report(text)`,
 makes an object and throws it away. The construction was the whole point, so it is an error saying to write a
 function instead. `Box<Integer>(3)` on a line of its own is the same error. An object stored in a variable that
@@ -316,7 +320,7 @@ A conversion and a preset answer with `return` and never assign `this`. Only the
 A file whose first line is `singleton` has one instance: calling its constructor anywhere answers that same
 instance, made the first time it is asked for (one instance *per argument values* when the constructor takes
 arguments, [below](#one-instance-per-argument-values)). `Console`, `Program`,
-`Environment`, `Build` and `Clock` are singletons; `File`, `Directory` and `Process` are not, since
+`Environment`, `Build`, `Clock` and `DynamicLibrary` are singletons; `File`, `Directory` and `Process` are not, since
 several may exist at once.
 
 ```gdscript title=singleton_basics/scoreboard.spite

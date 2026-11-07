@@ -9,7 +9,9 @@ cd game
 spite
 ```
 
-The folder is the only way to name a program: the compiler builds the folder it is run from. By
+The folder is the only way to name a program: the compiler builds the folder it is run from, and a folder with no
+file named after it is an error naming the file it looked for (`'game' holds no program: a program is a folder
+holding an entry file named after it, 'game/game.spite'`). By
 default the build writes the executable into `.spite/` in that folder, `.spite/build/game.exe`, and runs it; nothing is written beside the program's source
 ([compiler.md](compiler.md#where-the-outputs-go)).
 
@@ -214,8 +216,13 @@ func UnknownFlagError() {
 '--verbos' is not a compiler option, and this program's Build declares no 'verbos'
 ```
 
+- A field's default may be a literal, arithmetic on literals (`var seconds: Integer = 2 * 60`, `var offset = -3`), or
+  another field of the same type (`var attempts: Integer = retries`, which takes that field's value, a flag's included): all of these
+  are folded into constants. A default that reads anything else is worked out once, when `Build` is first made.
 - A program's own `build.spite` may give a compiler option a different default: `var optimized = true` builds it
-  optimized unless `--optimized=false` is given. The compiler reads the whole program before it decides
+  optimized unless `--optimized=false` is given. The compiler reads its options before anything runs, so an option
+  is declared with only a literal (`true` or `false`, a whole number, or a text without holes), and anything else is
+  an error at the declaration that says so. The compiler reads the whole program before it decides
   anything, so what it produces is a default like the rest: `var build = true` only builds it, and
   `var final_classes = "..."` writes its final classes on every build ([compiler.md](compiler.md#choose-the-outputs)).
   Formatting is not an option: every compile formats first, and `format` is not a field a program may declare.

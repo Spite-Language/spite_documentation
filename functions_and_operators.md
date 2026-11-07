@@ -400,8 +400,9 @@ balance 120
 owner BOB
 ```
 
-Inside a class's own functions, a bare `age = 1` (no receiver) always stays a plain field write:
-interception only applies to `receiver.field` written from outside. A getter may compute and hand back a fresh
+Inside a class's own functions, a bare `age = 1` (no receiver) stays a plain field write when the class has an
+attribute named `age`: interception only applies to `receiver.field` written from outside. A bare name that no
+local and no attribute holds goes through the class's own `get_<name>()` and `set_<name>(value)`. A getter may compute and hand back a fresh
 `String` or `List` as safely as it returns a field. It costs nothing hidden: an intercepted access is a direct
 call, and every other access a plain field read or write.
 
@@ -517,7 +518,9 @@ there is the raw field.
 
 ## One name, one function
 
-There is no overloading: one name is one function. An argument is cast to its parameter's type by the ordinary
+There is no overloading: one name is one function. A file that declares the same name twice is an error,
+`'Shop' declares 'price' twice: a later file may reopen a class and replace a declaration, but one file declares
+each name once`; replacing is what a reopening file does ([packages.md](packages.md#monkey-patching-mods)). An argument is cast to its parameter's type by the ordinary
 right-to-left rule ([values_and_types.md](values_and_types.md#numeric-types-and-the-casting-rule)), so a
 function that takes a `Float` takes an `Integer` too:
 

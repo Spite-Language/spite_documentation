@@ -18,6 +18,10 @@ assignment, a function argument (toward the parameter type), and `return` (towar
 | `Float` (default decimal) | `float` (32-bit) |
 | `Double` | `double` (64-bit) |
 
+The names are written in full, as every name is: `Int` or `UnsignedInt` is an error that names the spelling to
+use (`'Int' is spelled 'Integer'`). `count()`, `length()` and `index_of()` always answer an `Integer`, whatever they
+count.
+
 A number is written in plain digits, and `_` may separate them for reading: `1_000_000` is a million and
 `0.000_01` a hundred-thousandth, a `_` standing only between two digits: `1__000`, `1000_` and `12._5` are errors.
 A decimal has digits on both sides of its point (`.5` is not a number). There is no exponent (`2.5e3` is an
@@ -69,6 +73,11 @@ spite: 'amount * factor' does not fit in an Integer (2000000000 * 2), at game/ga
 A whole-number `/` or `%` by zero halts too (`'total / parts' divided by zero, at ...`), and a divisor the compiler
 sees is zero (`total / 0`) is a compile error. A decimal that is not a number, or is infinite, put into a whole
 number halts like any value that does not fit. Float division stays IEEE: `x / 0.0` is infinity or not-a-number.
+`%` on a `Float` or a `Double` is the remainder of the division cut toward zero, so it keeps the sign of the left
+side as a whole number's does: `-7.5 % 2.0` is `-1.5`, `730.5 % 360.0` is `10.5`, and `x % 0.0` is not-a-number.
+A decimal prints with the fewest digits that read back as the same value, so a `Float` `0.1` prints `0.1`, never
+`0.100000001`; a value that would need an exponent prints with one (`1e+21`, `1.0000000000000001e-05`), and
+infinity and not-a-number print `inf` and `nan` on every system.
 The same holds for `-` in front of a value (`-lowest` with the smallest `Integer`, or any unsigned value but `0`),
 for the smallest signed value divided by `-1`, and for a value put into a narrower name, by assignment, as an
 argument or by `return`: `var small: Tiny = count` halts when `count` is 200 (`spite: 200, an Integer, does not fit
@@ -205,6 +214,12 @@ meets a `T?` of the number: `var age: Integer? = "42"`. It answers `null` when t
 the type, since a `0` there would read as a real zero. Text put into a plain `Integer` is an error that names the
 `?` to write, and there is no `to_integer()` to call. A number becomes text with its own
 `to_string()` ([below](#numbers-are-classes)), and wherever text is wanted the number is made text by itself.
+The same goes for anything with a `to_string()`: a `Boolean`, an enum value (its name), a class read as a value (its
+name) and an object of any class that declares `func to_string(): String`. Where a `String` is wanted (an
+assignment, a `var name: String = value`, an argument, a `return`, the key of a `Dictionary<String, Value>`), such a
+value is made text through it: `label.text = clicks` stores `"42"`, and `show(badge)` with `func show(text: String)`
+passes `badge.to_string()`. A class with no `to_string()` is an error there: `a Pet cannot be used where a String is
+needed`.
 
 ### Numbers are classes
 
@@ -294,7 +309,12 @@ Each answers the receiver's type, with `other` cast to it like any argument: a `
 `Byte`. No shift is undefined: a count of the width or more moves every bit out, and a negative count halts the
 program. Calling one on a `Float` or a `Double` is an error, since they are not whole numbers; cast to a
 whole number first. `bits_as_unsigned()` on a signed whole number and `bits_as_signed()` on an unsigned one keep
-the bits and read them with the other sign, so a signed `-1` is `4294967295` as an `UnsignedInteger`.
+the bits and read them with the other sign, so a signed `-1` is `4294967295` as an `UnsignedInteger`, where storing
+`-1` in an `UnsignedInteger` halts (a change of sign is checked like any narrowing; only an unsigned value stored in
+a wider signed type is never checked, since it always fits). A decimal's bits are read the same way:
+`Float.bits()` answers an `UnsignedInteger` and `Double.bits()` a `Long`, and `UnsignedInteger.bits_as_float()`,
+`Long.bits_as_double()` and `UnsignedLong.bits_as_double()` turn them back, with nothing converted. These are what
+hashes and binary formats use; each is written in place, touches no memory and allocates nothing.
 
 ```gdscript title=bitwise_basics/bitwise_basics.spite entry
 var console = Console()
@@ -337,7 +357,11 @@ A number class also answers its special values as presets on the class itself, `
 no one value ([classes_and_files.md](classes_and_files.md#constructors-conversions-and-presets)): `Pi()`, `Tau()`,
 `EulerNumber()`, `Infinity()`, `NotANumber()`, `Largest()` and `Smallest()` on `Float` and `Double`, and
 `Largest()` and `Smallest()` on every whole number. `Integer.Largest()` is 2147483647 and `Float.Smallest()` the
-most negative `Float` there is. A preset builds its value on each call, and the compiler folds it.
+most negative `Float` there is. A preset builds its value on each call, and the compiler folds it. It is always
+called on the class, with its PascalCase name: `angle.pi` is `'Pi' is a preset of the class Float, not of a value:
+write 'Float.Pi()'`, `Float.pi()` names `Float.Pi()` the same way, and a function of a value called on the class,
+`Float.square_root()`, is an error too. Another language's short name (`sqrt`, `sin`, `pow`, `min`) is an error
+that gives the Spite one: `Float has no function 'sqrt': Spite spells it 'square_root'`.
 
 ```gdscript title=maths_basics/maths_basics.spite entry
 var console = Console()
@@ -366,6 +390,17 @@ nan true 2147483647
 As with `/` on a float, nothing here halts: the square root of `-1` is not-a-number and the logarithm of
 `0` is minus infinity, the IEEE answers. What each function answers at its edges is
 [standard_library.md](standard_library.md)'s.
+
+### Named numbers
+
+A number that means something is given a name: a private attribute whose default is the number
+(`var _days_in_400_years = 146097`), read by name where it is used. Written bare inside a function, a whole number
+of three or more digits that is neither a power of ten nor a power of two is an error asking for that attribute,
+and so is a decimal that is a library preset (`3.14159` names `Float.Pi()`); an attribute's default, the body of a
+preset, numbers of one or two digits and text are left alone. The rule and its exact message are in
+[style.md](style.md#a-number-gets-a-name). A named number costs nothing: an attribute nothing writes is read as
+its default where it is read, so it compiles to the number itself. A preset may be the default
+(`var _full_turn = Float.Tau()`), and the attribute then has the preset's class.
 
 ### A number library declares the type it needs
 
@@ -450,7 +485,9 @@ a number not a number
 `Statistics<Boolean>` is refused while compiling, since `Boolean` has no `greater_than`. An operator on a value read
 as a `type` of your own that requires the operator's function, `left + right` on two values read as
 `type Addable { sum: Spite.Function<Addable, Addable> }`, calls the `sum` of the left side's class, and a right side of another
-class halts with `which is not one`.
+class halts with `which is not one`. Through a `type` that does not require the operator's function, the operator
+is an error (`'+' on a value read as 'Labeled' needs the class that fits the type, which is not known while
+compiling`): take the value through a codegen value the type constrains, `generic $value_type: Addable`.
 
 ## `String`
 
@@ -459,11 +496,16 @@ than joined to it with `+`: `"hello {name}"`, where `{ }` holds one value of any
 `Boolean`, and enum format themselves) and `\{` is a brace meant literally. Two values still join with `+`, and
 joining written text with `+` is an error naming the form above. `==`/`!=`/`<`/`>` compare by content.
 
+### Text escapes
+
 A backslash writes a character a text cannot hold as itself: `\n` (line break), `\t` (tab), `\r` (carriage
 return), `\\` (backslash), `\"` (double quote) and `\{` (brace). Escapes follow each other freely, so `"\\\{"` is a
 backslash and a brace, and a text written inside a hole keeps its own escapes and holes. Any other character
-after a backslash is that character. A `{` that never closes by the end of the file, and a text that never
-closes by the end of its line, are errors.
+after a backslash is that character (the formatter writes `\'` as `'`). A `{` that is not escaped opens a hole,
+which ends at its matching `}`. A `{` that never closes by the end of the file (`this '{' inside text never
+closes`), and a text that never closes by the end of its line (`this text never closes`), are errors.
+
+### Values in text
 
 A text that is one hole and nothing else, `"{clicks}"`, is an error: it is the value
 itself, so the value is written directly, and where text is wanted it becomes text on its own. The error gives the line to write:
@@ -591,7 +633,16 @@ missing; `fallback flag` alone takes one, and asks that it is there and `true`. 
 yet) or `Monster()` (a default), and a generic class makes the default of what it is bound to with `$name()`. For a
 plain value the default is its literal: `0`, `0.0`, `false` or `""`, which the error writes for you.
 
-A `var` may be written again in the same scope, and the new one may hold another type. A `var` in an inner block may
+A `var` may be written again in the same scope, and the new one may hold another type:
+
+```gdscript
+var content = file.read_as_string()        # a String?
+fallback content
+var content = content.trim()               # a String
+```
+
+The new value is worked out first, so `content.trim()` reads the old `content`; then the old value is let go
+(running its `drop()` if nothing else holds it); only then does the name mean the new value. A `var` in an inner block may
 shadow a local, a parameter or an attribute of the same name for the length of that block; it may never shadow
 a function it can see. A shadowed name that was never read is removed by the compiler and reported as `fixed:`.
 
@@ -754,7 +805,11 @@ user true
 
 The number is a whole number that fits an `Integer`, and it belongs to the declaration alone: written after a value
 anywhere else it is an error. `=` because giving a value is assignment, as everywhere else. A value without a number counts on from the one
-before, so `'user'` is 100, and an enum's first value without a number is 0. Two values with one number are a
+before, so `'user'` is 100, and an enum's first value without a number is 0. A number, written or counted on, that
+does not fit an `Integer` is an error. Inside the program the numbers change nothing: names, comparisons, `switch`,
+`Course.values` and reading from text work as for any enum, and `var number: Integer = role` gives the number
+(`99` for `'admin'`). A hot reload cannot change the number of a value the running program already has: that is an
+error naming the value and both numbers, and a restart renumbers it. Two values with one number are a
 compile error, since the number is the value's identity outside the program:
 
 ```gdscript title=role_number_twice/role_number_twice.spite entry error
@@ -788,7 +843,12 @@ have it moved to the entry class of the namespace holding both, the class named 
 `Shelter.Pet` passes where a `Groomer.Pet` is wanted when every member of it is a member of `Groomer.Pet`, at no cost.
 A caller that only hands a value on passes the member itself (`groomer.groom(cat)`) and declares nothing. Copies
 with the same members are one type inside generics too: a `List<Shelter.Pet>` goes where a `List<Groomer.Pet>` is
-wanted, and a function taking one copy where a function taking the other is.
+wanted, and a function taking one copy where a function taking the other is. Inside a generic the union given may not have fewer
+members than the one wanted: a `List<Shelter.Pet>` with fewer members than `Groomer.Pet` is refused where a
+`List<Groomer.Pet>` is wanted, since the receiver could put into it a member the smaller union lacks (`... has fewer
+members than Groomer.Pet, and the receiver could put in it a member Shelter.Pet lacks`). The class that declares a
+union may give it conversions, named by the union alone (`func Job(from: String): Job?` beside `union Job`), and a
+value of that type meeting the union goes through it.
 
 ```gdscript title=union_basics/player.spite
 var health = 10
@@ -894,7 +954,9 @@ plain `{ key: value }` literal work. The empty `type`, which every object fits, 
 (`component: Anything`, `List<Anything>()`; see [functions_and_operators.md](functions_and_operators.md)):
 never declare an empty `type` of your own. A `type`, like an `enum` and a `union`, takes no `=` and no commas.
 
-An attribute of a `type` may itself be a union, met by that union or one of its classes. Anything else does not
+An attribute of a `type` may itself be a union, met by that union or one of its classes; one whose type is another
+`type` is met by that `type`, or by a class or a union whose classes each have its members; one whose type is a
+function value is met by a function value with the same parameter types and answer. Anything else does not
 fit and the error names the attribute.
 
 A `type` of attributes only has a default like a class does: the object literal with each attribute at its own

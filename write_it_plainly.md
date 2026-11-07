@@ -49,7 +49,9 @@ one with the proof that enables it, and [Proofs](proofs.md) lists every fact the
 - **Checks.** A read, a division or a narrowing the compiler has proven safe carries no run-time check.
 - **Size.** Anything your program does not use is not in it.
 
-None of this changes what your program prints or computes. It changes only how fast it runs and how big it is.
+None of this changes what your program prints, computes or crashes on. It changes only how fast it runs and how
+big it is. When the proof a faster form needs does not hold, the compiler writes the plain form instead, and
+`--optimization-report` names the place and what stopped the proof.
 
 ## A class is what you mean, not how it is stored
 

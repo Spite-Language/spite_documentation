@@ -29,7 +29,8 @@ requires of $number_type: it has no function 'subtract'", and `Vector3i` is an u
 
 `linear_interpolate(target, amount)` is this vector at 0 and `target` at 1, and it does not clamp: 2 goes as far
 past `target` as `target` is from the start, and -1 goes backwards. `cross` is for `Vector3` only; a `Vector2` and a
-`Vector4` have no `cross`. `minimum` and `maximum` work part by part and pass not-a-number on, as the number
+`Vector4` have no `cross`. `normalized()` of the zero vector stays the zero vector rather than becoming
+not-a-number, and `length_squared()` and `distance_squared_to(other)` skip the square root. `minimum` and `maximum` work part by part and pass not-a-number on, as the number
 classes do: a `nan` part stays `nan` in the answer, it is not ignored in favour of the other vector's part.
 
 ```gdscript title=game_vectors_basics/game_vectors_basics.spite entry
@@ -95,7 +96,8 @@ and `matrix.rotation = rotation` (writing `set_translation(offset)` is an error 
 only the parts of the matrix it names; `set_identity()` goes back to the identity; and `set_transform(translation, rotation, scale)`
 (scale first, then rotation, then translation), `set_look_at(eye, target, up)`,
 `set_perspective(field_of_view, aspect, near, far)` and `set_orthographic(left, right, bottom, top, near, far)`
-are calls.
+are calls. `field_of_view` is the vertical angle, in radians, and `set_look_at` makes a right-handed view: the
+camera at `eye` looks down its own -z toward `target`.
 The projections are **Vulkan's clip space**: the camera looks down -z, y points down the screen, and depth runs
 from 0 at `near` to 1 at `far`.
 
@@ -131,7 +133,8 @@ func GameMatricesBasics() {
 `inverse()` answers `Matrix4?`: a matrix that flattens space has none, and that is a value to handle, not a crash.
 `translation_part()`, `scale_part()` and `rotation_part()` take a transform apart again (a scale part that is 0
 leaves no rotation to find, so `rotation_part()` answers no rotation then, and `normal_matrix()` answers `null`),
-`transform(vector)` multiplies a `Vector4`, `project_point(point)` divides by the `w` it makes, and
+`scale_part()` is the lengths of the first three columns, with the x one negative when the matrix mirrors,
+`transposed()` swaps rows and columns, `transform(vector)` multiplies a `Vector4`, `project_point(point)` divides by the `w` it makes, and
 `normal_matrix()` is the `Matrix3` that turns normals under a scaled model. `Matrix3` has the same shape for three
 dimensions: `multiply`, `transform`, `transposed`, `determinant`, `inverse` and `set_rotation`.
 
@@ -171,7 +174,8 @@ A `Quaternion<Float>()` is no rotation, and `set_identity()` sets one back. `set
 turns about x first, then y, then z, as Blender's XYZ Euler does; the other orders are `'xzy'`, `'yxz'`, `'yzx'`,
 `'zxy'` and `'zyx'`. `rotate(vector)` turns a vector, `a * b` is the rotation `b` then `a`,
 `spherical_interpolate(target, amount)` and `normalized_interpolate(target, amount)` blend two rotations along the
-shorter way, and `to_matrix()` is the same rotation as a `Matrix4`. A target that is the same rotation written with
+shorter way, and `to_matrix()` is the same rotation as a `Matrix4`. `set_parts(x, y, z, w)` writes the four parts (x, y and
+z, then w), and `dot(other)`, `length()` and `conjugate()` are there for maths of your own. A target that is the same rotation written with
 every sign flipped gives the same answer, and two rotations closer than about 3.6 degrees give the same answer from
 either interpolation, since the spherical one hands such a pair to the normalized one. `==` compares all four parts
 exactly. A quaternion of four zeros is not a rotation: `normalized()` answers no rotation for it and `inverse()`
@@ -202,10 +206,13 @@ true true (0, 0, 0, 1)
 
 ## Boxes, frustums and rays
 
-`AxisAlignedBox(lowest, highest)` is a box along the axes: `contains(point)`, `intersects(other)`,
+`AxisAlignedBox(lowest, highest)` is a box along the axes, held as six `Float`s, `lowest_x` to `highest_z`, and read
+back as vectors with `lowest()` and `highest()`: `contains(point)`, `intersects(other)`,
 `united(other)`, `including(point)`, `center()`, `size()`, and `transformed(matrix)`, the box that holds the
 turned and moved one. A `Plane()` is set with `set_point_normal(point, normal)` or `set_parts(x, y, z,
-distance)`, and `signed_distance_to(point)` says how far in front of it a point is (negative behind it). A new
+distance)`, and `signed_distance_to(point)` says how far in front of it a point is (negative behind it). A plane is its
+`normal_x`, `normal_y`, `normal_z` and `distance`: the points where the normal's dot product with the point, plus
+`distance`, is 0. A new
 `Plane()` is the floor through the origin facing up, `normal()` answers its normal, `set_point_normal` makes the
 normal a unit one whatever length it was given, and `normalize()` does the same to a plane set by `set_parts`,
 scaling its distance with it. The faces of an `AxisAlignedBox` count as inside it for `contains`, and two boxes that
@@ -219,7 +226,8 @@ one that is inside. Planes, boxes, rays and frustums work in `Float`: a `Vector3
 as a `Float?` that is `null` when there is none: a miss is an answer, not a failure. The direction does not have to
 be of length 1, and the distance is counted in lengths of it, so a direction of length 2 halves the number. A ray
 parallel to a plane, passing beside a box, or pointing away from a triangle misses; a triangle is hit from either
-side.
+side. `origin()` and `direction()` read the ray back as vectors, `point_at(distance)` is the point that far along,
+and a ray that starts inside a box hits it where it leaves.
 
 ```gdscript title=game_picking_basics/game_picking_basics.spite entry
 var console = Console()
@@ -259,6 +267,10 @@ colour through the conversion a class declares to read text, which reads what th
 writes for one: `var read: Color? = "#ff6347"`, and the same for `#rgb`, `#rgba`, `#rrggbbaa`, `rgb()`, `rgba()`, `hsl()`
 and `hsla()` with commas or spaces and an alpha after a `/`, and the 148 CSS colour names. It answers a `Color?`,
 `null` for text that names no colour, so `crash` it when the text is your own and a mistake would be a bug.
+The text is trimmed and read without regard to case, so `" Tomato "` and `"#FF6347"` are colours, and anything
+else (a wrong count of digits or numbers, a letter where a number goes, a missing `)`) is `null`.
+`named_hex(name)` answers a CSS name's `#rrggbb`, or `""` for a name it does not know. `to_string()` is
+`to_hexadecimal_string()`, which adds two digits for alpha when alpha is below 1 (`#33669940`).
 A colour writes itself back as `to_hexadecimal_string()`, `to_rgb_string()` and `to_hsl_string()`, and
 `to_linear()` and `to_standard_rgb()` convert between the sRGB a picker or a texture holds and the linear light a
 shader adds up, leaving alpha alone. The channels are not clamped when set (`Color(2.0, -1.0, 0.5, 1.0)` reads back
@@ -305,9 +317,10 @@ curve whose x goes back on itself has several heights at one `x`, of which the f
 `sine`, `in_exponential`, `out_exponential`, `in_back`, `out_back`, `out_elastic` and `out_bounce`. `smooth_step` and
 `smoother_step` clamp the amount to 0 to 1; the others do not, and extrapolate (`in_cubic(2.0)` is 8). The two
 exponentials are exactly 0 at 0 and exactly 1 at 1, and the two backs overshoot by 1.70158, as easings.net writes them.
-`Noise(seed)` answers smooth noise from -1 to 1 (`value_2d`, `value_3d`, `gradient_2d`, `gradient_3d`), the
-same for the same seed on every machine, and `interleaved_gradient(pixel_x, pixel_y)`, the 0 to 1 dither a
-shader uses.
+`Noise(seed)`, with an `UnsignedInteger` seed, answers smooth noise: `value_2d` and `value_3d` blend a random value
+at each whole point, and `gradient_2d` and `gradient_3d` are Perlin's improved noise, 0 on every whole point and
+within -1.5 to 1.5 in 2D. Each is the same for the same seed and point on every machine, since nothing is random at
+run time. `interleaved_gradient(pixel_x, pixel_y)` is the 0 to 1 dither a shader uses.
 
 ```gdscript title=game_curves_basics/game_curves_basics.spite entry
 var console = Console()
@@ -335,7 +348,11 @@ true 0
 
 A GPU often takes a 16-bit float. `value.to_half_precision()` turns a `Float` into its 16 bits, as an
 `UnsignedShort`, rounding to the nearest and to even on a tie, as the hardware does; `bits.half_precision_to_float()`
-turns them back. Past 65504 is infinity, below about 6e-8 is zero, and not-a-number stays not-a-number.
+turns them back exactly. The largest half is 65504, and from 65520 up (where rounding no longer lands on 65504)
+the answer is infinity; below about 6.1e-5 a half is subnormal, below about 6e-8 it is zero, and not-a-number stays
+not-a-number. Both are written in Spite over the bit views of
+[values_and_types.md](values_and_types.md#bitwise-functions) (`Float.bits()`, `UnsignedInteger.bits_as_float()`),
+which a program may use too.
 
 ```gdscript title=half_precision_basics/half_precision_basics.spite entry
 var console = Console()

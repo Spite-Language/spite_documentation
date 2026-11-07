@@ -156,6 +156,9 @@ the list or it is only known when the program runs. The list must be the class's
 into a kept list (`walked.append(...)`) is an item the compiler wrote no copy for, and the walk stops the program with
 `spite: 'walked.each' holds an item the compiler did not list for it`, naming the line.
 
+A `type` has no attributes to walk: with `$row_type` bound to a `type`, `$row_type.attributes` is an error, because
+a `type` only lists what a value must have. Walk a class, or read each member the type requires by its name.
+
 ### Asking a question while compiling
 
 Every question a reflection object answers is a get-only attribute, so asking one is reading it, and on a constant
@@ -231,6 +234,9 @@ func run_between_frames(system: $system_type) {
     crash not update.arguments[0].is_mutated
 }
 ```
+
+The two sides of an `and` are checked one at a time, as two `crash` lines would be: in `crash update and ready`,
+the `update` side is decided on its own and fails the build when it is false, whatever `ready` holds at run time.
 
 A `fallback` on a condition decided while compiling folds the same way, in every build, `--development`,
 `--hot-reload` and the REPL builds included. When it holds, nothing is written for it. When it does not, the
@@ -341,6 +347,13 @@ The rest of the rules for which class a body means are few:
   anywhere in a class.
 - Writing the class on the parameter, `attribute: Spite.AttributeDeclaration<Monster>` or `Spite.Attribute<Monster>`,
   is an error saying to read the declaration on a value of `Monster` instead.
+- A walk or a template sees private attributes (`_count`), and reads and writes them through the walked attribute;
+  naming `_count` outside its class is still the private-name error.
+- Reading `label[attribute]` counts as using that attribute. `attribute.name` and `attribute.class` only describe
+  it, so an attribute that nothing but those look at is still the unread-attribute error.
+- A template that would make a function its class already has is an error naming both (`the template
+  'store_attribute' makes 'store_row' ..., which is already a function of 'Row'`): rename the function or the
+  template.
 
 ```gdscript title=name_templates/label.spite
 var text = "fragile"
@@ -419,6 +432,11 @@ A parameter of the bound types, `Spite.Attribute` (an attribute bound to one obj
 and its `owner`) or `Spite.Function`, makes no template. It is an ordinary parameter, and the function is an
 ordinary function that a walk over an instance's members calls, or a caller hands a value to. A template is written
 over the declaration, with the object as a parameter of its own.
+
+A reflection object the compiler knows has no value at run time. Inside a copy compiled for one member, the
+parameter is that member itself, so it cannot be kept or passed on as a value: `kept.append(attribute)` in a walker
+is the error `'attribute' is a reflection object known while compiling, so this function is compiled once for it,
+and it has no run-time value to pass on here`. Keep what you read from it instead, such as `attribute.name`.
 
 ### Templates over functions
 
@@ -599,6 +617,16 @@ uncountable words a program can add to by reopening `String`: `map_names` is
 `all_is_alive()`, which are what a question is asked for. A value worth collecting that is not already a member
 becomes one: a get-only attribute of the element's class, collected with its plural.
 
+A question member may be asked without its `is_`. The templates that ask something of each element (`filter_`,
+`count_`, `any_`, `all_` and `remove_where_`) read `filter_alive()` as `filter_is_alive()` when the element has an
+`is_alive` and no member named `alive` of its own; both spellings are the same template.
+
+The plural is never guessed. A collecting template written in the singular is an error naming the plural (`'map_name'
+answers every 'name', so it is written in the plural: 'map_names'`), and two members whose names share one plural,
+`person` and `people`, are an error asking you to rename one. When `pluralize()` gets a word wrong, add the word to
+the program's own `irregulars` or `uncountables` ([standard_library.md](standard_library.md#plural-and-singular)),
+or rename the member.
+
 A list of a union keeps one member class with that class in the plural, and narrows to it, while an attribute every
 member has is templated as on any list:
 
@@ -672,6 +700,17 @@ that lists the class's values in order (the second program below). A generic cla
 every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, Integer>`. `Pair` may declare `var left: $left_type = null` because its constructor
 assigns `left` at once; anywhere else `null` belongs to `T?` alone, and `var left = $left_type()` makes
 the default of whatever `$left_type` is bound to.
+
+The `generic` lines come first in the file, after a `singleton` line if there is one and before everything else, one
+value per line: `generic $left_type, $right_type` is an error asking for two lines, and so is a `generics` list, a
+`generic` line inside a function, and `func Pair<$left_type>(...)`. The values may be left out when every one of
+them can be read from the constructor's arguments: a parameter typed `$name`, `$name?` (a `T` or a `T?` argument both
+give `T`), `List<$name>`, `Dictionary<$key_type, $value_type>`, or a `Spite.Function<...>` that mentions it. A `null`
+argument says nothing, and when a value is still unknown the error asks for all of them between `<` and `>`.
+
+Calls are positional, so reordering the `generic` lines changes what every call means. When the types given have
+different shapes the compiler notices at once, but two that fit alike (a `Pair<Integer, String>` whose lines were
+swapped) compile and mean something else, which only tests catch.
 
 The program's entry class cannot declare a `generic` line: a generic class has no one object, and the entry class is the
 one that runs.
@@ -853,8 +892,9 @@ because the branch it rules out would not compile.
 
 What the branch ruled out is not compiled at all, and neither is what only it reaches. Below, `Field<Integer>`
 compiles `write` without the `List` branch, never compiles `write_list`, and so never checks its `.count()`
-against an `Integer`; the statements after a taken branch that returns are left out the same way. One generic
-class can therefore keep a helper per kind:
+against an `Integer`; the statements after a taken branch that returns are left out the same way. (A class
+that is not generic still compiles and checks every function, so a mistake in one nobody calls is reported.) One
+generic class can therefore keep a helper per kind:
 
 ```gdscript
 func write(value: $value_type): String {
@@ -868,7 +908,11 @@ func write(value: $value_type): String {
 Inside such a branch the types it was built from are named after the container's own codegen values:
 `$value_type.element_type` for a `List<$element_type>`, `$value_type.key_type` and `$value_type.value_type` for a `Dictionary<$key_type, $value_type>`
 or a `$value_type?`, and a generic class's own names for one of its instances. They are tested like `$value_type`
-itself, `else if $list_type.element_type == Float`, and fold in every branch of the chain.
+itself, `else if $list_type.element_type == Float`, and fold in every branch of the chain. A name the type does
+not have is an error listing the names there are (`a List<Integer> has no codegen value named '$value_type'`). An
+`and` whose left side folds to `false`, or an `or` whose left side folds to `true`, is decided without its right
+side, so the right may ask what only the left makes sure of:
+`$list_type.element_type == List and $list_type.element_type.element_type == Float`.
 
 ```gdscript title=describe_kind/kind.spite
 generic $kind_type

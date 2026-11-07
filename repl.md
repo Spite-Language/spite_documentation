@@ -8,9 +8,9 @@ prints the value read back), and calls with literal arguments that print what th
 compiler into the build that asks for it. `--repl-port` answers the same commands over TCP, one JSON line each,
 answered where the program waits or at the end of a loop's pass
 ([concurrency.md](concurrency.md#the-repl-answers-at-the-waits)), and `spite --connect` is its client. `--hot-reload`
-swaps the classes whose files changed into the running program, keeping its state, when a file is saved or when the
-REPL is sent `reload` ([Live reload](#live-reload---hot-reload)), moving live objects to their class's new attributes
-when those change. `bytes <path>` answers a value's address, size, bytes and layout as JSON
+swaps the functions whose code changed into the running program, keeping its state, when a file is saved or when the
+REPL is sent `reload` ([Live reload](#live-reload---hot-reload)); a change to a class's attributes is refused, and
+takes a restart. `bytes <path>` answers a value's address, size, bytes and layout as JSON
 ([Native memory](#native-memory-bytes)). `describe Monster`, `enums` and `memory` describe a class, the program's
 enums and the heap in use; an assignment takes `null` into a `T?`, a literal into a list or dictionary element, and
 another path's instance (`follower = leader`); a path walks into a union's active member. A reload swaps in a change
@@ -117,8 +117,8 @@ between passes). When the constructor returns the process stays alive until a cl
 program built with `--repl-port` always listens on that port, and a port another program holds stops it before
 its constructor runs, with `error: the REPL could not listen on 127.0.0.1:<port>`. With `--repl` as well, the
 console loop runs first, and after its `exit` the process keeps serving the port. What serving costs, and only in
-a `--repl-port` build: one thread waiting on the socket, and a call with two atomic loads at the end of every pass
-of the program's own loops.
+a `--repl-port` build: one thread waiting on the socket, and one load of a flag at the end of every pass of the
+program's own loops, which calls into the REPL only when a command is waiting.
 
 Talk to it with the compiler's own client:
 
@@ -129,8 +129,10 @@ spite --connect=4000 --command="program.player_name"
 
 With no `--command` it is interactive: a `spite> ` prompt that sends each line and prints the answer as
 `value (type)` or `error: message`. With `--command` it sends that one command, prints the raw JSON line, and
-
-exits, which is the form tests and AI clients use.
+exits, which is the form tests and AI clients use. `--connect` runs from any folder, since it builds nothing.
+Nothing listening on the port is `error: nothing is listening on 127.0.0.1:4000` and exit code 1, and a port
+outside 1 to 65535 is refused, for `--connect` as for `--repl-port`: `error: --repl-port takes a port number from
+1 to 65535: spite --repl-port=4000`. The port is a `Build` field, so changing it means building again.
 
 ## The wire protocol
 
@@ -167,6 +169,32 @@ The commands are the ones `--repl` answers:
 - `reload`, `last_reload` and `wait_reload`, which answer in a `--hot-reload` build
   ([Live reload](#live-reload---hot-reload)) and fail everywhere else with `'reload' answers in a program built with --hot-reload, which swaps its code while it
   runs, and this one was not`.
+
+### What the answers look like
+
+An instance prints one level deep, `Monster { name: Goblin, health: 30 }`: an object inside it prints as
+`Monster {...}`, a list or dictionary at any depth as `List<Monster>(2)` or `Dictionary<String, Integer>(2)`, a `T?`
+as `null` or the value it holds, a union as its active member, and text without quotes. A call that answers
+nothing prints nothing, and nothing may follow it in the same command: `World().spawn() ran, and it answers
+nothing, so nothing can follow it`.
+
+Every mistake is one line, never a crash, and says what is there instead:
+
+- an unknown attribute lists the ones that exist: `no attribute 'monstrs' in program: console, player_name,
+  player_age, monsters`;
+- an unknown function: `no function 'nope' in program: 'functions' lists them`;
+- an index past the end: `index 5 is out of range: names holds 2`;
+- a literal of the wrong kind: `type mismatch: target.health is an Integer, and "x" is not one`;
+- calling an attribute: `target.name is not callable`;
+- `null` into a value that is not a `T?`, and another path's instance of a different class, are refused naming the
+  types.
+
+The prompt reaches what code outside a class may reach: a function or attribute whose name starts with `_` is
+neither listed nor called, and neither is `drop()`. A singleton is named by its qualified name (`Ui.Panel()`), or by
+its name alone when one singleton has it; a singleton the program has not made yet is refused, `Tick has not been
+made yet: nothing in the program has asked for it, and the prompt never makes one`, and so is a class that is not a
+singleton. `classes` lists the singletons the prompt can bind, `not made yet` after one the program has not made,
+then the program's other classes; of the standard library's singletons it lists only `Environment` and `Build`.
 
 ## A worked debugging session
 
@@ -419,7 +447,10 @@ keeps its code. The next time any code reaches the line, the program stops befor
 as usual, and `continue` lets the program go on. `breaks` lists the breakpoints and `clear` (or
 `clear ticker.spite:16`) removes them, compiling the code again without the stop. A call made at the prompt that
 reaches a breakpoint answers `stopped at ticker.spite:16` at once, and its own answer is the answer to `continue`.
-At the console the program prints `stopped at ticker.spite:16` and reads commands until `continue`.
+At the console the program prints `stopped at ticker.spite:16` and reads commands until `continue`. When it is not
+stopped, `where`, `locals` and `continue` answer `the program is not stopped at a breakpoint: 'break hero.spite:12'
+sets one`. Only the program's own files hold a breakpoint, since only their code is swapped, and in a build without
+`--hot-reload` and a REPL every breakpoint command, `eval` and `run` answer that they need one.
 
 ## Code typed at the prompt
 
@@ -452,13 +483,14 @@ $ spite --connect=4000 --command="follower = Circle(3)"
 {"ok":true,"value":"Circle { radius: 3 }","type":"Circle?"}
 ```
 
-The construction becomes `prompt_made_<n>(): Circle`, which the REPL calls once and whose object it assigns as
-it assigns another path's.
+The assignment is compiled as `run`'s code is, the statement `program.follower = Circle(3)`, run once, and the
+answer is the target read back. A class that does not fit answers the compiler's error, and the program keeps its
+code. In a program built without `--hot-reload` such an assignment is refused, since nothing there compiles code.
 
 ## Live reload: `--hot-reload`
 
-`--hot-reload` builds a program that can take new code while it runs. Save a file of the program, and the classes
-that file declares are compiled again, on their own, into a small library the running program loads and swaps in
+`--hot-reload` builds a program that can take new code while it runs. Save a file of the program, and the program
+is compiled again; the functions whose machine code changed are copied into the running program and swapped in
 the next time it waits or ends a pass of a loop, the same moments the REPL is answered at. Objects, singletons
 and everything the REPL changed stay as they were: only functions change. Every function sits in a slot so it can
 be swapped, which makes the build slower; measure performance only with a production build
@@ -475,9 +507,10 @@ Monster`); with `--repl` or `--repl-port`, `reload` swaps in what changed right 
 swapped in (or refused), with what `last_reload` would then say, so a tool that saves a file never polls. A program
 built without `--hot-reload` has none of this: no watcher, no swapping, and `reload` answers that it was not
 built for it. `--hot-reload` keeps every function (it implies `--development`), since a new version of a class
-may call one nothing called before, and it compiles like the default build, so a reload is quick. It is
-slower than a release build, since its code is not optimised and every call goes through a slot a reload can
-re-point: a `--hot-reload` build trades run speed for live information, and speed is measured on release builds.
+may call one nothing called before. It is slower than a production build, since it inlines no call and every call
+goes through a slot a reload can re-point: a `--hot-reload` build trades run speed for live information, and speed
+is measured on production builds. A reload compiles with exactly the flags the program was built with. Live
+reload runs on Windows.
 
 ```gdscript title=hot_counter/monster.spite
 var name = ""
@@ -539,8 +572,7 @@ $ spite --connect=4000 --command="exit"
 ```
 
 `visits` kept the 42 set before the first reload, and the second reload rebuilt `Monster` alone. When the watcher
-has already swapped a save in, `reload` finds nothing left to do and answers `nothing changed since the code the
-program runs`. For an AI: edit the file and send `reload`; or save and send `wait_reload`, which answers once the
+has already swapped a save in, `reload` finds nothing left to do and answers `unchanged`. For an AI: edit the file and send `reload`; or save and send `wait_reload`, which answers once the
 watcher has swapped the save in.
 
 ### What a reload can change
@@ -548,7 +580,7 @@ watcher has swapped the save in.
 | You change | What happens |
 |---|---|
 | a function's body | the next call runs the new body; a call already running finishes the old one |
-| a new function on an existing class | the new code calls it, and the REPL's `functions` lists it and the prompt can call it |
+| a new function on an existing class | the new code calls it, and so can the prompt |
 | a function you deleted | whatever still holds it (a function value, the REPL) keeps its last code; the answer says `removed Greeter.old` |
 | an attribute's default value | instances made after the reload get the new default |
 | an enum: a value added after the others | taken; the objects that hold the enum keep their values |
@@ -613,74 +645,44 @@ worked out while compiling, so the check folds away with the branch it guards.
 
 ### How it works
 
-- **One slot per function.** In a `--hot-reload` build every function is called through a slot the program can
-  re-point: the program's own, the standard library's, and the helpers the compiler writes. The function the rest
-  of the code calls is a one-line forwarder to its slot. A normal build is untouched: direct calls, and tree
-  shaking. The slot costs about a nanosecond per call, one indirect call the C compiler cannot inline
-  and only in a `--hot-reload` build.
-- **Only what changed is compiled again.** The build writes two files beside the executable: `game.reload_host`,
-  what the running program holds (every function with its C prototype, its classes and their layouts, and the
-  facts its code was compiled against, below) and `game.reload_files`, a hash of each of the program's files. A
-  reload runs the compiler that built the program with the same options and `--reload-at`, in the program's folder. It reads the
-  program's files and compares their hashes first, so a save that changed nothing answers at once. Otherwise it
-  compiles **only the classes of the changed files**: every class is read and checked, as the changed code needs,
-  but no other class's functions are compiled: the new code reaches them in the running program. The C it writes
-  is only the changed classes' functions and whatever those need that the running program lacks, with the types
-  and declarations they use, and it compiles that into `game_reload_1.dll` (`.so` on Linux, `.dylib` on macOS).
-  For a large game's server (about 460 files; 880,000 lines of C for the whole program) a changed system is swapped
-  in about 6 seconds after the save (5 of them the compiler, 1 the C compiler and starting up), where compiling the
-  whole program took 20 to 30 seconds, and a save that changed
-  nothing answers in under a second.
-- **A reload is compiled against what the running program was compiled with, and compiles the whole program when
-  that changes.** Compiling one class depends on the rest: which functions can wait, which classes fit a shape,
-  which attributes something reads, the call effects that decide whether a value must be counted, how a
-  dictionary is keyed, which functions the program made for a class (a setter, a template instance, a `to_debug`).
-  The build records these in the manifest and a reload starts from them. When the changed code changes one of
-  them (or a parameter list), code in other classes compiled against the old one would
-  be stale, so the reload compiles the whole program instead, and says why on the compiler's error output
-  (`spite: compiling the whole program, since outside HotCounter changed`). A whole compile compares every function
-  it writes with the running program's, and every function whose C changed is swapped in, whatever class it
-  belongs to, a helper the compiler wrote included. Only a helper that keeps state of its own (a singleton's
-  cache, a table the program fills as it runs) has no slot, since a new copy would start empty: a change that
-  reaches one refuses the reload with `the change reaches '<name>', which the running program cannot swap:
-  restart the program to take the change, or undo it`. Either way what swaps in is what compiling the whole
-  program writes, which compiling a reload of every file both ways and comparing them checks
-  (`SPITE_RELOAD_CHECK=<file>`).
-- **A reload that compiled the whole program is the next one's baseline.** After it, every function the program
-  runs is what that compile wrote, so the facts, the hashes and the class ids it compiled with describe the
-  running program better than the build's do. It writes them beside its library (`game_reload_2.baseline`); when
-  the program swaps the library in, it keeps them as `game.reload_baseline`, and the next reload compares with them
-  instead of the build's manifest; the functions and slots the executable holds stay the build's. A save after a
-  change that compiled everything is fast again. Starting the program again starts from the build
-  (`game.reload_start`), since a new process runs the build's code.
-- **One reload at a time.** A reload compares with the files and the baseline of the code the program will run,
-  which swapping a library in writes, so a reload waits to compile until the library before it has been swapped in
-  (or refused): the watcher and the prompt never compile against the code before a swap that is still on its way,
-  and never read those files while a swap writes them.
-- **The swap happens where the program waits**, or at the end of a pass of one of its
-  loops. A call that waits, such as `console.read_line()`, a `File` read or write, or a socket's receive, is a
-  place to swap just before and just after it, and `Program.sleep` swaps while it sleeps, so a program with no loop picks up a save before its next
-  statement. There the program loads the library
-  with the operating system's loader, the one `DynamicLibrary` uses, hands it the addresses of the program's
-  functions, and re-points the slots. Nothing runs halfway through a step. The library is compiled on a helper
-  thread while the program keeps running, so a game keeps drawing frames while its code is rebuilt.
-- **The watcher is the standard library's [`FileSystemWatcher`](standard_library.md#watch-files-and-folders)**, the one any
-  program can use, started on a thread of its own: `ReadDirectoryChangesW` on Windows, `inotify` on Linux and
-  `kqueue` on macOS, with no polling. It is watching before the program's entry runs and before the REPL listens,
-  so a save made once the REPL answers is never missed. A save made while the build was still compiling is not
-  missed either: when the program starts, each of its files is held against the text the build compiled, and if
-  any differs the watcher compiles once before it waits, so `wait_reload` waits for that compile too. The
-  operating system wakes the thread; a burst of changes is waited out until 100 ms pass without one, so a save
-  that writes a file in pieces reloads once. Only a change to a `.spite` file, or to a folder, compiles again, and
-  never one under a `.spite/` folder: the compiler writes its own output there, so a compile started by its own
-  output (which, with an error in the saved code, would refuse the same code again and again) cannot happen. When the program ends, the watcher is stopped before anything it
-  uses is let go, after the compile it is running finishes: it looks every quarter of a second whether the program
-  is ending, so ending a `--hot-reload` program can take that long. The program's own folder is watched with every folder below it, and so is every folder it `load`s, except
-  a repository's checkout under `.spite/git/` ([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)),
-  which is read-only: a pinned commit never changes, so there is nothing to reload there, and a change to that
-  package is a new commit and a restart. Each reload's library is written beside the executable, into
-  `.spite/build/` by default; only when that lies inside a watched folder does it wake the watcher once more, for a check that finds nothing changed.
-- The compiler, its options, the program's folder and the executable are recorded in the build, and a reload
+- **One slot per function.** In a `--hot-reload` build every function starts with a jump through its slot, eight
+  bytes of the executable that hold the address of the function's body: the program's own functions, the standard
+  library's, and the helpers the compiler writes. Every call, function value and thread entry names the function's
+  start, so all of them follow a swap. A normal build is untouched: direct calls, and tree shaking. The cost is one
+  indirect jump per call, only in a `--hot-reload` build.
+- **What the build records.** Beside the executable, `game.reload_host` lists what the running program holds: every
+  function with its start, its slot and a digest of its machine code, the state its code reaches by name, the system
+  functions it imports, every class's layout, every enum's values and a digest of each of the program's files.
+- **A reload compiles the whole program.** It runs the compiler that built the program, in the program's folder,
+  with the same flags and `--reload-at`. It compares the program's files with the manifest first, so a save that
+  changed nothing answers `unchanged`. Otherwise it compiles the program and compares every function's digest with
+  the manifest's: the functions whose code changed, and the ones the running program lacks, are written into
+  `game.reload_<n>` beside the executable, laid out at the address the program keeps for new code, and every
+  other function keeps the code the program runs. It answers `rebuilt Monster` (the classes of the rebuilt
+  functions), `removed Greeter.old` for a function that is gone, or `no code the program runs changed, so nothing
+  was rebuilt`. The next manifest is written as `game.reload_pending`, and takes the place of `game.reload_host`
+  once the code is swapped in, so the manifest always describes the code the program runs.
+- **What else a reload refuses.** Besides a file that does not compile, a class's attributes and an enum's values
+  (above), a reload is refused, and the program keeps all of its code, when the routines every function shares
+  (allocating, freeing, stopping) are compiled differently, when the new code calls a system function the running
+  program never imports, when it reaches state the compiler did not name, when the room kept for new code is full,
+  and when a function writes more or fewer object literals of one set of attributes than the running one. Each
+  answer ends with what to do, most often `start the program again`.
+- **The swap happens where the program waits**, or at the end of a pass of one of its loops. A call that waits, such
+  as `console.read_line()`, a `File` read or write, or a socket's receive, is a place to swap just before and just
+  after it, and `Program.sleep` swaps while it sleeps, so a program with no loop picks up a save before its next
+  statement. There the program copies the new code in and re-points the slots. Nothing runs halfway through a
+  step, a call already running finishes on the old code, and new code is never unloaded, since values it made may
+  still be held. The compile runs there too: the program waits for the compiler while it reloads.
+- **The watcher is the standard library's [`FileSystemWatcher`](standard_library.md#watch-files-and-folders)**, the
+  one any program can use, with no polling. The program's own folder is watched with every folder below it, and so
+  is every folder it `load`s. Only a saved `.spite` file reloads, and never one under a `.spite/` folder: the
+  compiler writes its own output there, and a repository's checkout under `.spite/git/` is a pinned commit
+  ([packages.md](packages.md#loading-a-repository-pinned-to-a-commit)) that never changes. A file still being
+  written is waited out until it is quiet, so a save that writes a file in pieces reloads once.
+- **A crash inside reloaded code** names its file, line, class and function like any other, and its offset in the
+  reload ([failure.md](failure.md#what-a-native-fault-reports)).
+- The compiler, its flags, the program's folder and the executable are recorded in the build, and a reload
   compiles in that folder, so the program can run from any folder.
 
 ---

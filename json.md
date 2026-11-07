@@ -75,6 +75,13 @@ Ada "the" first shipped tea 2
 - `JsonReader<T>()` names the type it makes and takes nothing, and `read(text: String): T?` answers `null` when the
   text is not JSON, or not this class's JSON; one reader reads any number of texts. Narrow it like any other `T?`: `crash` when bad input is a bug, `fallback` when the program should carry on,
   `if` when absence is a case.
+- Text is escaped as JSON needs: `"`, `\`, line feed, carriage return and tab become `\"`, `\\`, `\n`, `\r` and
+  `\t`, and every other control character `\u00XX`. Reading turns any `\uXXXX` back into UTF-8, surrogate pairs
+  included. A `Dictionary`'s entries are written in the order they were set.
+- An attribute your program only ever hands to a writer counts as read, since the writer reads every attribute,
+  so the unused-attribute error does not fire for it.
+- There is no class named `Json`: writing `Json` is an error that names the pair, `JsonWriter<T>()` and
+  `JsonReader<T>()`.
 
 ### What a reader makes
 
@@ -389,6 +396,8 @@ lenient about what it does not need:
   the serializer is given ([below](#a-key-that-is-not-an-attributes-name)).
 - **A value of the wrong kind makes the whole read `null`**: text where a number belongs, `null` for an
   attribute that is not a `T?`, an enum name the enum does not have.
+- **Text that is not one whole value makes the read `null`**: a missing brace, or anything after the value
+  (`{} x`). A wrong object that looks right would be a surprise.
 
 ```gdscript title=json_input/reading.spite
 var name = "unnamed"
