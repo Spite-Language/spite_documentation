@@ -328,6 +328,10 @@ knowledge, write the section and link to it; if it warns against a change, a tes
 harder than prose. A line inside a function that seems to need explaining becomes a named function instead:
 a name, unlike a comment, is visible to reflection, `--final-classes` and every tool.
 
+These rules are the program's own. A file of the standard library or of a package, the files the compiler never
+rewrites, has its comments dropped when it is read (D1933), so no comment rule looks at them and their links are not
+checked: a library checked out alone, or loaded pinned with `@`, compiles without the markdown it links beside it.
+
 The one other link is the one `--final-classes` writes: in the folder it prints, each attribute and function is
 marked with a comment linking the `.spite` file that supplied it (`# ../../game/hero.spite`), with no anchor, so
 the printed classes name where every declaration came from and still compile. Only a file under a folder
