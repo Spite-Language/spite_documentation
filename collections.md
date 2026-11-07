@@ -384,7 +384,7 @@ names a program calls. Text has members too: `names.map_upper_cases()` collects 
 | `find_index_by_<member>(value)` | `Integer?`, the place of that element | return something comparable to `value` |
 | `sort_by_<member>()` | `List<T>`, sorted ascending, stable, in `n log n` time | return a number or a `String` |
 | `map_<members>()` | `List<U>`, one value per element | return a value |
-| `each_<member>()` | nothing: calls it on every element | be a function that takes nothing; what it returns is discarded |
+| `each_<member>()` | nothing: calls it on every element | be a function that takes nothing and answers nothing (a walk that drops answers is an error: use `map_<member>()`) |
 | `remove_where_<member>()` | nothing: removes the elements where it is true, keeping the rest in order | take nothing, return `Boolean` |
 
 A member that does not fit is a compile error naming the member, what it is, and what the template needs.

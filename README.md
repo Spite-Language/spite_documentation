@@ -155,9 +155,9 @@ with a link to the next.
 
 Every titled Spite program on these pages is compiled and run, what it prints is compared with the output written
 under it (or it must fail with the error written under it), and its memory must balance. The formal definition of the
-language is [the specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md), one page
-for each page here with every rule, edge case and exact error text; where the two disagree, the specification decides
-and the page is the bug. The code blocks are fenced as `gdscript` because GitHub cannot highlight Spite yet; the code
+language is the programs of [spite_spec](https://github.com/Spite-Language/spite_spec): a `tests/<name>` program for
+each behaviour and a `conformance/<name>` program for each refusal, with its exact error text. These pages teach what
+those programs hold; where the two disagree, the programs decide and the page is the bug. The code blocks are fenced as `gdscript` because GitHub cannot highlight Spite yet; the code
 is Spite throughout.
 
 For whoever writes or changes these pages:

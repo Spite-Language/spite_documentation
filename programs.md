@@ -269,7 +269,7 @@ running the printed program takes its flags again.
 
 `build.operating_system` is the system doing the compiling, and `build.target_operating_system` the one the
 program is compiled for: `"windows"`, `"linux"` or `"mac"`. The target defaults to the compiling system, and
-`--target-operating-system=linux` compiles for Linux from any machine. Both are constants, so a condition on
+`--target-operating-system=linux` sets it to Linux; the executable itself is a Windows x64 one whatever it says. Both are constants, so a condition on
 them keeps one branch:
 
 ```gdscript title=target_system/target_system.spite entry

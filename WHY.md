@@ -329,7 +329,7 @@ because it seems to work. Here nothing is accepted on that basis.
 - **Decisions are written down, with their reasons.** Every decision is logged in
   [DECISIONS.md](https://github.com/Spite-Language/mortaros_spite/blob/master/DECISIONS.md), each with its date, who made it and why, so nothing is re-argued from memory and
   nothing changes without a record.
-- **The specification is normative and tested.** Every rule has one page in `specs/`; every titled program in
+- **The specification is programs.** Every rule is held by a test or conformance program in `spite_spec`; every titled program in
   the docs is compiled and run by the test suite, along with conformance programs and programs that must fail with
   an exact error. The compiler is written in Spite and builds itself.
 - **Speed claims are measured against C.** Every optimisation has a benchmark that compares the plain Spite

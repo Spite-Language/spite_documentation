@@ -11,9 +11,9 @@ hold.
 it keeps the run-time check. So each entry ends with **Falls back**: what happens when the proof does not apply, and
 what you write yourself. That is the part to read before relying on a proof.
 
-This page is a catalogue, not a second home for the rules. Each entry says in a few lines what is proven, and the
-[specification](https://github.com/Spite-Language/spite_spec/blob/master/specs/README.md) states it in full; where
-an entry and the specification differ, the specification decides. The optimisations built on these proofs are on
+This page is a catalogue, not a second home for the rules. Each entry says in a few lines what is proven, and links
+the page that teaches the rule; the programs of [spite_spec](https://github.com/Spite-Language/spite_spec) hold its
+corner cases and exact errors, and where an entry and those programs differ, the programs decide. The optimisations built on these proofs are on
 [Optimisations](optimizations.md).
 
 Every entry has the same parts:
@@ -85,7 +85,7 @@ func Narrowing(): Integer {
 }
 ```
 
-See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/master/specs/failure.md#nothing-fails-silently-the-rule).
+See [Nothing fails silently](failure.md#nothing-fails-silently).
 
 ### Every side of an `and` narrows
 
@@ -223,7 +223,7 @@ See [Nothing fails silently](https://github.com/Spite-Language/spite_spec/blob/m
   a text is refused: choose among those with `if`s. A repeated case is an error.
 - **Falls back**: refused: `this switch over '...' has no case for ...: add the cases`.
 
-See [Switch over values](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md#switch-over-values).
+See [Switch over values](control_flow.md#switch-over-values).
 
 ## Indices and numbers
 
@@ -324,7 +324,7 @@ func Proven(): Integer {
   type's range.
 - **Buys**: an operation the ranges prove carries no overflow check.
 - **Falls back**: the check stays. See
-  [a range proves a check unneeded](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#a-range-proves-a-check-unneeded).
+  [a range proves arithmetic fits](#a-range-proves-arithmetic-fits).
 
 ```spite title=proofs/range.spite entry
 func Ranged(): Long {
@@ -508,12 +508,12 @@ func Ranged(): Long {
   because the list keeps the old item.
 - **Falls back**: write into the list (`list[index] = value`) if that is what you meant.
 
-See [Assigning a name read from a list](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#assigning-a-name-read-from-a-list-changes-only-the-name).
+See [Assigning a name read from a list](memory.md#a-name-read-from-a-list-names-the-item-until-you-assign-it).
 
 ## Threads and locks
 
 The rules are on [Concurrency](concurrency.md) and in
-[the memory model](https://github.com/Spite-Language/spite_spec/blob/master/specs/memory.md#the-memory-model).
+[the memory model](memory.md).
 
 ### No other thread counts a class
 
@@ -591,40 +591,40 @@ The rules are on [Concurrency](concurrency.md) and in
 - **Rule**: in a loop that sleeps, a call with no arguments and no answer that can wait is started as a
   state machine of its own, unless either side writes back a value read before a wait.
 - **Falls back**: it waits where it is written. See
-  [a wait in a frame](https://github.com/Spite-Language/spite_spec/blob/master/specs/concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame).
+  [a wait in a frame](concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame).
 
 ## Other refusals built on an analysis
 
-Each reads the program while compiling and accepts or refuses code; each is stated in full in its specification, and
+Each reads the program while compiling and accepts or refuses code; each is taught on the page it links, and
 none has a fallback beyond the error it gives.
 
 - **Unused is an error**: a name, parameter or attribute only written and never read
-  ([Style](https://github.com/Spite-Language/spite_spec/blob/master/specs/style.md#unused-is-an-error)).
+  ([Style](style.md#nothing-unused)).
 - **A constructed object must be kept and used**: a construction written as a statement of its own is refused
-  ([Classes and files](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#a-constructed-object-must-be-kept-and-used)).
+  ([Classes and files](classes_and_files.md#a-constructed-object-is-kept-and-used)).
 - **Singletons that make each other in a circle** are an error; a circle closed only at run time halts naming it
-  ([Singleton rules](https://github.com/Spite-Language/spite_spec/blob/master/specs/classes_and_files.md#singleton-rules)).
+  ([Singleton rules](classes_and_files.md#singletons)).
 - **Build settings are constants**: a flag's value has its field's type, an unknown flag is refused, and an `if`
   around a `load` is decided from `Build` fields and literals
-  ([Programs](https://github.com/Spite-Language/spite_spec/blob/master/specs/programs.md#build-settings-build)).
+  ([Programs](programs.md#compile-time-settings-build)).
 - **A value fits a `type`**, and a `$T` its constraint: a class passed as a `type` must have each attribute with the
   type's type, and each function with the same parameters and answer, the type's own name standing for the class
   that fits. The refusal says which: `'...' does not fit type '...': it has no function '...'`, or that an
   attribute or argument has another type, or that a function takes a different number of arguments
-  ([Inline types](https://github.com/Spite-Language/spite_spec/blob/master/specs/values_and_types.md#inline-types-and-duck-typing-in-full)).
+  ([Inline types](values_and_types.md#inline-types-and-duck-typing)).
 - **A member template fits**: the member a template names exists and has the right kind (a `Boolean` for
   `filter_`, `any_` and `all_`; a number for `sum_`; a function for `each_`; a number or text for `sort_by_`), and a
   passed function takes the element
-  ([Collections](https://github.com/Spite-Language/spite_spec/blob/master/specs/collections.md#standard-library-metaprogramming)).
+  ([Collections](collections.md#member-templates-loops-you-do-not-write)).
 - **A value can be written**: the `T` of a JSON or binary writer or reader holds no union, `type` or function value
-  anywhere ([JSON](https://github.com/Spite-Language/spite_spec/blob/master/specs/json.md)).
+  anywhere ([JSON](json.md)).
 - **What crosses into C**: numbers, `Boolean`s, enums, text, lists of numbers, number-only `type`s and function
   values; a callback's parameters and context are checked
-  ([Foreign libraries](https://github.com/Spite-Language/spite_spec/blob/master/specs/foreign_libraries.md#what-crosses)).
+  ([Foreign libraries](foreign_libraries.md#what-crosses)).
 - **The short form is proven the same, and the long form refused**: a `while` a member template already says, a
   chain of `if`s that is a `switch`, the same call opening every branch, a switch that is a class test and a text
   that is one hole are refused, naming the short form
-  ([Control flow](https://github.com/Spite-Language/spite_spec/blob/master/specs/control_flow.md)).
+  ([Control flow](control_flow.md)).
 
 Not proven anywhere, so write the check or accept the run-time report: how deep recursion goes (a stack overflow is
 a [native fault report](failure.md#what-a-native-fault-reports)); unreachable code after a `return`; a reference

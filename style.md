@@ -89,7 +89,9 @@ late
 fixed: a variable came after the constructor here; moved it up, since a file is ordered: the singleton line, generic lines, enums, unions, types, variables, the constructor, conversions, presets, then functions
 ```
 
-The same goes for anything else with exactly one fix (D1767): the compiler fixes it in the file and prints a
+## The compiler fixes what has one fix
+
+Anything with exactly one fix is treated like the order of a file (D1767): the compiler fixes it in the file and prints a
 `fixed:` line for it on the error output, `<path>:<line>: fixed: <what was wrong>; <what it did> (in
 <Class>.<function>)`, the line being the one the mistake was on, so you read what changed. Then it compiles the
 fixed file. A mistake whose fix needs a choice stays an error, and a file of
