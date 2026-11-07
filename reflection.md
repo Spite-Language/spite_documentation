@@ -348,6 +348,25 @@ root object, and a bound attribute's `.value`, which is `null` when the instance
 `.returned_literal` exists only for a function whose body is one `return` of a text literal, and reading it of another
 halts, naming it.
 
+### What the compiler leaves out
+
+Every reflection class takes all its fields in its constructor and the compiler makes it through that constructor,
+collections and facts included. A class's own `_fill_` builds its collections first, then runs the constructor on the
+object already in its slot, so a collection that names the class itself gets that object. A field the program never
+reads costs nothing, because the compiler leaves it out: no slot, no write, no constructor argument, and what it would
+have held (a function's stand-in and wrappers, its facts, its file) is not worked out. A program that reads no reflection
+has none of it. [optimizations.md](optimizations.md#a-reflection-field-nothing-reads-has-no-slot)
+
+Five fields stay nullable, each because the value can really be absent:
+
+| Field | Why it can be absent |
+|---|---|
+| `Spite.Class.namespace` | a class at a program's root has no namespace: there is no root object |
+| `Spite.Namespace.parent` | a namespace at the top has no parent, for the same reason |
+| `Spite.Attribute.value` | the instance's field holds `null` when the attribute is itself nullable |
+| `FunctionDeclaration._returned_literal`, behind `.returned_literal` | only a function whose body is one `return` of a text literal has one; reading it of another halts |
+| `FunctionDeclaration._called_on`, behind `Spite.Call` | a declaration runs on an instance only where the compiler can make a stand-in to bind it to, which it does for a class of the program that can be made; the entry class, a singleton, a class the compiler stores itself and a library class have none, and `call()` on one of those halts |
+
 A class's `.functions` lists the functions it declares and the template instances generated for it, once compiling
 ends and in the order they were made, so it does not depend on the order classes were compiled in. A constructor is
 not one of them: it makes an instance, it does not answer on one. A class of the standard library describes its members

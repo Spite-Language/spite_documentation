@@ -534,6 +534,13 @@ Nothing is silent: freeing the same memory twice stops with `the program freed t
 more than the system has stops with `the program ran out of memory`. A program that allocates nothing carries none of
 it, and only a `--debug-memory` build counts blocks.
 
+### A reflection field nothing reads has no slot
+
+The classes that describe your program (`Spite.Class`, `Spite.Function`, ...) take every field in their constructors. A
+field no code of the program reads takes no slot, has no write and is not passed, and what it would have held is not
+built. Reading `Monster.name` pays for the name, not for `Monster.functions`. A program that reads no reflection makes
+none of these objects.
+
 ### Defaults the constructor replaces are never made
 
 A constructor that assigns an attribute before anything can read it makes its objects with a copy of the class's
