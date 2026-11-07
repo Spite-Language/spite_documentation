@@ -27,8 +27,8 @@ spite --hot-reload --repl-port=4000
 
 It keeps running, even after its entry constructor returns, until a client sends `exit`. Then, for each change:
 
-1. **Edit and save the file.** The watcher compiles only the classes that file declares and swaps them in, keeping
-   every object's state.
+1. **Edit and save the file.** The watcher compiles the program again and swaps in every function whose code
+   changed, keeping every object's state.
 2. **`spite --connect=4000 --command="wait_reload"`** answers once the save is compiled and swapped in, with what was
    rebuilt (`rebuilt Monster`) or the compiler's errors. Never poll, never sleep: this is the wait. (`reload` swaps
    in what changed right away, without waiting for the watcher.)
@@ -40,11 +40,12 @@ It keeps running, even after its entry constructor returns, until a client sends
      allocations and bytes);
    - `eval stock.count() + 40` and `run stock.append(9)` compile code typed at the prompt into the running program.
 4. **Debug where it goes wrong.** `break monster.spite:42` stops the program before that line; `where` says where it
-   stopped, `locals` lists what is in scope, any path may start at a local's name, and `continue` goes on. `breaks`
+   stopped, `locals` lists `self` and every local in scope (`name: Type = value`, one per line), and `continue` goes
+   on. `breaks`
    lists them, `clear` removes them.
-5. **When a reload is held**, read why. Renaming an attribute is held because it would lose data, and the answer
-   names the map to send: `reload {Hero.attributes["level"]: "rank"}` keeps the value under the new name, and
-   `reload {}` lets it go.
+5. **When a reload is refused**, read why. A change that adds, removes, renames or retypes an attribute, or
+   changes an enum's values other than by adding new ones last, is refused: the program keeps all of its old code,
+   and the answer says to start the program again. Send `exit` and start it again.
 
 Leave the loop only when you need to:
 
@@ -53,7 +54,8 @@ Leave the loop only when you need to:
   Every compile formats first; there is no `spite format`.
 - A full run from a fresh start, and the tests (`spite` in `tests`, [docs/testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)),
   before you call the work done.
-- `--optimized` only to measure speed. A `--hot-reload` build is slower on purpose; never time one.
+- Measure speed only on a production build: no `--repl`, `--repl-port`, `--hot-reload` or `--debug-memory`.
+  `--optimized` only sets `Build.optimized`; it does not make the program faster.
 
 Every compile, a reload included, rewrites your files into the one style first: read a file back before editing it
 again. Every error comes as `path:line: error: message (in Class.function)` and says what to write instead: write
@@ -95,6 +97,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   types. No single letters except the axis names `x`, `y`, `z`, `w`.
 - No `for`, `break` or `continue`. Prefer the list templates (`monsters.filter_alive().sum_health()`,
   `names.each(say_hello)`); a `while` that only does what a template does is an error naming the template.
+- A `while` states how it ends: `while true` (or any condition known to be always true) is an error; loop
+  `while running` and set `running = false` where it ends. A `while` whose condition reads only locals the body never
+  changes, with no call, `return`, `fallback` or `crash`, is an error too.
+- Use the operator, never its function: `a + b`, not `a.sum(b)`; `person.age`, not `person.get_age()`; `list[0]`,
+  not `list.get_at(0)`.
 - Metaprogramming is ordinary code on reflection objects, run while compiling: `Monster.attributes.each(describe)` with
   `describe(attribute: Spite.AttributeDeclaration)`. A function with a parameter named by a word of its own name is a
   template over that kind of member: `Spite.AttributeDeclaration` (read as `monster[attribute]`),
@@ -103,7 +110,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it.
 - No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `fallback`, `crash`, `switch`).
   `fallback condition` ends the function with what its answer type builds with no arguments (`null` for a `T?`,
-  `0`, `""`, an empty list); answer a `T?` when a caller must tell that from a real answer. `crash condition` halts on
+  `0`, `false`, `""`, an empty list, or a fresh object of a class made with no arguments; an enum or a class whose
+  constructor takes arguments has none, so a `fallback` there is an error: answer `T?` or `crash`); answer a `T?` when a
+  caller must tell that from a real answer. `crash condition` halts on
   a developer mistake. Neither takes a message: the crash report shows the values.
 - A narrowing, a `[]` proof included, lasts until a write or a call that may undo it or shrink the list (the compiler follows the call, whatever its answer is used for). Narrow again after
   one: the new check stays and tests at run time. A write or a call inside a branch that returns leaves it standing
