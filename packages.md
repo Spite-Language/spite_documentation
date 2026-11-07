@@ -278,7 +278,8 @@ func SpiteNamespaceError() {
 `Spite.Internal` is the one namespace of the standard library that a program may not name at all: it holds the
 machinery under the library (raw memory, threads, locks), and the library offers plain forms instead, such as
 `Buffer` and `BinaryReader` for bytes. The compiler's own classes, `Spite.Fault`, `Spite.Asserts`,
-`Spite.CopyTable`, `Spite.Prompt`, `Spite.PromptPath` and `Spite.Settings`, are refused the same way. Naming any of them
+`Spite.CopyTable`, `Spite.Prompt`, `Spite.PromptPath` and `Spite.Settings`, are refused the same way (the library's
+`spite/` folders hold the first four, which no `spite/` folder of a program may reopen). Naming any of them
 from your own code is a compile error that says which plain form to use, wherever the name is written: a type, a
 call, a member of a `union` or of a `type`, a class written in a `spite/internal/` folder, or inside the `{}` of a
 text. The message names the class written, or `Spite.Internal` alone when no class follows. A text that merely
