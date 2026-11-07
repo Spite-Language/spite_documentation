@@ -452,6 +452,7 @@ rewritten.
   Value cases are `'red': return 30` or `true:`/`false:`, and a `Boolean` needs both (`this switch over 'count > 2' has no case for false: ...`); for one of them write an `if`. A `switch` over a number or a text is an error: choose with
   `if`s. Three `if`s in a row that each compare one name with one of its enum values and only return are an error that
   writes the switch for you, naming every value; an `else if` chain of three is the same.
+  The subject runs once however many cases there are, whatever it holds (a call, a chain through a call, an index, a getter). A subject holding a call narrows nothing in its cases, since writing it again calls again: `var held = thing.pop().target`, then `switch held`.
 - `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside.
   In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an

@@ -10,7 +10,7 @@ switch enemy {
 }
 ```
 
-That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum, a whole number or a text), plus
+That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum or a `Boolean`), plus
 `fallback` and `crash` ([failure.md](failure.md)). There is no
 `for`, no `break` or `continue`, no ternary `? :`, and no `do`. Before reaching for a loop at all, check whether a
 [member template](collections.md#member-templates-loops-you-do-not-write) already says it:
@@ -338,6 +338,10 @@ value with a case of its own`. A case of the switch is one statement (a call, an
 alone on its line or alone inside `{ }`; two statements are `this case runs 2 statements: a case is one statement,
 so move them into a function named for what they do and call it here`, in every kind of switch. The exception to the
 shared body is a body that reads the switched value, which stays a `switch`.
+
+**The subject runs once.** However many cases there are, and whatever it holds: `switch thing.pop().shade` calls `pop`
+one time, and so does a subject that ends in an index or reads a getter. A subject holding a call narrows nothing in
+its cases, since writing it again calls again. To read the narrowed value, hold it in a `var` and switch on the name.
 
 ## `switch` over values
 
