@@ -26,6 +26,9 @@ spite --high-ir                     also write the high representation, .spite/b
 spite --low-ir                      the same for the low representation, .spite/build/<name>.low_ir.txt
 ```
 
+Each instruction in the low representation ends with ` | ` and every field it holds as `name=value` (a list as
+`[a,b]`, a vector loop's lists as a count), so a field an optimisation forgets to carry shows in the file.
+
 Every flag is a `Build` field, listed under [Build options](#build-options). Flags mix
 freely, and the outputs combine: one compile can build the executable and write its final classes. `--optimized`
 marks a release build: `Build.optimized` is true, which the program's own code can read. A production build is
