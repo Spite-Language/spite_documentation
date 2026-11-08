@@ -956,7 +956,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `"hello ${name}"` | *silent*: prints `hello $` and the name | `"hello {name}"` |
 | `'hello'` for text | `'hello' in single quotes is an enum value literal, and text is wanted here: text is always written in double quotes` | `"hello"`: single quotes are enum values only |
 | `flags.bits_and(mask)` with a wider `mask` | `'flags.bits_and(mask)' works in a Byte, since a bitwise function takes its receiver's type` | widen the receiver first: `var wide: Long = flags` |
-| `var held: $held_type = null` bound to a `type` that requires a function | `'held' is a Weapon, a type that requires the function 'strike', so '= null' has no default to make` | `$held_type?`, or set it in the constructor |
+| `var held: $held_type = null` that no constructor assigns | `the attribute 'held' is declared '$held_type', not '$held_type?', so '= null' would make a default $held_type rather than nothing: ...` | `$held_type?`, or assign it at the top of the constructor (then `= null` is fine, a `type` that requires a function included) |
 | `for item in list` | `Spite only has 'while' loops; there is no 'for'` | `each_<member>()`, `map_`/`filter_<member>()`, or `list.each(function)` with a function of yours; `while index < list.count()` when the body needs more |
 | `break`, `continue` | `Spite has no 'break': a loop stops in its own condition` | the loop's own condition: `while index < count and not found` |
 | `list.add(x)`, `list.pop()` | `List has no method 'add', which does not say where` | `append`/`prepend`, `remove_last()`/`remove_first()` |

@@ -602,7 +602,8 @@ whether an attribute's class is a singleton is `attribute.class.is_singleton`, n
 | `.index` | its place in declaration order, 0 for the first | `Monster.attributes["health"].index` is `1` |
 | `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
 | `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
-| `.pascal_case_name` | its name as other systems spell it | `buy_price` is `BuyPrice` |
+| `.camel_case_name` | its name in camelCase, while compiling only (a walk or a function handed a constant) | `buy_price` is `buyPrice` |
+| `.pascal_case_name` | its name in PascalCase, while compiling only, like `.camel_case_name` | `buy_price` is `BuyPrice` |
 | `.source_file` | on a declaration: the `File` it is written in | `Monster.attributes["health"].source_file` |
 | `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes["health"].value` |
 
@@ -773,7 +774,9 @@ reflection on it is ordinary code that costs nothing at run time:
   itself, so `attribute.class` is a type, `attribute.name` is text known while compiling, and
   `monster.attributes[attribute]` is a plain read of the field.
 - **A constant class is a type and makes its own instances**: `part()` makes one, `Column<part>()` a column of
-  them.
+  them. A class known only at run time is not: a parameter, local or attribute holding a `Spite.Class` written
+  where a type is (`List<kind>`, or `func made(kind: Spite.Class): kind`) is `'kind' is not a class known while
+  compiling, so it cannot be a type here`.
 - **Asking a constant list is a constant too**: `Part.classes.is_empty()` and `Part.namespaces.is_empty()` fold, as
   do `count()`, `filter(...)` over the list and `map_names()`, so an `if` on them keeps one branch and the branch
   not taken is never compiled. `[]` with a name or number written in the code answers a constant `T?`:

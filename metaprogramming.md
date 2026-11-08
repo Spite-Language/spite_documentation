@@ -622,7 +622,9 @@ A question member may be asked without its `is_`. The templates that ask somethi
 `is_alive` and no member named `alive` of its own; both spellings are the same template.
 
 The plural is never guessed. A collecting template written in the singular is an error naming the plural (`'map_name'
-answers every 'name', so it is written in the plural: 'map_names'`), and two members whose names share one plural,
+answers every 'name', so it is written in the plural: 'map_names'`), and so is a plural `pluralize()` would not
+spell (`map_persons` for `person` names `map_people`) and a template of your own that answers
+`List<member.class>` declared in the singular (`collect_member` names `collect_members`), and two members whose names share one plural,
 `person` and `people`, are an error asking you to rename one. When `pluralize()` gets a word wrong, add the word to
 the program's own `irregulars` or `uncountables` ([standard_library.md](standard_library.md#plural-and-singular)),
 or rename the member.
@@ -641,7 +643,9 @@ var paths = entries.map_paths()
 `entries()` is a `List<Directory.Entry>?`, a union of `Directory` and `File` (`null` when the folder cannot be
 opened); `filter_files()` answers a `List<File>`, and `path` is the member both classes have.
 The other templates take a member class the same way: `entries.count_files()`, `any_directories()`,
-`all_files()` and `remove_where_directories()`.
+`all_files()` and `remove_where_directories()`. A name that could be a member class or an attribute every member has
+(`things.count_wheels()` over a `Wheel` member and a `wheels` attribute) is an error, never a guess: `'count_wheels'
+could keep the 'Wheel' members of 'Part' or ask each member its 'wheels': ...`, so rename one of them.
 
 ### Templates and walks, side by side
 
@@ -698,7 +702,7 @@ accepts. Every hole is filled at every call: there are no defaults, and the wron
 that lists the class's values in order (the second program below). A generic class needs no constructor
 (`library/list.spite` is `generic $element_type` and its functions), and when the constructor's arguments say
 every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, Integer>`. `Pair` may declare `var left: $left_type = null` because its constructor
-assigns `left` at once; anywhere else `null` belongs to `T?` alone, and `var left = $left_type()` makes
+assigns `left` at once, even when `$left_type` is a `type` that requires a function and so has no default to make; anywhere else `null` belongs to `T?` alone, and `var left = $left_type()` makes
 the default of whatever `$left_type` is bound to.
 
 The `generic` lines come first in the file, after a `singleton` line if there is one and before everything else, one

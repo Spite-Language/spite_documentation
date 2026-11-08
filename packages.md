@@ -36,8 +36,9 @@ func Game() {
   `window-plugin`, and a folder that is not is an error before anything compiles, naming the spelling to use
   (`the folder 'BadFolder' is not named in snake_case: ... so rename it 'bad_folder'`). A name is `snake_case` when it is
   a lowercase letter, then lowercase letters, digits and single `_`, not ending in `_`: `kit_2` is fine, and
-  `kit__x`, `kit_` and `2kit` are not. The rule covers the program's folder and every folder inside it, and the
-  same inside a loaded folder. Of the folders a `load` names, only the last
+  `kit__x`, `kit_` and `2kit` are not. The rule covers the program's folder and every folder inside it that holds
+  a `.spite` file, however deep, and the same inside a loaded folder: a folder of notes or images with none, `Notes
+  And Things/`, is never read. Of the folders a `load` names, only the last
   one becomes a namespace, so only it is held to the rule: `load "../../Old Tools/render_vulkan"` is fine, and
   `load "../../plugins/RenderVulkan"` is refused for `RenderVulkan` at the line that writes it, before the
   folder is looked for. `.` and `..` are not folder names, so the last folder is the last one that is neither.
