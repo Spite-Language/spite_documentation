@@ -900,7 +900,9 @@ Like `enum` and `type`, a `union` takes no `=` and lists one member per line. A 
 member, with no `_:` for the rest, so a member added later is an error at every switch, and two members may share
 a one-line case. `enemy.class == Monster` asks which member a value is
 ([control_flow.md](control_flow.md#switch-over-a-union)). `Monster?` is exactly this kind of union: `Monster` and
-`Null`, the class whose only value is `null`.
+`Null`, the class whose only value is `null`. So a `Monster?` fits an `Enemy?` with nothing to narrow, in a
+`return`, an assignment and an argument alike: `Monster` fits `Enemy`, and `null` fits the `?`. It fits a plain
+`Enemy` only once narrowed.
 
 A union holds objects whose class a `switch` can test, so `String`, a number class, `Boolean` and a generic class
 such as `List<Integer>` are refused as members: make a class of your own that keeps the value in an attribute.

@@ -873,8 +873,11 @@ another class's `type` is never named outside it, so `Shelf` declares its own `P
 (naming `Other.Printable` is an error saying so). What fits is what the `type` would accept anywhere: a class with
 the functions and attributes listed, `String`, a number, an enum, a `List` or `Dictionary` that has what the `type`
 needs (a `count(): Integer` is enough for either), and the `type` itself. Each member is compared by its type as well
-as its name, so a `weight` that answers a `String` does not fit a `type` that needs an `Integer`. A `T?` is refused
-(`it may be null, and null has none of what the type needs`), and so is a function value. A constraint names a `type`
+as its name, so a `weight` that answers a `String` does not fit a `type` that needs an `Integer`. A `T?` fits when its `T`
+does and the `type` asks only for what null answers too, `to_string()` and `to_debug()`, each giving `null`:
+`Shelf<String?>` compiles, and a null item prints as `null`, as printing a null anywhere does. A `T?` is refused
+for a `type` that needs anything else (`it may be null, and null has no function 'label'`), and so is a function
+value. A constraint names a `type`
 and nothing else: `generic $count_type: Integer` is an error on the `generic` line.
 
 The check runs once for each class given, wherever the class is made: written between `<` and `>`, or read from the

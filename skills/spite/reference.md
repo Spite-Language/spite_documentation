@@ -425,7 +425,8 @@ rewritten.
   by the compiler to the entry class of the lowest namespace holding both (the class named like its folder, its file
   created if missing), and every use is rewritten: `Bunda.Pet` in a class of that namespace or below, plain `Pet` only in
   the entry class. Outside that namespace it is never named. A union value fits another
-  union when all its members are members of it, and a caller passes the member value itself. Unions with the same
+  union when all its members are members of it, and a caller passes the member value itself; a `Gitty?` fits a `Place?`
+  (a member's `T?` into the union's `T?`) with no narrowing, a plain `Place` only once narrowed. Unions with the same
   members are one type inside a generic (`List<A.Pet>` is `List<B.Pet>`).
 - A `type` or a `union` makes no object: `Tag("favourite")` is an error (`'Tag' is a type, so it makes no object: ...`). Make an object of a class that fits it.
 - `union Enemy { Player Monster }`, written one member per line: `switch enemy { Player: ... Monster: { ... } }`
@@ -659,7 +660,8 @@ rewritten.
   class is never generic (`'Game' is the entry class and declares 'generic $item_type'`): put what needs `generic`
   lines in a class the entry class makes. A function never has codegen values of its own (`func pick<$value_type>(...)` is an error): a
   function that takes any object takes `Anything` or a `type`. `if $value_type == Integer { }` is decided at compile time. `generic $item_type: Printable` (with the class's own `type Printable`) accepts
-  only classes that fit that `type` (a `T?` and a function value never fit); any other is an error where the class is
+  only classes that fit that `type` (a function value never fits; a `T?` fits when its `T` does and the `type` needs
+  only `to_string()` or `to_debug()`, which null answers as `null`, so `Shelf<String?>` prints a null item as `null`); any other is an error where the class is
   named, not inside the generic. Only an enum is named outside its class (`Player.Job`): a `union` or `type` belongs to
   the class that declares it, or to its namespace's entry class. One value per `generic` line, at the top of the file
   after any `singleton` line: `generic $a, $b`, a `generics` list and a `generic` line inside a function are errors.
