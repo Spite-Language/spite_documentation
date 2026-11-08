@@ -33,7 +33,9 @@ func Game() {
   which is how one entry function loads the standard library folder of the system it is built for
   ([programs.md](programs.md#how-a-program-is-loaded)).
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
-  `window-plugin`, and a folder that is not is an error before anything compiles, naming the spelling to use
+  `window-plugin`. A folder of the program with one right spelling is renamed by the compiler, with every `load`
+  that names it ([classes_and_files.md](classes_and_files.md#a-misnamed-file-or-folder-is-renamed)); any other
+  folder that is not is an error before anything compiles, naming the spelling to use
   (`the folder 'BadFolder' is not named in snake_case: ... so rename it 'bad_folder'`). A name is `snake_case` when it is
   a lowercase letter, then lowercase letters, digits and single `_`, not ending in `_`: `kit_2` is fine, and
   `kit__x`, `kit_` and `2kit` are not. The rule covers the program's folder and every folder inside it that holds

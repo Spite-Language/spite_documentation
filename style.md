@@ -115,7 +115,9 @@ What the compiler fixes for you, and what it leaves as an error:
   nothing is removed with every write; one a call makes or writes stays an error.
 - **Loads.** A load of the standard library's `common` folder alone becomes a load of the `windows` folder beside it,
   which loads `common` ([programs.md](programs.md#how-a-program-is-loaded)).
-- **Names.** A local or parameter with one right spelling is renamed, and a keyword one letter off is corrected.
+- **Names.** A local or parameter with one right spelling is renamed, and a keyword one letter off is corrected. A
+  file or folder of the program with one right spelling is renamed on the disk, with every `load` that names it
+  ([classes_and_files.md](classes_and_files.md#a-misnamed-file-or-folder-is-renamed)).
 - **Placement.** A declaration out of order is moved with the comment lines above it, a comment in the wrong place
   moves to the top of the file, and a `union` or `type` two classes of one root declare alike moves to the entry
   class of the lowest namespace, with every use rewritten.
@@ -127,7 +129,8 @@ searching for the old name. These are errors, each with the fix:
 
 - `snake_case` for variables, attributes, parameters, functions, enum values, files and folders (a package's
   root folder too: `window_plugin`, never `window-plugin`); `PascalCase` for classes, enums, unions and
-  types.
+  types. A file or folder of the program with one right spelling is renamed, with every `load` that names it
+  ([classes_and_files.md](classes_and_files.md#a-misnamed-file-or-folder-is-renamed)).
 - **Never a single letter**, except the axis names `x`, `y`, `z` and `w`, which are the names of what they
   hold and abbreviate nothing: `position.x`, `var x = 0.0`.
 - **Never an abbreviation.** Every `_`-separated word of a name is checked against a list (`msg`, `idx`, `val`, `cfg`,
