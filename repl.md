@@ -586,6 +586,7 @@ watcher has swapped the save in.
 | an attribute's default value | instances made after the reload get the new default |
 | an enum: a value added after the others | taken; the objects that hold the enum keep their values |
 | an enum: a value inserted before the others, removed or reordered | refused: `the reload changes the values of Gauge.Mood other than adding new ones last ... start the program again, or add the new values after the others` |
+| an enum: a value's number (`'red' = 1` saved as `'red' = 5`) | refused: `the reload changes Palette.Shade's 'red' from 1 to 5 ... start the program again, or give 'red' its number 1 back` |
 | a class's attributes: added, removed, renamed or retyped | refused: `the reload changes the attributes of Counter (total is new), and the objects the program holds keep the attributes they were made with: start the program again to take the new attributes` |
 | a file that does not compile | refused with the compiler's error, and the program keeps all of its code |
 | a function of a class the program reopens, a class of the standard library or a number (`func doubled(): Integer` in `integer.spite`) | the whole program is compiled again and every function whose code changed is swapped in, the standard library's and the compiler's helpers included |
@@ -607,8 +608,8 @@ error: the reload was refused, and the program keeps all of its code: the reload
 
 Start the program again to take the new attributes. An attribute's *default value* is not a layout change: instances
 made after the reload get the new default, and the ones already made keep what they hold. An enum is the same: a value
-added after the others is taken, and any other change to an enum's values is refused, since every value the program
-holds keeps the number it was made with.
+added after the others is taken, and any other change to an enum's values is refused, a changed number included
+(the answer names both numbers), since every value the program holds keeps the number it was made with.
 
 ### Knowing what a reload rebuilt
 
@@ -653,7 +654,7 @@ worked out while compiling, so the check folds away with the branch it guards.
   indirect jump per call, only in a `--hot-reload` build.
 - **What the build records.** Beside the executable, `game.reload_host` lists what the running program holds: every
   function with its start, its slot and a digest of its machine code, the state its code reaches by name, the system
-  functions it imports, every class's layout, every enum's values and a digest of each of the program's files.
+  functions it imports, every class's layout, every enum's values with their numbers and a digest of each of the program's files.
 - **A reload compiles the whole program.** It runs the compiler that built the program, in the program's folder,
   with the same flags and `--reload-at`. It compares the program's files with the manifest first, so a save that
   changed nothing answers `unchanged`. Otherwise it compiles the program and compares every function's digest with

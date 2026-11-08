@@ -621,6 +621,36 @@ this switch only asks what 'creature' is: write 'return creature.class == Fish'
 A `_:` is refused anyway (above); for a switch shaped like this one, this error comes first, since it names the
 shorter form.
 
+## An assignment works out its value first
+
+An assignment runs its value before it reads anything of its target: the index, the object a member is set on,
+and the list or object an index is taken on. A call in the value that moves the index or replaces the object
+therefore moves where the value lands:
+
+```gdscript
+var position = 0
+var items = [0, 0, 0]
+
+func store() {
+    items[position] = moved()     # items is [0, 7, 0]: moved() ran before position was read
+}
+
+func moved(): Integer {
+    position = 1
+    return 7
+}
+```
+
+It holds the same way inside a state machine ([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)), where the value
+may wait. A target that only reads locals, parameters, `this` or constants, or a value that calls nothing, compiles
+as it always did, since nothing the value does can change where it lands.
+
+Since the target is read after the value, a proof of the target is judged there too: in `keeper.target.body = made()`,
+a `made()` that may assign `keeper.target` takes back the `crash keeper.target` before it, and the write is refused
+like any read past such a call ([proofs.md](proofs.md)). To write the object proven before the call, name it
+first: `var target = keeper.target` and then `target.body = made()`. A `[]` read stays a test where it runs, so
+`crash boxes[position]` before `boxes[position].amount = moved()` tests the item `moved()` left `position` at.
+
 ## Nothing after a `return`
 
 A statement written after a `return` in the same block could never run, so it is an error rather than a step

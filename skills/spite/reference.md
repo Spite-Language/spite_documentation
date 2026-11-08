@@ -37,7 +37,7 @@ of printing: a path or call (`World().player.health`, `Channel(1).number`, `mons
 `describe Monster`, `classes`, `enums`, `memory`, and `eval <expression>` / `run <statement>` to compile code into
 the running program. `break monster.spite:42` stops before that line; `where` and `locals` (`self` and every local in scope, one
 `name: Type = value` per line) answer there, `continue` goes on, `breaks` lists and `clear` removes. A reload that
-adds, removes, renames or retypes an attribute, or changes an enum's values other than by adding new ones last, is
+adds, removes, renames or retypes an attribute, or changes an enum's values other than by adding new ones last (a value's number included), is
 refused, the program keeping all of its old code: send `exit` and start it again. Use `--check` only for the errors
 or for a program that cannot stay running, and run the tests before calling the work done. Measure speed only on a
 production build (no `--repl`, `--repl-port`, `--hot-reload` or `--debug-memory`): `--optimized` only sets
@@ -274,6 +274,10 @@ rewritten.
 - `var item = list[index]` names the stored item: `item.x = 1` writes it, but `item = made` only renames the local,
   and an assignment nothing reads after is an error; replace an item with `list[index] = made`. Writing back
   `list[index] = item` after changing it costs nothing when nothing between can change the slot.
+- An assignment runs its value before it reads its target: in `items[position] = moved()` a `moved()` that sets
+  `position` moves where the value lands, and `boxes[next].amount = refill()` reads `boxes[next]` after `refill()`, in
+  a state machine too. A proof of the target that the value's call may take back is refused there: name the object
+  first (`var target = keeper.target`, then `target.body = made()`).
 - `List<T>`: `[1, 2, 3]`, `append`, `prepend`, `insert`, `remove_at`, `remove_last`, `remove_first`, `first`,
   `last` (both a `T?`, `null` on an empty list, like `[]`: `var first = names.first()` then `crash first`), `count`, `contains` (elements that are numbers, `Boolean`, `String`
   or an enum only: on a list of a class use `any(f)` or `find_by_<member>`), `index_of` (an `Integer?`, the same
