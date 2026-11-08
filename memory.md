@@ -98,7 +98,8 @@ statement naming it: a local assigned twice, a local that is read afterwards, on
 
 `copy()` makes a fresh object with the same attributes (still shared references for any attribute that is
 itself a reference). `deep_copy()` recurses, giving every reference-kind attribute its own independent copy
-too:
+too. Inside a class, a bare `copy()` or `deep_copy()` copies the object itself, as every own function is called
+by name:
 
 ```gdscript title=copy_basics/box.spite
 var label = "unnamed"
