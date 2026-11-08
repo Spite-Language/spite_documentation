@@ -242,7 +242,9 @@ A write through another object undoes a proof when it could break it: after `fal
 A write or a call in a branch that returns does not reach what follows the branch, so it leaves the proof alone there,
 a write to the narrowed path itself included, and in a loop no next pass reads it. A branch that may fall through
 still undoes the proof. A call in a condition counts too: `if rack.item and clear(rack)` proves nothing about
-`rack.item` when `clear` may write it, while `if clear(rack) and rack.item` does.
+`rack.item` when `clear` may write it, while `if clear(rack) and rack.item` does. So does a call earlier in the
+same statement: `var sum = clear_count(rack) + rack.item.number` reads `rack.item` after the call, and is refused.
+A write or a call in a `then` never reaches its `else`, so the `else` keeps what was proven before the `if`.
 
 Proving it again is a check like any other: `fallback`, `crash` or `if` on the same path after that line tests the value at run time and narrows it again. With nothing that undoes the proof between, the same check is a repeat, and the compiler removes it.
 
@@ -258,6 +260,10 @@ list a proven `[]` reads, or anything its index reads), the proof is gone and th
 it provably cannot, the proof stands and nothing more is written. There is no `const` to declare: the compiler
 reads the code. The call counts however its answer is used: in a `var`, or inside a `fallback`, a `crash`, an `if`, a `while` or a `switch`. What the
 list refusal says: `'items[0]' was proven before line 9, where 'trim(...)' may shrink what it reads, so this read may fall outside it: prove 'items[0]' again after that line`.
+A list proof watches everything that may be the same list: a shrink through a local given the list (`var alias = items`,
+`alias.clear()`) or through a parameter, a call or a write that may give the attribute another list
+(`shelf.renew()` assigning `items`), and a count kept in a `var` before such a call all undo it. A list the function
+made itself, or a `copy()`, is its own until it is stored or passed.
 
 ```gdscript title=call_undoes_proof_error/monster.spite
 var name = "goblin"

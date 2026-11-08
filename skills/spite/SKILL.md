@@ -119,6 +119,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   below the branch. A call in a condition counts too: `if rack.item and clear(rack)` proves nothing about `rack.item`
   when `clear` may write it; `if clear(rack) and rack.item` does. A proof made before a `while` and read in its
   body is undone by such a call anywhere in the body, since the next pass reads after it: prove it inside the loop.
+  A call earlier in the same statement counts too (`clear_count(rack) + rack.item.number` is refused; read first),
+  and a `then` never undoes its `else`. A `[]` proof also falls to a shrink through a local or parameter that may be
+  the same list (`var alias = items`, `alias.clear()`) and to a count kept in a `var` before a shrinking call.
 - Only a path with no call in it narrows: `if thing.pop().held` proves nothing about a second `thing.pop().held`
   (it calls again); write `var held = thing.pop().held` and narrow `held`. A getter path (`thing.reading`, running
   `get_reading()`) narrows while the getter only reads; if it may write anything, a second read after the check is an

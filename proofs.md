@@ -128,7 +128,14 @@ See [Nothing fails silently](failure.md#nothing-fails-silently).
   followed too. Inside a loop, a call anywhere in the body undoes a narrowing made before the loop for the next pass.
   A call in a condition counts: a side of an `and` is proven before a call on a later side, and after one on an
   earlier side. A call in a `fallback` or a `crash` counts for what was proven before it.
-  A `[]` or count proof is refused past a call that may shrink the list, however the call's answer is used: `'items[0]' was proven before line 9, where 'trim(...)' may shrink what it reads, ...`. A proven read that still finds its list changed (a count kept in a `var`, a local alias of the list)
+  A call earlier in the same statement counts too, a getter's included: `cleared(alias) + rack.item.number`,
+  `"{cleared(alias)} {rack.item.number}"` and `cleared_item(alias).add(rack.item.number)` are refused, while a read
+  before the call in the statement keeps its proof. A call or a write in a `then` does not reach a read in its `else`.
+  A `[]` or count proof is refused past a call that may shrink the list, however the call's answer is used: `'items[0]' was proven before line 9, where 'trim(...)' may shrink what it reads, ...`. The same holds for a shrink through
+  a local or a parameter that may hold the same list (`var alias = items`, then `alias.clear()`), for a call or a write
+  that may give the attribute holding the list another list (`shelf.renew()`), and for a count kept in a `var`
+  (`var total = items.count()`, then `trim()`, then `while index < total`). A list made in the function, or a `copy()`,
+  is not counted until it is stored or passed. A proven read that still finds its list changed
   halts (see [a proven read halts outside its list](#a-proven-read-halts-outside-its-list)).
 - **Buys**: no re-check after a harmless call, and a call that may null what was proven is never read past.
 - **Falls back**: refused: `'keeper.target' was proven before line 12, where 'forget(...)' may assign 'target'
