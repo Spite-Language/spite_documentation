@@ -297,7 +297,7 @@ rewritten.
   key). Any number, `Boolean`, `String`, enum or object can be a key: numbers by value (key by the number
   itself, `created_layouts[entity]` in a `Dictionary<Integer, Layout>`, never by text made from it), an object
   by identity (one object, one key; the dictionary holds it). A class that declares `equals` cannot be a key
-  (key by what `equals` compares); nor can a nullable, a union or a value class. A dictionary literal writes its
+  (key by what `equals` compares); nor can a nullable, a union, a `type`, a function value or a value class. A dictionary literal writes its
   entries, `{"cactus": "cacti", "foot": "feet"}` or `{1: 1, 2: 4}` (keyed `String` or `Integer` unless declared);
   a key written twice is an error, and an empty one is `{}` where its type is declared
   (`var scores: Dictionary<String, Integer> = {}`), `Dictionary<Key, Value>()` elsewhere. A list or a dictionary is not printable: `console.print(list)` is `'List<Integer>' does not fit type
@@ -551,7 +551,8 @@ rewritten.
   way, and a literal is decided while compiling (`var mood: Cat.Mood = "calm"`); `var mood: Mood = text` is an error, and `var mood: Mood? = text` reads it.
 - A function that declares a result ends every path with a `return` (or a bare `crash`): a path that reaches the
   closing `}` is an error naming it (`'sign_of' answers a String, but when 'value < 0' is false (line 12, an 'if'
-  with no 'else') it reaches its end without a 'return'`). An `if`/`else` whose branches both return, and a `switch`
+  with no 'else') it reaches its end without a 'return'`); in a generic class it names the instance that falls off
+  (`but in Marker<Label> it reaches its end`). An `if`/`else` whose branches both return, and a `switch`
   whose cases all return (or `crash`), end the path; an `if` with no `else` and any `while` do not (`while true` is an
   error), so write the last `return` after them, `return null` included.
 - A native fault (a null read or an illegal instruction inside a foreign library, a stack overflow) is never

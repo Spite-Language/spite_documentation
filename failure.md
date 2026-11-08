@@ -783,6 +783,9 @@ func sign_of(value: Integer): String {
 'sign_of' answers a String, but when 'value < 0' is false (line 12, an 'if' with no 'else') it reaches its end without a 'return', so a caller would get a String nobody wrote: end that path with 'return <value>', or with 'crash' if it cannot happen
 ```
 
+In a generic class, each instance is checked on its own, and the error names the one that falls off: `'name'
+answers a String, but in Marker<Label> it reaches its end without a 'return'`, where `Marker<Health>` returns.
+
 A `switch` covers every case, so one whose cases all return needs nothing after it:
 
 ```gdscript title=falling_end_fixed/falling_end_fixed.spite entry
