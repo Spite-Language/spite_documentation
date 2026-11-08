@@ -113,6 +113,8 @@ What the compiler fixes for you, and what it leaves as an error:
   what it copied. Statements after a `return` go.
 - **Unused things with no effect.** An unread local or attribute, or a `load` nothing names, whose value and writes do
   nothing is removed with every write; one a call makes or writes stays an error.
+- **Loads.** A load of the standard library's `common` folder alone becomes a load of the `windows` folder beside it,
+  which loads `common` ([programs.md](programs.md#how-a-program-is-loaded)).
 - **Names.** A local or parameter with one right spelling is renamed, and a keyword one letter off is corrected.
 - **Placement.** A declaration out of order is moved with the comment lines above it, a comment in the wrong place
   moves to the top of the file, and a `union` or `type` two classes of one root declare alike moves to the entry

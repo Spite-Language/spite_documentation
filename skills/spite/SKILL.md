@@ -142,7 +142,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   named like the folder); the other classes write `Bunda.Pet`, only the entry class writes `Pet`.
 - The compiler fixes what has one fix, and prints `fixed:` for each: declarations out of order, a local or parameter
   with one right spelling, a keyword one letter off, a local or attribute that does nothing and is never read, a
-  check on a proven value, an `if` or `while` decided while compiling, statements after a `return`. A choice stays
+  load of the library's `common` alone (it loads `windows`, which loads `common`), a check on a proven value, an `if` or `while` decided while compiling, statements after a `return`. A choice stays
   an error. It never rewrites the library or a package. A check or `if` it would remove because of a narrowing
   stays when a later call or loop pass takes that narrowing back: the compile fails on that instead.
 

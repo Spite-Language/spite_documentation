@@ -47,7 +47,7 @@ sets `Build.target_operating_system`: the executable is always Windows x64. Ever
 commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
 A program lives in its own folder, and `spite` run in it runs it: the first line of its entry function loads the standard
-library by its relative path (`load "../spite_standard_library/windows"`, which loads `common` itself), and `game/`'s every sub folder is a
+library by its relative path (`load "../spite_standard_library/windows"`, which loads `common` itself; never `common` alone), and `game/`'s every sub folder is a
 namespace and nothing else (`game/engine/renderer/shader.spite` is `Engine.Renderer.Shader`, and
 `game/engine/physics/physics.spite` is `Engine.Physics.Physics`: no file is special). A file and a folder of one
 name side by side (`engine/renderer.spite` beside `engine/renderer/`) is an error, since a dotted name means one
@@ -201,6 +201,7 @@ A mistake with exactly one fix is not an error: the compiler writes the fix into
 - a local or parameter name with one right spelling (camelCase, a doubled `_`, an abbreviation with one expansion, a
   read `_name`), and a keyword one letter off at the start of a line (`retrun`);
 - a local or attribute nothing reads whose value and every write do nothing, and statements after a `return`;
+- a load of the library's `common` folder alone, which becomes a load of `windows` beside it (which loads `common`);
 - a check on a proven value (`fallback`, `crash` or `if`), a local copied only to narrow, an `if` that only returns
   what `fallback` answers, and an `if` or `while` the compiler decides while compiling (an `if` always true becomes its
   body; a `while` always false goes). A local taken from a narrowed path is proven too (`crash thing.store`,
