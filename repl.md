@@ -130,9 +130,10 @@ spite --connect=4000 --command="program.player_name"
 With no `--command` it is interactive: a `spite> ` prompt that sends each line and prints the answer as
 `value (type)` or `error: message`. With `--command` it sends that one command, prints the raw JSON line, and
 exits, which is the form tests and AI clients use. `--connect` runs from any folder, since it builds nothing.
-Nothing listening on the port is `error: nothing is listening on 127.0.0.1:4000` and exit code 1, and a port
-outside 1 to 65535 is refused, for `--connect` as for `--repl-port`: `error: --repl-port takes a port number from
-1 to 65535: spite --repl-port=4000`. The port is a `Build` field, so changing it means building again.
+Nothing listening on the port is `error: nothing is listening on 127.0.0.1:4000` and exit code 1, and so is a
+port outside 1 to 65535: `error: --connect takes a port number from 1 to 65535: spite --connect=4000`
+(`--repl-port` is refused the same way, with its own name). The port is a `Build` field, so changing it means
+building again.
 
 ## The wire protocol
 
