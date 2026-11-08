@@ -378,7 +378,10 @@ rewritten.
   one member typed with it: `posts.filter_published()` keeps the posts whose `stage == 'published'`. Two members
   whose enums list the value, or a member of that name, is an error. A question member `is_alive` may be asked as
   `filter_alive()`, `count_alive()` and so on when the class has no member `alive`. `map_` takes the plural
-  (`map_names`; `map_name` is an error), and two members with one plural are an error: rename one.
+  (`map_names`; `map_name` is an error), the plural `pluralize()` spells (`map_people` for `person`, never
+  `map_persons`), and two members with one plural are an error: rename one. A template of your own answering
+  `List<member.class>` is declared in the plural too (`collect_members(member: ...)`). Over a list of a union, a name that
+  is both a member class and an attribute every member has (`count_wheels`) is an error: rename one.
 - A `while` that only walks a list doing what one of these does (`var index = 0`, `while index <
   items.count()`, `total = total + items[index].price`, `index = index + 1`) is an error naming
   `items.sum_price()`: `this 'while' walks every element of 'items' only to add up 'price': write 'var total =
