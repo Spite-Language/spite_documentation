@@ -249,7 +249,9 @@ branch, a template exists only for the names called, and reflection only where i
 ([metaprogramming.md](metaprogramming.md#tree-shaking)).
 
 An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every generated
-function instead, every function of your classes compiled even when nothing calls it, so live reload has all of them to swap and the REPL can reach every internal, and the
+function instead, every function of your classes compiled even when nothing calls it (one that takes a member a
+walk hands it, a `Spite.AttributeDeclaration`, `Spite.Attribute`, `Spite.FunctionDeclaration` or `Spite.Argument`, is
+compiled for each member walked), so live reload has all of them to swap and the REPL can reach every internal, and the
 singletons that hold nothing, such as `Build`, are ordinary objects. A `false` form (`--development=false`) does not
 make a build inspectable, and `--optimized` together with a REPL flag is still an inspectable build. Every other
 build is a production build, where unused things are tree-shaken, down to the classes nothing reachable uses. Conditions on
