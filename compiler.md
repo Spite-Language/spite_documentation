@@ -332,8 +332,9 @@ spite --optimization-report=.spite/optimization.md --check
 The report has one section per optimisation, with how many places it lists:
 
 - **Lists that hold references**: each `List<T>` whose items are kept as references, at the line that first made
-  it, and why `T` cannot be laid inline (an attribute that is a list or another object, a `drop()`, a function
-  using `this` as a value), or that it would fit inline.
+  it, and why `T` cannot be laid inline (an attribute that is text, a list or another object, a `drop()`, a function
+  using `this` as a value), or that it would fit inline but the list is given objects that were not made for it or
+  its items are used for more than reading.
 - **Lists not in the frame**: a local list that could have lived in the function's frame
   ([optimizations.md](optimizations.md#a-local-list-of-known-size-lives-in-the-frame)) and did not: appended to in
   a loop, more items than the frame holds, or the line that does more than read it.
@@ -374,7 +375,8 @@ twice, a flag with an underscore, a `--name=value` that names no field of `Build
 are errors, each naming the fix. The underscore one reads `'--player_name' is written '--player-name': flags and
 settings are kebab-case on the command line, and the field they set is 'player_name'`, and it is checked before
 anything is read. `--target-operating-system` is read from the flag alone: a `var target_operating_system` in
-`build.spite` is an error naming the flag, and it takes only `windows`, `linux` or `mac`.
+`build.spite` is an error naming the flag, and it takes only `windows`, `linux` or `mac`. A `var operating_system` or
+`var program` in `build.spite` is an error too: the compiler supplies both.
 
 A few more, each with the words it prints:
 

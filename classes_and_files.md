@@ -646,6 +646,8 @@ adds settings to `Environment`, a member template to `List`, a function to `Inte
 ([packages.md](packages.md#monkey-patching-mods)). The program's entry class is the one class nothing may
 reopen, and it cannot declare a `generic` line, since it is the class that runs.
 
+A reopening sees every function of the class, wherever it is declared, so a local, a parameter or an attribute it
+names like one (`var absolute = this * 2` in a reopening of `Integer`) is the same error as in the class's own file.
 An attribute replaced this way keeps its type: a reopening changes its default, never its type, however each file
 gives it (`var level: Integer = 1`, then `var level = "one"`, is `'level' is an Integer where the class first
 declares it, and this reopening makes it a String: a reopening replaces an attribute's default, never its type, so
@@ -688,7 +690,9 @@ namespace written into each name. Make it a folder instead, `high/block.spite` a
 reader already knows which namespace they are in. Three or more such names in one folder are an error naming the
 folder to move them into, listing the first three and `(and 9 more)` for the rest. The shared word must be a whole
 word of each name: `Higher` and `Highway` beside `HighBlock` and `HighValue` are not four matches, and two matches
-are allowed. A class named for the word alone, `High`, counts as one of them. A class named for its own folder
+are allowed. A class named for the word alone, `High`, counts as one of them. Only the program's own classes count: a
+folder that reopens a library folder (`spite/function.spite`, adding to `Spite.Function`) does not count the
+library's `FunctionDeclaration`, and a class reopened there counts once. A class named for its own folder
 (the folder's entry class, `backend/backend.spite` beside `BackendBlock` and `BackendValue`) does not count: its name
 is the namespace itself, not a word repeated in it. And name the namespace for what it holds: `High` alone does not
 say high what.

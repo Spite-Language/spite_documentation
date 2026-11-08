@@ -534,7 +534,7 @@ true false
 hello
 ```
 
-Inside a generic class, a codegen value bound to a class tests for that class: `item == $wanted_type`. A value
+Inside a generic class, a codegen value bound to a class tests for that class: `item.class == $wanted_type`. A value
 read through a `type` that accepts anything is narrowed to the bound class, so a function can find the first
 value of the class it was made for without a generic function (there are none). A number held as a `type`
 keeps its class, so `Find<Integer>` finds it too. Where the value's own type already answers (a `Health` tested
@@ -542,7 +542,10 @@ against `$wanted_type` bound to `Health`, or a union that does not hold the boun
 while compiling, and it is never the "never true" error, since another binding may make it true. The same goes
 for any class test inside a generic class: one that can never be true for one instantiation (`held.class == Health` in
 a `Box<Label>`) folds to `false` and its branch is removed from that copy, while outside a generic it stays the
-error. The rules for class tests are with
+error. A value's `.class` is always one class, so testing it against a union or a `type`, written out or bound to
+the codegen value, is an error rather than a test that is never true (`'$wanted_type' is a type here, bound to
+'Pet', a union, so it cannot be used as a value: 'item.class' is always one class, so the test could never be
+true: test for one of the classes it holds`). The rules for class tests are with
 [unions](values_and_types.md#unions).
 
 ```gdscript title=codegen_class_test_doc/find.spite
@@ -553,7 +556,7 @@ func first(items: List<Anything>): $wanted_type? {
     var found: $wanted_type? = null
     while index < items.count() {
         var item = items[index]
-        if item == $wanted_type {
+        if item.class == $wanted_type {
             found = item
         }
         index = index + 1

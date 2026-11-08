@@ -239,7 +239,7 @@ nothing until a value is passed to it.
 
 ## Every operator is a function
 
-Every operator is a shortcut for a function a class can define to support it, with the parameters the table shows. Any other count is an error where the operator is used: `this operator on a 'Thing' needs it to define 'less_than(other)', and its 'less_than' takes 0 arguments`.
+Every operator is a shortcut for a function a class can define to support it, with the parameters the table shows. Any other count is an error where the operator is used: `this operator on a 'Thing' needs it to define 'sum(other)', and its 'sum' takes 0 arguments`. `equals`, `less_than` and `greater_than` are checked where they are declared instead ([Functions the compiler calls by name](#functions-the-compiler-calls-by-name)).
 
 | Operator | Function |
 |---|---|
@@ -552,19 +552,19 @@ signature is dictated from outside ([style.md](style.md#nothing-unused)).
 Some functions are never called by the program's own code: the compiler calls them itself. `drop()` runs when the
 last reference to an object goes ([memory.md](memory.md)), `to_string()` wherever an object is used as text,
 `to_debug()` wherever it is shown for debugging, and `equals`, `less_than` and `greater_than` for `==`, `<` and
-`>`. Three have a signature the compiler enforces, and declaring one with another is an error that writes the one
-it must have, since a `drop` with a parameter could never run and an `equals` with two would leave `==` comparing
-identity; the parameter of `equals` must be the class itself, because an `equals` for another type is never the
-one `==` calls:
+`>`. Each has a signature the compiler enforces, and declaring one with another is an error that writes the one
+it must have, since a `drop` with a parameter could never run, an `equals` with two would leave `==` comparing
+identity, and a `to_debug` answering a number would be shown as text; the parameter of `equals`, `less_than` and
+`greater_than` must be the class itself, because a comparison with another type is never the one the operator calls:
 
 | Function | Signature |
 |---|---|
 | `drop` | `func drop()` |
 | `to_string` | `func to_string(): String` |
 | `equals` | `func equals(other: Class): Boolean` |
-
-Write `to_debug(): String`, `less_than(other: Class): Boolean` and `greater_than(other: Class): Boolean` the same
-way; the compiler calls them with exactly those shapes.
+| `to_debug` | `func to_debug(): String` |
+| `less_than` | `func less_than(other: Class): Boolean` (`<` and `>=`) |
+| `greater_than` | `func greater_than(other: Class): Boolean` (`>` and `<=`) |
 ```gdscript title=drop_with_parameter/handle.spite
 var open = true
 

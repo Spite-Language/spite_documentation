@@ -56,11 +56,12 @@ thing. A class that hides another class visible from an enclosing namespace (`Ph
 class such as `Spite.Function` is always written with its namespace, so a `Function` of your own is fine): use the
 library's class, reopening it to add what it lacks. Three or more classes in one folder whose names start with the
 same whole word (`HighBlock`, `HighFunction`, `HighValue`) are an error: move them into the folder `high/` and name
-them `Block`, `Function`, `Value`. `load "folder"` inside a function loads another package (it takes literal text: a
+them `Block`, `Function`, `Value` (only the program's own classes count, so `spite/function.spite` reopening
+`Spite.Function` is fine). `load "folder"` inside a function loads another package (it takes literal text: a
 folder path relative to the file, never absolute, or `repository@commit/folder` for a pinned repository; only its last
 folder, the namespace, must be snake_case); a file at the same namespace path
 reopens the class: same-named functions, attributes and enums replace (an enum declared again is its whole new
-list of values), the rest are added. A file in the program's own folder that reopens a class a loaded folder
+list of values), the rest are added; a reopening may not name a local, parameter or attribute like any function of the class. A file in the program's own folder that reopens a class a loaded folder
 declares loses wherever both declare a name, the constructor included, since loaded folders merge later: put a
 replacement in a folder loaded after the one it replaces. Two `load`s of folders one inside the other are an error
 (load only the outer one). A `load` under an `if` must be decidable from `Build` fields and literals, and a `load`
@@ -502,7 +503,8 @@ rewritten.
 - `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside.
   A `.class` known while compiling of something holding a call (`thing.pop().class == Thing`, `count().class.name`)
   still makes the call once; only the answer folds.
-  In a generic class, `value == $wanted_type` tests for the class the codegen value is bound to.
+  In a generic class, `value.class == $wanted_type` tests for the class the codegen value is bound to; `.class` against a
+  union or a `type` (written out or bound to `$wanted_type`) is an error, since a value's class is one class.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every
   `return` of which cannot be null. Read it with nothing written; a `fallback`, `crash` or `if` on it is `is already
@@ -673,7 +675,7 @@ rewritten.
 - Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite --serve=true`, else the `SERVE` variable, else a `SERVE=` line of the `.env` file in the folder built, else its default) and is a constant in the program, so `if build.serve { }`
   keeps only one branch; in a `--hot-reload` build the program's own reads of a field are made while it runs, and
   the standard library's stay constants. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and
-  `build.target_operating_system` are `Build` fields too. A flag is kebab-case (`--debug-memory`) and sets the
+  `build.target_operating_system` are `Build` fields too; `target_operating_system`, `operating_system` and `program` cannot be declared in `build.spite` (the target is the flag's, the others the compiler's). A flag is kebab-case (`--debug-memory`) and sets the
   snake_case field; an unknown flag is an error. A `Build` default may be arithmetic on literals or another field
   (`var attempts: Integer = retries`); the compiler's own options take only a literal. There is no `format` option: every compile formats.
 - Reflection: `value.class` (a `Spite.Class`: `.name` (always the short name, however the class was reached; `.name_with_namespaces` is the dotted one), `.namespace` (a `Spite.Namespace?`; narrow it before
@@ -843,7 +845,7 @@ may reach only its own value attributes, its locals and singletons. A COM-style 
 `address` (`mixer.set_voice_started(started.address)`); a program cannot write memory at an address. A C constant
 is read as its name in snake_case (`user32.mouseeventf_leftdown`) and needs a header as the third argument. A
 struct's size is `PointPair.size`, a `Long`, only on a number-only `type`, whose layout and padding you declare in
-C's order. A `Buffer` crosses by address too.
+C's order; with a readable header, a `type` passed where the prototype takes a pointer to a struct the header declares must have that struct's size, or the call is a compile error naming both sizes. A `Buffer` crosses by address too.
 Game maths (docs/game_maths.md): `Vector2`, `Vector3`, `Vector4` are generic over a number class taken from their
 parts, `Vector3(1.0, 2.0, 3.0)` a `Vector3<Float>` and `Vector2(5, 1)` a `Vector2<Integer>` (never `Vector3i`), written
 `Vector3<Float>` where a type is named; every member answers the vector's own class (whole numbers truncate).

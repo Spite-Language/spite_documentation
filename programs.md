@@ -227,7 +227,9 @@ func UnknownFlagError() {
   `var final_classes = "..."` writes its final classes on every build ([compiler.md](compiler.md#choose-the-outputs)).
   Formatting is not an option: every compile formats first, and `format` is not a field a program may declare.
   `target_operating_system` is the one field only a flag sets: declaring it in `build.spite` is a compile error naming
-  the flag, even when it names the system being compiled for. The fields that say what one compile writes (`check`,
+  the flag, even when it names the system being compiled for. `operating_system` and `program` are supplied by the
+  compiler, and declaring either in `build.spite` is a compile error too (`'Build.operating_system' cannot be
+  declared by a program: it is the system doing the compiling, which the compiler supplies`). The fields that say what one compile writes (`check`,
   `build`, `executable_path`, `final_classes`, `optimization_report`, `high_ir`, `low_ir`) keep their declared value
   inside the program: a flag sets what the compile does, not what `build.low_ir` reads, which is `false` unless
   `build.spite` says otherwise. `check` and `build` both on, from the flags or from `build.spite`, is an error.
@@ -289,7 +291,7 @@ known system true
 compiled for this machine true
 ```
 
-Neither `operating_system` nor `program` can be given as a flag: the compiler supplies both. Which operating
+Neither `operating_system` nor `program` can be given as a flag or declared in `build.spite`: the compiler supplies both. Which operating
 system a program targets is the one whose folder of the standard library it loads, which is the next
 section.
 

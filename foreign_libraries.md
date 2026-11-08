@@ -39,7 +39,8 @@ system's file in a class that each system's folder reopens, as the standard libr
   at all ([optimizations.md](optimizations.md#tree-shaking)), except in an inspectable build
   (`--development`, `--repl`, `--repl-port`, `--hot-reload`), which keeps everything. A missing library, or a symbol
   the library does not export that some reachable code calls, stops the program the moment the library opens,
-  before any call of it has run, naming the file, or the symbol and the Spite function that wanted it. So a typo in
+  before any call of it has run, naming the file, or the symbol, the file it is missing from and the Spite function
+  that wanted it (`the foreign function 'ring_bell' is not in its library, 'fixture.dll'`). So a typo in
   a symbol name is found when the class holding the library is first made, not on a rarely taken path.
 - **A foreign call goes through the attribute or variable holding the library**, so the compiler knows which
   table binds it.
@@ -95,9 +96,15 @@ prototypes, but reading a constant from it is an error that says so. A function 
 `SendInput` does, is given `PointPair.size`: the bytes of the struct the call passes, a `Long` the compiler knows
 while it compiles. Only a `type` whose attributes are all numbers is a C struct, so `.size` on any other `type` is a
 compile error, and so is passing a `type` with a `String`, a list, a dictionary or an object in it to a foreign
-call: the error names the type (`a Labelled cannot cross into C`), not the field. The compiler does not compare that size with the header's struct, and C's field names are not
-matched to yours: the fields of a `type` are laid out in the order you declare them, so the layout, padding
-included, is yours to get right. The reflection members every value has (`.class`, `.attributes`, `.functions`) and
+call: the error names the type (`a Labelled cannot cross into C`), not the field. With a header the compiler can
+read, a `type` passed where the prototype takes a pointer to a struct the header declares (`POINT_PAIR*`, a pointer
+`typedef` such as `LPPOINT_PAIR`, or `struct Tag*`) is compared with that struct: the struct's fields are numbers and
+pointers at their natural alignment, and when the two sizes differ the call is an error naming both (`'MovePoint'
+takes a 'POINT_PAIR', which 'fixture.h' declares as 8 bytes, but a PointPair is 12 bytes as a C struct: give
+'PointPair' the fields of 'POINT_PAIR', in its order and at its widths`). A struct with an array, a bit field, a
+nested struct or a union in it, or one only a system header declares, is not measured. C's field names are not
+matched to yours: the fields of a `type` are laid out in the order you declare them, so the order is yours to get
+right. The reflection members every value has (`.class`, `.attributes`, `.functions`) and
 `DynamicLibrary`'s own members (`file_name`, `handle`) are never read as foreign symbols, so a `List<DynamicLibrary>`
 can still `find_by_file_name` and `sort_by_file_name`.
 
