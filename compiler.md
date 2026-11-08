@@ -283,6 +283,8 @@ Each attribute and function is marked with one comment line linking the `.spite`
 program's own file, a file it loads, or the reopening that replaced it, as a path relative to the printed
 file. The folder holds a `.final-classes` file, which is what lets a comment there link a `.spite` file
 ([style.md](style.md#comments-are-links)), so the printed program compiles with its links checked like any other.
+A folder holding that file is never part of the program around it: printed into the program's own folder
+(`--final-classes=final`), the classes are not read as the program's source the next time it compiles.
 
 What is written is what the program **ends up with**, not what was written down: the classes come from the
 generator after it has run, so a class the generator never made is not there, and a generic template the program

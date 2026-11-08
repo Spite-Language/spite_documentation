@@ -312,8 +312,8 @@ declared by a statement that failed.
 
 A comment is one line that holds nothing but a link to a heading in a markdown file, and it sits right above a
 function or at the top of the file, as the class's heading. The compiler moves one written anywhere else between
-declarations (above an attribute, an `enum` or a `type`) to the top of the file and says so; one inside a function is an
-error. Prose above a two-line function that explains the compiler instead of the code is the habit this
+declarations (above an attribute, an `enum` or a `type`) to the top of the file and says so; one inside a function, or
+inside the body of an `enum`, a `union` or a `type`, is an error. Prose above a two-line function that explains the compiler instead of the code is the habit this
 rule ends, and a note that is needed becomes a section somewhere a reader can open:
 
 ```gdscript
@@ -324,7 +324,8 @@ func Game() {
 The path is resolved from the folder of the file the comment is in, as `load` resolves its folder, and the compiler
 checks that the file exists and has that heading, so a link cannot rot silently. A heading is found the way GitHub
 makes its anchor: lowercase, punctuation dropped, spaces turned into hyphens (`What's new in "version" 2?` is
-`whats-new-in-version-2`). Prose in a comment, `//` and `/* */` are errors, and each one asks
+`whats-new-in-version-2`), and a heading repeated in the file takes `-1`, `-2` and so on after the first, so the
+second `## Details` is `#details-1`; a `#` line inside a fenced code block is not a heading. Prose in a comment, `//` and `/* */` are errors, and each one asks
 whether the note is needed at all: if a reader could work it out from the code, delete it; if it is lasting
 knowledge, write the section and link to it; if it warns against a change, a test or a compile error pushes
 harder than prose. A line inside a function that seems to need explaining becomes a named function instead:
