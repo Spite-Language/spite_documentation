@@ -828,8 +828,8 @@ pointer for that call only (`c_runtime.qsort(values, count, 4, ascending)`); a f
 own thread is handed over as `var handler = ForeignCallback(owner.function, 'context_last')` (or `'context_first'`),
 passing `handler.address` as the pointer and `handler.context` as C's user data, or `'no_context'` for a function
 of a singleton when C gives none (a window procedure; the singleton tells objects apart by the handle C passes). A
-callback takes and returns only numbers, `Boolean` (a 32-bit `BOOL`) and addresses as a `Long`; text C passes
-arrives as its address, a `Long`, kept or handed back to C. Keep the `ForeignCallback` in an attribute of the object that owns the C
+callback takes and returns only numbers, `Boolean` (a 32-bit `BOOL`) and addresses as a `Long`; a callback cannot take text
+yet, so text C passes arrives as its address, a `Long`, kept or handed back to C (a `String` parameter is a compile error). Keep the `ForeignCallback` in an attribute of the object that owns the C
 registration and unregister in its `drop()`: C may call only while it is kept, and a call after the drop halts
 naming the function. A handed-over function of an ordinary object
 may reach only its own value attributes, its locals and singletons. A COM-style table of functions is filled on the C side: hand the library each `'no_context'` `ForeignCallback`'s

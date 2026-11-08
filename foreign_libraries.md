@@ -237,8 +237,8 @@ check only makes forgetting loud.
 **C types.** A trampoline's C signature is the Spite function's, one parameter at a time, each at its width
 ([what crosses](#what-crosses)): numbers as their C types, an address as a `Long`, and a
 `Boolean` as a 32-bit integer (`BOOL`, `VkBool32`, `int`; C's one-byte `bool` is taken as a `Byte`). A callback
-takes only these and returns one of them or nothing, and text or a struct C passes arrives as its
-address, a `Long`, which the callback can keep or hand back to C. The header does not check the trampoline
+takes only these and returns one of them or nothing. A callback cannot take text yet: text or a struct C passes arrives as its
+address, a `Long`, which the callback can keep or hand back to C, and a `String` parameter is a compile error that says so. The header does not check the trampoline
 against C's declaration (C cannot name a parameter's type), so the widths are the program's to get right, the
 same bargain a struct's layout is. On every 64-bit target C has one calling convention, so `CALLBACK`, `WINAPI`,
 `VKAPI_PTR` and `STDMETHODCALLTYPE` need nothing.
