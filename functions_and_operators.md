@@ -237,6 +237,11 @@ which is all a shape can ask of it, and `.class` read through the shape names th
 the enum). `Spite.Attribute.value`, the value an attribute holds, is typed `Anything?`. An empty `type` costs
 nothing until a value is passed to it.
 
+A `T?` fits a `type` unnarrowed only when null can answer everything the `type` asks, which is `to_string()` and
+`to_debug()`: both answer `null` for it. Any other `type` needs the value narrowed first, or proven present
+([proofs.md](proofs.md#a-value-proven-present-is-a-t)): `var singer: Singer = maybe_rock` with a `Rock?` is "this value may be null (it is a
+Rock?), but a Singer is needed: narrow it first with 'if value { }', 'fallback value' or 'crash value'".
+
 ## Every operator is a function
 
 Every operator is a shortcut for a function a class can define to support it, with the parameters the table shows. Any other count is an error where the operator is used: `this operator on a 'Thing' needs it to define 'sum(other)', and its 'sum' takes 0 arguments`. `equals`, `less_than` and `greater_than` are checked where they are declared instead ([Functions the compiler calls by name](#functions-the-compiler-calls-by-name)).

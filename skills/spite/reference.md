@@ -438,7 +438,9 @@ rewritten.
   refused as a member, so wrap it in a class of your own that keeps it in an attribute.
 - A `type` declares a shape (`label: String` and `render: Spite.Function<Integer, String>`, one per line, with `Spite.Function<Nothing>` for no answer and never a call form `render(Integer): String`, which the compiler rewrites; a function of the class or an attribute holding such a function meets it, and `item.render(12)` calls either; a required function
   naming the *types* it takes and never the names) and accepts any class, or
-  object literal `{ label: "x" }`, with those attributes and functions.
+  object literal `{ label: "x" }`, with those attributes and functions. A `T?` fits a `type` that asks only for
+  `to_string()` and `to_debug()` (null answers both with `null`); any other `type` needs it narrowed or proven present
+  first (`this value may be null (it is a Rock?), but a Singer is needed: ...`).
 - `Anything` is the built-in empty `type`, the counterpart of `Nothing`: `component: Anything` and
   `List<Anything>()` accept any object (a number keeps its class, with no allocation). Never declare an empty `type` of your own.
 - No `type` stands for every number. Write number code as a generic class that declares the `type` its codegen
