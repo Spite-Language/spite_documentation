@@ -492,7 +492,7 @@ rewritten.
   apply to my code" first: where a proof does not hold, you write the check yourself.
 - A `switch` is over a union, a `T?`, an enum or a `Boolean`, and names every member or value: there is no `_:`,
   so a member added later is an error at every switch until it has a case. Cases may share a one-line body
-  (`Cat: walk()` and `Dog: walk()`); when all but one share it, write `if value.class == Fish { swim() } else { walk() }`.
+  (`Cat: walk()` and `Dog: walk()`); when all but one share it, write `if value.class == Fish { swim() } else { walk() }`, unless the shared body reads the switched value, which stays a `switch`.
   Value cases are `'red': return 30` or `true:`/`false:`, and a `Boolean` needs both (`this switch over 'count > 2' has no case for false: ...`); for one of them write an `if`. A `switch` over a number or a text is an error: choose with
   `if`s. A case is one statement (a call, an assignment, a `return` or a `crash`), on its line or alone in `{ }`; two
   statements are `this case runs 2 statements: ... move them into a function named for what they do`. A switch over
@@ -678,7 +678,7 @@ rewritten.
 - Reflection: `value.class` (a `Spite.Class`: `.name` (always the short name, however the class was reached; `.name_with_namespaces` is the dotted one), `.namespace` (a `Spite.Namespace?`; narrow it before
   reading its members: `fallback value.class.namespace` narrows the path itself and its prefixes for the rest of
   the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
-  `.namespaces`), `.functions`, and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
+  `.namespaces`), `.functions` (empty for the entry class, which is never made twice), and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
   `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a

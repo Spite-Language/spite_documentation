@@ -414,7 +414,6 @@ code comes from.
 | `.parent` | the namespace above, a `Spite.Namespace?` | `Shop.Tools.parent` is `Shop` |
 | `.classes` | the classes declared directly in it | `Shop.Tools.classes.count()` |
 | `.namespaces` | the namespaces directly below it | `Shop.namespaces` |
-| `.every_class` | its classes and those of every namespace below it | `Shop.every_class` |
 | `.source_directories` | a `List<Directory>`: every directory its classes come from, in load order | `Shop.source_directories.first()` |
 
 There is no root namespace object: a namespace at the top has `null` as its `.parent`.
@@ -754,7 +753,7 @@ templates work over its values:
 
 ```gdscript
 var names = Monster.attributes.map_names()
-var counted = Shop.every_class.count_is_singleton()
+var counted = Shop.classes.count_is_singleton()
 var written = update_each.writes.map_names()
 ```
 
