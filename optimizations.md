@@ -359,6 +359,10 @@ is not passed to a call that keeps it, stored in memory, answered or waited on) 
 3. Otherwise, when the class lets go of nothing when freed and is at most 4096 bytes, the object is room in the
    function's frame, and its counts are dropped.
 
+Comparing such an object with `==` or `!=` (a class without `equals` compares which object it is) keeps it in the
+function: it is room in the frame, which has an address no other object has, so `pair == before` in a loop makes
+nothing on the heap.
+
 An object answered by `return` is made at the return from the registers, so a function that builds its answer through
 a loop of temporary objects makes one object, not one per pass.
 
