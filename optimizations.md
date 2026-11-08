@@ -34,6 +34,12 @@ declared place, and the optimisations that hide something (tree shaking, static 
 shrunk layouts, ranges that drop checks) are not applied, because code added later may read any of it. Everything
 else on this page changes how fast the program runs, not what it is made of.
 
+**"A function that waits" means its state machine.** Where an optimisation below does not apply in a function that
+waits, it means the copy of the function a state machine runs, whose locals live in a heap frame across each wait
+([concurrency.md](concurrency.md#what-the-compiler-does-at-a-wait)). A function that only waits where it is, such
+as a loop calling `program.sleep` in a program that starts no `Concurrent`, is optimised like any other: a `Pair`
+made in that loop still lives in registers or the frame.
+
 What you can observe at all is short: the counts `--debug-memory` prints, when a singleton's constructor runs, the
 order in which a fused chain calls your member functions, the frame in which a call a frame loop started finishes,
 the size of the executable, and speed. Apart from those, no optimisation changes what a program prints or computes.
