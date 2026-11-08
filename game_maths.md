@@ -5,7 +5,7 @@ The standard library has the maths a game engine is built on: `Vector2`, `Vector
 `Color` with the web's colour formats, and the curves, easings, noise and half-precision floats that animation and
 rendering need. They are plain classes in `library/` holding numbers and
 nothing else, so a binary writer writes each as just its numbers (a `BinaryWriter<Vector3<Float>>` makes 12 bytes, a
-`Matrix4<Float>` 64), the vectors and matrices are fixed size, which a [list](collections.md#one-list) can lay out
+`Matrix4<Float>` 64), the vectors, matrices and quaternions are fixed size, which a [list](collections.md#one-list) can lay out
 flat, and a program that uses none of them carries none of their code. They are built on the number classes' own
 maths (`square_root()`, `sine()`, `arc_cosine()`, see [values_and_types.md](values_and_types.md#maths-functions))
 and every name is spelled out in full, except the type names themselves.
@@ -274,7 +274,7 @@ else (a wrong count of digits or numbers, a letter where a number goes, a missin
 A colour writes itself back as `to_hexadecimal_string()`, `to_rgb_string()` and `to_hsl_string()`, and
 `to_linear()` and `to_standard_rgb()` convert between the sRGB a picker or a texture holds and the linear light a
 shader adds up, leaving alpha alone. The channels are not clamped when set (`Color(2.0, -1.0, 0.5, 1.0)` reads back
-as it was given, and so do the results of `linear_interpolate`); writing clamps each channel to 0 to 1 and rounds it
+as it was given, and so do the results of `linear_interpolate`); writing clamps each channel, alpha included, to 0 to 1 and rounds it
 to a byte, so that colour is `#ff0080`. Read from text, a channel above 255 or below 0 is held at the end
 (`rgb(300, -5, 0)` is `rgb(255, 0, 0)`) and a hue may be any number of turns, negative or past 360. `==` is exact:
 colours one step apart in one channel are different.

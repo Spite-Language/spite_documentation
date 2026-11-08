@@ -76,9 +76,9 @@ gzip ([below](#bytes-base64-compression-hashes-and-passwords)). TLS belongs to i
 
 ## `String`
 
-Immutable. Text of up to 15 bytes is kept inside the `String` value itself and allocates nothing; longer text is
-one reference-counted block ([optimizations.md](optimizations.md#short-text-lives-inside-the-string)), and none of
-it changes what a program means. A value is placed inside written text, `"hello {name}"`, and two values join
+Immutable. A text is one reference-counted block holding the `String`, its `Buffer` and room for 47 bytes, so short
+text is one allocation and longer text moves its bytes out once they outgrow the room
+([optimizations.md](optimizations.md#short-text-lives-inside-the-string)), and none of it changes what a program means. A value is placed inside written text, `"hello {name}"`, and two values join
 with `+` ([values_and_types.md](values_and_types.md#string)). `==`, `!=`, `<` and `>` compare by content. `copy()` and
 `deep_copy()` both answer a new text with the same bytes.
 
@@ -748,7 +748,7 @@ next: A12 for 3 boarding true 2.5 Ticket
 `...values: List<Debuggable>` (`to_debug: Spite.Function<String>`), and every value answers that without writing anything: a
 class shows its name and every attribute, nesting into the attributes that are classes, a `List` shows `[a, b]`, a
 `Dictionary` `{"key": value}`, text is quoted, an enum value is written `'like_this'`, and an absent
-`T?` is `null`. An object already being shown further up is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
+`T?` is `null`. An object already being shown further up (the same object, not one `==` calls equal) is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
 as the class it is, and an attribute that holds a singleton is shown too (`Holder { ledger: Ledger { entries: 4 }, label: "kept" }`). A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:
 the compiler writes the automatic one only for the classes a program debugs. The automatic one leaves out private

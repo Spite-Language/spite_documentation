@@ -750,7 +750,7 @@ Text has no `to_integer()` or `to_float()`, and there is no `to_ip_address()`: e
 `var count: Integer? = text`, `var address: IpAddress? = text`. `split("")` splits text into characters.
 TCP is `Tcp.Server()` (`listen_locally(port)`, `listen_everywhere(port)`, `listen_at(address, port)`,
 `accept(): Tcp.Connection?`) and `Tcp.Client()` (`connect(address, port)`, `connect_locally(port)`); a client and a `Tcp.Connection` talk alike: lines
-(`read_line(): String?`, `write_line(text)`), text (`read_as_string(): String?`, `write_string(text)`) or bytes as a
+(`read_line(): String?`, `write_line(text)`), text (`read_as_string(): String?`, `null` for bytes that are not UTF-8, waiting only for the rest of a character the network cut at the end; `write_string(text)`) or bytes as a
 `Buffer` (`read_as_buffer(): Buffer?`, a fresh buffer of what arrived, `write_buffer(buffer)`). Every read waits:
 there is no `_now` read. A peer that hung up is not an error: `closed` turns `true`, reads answer `null` and
 writes send nothing.
@@ -883,7 +883,7 @@ highest)`, `Plane()` with `set_point_normal`, `Frustum()` set with `frustum.from
 `intersects_box`/`intersects_sphere`, and `Ray(origin, direction)` whose `hit_plane`, `hit_box` and `hit_triangle`
 answer a `Float?` distance, `null` for a miss. Colours: `Color(0.2, 0.5, 0.9, 1.0)` holds `red`, `green`, `blue`, `alpha` from 0 to 1, its one
 constructor; text becomes one only through a conversion, `var read: Color? = text`, a `Color?` (a literal needs no narrowing, `var read: Color = "#ff6347"`) (also `rgb()`, `rgba()`, `hsl()`,
-`hsla()` and CSS names; `null` for text naming none, so `crash` it), written with `to_hexadecimal_string()`, `to_rgb_string()`, `to_hsl_string()`, converted with
+`hsla()` and CSS names; `null` for text naming none, so `crash` it), written with `to_hexadecimal_string()`, `to_rgb_string()`, `to_hsl_string()` (each clamps every channel, alpha too, to 0 to 1), converted with
 `to_linear()` and `to_standard_rgb()`. Animation and shading: `CubicBezier(start, first_handle, second_handle, end)`
 with `y_at_x(x)`, `var easing = Easing()` then `easing.in_out_cubic(amount)` and the rest, `Noise(seed)` with
 `gradient_2d(x, y)` and `interleaved_gradient`, and `value.to_half_precision()` / `bits.half_precision_to_float()`
