@@ -222,6 +222,20 @@ var written = update.writes.map_names()
 var read_count = update.reads.count()
 ```
 
+Whether a class can stand in for a type is the one question that takes an argument, the type's name:
+`attribute.class.satisfies_type(Number)` in a walk is `true` in the copies for numbers and `false` in the others, so
+a walker branches on numbers with no test left at run time. It takes a `type`, a union, a class, `Anything` or
+`Number`, the compiler's own type every number class satisfies
+([reflection.md](reflection.md#whether-a-class-satisfies-a-type)):
+
+```gdscript
+func write_number(attribute: Spite.AttributeDeclaration) {
+    if attribute.class.satisfies_type(Number) {
+        columns.append(attribute.name)
+    }
+}
+```
+
 **A question that means a program is wrong is a `crash`**, and a `crash` whose condition is decided while compiling
 and is false is a compile error where the program reaches it every time the function runs. One under a condition only the run decides is
 left to the run. A library writes the
@@ -894,7 +908,7 @@ When a codegen value is a type, `if $value_type == String { }` asks which type i
 the class is made, so only the branch taken is compiled, and each branch may use what only that type has. Besides
 naming a type exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Enum` (any enum),
 and a `type` name asks whether the type fits it. `$value_type.is_number` asks whether it is a number class, `Tiny` to
-`Double`. A union name is true for any of its members. Such a test always folds, in a `--development` build too,
+`Double`, as `$value_type.satisfies_type(Number)` does. A union name is true for any of its members. Such a test always folds, in a `--development` build too,
 because the branch it rules out would not compile.
 
 What the branch ruled out is not compiled at all, and neither is what only it reaches. Below, `Field<Integer>`

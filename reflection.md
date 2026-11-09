@@ -399,6 +399,7 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 | `.is_list`, `.is_dictionary`, `.is_optional`, `.is_enum` | the kind of a type | `$value_type.is_list` |
 | `.generics` | a `Dictionary<String, Spite.Class>`: the class each `generic` line was given, keyed by its name without the `$`, in `generic`-line order; empty for a class that is not generic | `numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer` |
 | `.source_files` | a `List<File>`: every file that declares or reopens the class, in load order | `Monster.source_files.first()` |
+| `satisfies_type(...)` | whether it can stand in for a type, decided while compiling ([below](#whether-a-class-satisfies-a-type)) | `Integer.satisfies_type(Number)` is `true` |
 
 `.generics` holds the same names a codegen value reads while compiling, `$list_type.element_type`; a dictionary's are `"key_type"` and `"value_type"`. A literal name on a
 class known while compiling folds and is proven present, and a name the class has no `generic` line for is a compile
@@ -408,6 +409,63 @@ A class has no folder of its own: a reopening may live anywhere a program loads,
 list, a namespace's `.source_directories` answers its directories, and a question about a path is asked of those `File`s. One function or attribute is written in one file, which
 its declaration's `.source_file` answers: a tool that rebuilds what a function's code makes can watch the file that
 code comes from.
+
+### Whether a class satisfies a type
+
+`kind.satisfies_type(Named)` answers whether the class can stand in for a type: whether a value of it fits where
+that type is wanted, by the rule the compiler checks every fit with. The argument is the name of a type written in
+the code, the way a class name is written for a `Spite.Class`:
+
+| Written | Answers `true` for |
+|---|---|
+| a `type` the code can name, `Named` | a class with each of its members, typed as the type says ([values_and_types.md](values_and_types.md#inline-types-and-duck-typing)) |
+| a union the code can name, `Pet` | each of its member classes |
+| a class, `Monster` or `List<Integer>` | that class, its generic arguments included |
+| `Anything` | every class |
+| `Number` | every number class: `Byte`, `Tiny`, `Short`, `UnsignedShort`, `Integer`, `UnsignedInteger`, `Long`, `UnsignedLong`, `Float` and `Double`, and nothing else |
+
+`Number` is the compiler's own: a program names it here and cannot declare it, nor hold a value typed `Number`. It
+is closed, like a union of the classes the compiler stores as numbers, so a class of the program with a `sum` of its
+own is not one.
+
+The rule is the one the compiler checks a member's type against a `type` with, so a class stands in for a `type` only
+when it is an object class: a number or a `Boolean` value is converted when it is given where a `type` is wanted, and
+`Integer.satisfies_type(Textual)` is `false` even though `var shown: Textual = 5` compiles.
+
+The answer is decided while compiling, so it costs nothing at run time: asked of a class named in the code, `$T`, or
+a walk's `attribute.class`, it is a `true` or a `false`, and an `if` on it keeps only the branch taken. That is how a
+walk branches on numbers:
+
+```gdscript title=walk_numbers/monster.spite
+var name = "troll"
+var health = 10
+var speed = 2.5
+```
+```gdscript title=walk_numbers/walk_numbers.spite entry
+var console = Console()
+
+func WalkNumbers() {
+    load "../spite_standard_library/windows"
+    var monster = Monster()
+    monster.attributes.each(double)
+    console.print(monster.name, monster.health, monster.speed)
+}
+
+func double(attribute: Spite.Attribute) {
+    if attribute.class.satisfies_type(Number) {
+        attribute.value = attribute.value * 2
+    }
+}
+```
+```output
+troll 20 5
+```
+
+The copy of `double` compiled for `name` has no `if` and no multiplication; the copies for `health` and `speed` are
+the multiplication alone. Asked of a class known only at run time, `value.class` through `Anything`, it is an error
+that says so (`'held.class.satisfies_type(...)' is answered while compiling, and 'held.class' is a class known only
+at run time: ask it of a class named in the code or walked from one`), and so is an argument that is not a type's
+name.
 
 ### `Spite.Namespace`
 
