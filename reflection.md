@@ -784,7 +784,9 @@ reflection on it is ordinary code that costs nothing at run time:
   compiling, so it cannot be a type here`.
 - **Asking a constant list is a constant too**: `Part.classes.is_empty()` and `Part.namespaces.is_empty()` fold, as
   do `count()`, `filter(...)` over the list and `map_names()`, so an `if` on them keeps one branch and the branch
-  not taken is never compiled. `[]` with a name or number written in the code answers a constant `T?`:
+  not taken is never compiled. `first()`, `last()`, a whole number written in `[]` and a name in `[]`
+  (`Part.classes["Alpha"]`) over a constant list of classes or namespaces are the item itself, and no list is made; `first()`, `last()` and a
+  name answer it as a `T?` proven present, so a `crash` on a `var` holding one is already proven and is removed. `[]` with a name or number written in the code answers a constant `T?`:
   present, a narrowing `if`, `fallback` or `crash` on it costs nothing and narrows the path after it; absent, the
   branch it guards is never compiled.
 - **A name that is both an enum and a class is the enum**: inside the class that declares `enum Shade`, `Shade` is

@@ -635,7 +635,7 @@ rewritten.
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
   so keep one generic class with a helper per kind, not one class per kind.
-- Names, classes and counts over known classes fold (`Part.name`, `Part.classes.count()`, `Part.classes.map_names().contains("X")`, `namespace.name_with_namespaces.starts_with("Y.")`, `Spite.Namespace.instances.each(check)`), so a `crash` on them is decided.
+- Names, classes and counts over known classes fold (`Part.name`, `Part.classes.count()`, `Part.classes.map_names().contains("X")`, `Part.classes.first()`, `Part.classes[0]`, `Part.classes["X"]`, `namespace.name_with_namespaces.starts_with("Y.")`, `Spite.Namespace.instances.each(check)`), so a `crash` on them is decided.
 - `fallback`/`crash` on such a condition folds too. A `crash` that folds to false refuses the build
   (`'crash ...' always halts: its condition is decided while compiling and is false`, naming the instance, as
   `Slot<List<String>>`) when the function reaches it every time it runs and the program reaches the function; one
