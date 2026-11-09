@@ -913,7 +913,8 @@ callers as before.
 
 A call inside a loop to a function too large to inline, whose first block only reads and compares and then returns
 nothing on one side, makes that test in the caller: the call runs only on the other side. The room check the compiler writes before
-every `append` is a compare with its room, and the call is made only when the list grows.
+every `append` is a compare with its room, and the call is made only when the list grows. Inlining the function that
+holds such a call copies its test with it, so the call is never tested twice.
 
 ### The class of an object made in the function is known
 
