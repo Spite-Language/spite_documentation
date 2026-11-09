@@ -89,7 +89,8 @@ workers 4 verbose true
 That run is `.spite/build/program_settings.exe --endpoint=production --worker-count=4 --verbose`, after `spite
 --build` in `program_settings`: a setting is written like a compiler flag, kebab-case on the command line and
 snake_case in code, and a `Boolean` may be given bare. `spite` itself refuses it, since it is no flag of the
-compiler and no field of the program's `Build`, and runs the program with no flags (D1812, D1813). Each field is read once, when `Environment()` is first made, from the first of:
+compiler and no field of the program's `Build`, and runs the program with no flags (D1812, D1813). Each field is read once, when `Environment()` is first made (and again in a `--hot-reload` build when a save gives a
+setting a new default, [repl.md](repl.md#what-a-reload-can-change)), from the first of:
 
 1. the program's own command line, `--endpoint=production`, given to the built program;
 2. the process environment variable named by the field in upper case, `ENDPOINT`;

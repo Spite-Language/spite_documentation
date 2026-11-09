@@ -538,8 +538,8 @@ A singleton is bound once, as an attribute beside the others, and used through t
 class uses is visible at the top of its file. Binding it as a local inside a function is an error, `'Build' is a
 singleton, bound here as a local: bind it once beside the attributes`. The one exception is a class that is a
 value, `String`, the numbers, `List` and `Dictionary`: an attribute there would be carried by every text or list,
-so a function you add to one of them binds the singleton as a local `var`, and it is made when the object that
-binds it is made, not when the function first runs. A generic singleton whose codegen values come from the
+so a function you add to one of them binds the singleton as a local `var`. It is made the first time that `var`
+runs, like any singleton the first time it is asked for, and every later run of the line finds the same one. A generic singleton whose codegen values come from the
 function's own metaprogramming (`Query<argument.class>()`) stays a local too, since no attribute can name that type.
 
 Reading or calling a member on the constructor call itself is an error, and so is passing it (`greet(Console())`),

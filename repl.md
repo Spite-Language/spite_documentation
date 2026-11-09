@@ -493,7 +493,8 @@ code. In a program built without `--hot-reload` such an assignment is refused, s
 `--hot-reload` builds a program that can take new code while it runs. Save a file of the program, and the program
 is compiled again; the functions whose machine code changed are copied into the running program and swapped in
 the next time it waits or ends a pass of a loop, the same moments the REPL is answered at. Objects, singletons
-and everything the REPL changed stay as they were: only functions change. Every function sits in a slot so it can
+and everything the REPL changed stay as they were: only functions change, and `Environment` reads its settings
+again when a save gives one a new default. Every function sits in a slot so it can
 be swapped, which makes the build slower; measure performance only with a production build
 ([Measure only a production build](compiler.md#measure-only-a-production-build)).
 
@@ -584,6 +585,7 @@ watcher has swapped the save in.
 | a new function on an existing class | the new code calls it, and so can the prompt |
 | a function you deleted | whatever still holds it (a function value, the REPL) keeps its last code; the answer says `removed Greeter.old` |
 | an attribute's default value | instances made after the reload get the new default |
+| a setting's default in `environment.spite` | every setting is read again the way it is when the program starts: from the command line it was started with, the environment, a `.env` it loaded, or the new default |
 | an enum: a value added after the others | taken; the objects that hold the enum keep their values |
 | an enum: a value inserted before the others, removed or reordered | refused: `the reload changes the values of Gauge.Mood other than adding new ones last ... start the program again, or add the new values after the others` |
 | an enum: a value's number (`'red' = 1` saved as `'red' = 5`) | refused: `the reload changes Palette.Shade's 'red' from 1 to 5 ... start the program again, or give 'red' its number 1 back` |

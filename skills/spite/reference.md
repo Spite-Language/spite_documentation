@@ -693,6 +693,8 @@ rewritten.
   default. A value not of the setting's type stops the program with an error naming the setting and exit code 1.
   A setting named like a `Build` field is a compile error naming both. A program given any argument makes
   `Environment()` before its entry starts, so an undeclared flag is refused even where nothing else makes it.
+  In a `--hot-reload` build, a save of `environment.spite` that gives a setting a new default reads every setting
+  again the same way (the command line it started with, the environment, a loaded `.env`, the new default).
 - Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite --serve=true`, else the `SERVE` variable, else a `SERVE=` line of the `.env` file in the folder built, else its default) and is a constant in the program, so `if build.serve { }`
   keeps only one branch; in a `--hot-reload` build the program's own reads of a field are made while it runs, and
   the standard library's stay constants. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and
@@ -719,7 +721,8 @@ rewritten.
   others) and used through the name. `Journal().record(entry)`, `Build().program`, `keep(Console())` and
   `return Console()` are errors (`'Console' is a singleton: bind it once beside the attributes`), and so are a
   binding nothing reads, even in a loaded package, and a binding inside a function (`'Build' is a singleton, bound
-  here as a local`). Write no lock for one: work the compiler runs at once never
+  here as a local`), except in a function added to a value class (`String`, a number, `List`, `Dictionary`), which
+  binds it as a local `var`, made the first time that line runs. Write no lock for one: work the compiler runs at once never
   shares a singleton one of them writes. Singletons whose attributes make each other, even through an ordinary object
   (`World` binds `Column<Entity>`, which makes an `Entity`, which binds `World`), are an error naming the circle
   (`singletons initialise each other in a circle`): bind one of them in the class that uses both instead.
