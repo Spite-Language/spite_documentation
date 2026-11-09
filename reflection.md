@@ -773,6 +773,11 @@ reflection on it is ordinary code that costs nothing at run time:
 - **A function handed a constant is compiled once for it.** Inside that copy the parameter is the constant
   itself, so `attribute.class` is a type, `attribute.name` is text known while compiling, and
   `monster.attributes[attribute]` is a plain read of the field.
+- **A test in a copy folds.** `attribute.class == List<Integer>` asks for the whole class, its generic arguments
+  included, so it is `false` for a `List<String>`, while `attribute.class == List` is any list; `attribute.name ==
+  "health"` folds as well. An `if` on either keeps only the branch taken, and the code of the other is never
+  compiled, so a branch may do what only its fields' class can (`field.value.join(",")` for a list). `$T ==
+  List<Integer>` in a generic class compares the same way.
 - **A constant class is a type and makes its own instances**: `part()` makes one, `Column<part>()` a column of
   them. A class known only at run time is not: a parameter, local or attribute holding a `Spite.Class` written
   where a type is (`List<kind>`, or `func made(kind: Spite.Class): kind`) is `'kind' is not a class known while

@@ -587,7 +587,9 @@ rewritten.
   (`Runner.functions["run_each"]`); a selection is a member template (`Runner.functions.filter_name_ends_with("_each")`).
   A name is selected, never built from text. A walk sees private `_` attributes and
   reads and writes them through the walked attribute; a serializer skips them, and attributes holding a singleton,
-  with `if not attribute.name.starts_with("_") and not attribute.class.is_singleton`, which folds. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
+  with `if not attribute.name.starts_with("_") and not attribute.class.is_singleton`, which folds. So do
+  `attribute.name == "health"` and `attribute.class == List<Integer>`, which compares the generic arguments too
+  (`List<String>` is false; `attribute.class == List` is any list), so the branch not taken is never compiled. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
   A reflection object a walk hands a function has no run-time value: never `append` it to a list or keep it in an
   attribute (an error); keep what you read from it, such as `attribute.name`. A template that would make a function
   the class already has is an error.
