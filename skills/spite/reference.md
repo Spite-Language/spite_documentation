@@ -1,9 +1,10 @@
 # Spite: the whole language on one page
 
 Everything here is enforced by the compiler. When it rejects something it says what to write instead, and it
-never warns: it errors or it is fine. A file that does not parse is reported as
-`path:line:column: message`; the other errors come as `path:line: error: message (in Class.function)`, and a
-compile may stop at the first, so fix it and compile again. Every compile first rewrites your files into the one
+never warns: it errors or it is fine. A file that does not read or parse lists every such mistake in it as
+`path:line: error: message` (its spelling first; once it spells right, every syntax mistake, one for each broken
+statement or declaration); the other errors come as `path:line: error: message (in Class.function)`. A later stage
+waits for the earlier one to be clean, so fix the list and compile again. Every compile first rewrites your files into the one
 style (`formatted path` is printed), so what you read back may differ from what you wrote. Where a mistake has
 exactly one fix the compiler makes it and prints `fixed: ...`; the list is under
 [the compiler fixes](#the-compiler-fixes-what-has-one-fix).

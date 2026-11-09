@@ -430,8 +430,12 @@ is in its signature, and `(in <Class>.)` for one among a class's attributes and 
 A compile lists its errors together, so one compile tells you what to fix. A failure stops its own check, and the
 checks go on to the rest:
 
-- A file that does not lex or parse stops that file; the other files are still read and checked. If it is the entry
-  file, the compile stops there.
+- A file that does not lex or parse lists every reading mistake in it and stops there; the other files are still read
+  and checked. Its spelling mistakes (a mark, a text or a number Spite does not read, a word from another language)
+  come first, since a file spelt wrong is not what was meant. Once it spells right, every syntax mistake is listed:
+  after one, the compiler reads on from the next statement of the same block or the next declaration, past the braces
+  the broken one opened, so an unclosed brace is one error, not one for every line after it. If it is the entry file,
+  the compile stops there.
 - Each rule on a read file reports what it finds and goes on, so two unread locals are two errors. A line is told once:
   a second mistake on it waits for the next compile.
 - A function that does not type-check stops that function, and every other reached function is still built. Functions
