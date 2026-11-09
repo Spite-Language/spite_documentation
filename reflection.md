@@ -786,9 +786,15 @@ reflection on it is ordinary code that costs nothing at run time:
   do `count()`, `filter(...)` over the list and `map_names()`, so an `if` on them keeps one branch and the branch
   not taken is never compiled. `first()`, `last()`, a whole number written in `[]` and a name in `[]`
   (`Part.classes["Alpha"]`) over a constant list of classes or namespaces are the item itself, and no list is made; `first()`, `last()` and a
-  name answer it as a `T?` proven present, so a `crash` on a `var` holding one is already proven and is removed. `[]` with a name or number written in the code answers a constant `T?`:
-  present, a narrowing `if`, `fallback` or `crash` on it costs nothing and narrows the path after it; absent, the
-  branch it guards is never compiled.
+  name answer it as a `T?` proven present, so a `crash` on a `var` holding one is already proven and is removed;
+  `[n]` is the `T` itself. When there is no such item (an empty list, `[n]` past the end, a name no item has) the
+  read stays at run time, so `[n]` past the end halts with its words and the name answers `null`.
+- **A name over a class's `.functions` or `.attributes` is still read at run time.** They are dictionaries, and a
+  declaration lives only in its class's table, so on a class named in the code `Gear.Axle.functions["spun"]` reads
+  that table and answers a `T?` that an `if`, `fallback` or `crash` narrows, and `Gear.Axle.attributes["turns"]`
+  reads it already proven present, a `T`. What folds is a missing name: one the class has no function of is a
+  constant `null`, so `if not Gear.Axle.functions["rolled"]` keeps only its branch, and an attribute name the class
+  does not declare is a compile error.
 - **A name that is both an enum and a class is the enum**: inside the class that declares `enum Shade`, `Shade` is
   the enum even when a `shade.spite` exists, and `Shade.values` is its values.
 - **A walk over an instance's attributes reads the class's declaration** of what it stands for:
