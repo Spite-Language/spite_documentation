@@ -754,8 +754,10 @@ TCP is `Tcp.Server()` (`listen_locally(port)`, `listen_everywhere(port)`, `liste
 `Buffer` (`read_as_buffer(): Buffer?`, a fresh buffer of what arrived, `write_buffer(buffer)`). Every read waits:
 there is no `_now` read. A peer that hung up is not an error: `closed` turns `true`, reads answer `null` and
 writes send nothing.
-**Bytes are a `Buffer`**, never a `List<Byte>` (a list has no byte functions; calling one is a compile error naming
-`Buffer`). A `Buffer` is still a run of bytes (`count()`, `is_empty()`, `buffer[index]`, `append(byte)`, `truncate(count)`,
+**Bytes are a `Buffer`**, never a `List<Byte>`: the type is a compile error written or made (a literal of `Byte`
+items, a `map_<plural>` over a `Byte` attribute, a generic class bound to `Byte` that keeps a list of it, so
+`Dictionary<Byte, ...>` and `Dictionary<..., Byte>` too), and a list has no byte functions (calling one is a compile
+error naming `Buffer`). A `Buffer` is still a run of bytes (`count()`, `is_empty()`, `buffer[index]`, `append(byte)`, `truncate(count)`,
 `clear()`, `copy()`; it has no `each` or other list templates, so walk it with a `while` and an index) and adds:
 made with a size, `Buffer(size)` (`Buffer(0)` when nothing is known; the size is room, never a limit; a foreign
 function that writes into it is passed `Buffer(4096)`, then `take_written(count)` says how much it wrote),

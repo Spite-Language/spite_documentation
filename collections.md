@@ -56,8 +56,8 @@ that way, and the error says to ask with `any(f)` or `find_by_<member>` instead 
 its place, [below](#member-templates-loops-you-do-not-write)).
 
 A list has the same members whatever it holds. Bytes from a file or a socket, and the numbers and text laid out in
-them, are a `Buffer`, which still reads like a list of bytes and adds what bytes need
-([standard_library.md](standard_library.md#bytes-are-a-buffer)).
+them, are a `Buffer`, which still reads like a list of bytes and adds what bytes need, and `List<Byte>` is an error,
+written or made ([standard_library.md](standard_library.md#bytes-are-a-buffer)).
 
 ## `Dictionary<Key, Value>`
 

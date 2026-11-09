@@ -1254,6 +1254,14 @@ buffer's reads and writes whatever it holds: `numbers.read_as_string()` is the e
 bytes has one class, so there is one way to hold it, and it is the class that can read the numbers in it. Write
 `Buffer(size)`.
 
+**`List<Byte>` is an error, written or made.** `List<Byte>()`, or the type written anywhere, is "there is no
+List<Byte>: bytes are a Buffer, the one class that holds them and reads the numbers in them: write 'Buffer(0)' and add
+each byte with 'append(byte)'" at the line that writes it. A list the compiler would make of bytes is refused where it
+is made: a literal whose items are `Byte` values (`[first_byte, second_byte]`) at its line, a `map_<plural>` over a
+`Byte` attribute (`pixels.map_reds()`) at the call, and a generic class bound to `Byte` whose list would hold them
+(`Box<Byte>` over `List<$held_type>`, and so `Dictionary<Byte, String>` and `Dictionary<String, Byte>`, which keep
+their keys and values in lists) at the line that binds it. A list of `Byte?` is not a run of bytes and stays a list.
+
 **Byte order is said in each name.** A number of two bytes or more is read and written through a function that
 names its order after the number: `_little_endian`, the order of every machine Spite compiles for and of Spite's own
 binary format, or `_big_endian`, which puts the most significant byte first (PNG, network order). So a call says what
