@@ -27,7 +27,10 @@ spite --low-ir                      the same for the low representation, .spite/
 ```
 
 Each instruction in the low representation ends with ` | ` and every field it holds as `name=value` (a list as
-`[a,b]`, a vector loop's lists as a count), so a field an optimisation forgets to carry shows in the file.
+`[a,b]`, a vector loop's lists as a count), so a field an optimisation forgets to carry shows in the file. Each
+statement in the high representation, and each `function` line, ends the same way: a value it holds is its own fields
+in braces, `{name=x ...}`, a list of values `[{...}, {...}]`, a block `{statements=3 statements line=12 ...}`, a type
+its name, a function its key, and a missing one `null`.
 
 Every flag is a `Build` field, listed under [Build options](#build-options). Flags mix
 freely, and the outputs combine: one compile can build the executable and write its final classes. `--optimized`
