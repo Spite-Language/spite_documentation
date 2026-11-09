@@ -327,8 +327,10 @@ func Proven(): Integer {
   force (each side of an `and` that holds, each side of an `or` that does not, as after `if amount > 100 or
   amount < 0 { return 1 }`); `count()`, `length()`, `%`, `minimum`, `maximum` and `clamp` bound their answers; loops widen counters and
   count their passes; a total assigned once per pass holds at most as many terms as there are passes. So a `Long`
-  total of `Integer` terms over a list carries no check. An attribute, a list item or a call's answer has its
-  type's range.
+  total of `Integer` terms over a list carries no check. An attribute nothing writes outside its default, when that
+  default is a whole-number literal, has that number's range (`var _hundred = 100` bounds as `100` does), except in
+  a `--repl`, `--repl-port`, `--hot-reload` or `--development` build; any other attribute, a list item or a call's
+  answer has its type's range.
 - **Buys**: an operation the ranges prove carries no overflow check.
 - **Falls back**: the check stays. See
   [a range proves arithmetic fits](#a-range-proves-arithmetic-fits).

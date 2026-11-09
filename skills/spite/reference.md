@@ -240,7 +240,8 @@ rewritten.
   the same rule: `count < total` with a `Long` `total` is an error, write `total > count`. Nothing wraps silently: `+ - *`, unary
   `-` and the smallest signed value `/ -1` that do not fit their type halt naming the line in every build, signed
   and unsigned alike (the check is left out where the ranges of local numbers prove the answer fits: a `Long` total
-  of `Integer` terms over a list, a remainder, a clamped value), and so does a value assigned, passed or returned into a narrower type it does not fit (a
+  of `Integer` terms over a list, a remainder, a clamped value, a value bounded by a named number nothing writes
+  such as `floor.minimum(_hundred)` or `fallback amount < _thousand`), and so does a value assigned, passed or returned into a narrower type it does not fit (a
   number written there that does not fit is a compile error). Where wrapping is the point (a hash), call
   `a.wrapping_sum(b)`, `a.wrapping_subtract(b)` or `a.wrapping_multiply(b)`, which keep the low bits. A whole number divided by zero (`/` or `%`) halts naming the line, and a divisor written as zero is an error; after `fallback divisor != 0` the check is gone. Floats keep infinity and not-a-number.
   An integer literal is an `Integer`: `var big = 3000000000` is an error (`does not fit in an Integer ... store it

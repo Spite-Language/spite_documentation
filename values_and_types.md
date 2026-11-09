@@ -399,7 +399,8 @@ of three or more digits that is neither a power of ten nor a power of two is an 
 and so is a decimal that is a library preset (`3.14159` names `Float.Pi()`); an attribute's default, the body of a
 preset, numbers of one or two digits and text are left alone. The rule and its exact message are in
 [style.md](style.md#a-number-gets-a-name). A named number costs nothing: an attribute nothing writes is read as
-its default where it is read, so it compiles to the number itself. A preset may be the default
+its default where it is read, so it compiles to the number itself, and it bounds a range as the number does
+(`floor.minimum(_hundred) * 1000` keeps no overflow check). A preset may be the default
 (`var _full_turn = Float.Tau()`), and the attribute then has the preset's class.
 
 ### A number library declares the type it needs
