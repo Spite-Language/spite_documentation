@@ -253,7 +253,7 @@ branch, a template exists only for the names called, and reflection only where i
 
 An **inspectable build** (`--development`, `--hot-reload`, `--repl` or `--repl-port`) keeps every generated
 function instead, every function of your classes compiled even when nothing calls it (one that takes a member a
-walk hands it, a `Spite.AttributeDeclaration`, `Spite.Attribute`, `Spite.FunctionDeclaration` or `Spite.Argument`, is
+walk hands it, a `Spite.AttributeDeclaration`, `Spite.Attribute`, `Spite.FunctionDeclaration`, `Spite.Argument` or `Spite.Class`, is
 compiled for each member walked), so live reload has all of them to swap and the REPL can reach every internal, and the
 singletons that hold nothing, such as `Build`, are ordinary objects. A `false` form (`--development=false`) does not
 make a build inspectable, and `--optimized` together with a REPL flag is still an inspectable build. Every other
