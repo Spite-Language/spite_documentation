@@ -158,7 +158,7 @@ func is_alive(): Boolean {
   spelling silences it. A parameter the signature needs but the body ignores is named `_name` (`the parameter
   'amount' is never read: remove it, or name it '_amount' if the signature needs it`); a `_name` that is read is
   renamed `name` in the file, with a `fixed:` line. The parameters of an operator function, of a one-parameter
-  `set_<attribute>` and of a template over members need no `_`. A function nobody calls is never reported. A use inside a branch a codegen test rules out (`if $slot_type == Entity { ... }`) still counts, so
+  `set_<attribute>` and of a template over members need no `_`. A function nobody calls is never reported as unused, yet every build (`--check` too) compiles and checks it, outside a generic class, so a mistake in it is still an error. A use inside a branch a codegen test rules out (`if $slot_type == Entity { ... }`) still counts, so
   a parameter only that branch reads is not unused in the other instantiations.
 - An attribute nothing reads is an error too (`the attribute 'world' is never read: remove it`). A private `_name` attribute is checked too.
   Assigning it is not reading it, and a read counts only for its own class: `tag.label` reads `Tag.label`, not

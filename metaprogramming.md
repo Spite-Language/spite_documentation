@@ -900,7 +900,8 @@ because the branch it rules out would not compile.
 What the branch ruled out is not compiled at all, and neither is what only it reaches. Below, `Field<Integer>`
 compiles `write` without the `List` branch, never compiles `write_list`, and so never checks its `.count()`
 against an `Integer`; the statements after a taken branch that returns are left out the same way. (A class
-that is not generic still compiles and checks every function, so a mistake in one nobody calls is reported.) One
+that is not generic still compiles and checks every function in every build, so a mistake in one nobody calls is
+reported: [compiler.md](compiler.md#every-function-is-checked).) One
 generic class can therefore keep a helper per kind:
 
 ```gdscript

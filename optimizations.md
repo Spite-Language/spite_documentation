@@ -56,8 +56,10 @@ free and copy functions and its text literals. A program that never makes a `Tcp
 `FileSystemWatcher` has none of their code, and a native symbol is looked up only when a function that calls it
 survived.
 
-A function nobody calls, outside a generic class, is still compiled and checked, so a mistake in it is still
-reported; it just is not in the executable. An inspectable build keeps everything, so live reload has every function
+A function nobody calls, outside a generic class, is still compiled and checked in every build, `--check` included,
+so a mistake in it is still reported; it just is not in the executable, and nothing it would make (a class, a copy
+function, a shape filler) reaches the executable either
+([compiler.md](compiler.md#every-function-is-checked)). An inspectable build keeps everything, so live reload has every function
 to swap and the REPL can reach every class ([compiler.md](compiler.md#development-builds-and-tree-shaking)).
 
 ### Concurrency machinery only where it is used

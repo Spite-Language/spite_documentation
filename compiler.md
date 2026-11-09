@@ -261,6 +261,27 @@ build is a production build, where unused things are tree-shaken, down to the cl
 codegen values and `Build` fields fold in both: they are facts of the build, not values the running program could
 change. Which optimisation applies in which build is in [optimizations.md](optimizations.md).
 
+### Every function is checked
+
+Every build, `--check` and `--build` alike, compiles every function of your classes outside a generic class, called
+or not, so a mistake in one nobody calls is reported like any other:
+
+```gdscript
+func never_called(): Integer {
+    return missing_function(2)
+}
+```
+
+```
+game.spite:9: error: this class has no function 'missing_function' (in Game.never_called)
+```
+
+A production build compiles them after the program's own functions and then sets aside everything they made, so
+the executable is exactly the one the reached functions make: a class only they make, a copy function, a shape they
+fill or the order objects are numbered in never reaches it. The rules a function is built against refuse in every
+function; the proofs that need the whole program (that a value is present, that an attribute is read) prove the
+reached functions. An inspectable build keeps the unreached functions in the executable instead.
+
 ## Counting memory: `--debug-memory`
 
 `--debug-memory` builds the program with a table of live allocations and prints `allocations: N frees: N` when it ends.
