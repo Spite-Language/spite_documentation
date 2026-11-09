@@ -253,7 +253,7 @@ how a package is tried out before it is upstreamed. Inside the class, a reopenin
 (`_name`, `_namespace`) that the read-only `name` and `namespace` answer from outside:
 
 ```gdscript title=reopen_spite_class/spite/class.spite
-func name_with_namespaces(): String {
+func dotted_name(): String {
     if _namespace {
         return "{_namespace.name_with_namespaces}.{_name}"
     }
@@ -265,7 +265,7 @@ var console = Console()
 
 func ReopenSpiteClass() {
     load "../spite_standard_library/windows"
-    var console_class_name = console.class.name_with_namespaces()
+    var console_class_name = console.class.dotted_name()
     console.print(console_class_name)
 }
 ```
@@ -273,8 +273,30 @@ func ReopenSpiteClass() {
 Console
 ```
 
-Every class object in the program answers `name_with_namespaces()` from then on, because there is one `Spite.Class` and
-that folder reopened it. A *new* class under `Spite` is a diagnostic instead: that namespace holds the
+Every class object in the program answers `dotted_name()` from then on, because there is one `Spite.Class` and
+that folder reopened it. A reopening of a reflection class (`Spite.Class`, `Spite.Function`, `Spite.Namespace` and
+the other `Spite` classes that describe the program) adds functions of its own, but it cannot declare one the class
+already has, whether by the name the library declares (`get_is_singleton`) or by the name a program reads
+(`is_singleton`, `name`):
+
+```gdscript title=reopened_reflection_function/spite/class.spite
+func is_singleton(): Boolean {
+    return true
+}
+```
+```gdscript title=reopened_reflection_function/reopened_reflection_function.spite entry error
+var console = Console()
+
+func ReopenedReflectionFunction() {
+    load "../spite_standard_library/windows"
+    console.print(console.class.is_singleton)
+}
+```
+```diagnostic
+'is_singleton' is a reflection function of Spite.Class, and reflection functions cannot be replaced: a reopening may add functions of its own, so give this one a name the reflection class does not have
+```
+
+A *new* class under `Spite` is a diagnostic instead: that namespace holds the
 standard library's own classes, and a class of your own belongs in a namespace of your own. `load "spite"` is
 a diagnostic too:
 

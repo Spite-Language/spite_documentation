@@ -1051,9 +1051,10 @@ one: every class answers it, from its `singleton` line ([classes_and_files.md](c
 and declaring it in a class is an error that says to write the `singleton` line instead. A class's name, `Gadget`,
 is a constant that names one instance of `Spite.Class`; a class file's functions are its instances' functions, never
 its class object's, so no class answers a class question its own way. Reopening `Spite.Class` is the one way to
-change what a class object answers, and it changes it for every class in the program. It is a foot you are allowed
-to shoot, and one that shows in `--final-classes`: the class is printed with the function or default you changed,
-and a comment above it names the root it came from. The compiler has no warnings, so visible output is the whole
+add to what a class object answers, and it adds it for every class in the program. It adds functions and may change a
+default, but it cannot replace a function `Spite.Class` already has: `is_singleton`, `name` and the others stay the
+library's ([packages.md](packages.md#the-spite-namespace-is-reserved)). What it adds shows in `--final-classes`: the
+class is printed with the function or default you wrote, and a comment above it names the root it came from. The compiler has no warnings, so visible output is the whole
 mitigation.
 
 ---

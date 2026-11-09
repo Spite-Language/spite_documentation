@@ -420,7 +420,7 @@ func SingletonBasics() {
     load "../spite_standard_library/windows"
     home.score(2)
     away.score(3)
-    var is_singleton = Scoreboard.is_singleton()
+    var is_singleton = Scoreboard.is_singleton
     console.print(home.points, home == away, is_singleton)
 }
 ```
@@ -429,10 +429,11 @@ func SingletonBasics() {
 ```
 
 Call sites never change: `var console = Console()` reads the same whether or not the class is a singleton, and
-the class file is where that is said. `is_singleton()` is answered by `Spite.Class` for every class, from the
+the class file is where that is said. `.is_singleton` is answered by `Spite.Class` for every class, from the
 line. Writing a `func is_singleton()` in a class of your own is an error that tells you to write `singleton` as
-the file's first line. A later file may reopen a class and add the `singleton` line, and the class is then a
-singleton everywhere.
+the file's first line, and declaring it in a reopening of `Spite.Class` (`spite/class.spite`) is an error too,
+since a reopening cannot replace a reflection function ([packages.md](packages.md#the-spite-namespace-is-reserved)).
+A later file may reopen a class and add the `singleton` line, and the class is then a singleton everywhere.
 
 A singleton lives until the program ends, and its `drop()` runs then, newest singleton first, so a `drop()` may
 use any singleton its class keeps in an attribute. A singleton counts as made when its constructor finishes, so the

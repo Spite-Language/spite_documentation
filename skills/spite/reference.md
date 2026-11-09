@@ -62,7 +62,7 @@ them `Block`, `Function`, `Value` (only the program's own classes count, so `spi
 folder path relative to the file, never absolute, or `repository@commit/folder` for a pinned repository; only its last
 folder, the namespace, must be snake_case); a file at the same namespace path
 reopens the class: same-named functions, attributes and enums replace (an enum declared again is its whole new
-list of values), the rest are added; a reopening may not name a local, parameter or attribute like any function of the class. A file in the program's own folder that reopens a class a loaded folder
+list of values), the rest are added; a reopening may not name a local, parameter or attribute like any function of the class. A reopening of a reflection class (`Spite.Class`, `Spite.Function`, `Spite.Namespace`, the other `Spite` classes describing the program) adds functions but cannot declare one the class has, by its library name or the name read (`get_is_singleton`, `is_singleton`, `name`): `'is_singleton' is a reflection function of Spite.Class, and reflection functions cannot be replaced`. A file in the program's own folder that reopens a class a loaded folder
 declares loses wherever both declare a name, the constructor included, since loaded folders merge later: put a
 replacement in a folder loaded after the one it replaces. Two `load`s of folders one inside the other are an error
 (load only the outer one). A `load` under an `if` must be decidable from `Build` fields and literals, and a `load`
