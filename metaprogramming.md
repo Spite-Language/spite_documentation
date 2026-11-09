@@ -78,7 +78,7 @@ walk is `each`, a selection is a filter or a member template, and a member by na
 | every value of an enum | `Phase.values.each(run)`, with `run(phase: Phase)` |
 | one function, if the class has it | `Runner.functions["run_each"]`, a `Spite.FunctionDeclaration?` narrowed by `if` or `fallback` |
 | the same function bound to an instance | `runner.functions["run_each"]`, a `Spite.Function?` |
-| a call filled argument by argument | `Spite.Call(Runner.functions["run_each"], runner)`, then `call.arguments["name"] = value` and `call.call()` |
+| a call filled argument by argument | `Spite.Call(Runner.functions["run_each"], runner)`, then `call.arguments["name"] = value` (`null` for a nullable parameter) and `call.call()` |
 | the functions whose names end in `_each` | `Runner.functions.filter(walks_each)`, or `Runner.functions.filter_name_ends_with("_each")` to count or to ask |
 | a function's arguments | `function.arguments.each(describe_taken)` |
 | an enum's values, in order | `Phase.values` |

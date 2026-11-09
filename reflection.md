@@ -218,8 +218,12 @@ since it is only the direct call (`'call' is a call known while compiling ... ha
 another class than the one declaring the function is a compile error too. A call built from a function known only at
 run time is a real object, and `call()` halts, naming what it found, when the instance is not of the class that
 declares the function, or when an argument is missing, of another type than the parameter's (a number, a `String`,
-an enum, an object, a nullable one, a `type` or a union), or one the function does not have (the first extra key
-in the order they were filled, and the names it does take, or "it takes no arguments"). A parameter that takes a function value is given the function bound to its object,
+an enum, an object, a nullable one, a `type` or a union), `null` for a parameter that is not nullable, or one the
+function does not have (the first extra key
+in the order they were filled, and the names it does take, or "it takes no arguments"). `call.arguments` is a
+`Dictionary<String, Anything?>`, so `call.arguments["count"] = null` fills the argument with `null`: a nullable
+parameter (`count: Integer?`, `badge: Badge?`, `word: String?`) takes it, and `count: Integer` halts that it is not
+an Integer. A parameter that takes a function value is given the function bound to its object,
 `call.arguments["change"] = doubler.functions["doubled"]`, and `call()` halts when its signature is another. Calling a class known only at run time
 makes an object of it, typed `Anything`, wherever the class object is held: `part()` with `part: Spite.Class`, an
 attribute `kind()`, or a member read, `thing.class()` or `argument.class()`. It halts, saying why, for the program's
@@ -580,7 +584,7 @@ whether an attribute's class is a singleton is `attribute.class.is_singleton`, n
 | Member | Answers | Example |
 |---|---|---|
 | `Spite.Call(declaration, instance)` | a call of a `Spite.FunctionDeclaration` on an instance of its class, nothing run yet | `Spite.Call(MoveSystem.functions["run_each"], system)` |
-| `.arguments` | its arguments by name, each written once before the call runs | `call.arguments["position"] = position` |
+| `.arguments` | its arguments by name, a `Dictionary<String, Anything?>`, each written once before the call runs; `null` fills a nullable parameter | `call.arguments["position"] = position` |
 | `call()` | runs it, answering what the function answers | `call.call()` |
 
 ### `Spite.Argument`

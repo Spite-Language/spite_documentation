@@ -618,7 +618,9 @@ rewritten.
   `argument.class()`), makes an object of it typed `Anything`.
 - A call built before it runs: `var call = Spite.Call(MoveSystem.functions["run_each"], system)` (a declaration and
   an instance of its class, the only way to build one), `call.arguments["position"] = value`, `call.call()`; known
-  while compiling it is the direct call.
+  while compiling it is the direct call. Known only at run time, `call()` halts on an argument missing, of another
+  type, or not taken; `call.arguments["count"] = null` is a filled argument, taken by `count: Integer?` and halting
+  for `count: Integer`.
   There is no `call_with`.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,
