@@ -264,7 +264,8 @@ change. Which optimisation applies in which build is in [optimizations.md](optim
 ### Every function is checked
 
 Every build, `--check` and `--build` alike, compiles every function of your classes outside a generic class, called
-or not, so a mistake in one nobody calls is reported like any other:
+or not, so a mistake in one nobody calls is reported like any other. Your classes are the ones the program names,
+from the entry on: a file nothing names is not read at all.
 
 ```gdscript
 func never_called(): Integer {
@@ -276,7 +277,7 @@ func never_called(): Integer {
 game.spite:9: error: this class has no function 'missing_function' (in Game.never_called)
 ```
 
-A production build compiles them after the program's own functions and then sets aside everything they made, so
+A production build compiles them after the functions the program reaches and then sets aside everything they made, so
 the executable is exactly the one the reached functions make: a class only they make, a copy function, a shape they
 fill or the order objects are numbered in never reaches it. The rules a function is built against refuse in every
 function; the proofs that need the whole program (that a value is present, that an attribute is read) prove the
