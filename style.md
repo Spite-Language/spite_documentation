@@ -124,8 +124,10 @@ What the compiler fixes for you, and what it leaves as an error:
 
 ## Names
 
-A name is never rewritten for you, because renaming a symbol can change what a program means to someone
-searching for the old name. These are errors, each with the fix:
+A local or a parameter, and a file or folder of the program, with one right spelling is renamed for you, a file or
+folder with every `load` that names it. Any other name (a function, an attribute, a class, an enum value) is never
+rewritten, because renaming it can change what a program means to someone searching for the old name. These are
+errors, each with the fix:
 
 - `snake_case` for variables, attributes, parameters, functions, enum values, files and folders (a package's
   root folder too: `window_plugin`, never `window-plugin`); `PascalCase` for classes, enums, unions and
