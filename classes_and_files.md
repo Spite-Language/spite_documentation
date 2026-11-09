@@ -46,13 +46,14 @@ names it, says so, and compiles again:
     BadFolder: fixed: the folder 'BadFolder' was not named in snake_case, every folder is lowercase words joined by '_'; renamed it 'bad_folder'
     game.spite:5: fixed: 'load "Engine-Plugin"' named the folder 'Engine-Plugin', which is renamed 'engine_plugin'; changed it to 'load "engine_plugin"' (in Game.Game)
 
-The right spelling is the name's words in lowercase, joined by one `_`: `ToolHelper`, `toolHelper`, `tool-helper`,
+The right spelling is the name's `snake_case()` ([standard_library.md](standard_library.md#snake-camel-and-pascal-case)),
+its words in lowercase, joined by one `_`: `ToolHelper`, `toolHelper`, `tool-helper`,
 `tool helper`, `tool.helper`, `tool__helper` and `tool_helper_` are all `tool_helper`. A class name needs nothing,
 since `ToolHelper` names `tool_helper.spite` either way, and only the last folder of a `load` is a namespace, so
 only that last segment is rewritten. The renames are done together with every other fix of that compile, once
 every class is read, so a compile that stops earlier renames nothing.
 
-The name stays an error, `'HTTPHelper.spite' is not named in snake_case: ... so rename it 'h_t_t_p_helper.spite'`
+The name stays an error, `'HTTPHelper.spite' is not named in snake_case: ... so rename it 'http_helper.spite'`
 or `the folder 'BadFolder' is not named in snake_case: ...`, when the compiler cannot know the rename is right:
 
 - the spelling is unclear: two capitals in a row (`HTTPHelper` could be `http_helper` or `h_t_t_p_helper`), or the

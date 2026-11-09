@@ -754,7 +754,13 @@ the name for HTTP's `host`; `null` when neither), `"example.com".resolve_ip_addr
 address (IPv4 first), `to_string()` writes it as RFC 5952 does, `==` compares; no constructor and no network call
 takes text, so a program writes the literal (`var read: IpAddress = "127.0.0.1"`) or narrows a read `IpAddress?` and passes the `IpAddress`.
 Text has no `to_integer()` or `to_float()`, and there is no `to_ip_address()`: each is a conversion,
-`var count: Integer? = text`, `var address: IpAddress? = text`. `split("")` splits text into characters.
+`var count: Integer? = text`, `var address: IpAddress? = text`. `split("")` splits text into characters. `snake_case()`,
+`camel_case()` and `pascal_case()` respell a text's words (`"total_count".camel_case()` is `totalCount`, `.pascal_case()`
+`TotalCount`, `"TotalCount".snake_case()` `total_count`); words end at `_`, `-`, `.` and spaces (dropped, so `"_kit"`
+is `kit`), before a capital after a small letter or digit, and before the last capital of a run a small letter follows
+(`"HTTPHelper"` is `http_helper`, `httpHelper`, `HttpHelper`); a digit never starts a word (`vector_2d` is `Vector2d`).
+Reflection has no casing of its own: `attribute.name` is the name as written, and `attribute.name.camel_case()` in a
+walk is worked out while compiling.
 TCP is `Tcp.Server()` (`listen_locally(port)`, `listen_everywhere(port)`, `listen_at(address, port)`,
 `accept(): Tcp.Connection?`) and `Tcp.Client()` (`connect(address, port)`, `connect_locally(port)`); a client and a `Tcp.Connection` talk alike: lines
 (`read_line(): String?`, `write_line(text)`), text (`read_as_string(): String?`, `null` for bytes that are not UTF-8, waiting only for the rest of a character the network cut at the end; `write_string(text)`) or bytes as a

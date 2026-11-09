@@ -664,13 +664,16 @@ whether an attribute's class is a singleton is `attribute.class.is_singleton`, n
 | `.index` | its place in declaration order, 0 for the first | `Monster.attributes["health"].index` is `1` |
 | `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
 | `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
-| `.camel_case_name` | its name in camelCase, while compiling only (a walk or a function handed a constant) | `buy_price` is `buyPrice` |
-| `.pascal_case_name` | its name in PascalCase, while compiling only, like `.camel_case_name` | `buy_price` is `BuyPrice` |
 | `.source_file` | on a declaration: the `File` it is written in | `Monster.attributes["health"].source_file` |
 | `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes["health"].value` |
 
-A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index`, the case spellings,
-and `.source_file`, never a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
+`.name` is the name as it is written. Another spelling of it is the `String`'s own:
+`attribute.name.camel_case()` is `buyPrice` and `attribute.name.pascal_case()` is `BuyPrice`
+([standard_library.md](standard_library.md#snake-camel-and-pascal-case)), and in a walk, where the name is known,
+the call is worked out while compiling.
+
+A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index` and `.source_file`, never
+a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
 declaration, plus `.value` and `.owner`. Which one a function takes depends on what it is for: a template, or a walk of the
 class, takes the declaration, and a walk of an instance's data takes the bound attribute. Mixing them up is an error
 that names both ways out: `Monster.attributes.each(describe)` with `describe(attribute: Spite.Attribute)` is `'describe'
@@ -860,7 +863,8 @@ reflection on it is ordinary code that costs nothing at run time:
 - **A name that is both an enum and a class is the enum**: inside the class that declares `enum Shade`, `Shade` is
   the enum even when a `shade.spite` exists, and `Shade.values` is its values.
 - **A walk over an instance's attributes reads the class's declaration** of what it stands for:
-  `attribute.declaration.name`, `.index`, `.class` and `.pascal_case_name` fold in each copy as `attribute.name` does,
+  `attribute.declaration.name`, `.index` and `.class` fold in each copy as `attribute.name` does, and so does
+  `attribute.declaration.name.pascal_case()`,
   and in a template over functions `phase.returns`, `phase.is_resumable`, `phase.returned_literal`, `phase.reads`
   and `phase.writes` are what `Mover.functions["update_each"]` answers for the function the copy stands for.
 

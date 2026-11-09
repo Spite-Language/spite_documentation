@@ -143,6 +143,7 @@ ADA 3 null da d
 | `split(separator)` | `List<String>` | an empty separator, `split("")`, gives one text per character |
 | `lines()` | `List<String>` | the text split at each line break |
 | `pluralize()`, `singularize()` | `String` | the English plural or singular of the last word ([below](#plural-and-singular)) |
+| `snake_case()`, `camel_case()`, `pascal_case()` | `String` | the text's words joined as `total_count`, `totalCount` or `TotalCount` ([below](#snake-camel-and-pascal-case)) |
 | `to_string()`, `to_debug()` | `String` | the text itself; the text quoted, with `"`, `\` and a line break escaped |
 | `to_buffer()` | `Buffer` | the text's UTF-8 bytes ([Bytes are a Buffer](#bytes-are-a-buffer)) |
 
@@ -195,6 +196,38 @@ sheaves sheaf people ActiveQuests foots
 
 `foot` is `foots` here because the program's `irregulars` replaced the library's whole; adding `"foot": "feet"` to it
 brings the library's word back.
+
+### Snake, camel and pascal case
+
+`snake_case()`, `camel_case()` and `pascal_case()` spell a text's words another way, like Rails' `underscore` and
+`camelize`: `"total_count".camel_case()` is `"totalCount"`, `"total_count".pascal_case()` is `"TotalCount"`, and
+`"TotalCount".snake_case()` and `"totalCount".snake_case()` are both `"total_count"`. The three cut the text into
+words by one rule:
+
+- `_`, `-`, `.` and a space end a word and are dropped, so a leading, trailing or doubled `_` is gone: `"_kit"` is
+  `kit`, `"kit__x"` is `kit_x` and `"tool-helper"` is `tool_helper`.
+- A capital after a small letter or a digit starts a word: `"version2Beta"` is `version2_beta`.
+- In a run of capitals, the last one starts a word when a small letter follows it, so an acronym is one word:
+  `"HTTPHelper"` is `http_helper`, `"userID"` is `user_id`, `"XMLHttpRequest"` is `xml_http_request`.
+- A digit belongs to the word it is in and never starts one: `"vector_2d"` is `Vector2d` in PascalCase and `"2kit"`
+  stays `2kit`.
+
+`snake_case()` lowers every word and joins them with `_`. `pascal_case()` raises the first letter of each word and
+lowers the rest; `camel_case()` does the same but lowers the whole first word: `"HTTPHelper"` is `HttpHelper` and
+`httpHelper`. Only `A` to `Z` change case, so `"café_au_lait"` is `CaféAuLait`. A text with no word (`""`, `"__"`)
+answers `""`. Since an acronym is lowered, the forms do not always come back: `"a_b_c".pascal_case()` is `ABC`, and
+`"ABC".snake_case()` is `abc`.
+
+On a text known while compiling, such as an attribute's name in a walk, the call is worked out while compiling and
+is the text itself, so in each copy of this walk `attribute.name.pascal_case()` costs what the literal `"BuyPrice"`
+costs ([reflection.md](reflection.md#spiteattribute)):
+
+```spite
+func describe(attribute: Spite.Attribute) {
+    var label = attribute.name.pascal_case()
+    console.print("{label}: {attribute.value}")
+}
+```
 
 ## Maths
 

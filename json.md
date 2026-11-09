@@ -440,7 +440,9 @@ unclosed object
 
 Other systems write `buyPrice` or `BuyPrice`
 where Spite writes `buy_price`, so a key that names no attribute as written is matched against each attribute's
-name spelled in camelCase and in PascalCase. The spellings are constants the compiler writes, so snake_case input
+name spelled in camelCase and in PascalCase, `attribute.name.camel_case()` and `attribute.name.pascal_case()`
+([standard_library.md](standard_library.md#snake-camel-and-pascal-case)). The name is known in each copy of the walk,
+so the spellings are constants the compiler works out, and snake_case input
 reads exactly as fast as before and a camelCase key costs only the second, shorter look; `JsonWriter` still writes
 `buy_price`:
 
