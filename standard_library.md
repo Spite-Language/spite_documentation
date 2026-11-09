@@ -1257,10 +1257,11 @@ bytes has one class, so there is one way to hold it, and it is the class that ca
 **`List<Byte>` is an error, written or made.** `List<Byte>()`, or the type written anywhere, is "there is no
 List<Byte>: bytes are a Buffer, the one class that holds them and reads the numbers in them: write 'Buffer(0)' and add
 each byte with 'append(byte)'" at the line that writes it. A list the compiler would make of bytes is refused where it
-is made: a literal whose items are `Byte` values (`[first_byte, second_byte]`) at its line, a `map_<plural>` over a
-`Byte` attribute (`pixels.map_reds()`) at the call, and a generic class bound to `Byte` whose list would hold them
-(`Box<Byte>` over `List<$held_type>`, and so `Dictionary<Byte, String>` and `Dictionary<String, Byte>`, which keep
-their keys and values in lists) at the line that binds it. A list of `Byte?` is not a run of bytes and stays a list.
+is made: a literal whose items are `Byte` values (`[first_byte, second_byte]`) at its line, a call that would answer
+one (`pixels.map_reds()` over a `Byte` attribute, `keys()` of a `Dictionary<Byte, String>`) at the call, and a
+generic class of your own bound to `Byte` whose list would hold them (`Box<Byte>` over `List<$held_type>`) at the line
+that binds it. The library's own classes keep what they hold as they like, so a `Dictionary<Byte, String>` is fine
+until its keys are asked for as a list. A list of `Byte?` is not a run of bytes and stays a list.
 
 **Byte order is said in each name.** A number of two bytes or more is read and written through a function that
 names its order after the number: `_little_endian`, the order of every machine Spite compiles for and of Spite's own

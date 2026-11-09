@@ -142,7 +142,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   children) are plain references: the compiler finds the back reference and frees the cycle.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
 - Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
-  of `Byte` items, `map_<plural>` over a `Byte` attribute, a `Dictionary` or generic class bound to `Byte`).
+  of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
+  to `Byte` that keeps a list of it).
 - Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
   entry class is never generic; put what needs `generic` lines in a class it makes.
 - A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class
