@@ -254,6 +254,53 @@ Every `var` is written with its default, so an object made with no arguments is 
 it says something is a bug ([failure.md](failure.md#fallback-is-not-allowed-in-a-constructor)). There is no `new`:
 `Person(30)` makes one.
 
+### A default reads only what is above it
+
+The defaults run in the order they are written, so a default may only read an attribute that was already given a
+value: one declared above it, read directly or through a function of its object it calls. A default that reads one
+declared below it is moved for you when the compiler can: it moves the `var` lines into an order where each default
+reads only those above it, says so with a `fixed:` line, and compiles the fixed file, so a development build and
+any other read the same values:
+
+```gdscript title=default_order/default_order.spite entry
+var console = Console()
+var tripled: Integer = _hundred * 3
+var _hundred = 100
+
+func DefaultOrder() {
+    load "../spite_standard_library/windows"
+    console.print(tripled)
+}
+```
+```output
+300
+```
+```diagnostic
+fixed: '_hundred' was declared below 'tripled', whose default reads it; moved it above, since a default may only read attributes already given a value
+```
+
+When no order can work, or the compiler cannot move the lines, it is an error. Defaults that read each other in a
+circle, or a default reading its own attribute, could never run:
+
+```gdscript title=default_circle/default_circle.spite entry error
+var console = Console()
+var _first: Integer = _second + 1
+var _second: Integer = _first + 1
+
+func DefaultCircle() {
+    load "../spite_standard_library/windows"
+    console.print(_first, _second)
+}
+```
+```diagnostic
+the default of '_first' reads '_second', whose default reads '_first': a default may only read attributes already given a value, directly or through the functions it calls, so none of them can come first: give one of them a default that reads none of the others
+```
+
+A line is only moved inside its own file, and a file of the standard library or of a package is never rewritten.
+A default reading an attribute that a later file adds to its class, in a reopening, is the error `the default of
+'total' reads 'extra', declared below it in another file of the class: ...`; one in a file the compiler never
+rewrites is `... declared below it in a file the compiler never rewrites: ..., so declare 'extra' above 'total'`.
+
 There is one function per name. A file declaring a name twice is an error, `'DuplicateFunction' declares 'twice'
 twice: a later file may reopen a class and replace a declaration, but one file declares each name once`, and there
 is no overloading: an argument is cast to the parameter's type instead

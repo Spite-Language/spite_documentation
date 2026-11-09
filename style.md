@@ -119,8 +119,9 @@ What the compiler fixes for you, and what it leaves as an error:
   file or folder of the program with one right spelling is renamed on the disk, with every `load` that names it
   ([classes_and_files.md](classes_and_files.md#a-misnamed-file-or-folder-is-renamed)).
 - **Placement.** A declaration out of order is moved with the comment lines above it, a comment in the wrong place
-  moves to the top of the file, and a `union` or `type` two classes of one root declare alike moves to the entry
-  class of the lowest namespace, with every use rewritten.
+  moves to the top of the file, a `var` that a default above it reads moves above that default
+  ([classes_and_files.md](classes_and_files.md#a-default-reads-only-what-is-above-it)), and a `union` or `type` two
+  classes of one root declare alike moves to the entry class of the lowest namespace, with every use rewritten.
 
 ## Names
 

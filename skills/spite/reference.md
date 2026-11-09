@@ -106,6 +106,11 @@ func is_alive(): Boolean {
   order: a `singleton` line, `generic $name` lines, enums, unions, types, variables, the constructor, conversions, presets, then
   functions (`a file holds declarations and nothing else` for a statement at file level). A file in
   the wrong order is put back in order by the compiler (`fixed: ... moved it up, since a file is ordered`). Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
+  default may only read attributes declared above it (directly or through a function of its object). One reading an
+  attribute declared below it in the same file is moved for you (`fixed: '_hundred' was declared below 'tripled',
+  whose default reads it; moved it above, ...`); a circle, a default reading its own attribute, or a read the compiler
+  cannot move (another file of a reopened class, a library file) is an error (`the default of '_first' reads
+  '_second', whose default reads '_first': ...`). A
   name starting with `_` is private to its class, for reads and writes alike (`'_hidden' is private to 'Secret'`).
 - The function named like the class is the constructor. Do not write an empty one: a class without a constructor
   is made from its defaults, and `func Monster() { }` is an error (`has an empty constructor: delete it`).
