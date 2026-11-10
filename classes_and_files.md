@@ -257,11 +257,12 @@ it says something is a bug ([failure.md](failure.md#fallback-is-not-allowed-in-a
 
 ### A default reads only what is above it
 
-The defaults run in the order they are written, so a default may only read an attribute that was already given a
-value: one declared above it, read directly or through a function of its object it calls. A default that reads one
-declared below it is moved for you when the compiler can: it moves the `var` lines into an order where each default
-reads only those above it, says so with a `fixed:` line, and compiles the fixed file, so a development build and
-any other read the same values:
+The defaults run in the order they are written, so a default may only read or write an attribute that was already
+given a value: one declared above it, used directly or through a function of its object it calls. A read of one
+declared below it would see no value yet, and a write to it would be undone when its own default runs after. A
+default that reads or writes one declared below it is moved for you when the compiler can: it moves the `var` lines
+into an order where each default uses only those above it, says so with a `fixed:` line, and compiles the fixed
+file, so a development build and any other read the same values:
 
 ```gdscript title=default_order/default_order.spite entry
 var console = Console()
@@ -277,11 +278,36 @@ func DefaultOrder() {
 300
 ```
 ```diagnostic
-fixed: '_hundred' was declared below 'tripled', whose default reads it; moved it above, since a default may only read attributes already given a value
+fixed: '_hundred' was declared below 'tripled', whose default reads it; moved it above, since a default may only read or write attributes already given a value
 ```
 
-When no order can work, or the compiler cannot move the lines, it is an error. Defaults that read each other in a
-circle, or a default reading its own attribute, could never run:
+A write counts the same way. Here `start()` sets `_ready`, so `_ready` is moved above `started`, and its default
+`false` runs before the write instead of after it:
+
+```gdscript title=default_write_order/default_write_order.spite entry
+var console = Console()
+var started: Boolean = start()
+var _ready = false
+
+func DefaultWriteOrder() {
+    load "../spite_standard_library/windows"
+    console.print(started, _ready)
+}
+
+func start(): Boolean {
+    _ready = true
+    return true
+}
+```
+```output
+true true
+```
+```diagnostic
+fixed: '_ready' was declared below 'started', whose default writes it; moved it above, since a default may only read or write attributes already given a value
+```
+
+When no order can work, or the compiler cannot move the lines, it is an error. Defaults that read or write each
+other in a circle, or a default reading or writing its own attribute, could never run:
 
 ```gdscript title=default_circle/default_circle.spite entry error
 var console = Console()
@@ -294,12 +320,17 @@ func DefaultCircle() {
 }
 ```
 ```diagnostic
-the default of '_first' reads '_second', whose default reads '_first': a default may only read attributes already given a value, directly or through the functions it calls, so none of them can come first: give one of them a default that reads none of the others
+the default of '_first' reads '_second', whose default reads '_first': a default may only read or write attributes already given a value, directly or through the functions it calls, so none of them can come first: give one of them a default that reads or writes none of the others
 ```
+
+The words say `writes` where the default only writes the attribute: `the default of 'started' writes '_ready',
+whose default reads 'started': ...` for a circle through a write, and `the default of '_count' writes '_count'
+itself: ...` for a default whose function sets its own attribute, a write its default would undo.
 
 A line is only moved inside its own file, and a file of the standard library or of a package is never rewritten.
 A default reading an attribute that a later file adds to its class, in a reopening, is the error `the default of
-'total' reads 'extra', declared below it in another file of the class: ...`; one in a file the compiler never
+'total' reads 'extra', declared below it in another file of the class: ...` (`writes 'extra'` when its function
+only sets it); one in a file the compiler never
 rewrites is `... declared below it in a file the compiler never rewrites: ..., so declare 'extra' above 'total'`.
 
 There is one function per name. A file declaring a name twice is an error, `'DuplicateFunction' declares 'twice'
