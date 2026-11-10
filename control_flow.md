@@ -342,6 +342,11 @@ alone on its line or alone inside `{ }`; two statements are `this case runs 2 st
 so move them into a function named for what they do and call it here`, in every kind of switch. The exception to the
 shared body is a body that reads the switched value, which stays a `switch`.
 
+**A case is one line.** It opens no `if`, `while` or `switch` with lines inside: `'dark': if ready {` followed by its
+statements is `the 'if' this case opens spans several lines: a case is one line, so move the 'if' into a function named
+for what it does and call it here`. A call too long for its line still breaks over several, one argument per line,
+indented under its case.
+
 **The subject runs once.** However many cases there are, and whatever it holds: `switch thing.pop().shade` calls `pop`
 one time, and so does a subject that ends in an index or reads a getter. A subject holding a call narrows nothing in
 its cases, since writing it again calls again, and a getter that may write something is not trusted on a second

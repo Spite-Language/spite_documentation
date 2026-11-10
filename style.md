@@ -405,7 +405,8 @@ Each of the exceptions is there for a reason:
 - **An enum's entries.** An enum is one entry per line and reopening it replaces it, so it has no way to get smaller. If
   lines counted, an enum over the budget could not exist. Counting statements forbids nothing.
 - **A switch's cases.** Each case is one line, and a switch over an enum is exhaustive with one value per case, so a
-  switch over a large enum cannot be split either. A case that opens an `if` or a `while` still pays for what is inside it.
+  switch over a large enum cannot be split either. A case cannot open an `if`, a `while` or a `switch`, so it hides
+  nothing: the work it calls is counted in the function that holds it.
 - **A statement over many lines.** A printed call with one argument per line, or a long list literal, is still one thing
   said once, so it costs one.
 

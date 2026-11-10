@@ -513,7 +513,7 @@ rewritten.
   (`Cat: walk()` and `Dog: walk()`); when all but one share it, write `if value.class == Fish { swim() } else { walk() }`, unless the shared body reads the switched value, which stays a `switch`.
   Value cases are `'red': return 30` or `true:`/`false:`, and a `Boolean` needs both (`this switch over 'count > 2' has no case for false: ...`); for one of them write an `if`. A `switch` over a number or a text is an error: choose with
   `if`s. A case is one statement (a call, an assignment, a `return` or a `crash`), on its line or alone in `{ }`; two
-  statements are `this case runs 2 statements: ... move them into a function named for what they do`. A switch over
+  statements are `this case runs 2 statements: ... move them into a function named for what they do`, and a case is one line, so it opens no `if`, `while` or `switch` with lines inside (`the 'if' this case opens spans several lines: a case is one line, so move the 'if' into a function named for what it does and call it here`). A switch over
   a `T?` needs a `Null:` case (`this switch over 'target' has no case for Null`). Three `if`s in a row that each compare one name with one of its enum values and only return are an error that
   writes the switch for you, naming every value; an `else if` chain of three is the same.
   The subject runs once however many cases there are, whatever it holds (a call, a chain through a call, an index, a getter). A subject holding a call narrows nothing in its cases, since writing it again calls again: `var held = thing.pop().target`, then `switch held`.
