@@ -450,6 +450,9 @@ rewritten.
   first (`this value may be null (it is a Rock?), but a Singer is needed: ...`).
 - `Anything` is the built-in empty `type`, the counterpart of `Nothing`: `component: Anything` and
   `List<Anything>()` accept any object (a number keeps its class, with no allocation). Never declare an empty `type` of your own.
+  `Anything` never holds `null`: `null` assigned, passed, appended, answered or declared into a plain `Anything` is a
+  compile error (`'null' is given where an Anything is needed, and an Anything never holds null: ...`). `Anything?`
+  is a smell: write it only where none is a real answer, and prefer a real type.
 - No `type` stands for every number. Write number code as a generic class that declares the `type` its codegen
   value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum: Spite.Function<Measure, Measure> }`);
   every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,

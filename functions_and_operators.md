@@ -242,6 +242,23 @@ A `T?` fits a `type` unnarrowed only when null can answer everything the `type` 
 ([proofs.md](proofs.md#a-value-proven-present-is-a-t)): `var singer: Singer = maybe_rock` with a `Rock?` is "this value may be null (it is a
 Rock?), but a Singer is needed: narrow it first with 'if value { }', 'fallback value' or 'crash value'".
 
+### Anything never holds null
+
+`Anything` is every class except `Null` and `Nothing`, so a plain `Anything` always holds a value. `null` given to
+one (assigned, passed, appended, answered or declared) is a compile error, never an empty object:
+
+```spite
+var held = List<Anything>()
+held.append(null)
+```
+```diagnostic
+'null' is given where an Anything is needed, and an Anything never holds null: write 'Anything?' only where none is a real answer (a real type says more), otherwise give it a value
+```
+
+`Anything?` holds `null` too, and is narrowed before use like any `T?`. Treat it as a smell: write it only where
+"none" is a real answer, such as the value of an attribute declared `T?` (`Spite.Attribute.value`) or an
+argument a run-time call leaves out, and prefer a real type, a union or a `T?` of a real class everywhere else.
+
 ## Every operator is a function
 
 Every operator is a shortcut for a function a class can define to support it, with the parameters the table shows. Any other count is an error where the operator is used: `this operator on a 'Thing' needs it to define 'sum(other)', and its 'sum' takes 0 arguments`. `equals`, `less_than` and `greater_than` are checked where they are declared instead ([Functions the compiler calls by name](#functions-the-compiler-calls-by-name)).

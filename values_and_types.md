@@ -955,7 +955,9 @@ answers `Object`.
 This is what makes fast, JSON-shaped code possible: accept a `type`, and both a real class instance and a
 plain `{ key: value }` literal work. The empty `type`, which every object fits, is built in as `Anything`
 (`component: Anything`, `List<Anything>()`; see [functions_and_operators.md](functions_and_operators.md)):
-never declare an empty `type` of your own. A `type`, like an `enum` and a `union`, takes no `=` and no commas.
+never declare an empty `type` of your own. `Anything` never holds `null`: `null` given to one is a compile error,
+and `Anything?` is a smell kept for where none is a real answer ([functions_and_operators.md](functions_and_operators.md#anything-never-holds-null)).
+A `type`, like an `enum` and a `union`, takes no `=` and no commas.
 
 An attribute of a `type` may itself be a union, met by that union or one of its classes; one whose type is another
 `type` is met by that `type`, or by a class or a union whose classes each have its members; one whose type is a
