@@ -239,7 +239,7 @@ var columns = Columns()
 func run(mover: Mover) {
     var index = 0
     while index < columns.size() {
-        var row: $row_type = null
+        var row = $row_type()
         fill_attributes(row, index)
         mover.update_each(row)
         index = index + 1
@@ -358,7 +358,7 @@ func run(mover: Mover, entity_count: Integer) {
     var entity = 0
     while entity < entity_count {
         found.clear()
-        var row: $row_type = null
+        var row = $row_type()
         find_attributes(row, entity)
         fill_attributes(row, found, entity)
         mover.update_each(row)

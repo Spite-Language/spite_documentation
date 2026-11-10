@@ -242,10 +242,27 @@ A `T?` fits a `type` unnarrowed only when null can answer everything the `type` 
 ([proofs.md](proofs.md#a-value-proven-present-is-a-t)): `var singer: Singer = maybe_rock` with a `Rock?` is "this value may be null (it is a
 Rock?), but a Singer is needed: narrow it first with 'if value { }', 'fallback value' or 'crash value'".
 
-### Anything never holds null
+### `null` only goes where a `T?` is wanted
 
-`Anything` is every class except `Null` and `Nothing`, so a plain `Anything` always holds a value. `null` given to
-one (assigned, passed, appended, answered or declared) is a compile error, never an empty object:
+`null` given to a type without `?` (assigned, passed, appended, answered or declared) is a compile error, never a
+default made for it: not `0`, `false` or `""` for a number, a `Boolean` or a `String`, not the first value of an
+enum, and not an object of a class or a `type`, built through its constructor or without it. Write `T?` where none
+is a real answer, and narrow it before use, or give it a real value:
+
+```spite
+func packed(): Crate {
+    return null
+}
+```
+```diagnostic
+'null' is given where a Crate is needed, and a Crate never holds null: write 'Crate?' where none is a real answer, otherwise give it a real Crate
+```
+
+An attribute written `= null` that its constructor assigns at its top level is not given `null`: nothing is made
+for it, and the constructor gives it its first value. A local a walk fills is made first, `var row = $row_type()`.
+
+`Anything` is every class except `Null` and `Nothing`, so a plain `Anything` always holds a value too, and its words
+add that a real type says more:
 
 ```spite
 var held = List<Anything>()

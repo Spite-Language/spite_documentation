@@ -111,6 +111,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `system.update_each(made_arguments(row))`); the body says which class. A class's `.name` is always its short name
   and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it.
 - No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `fallback`, `crash`, `switch`).
+  `null` only goes where a `T?` is wanted: given to any type without `?` (assigned, passed, appended, answered or
+  declared) it is a compile error, never a silent `0`, `""`, first enum value or default object.
   `fallback condition` ends the function with what its answer type builds with no arguments (`null` for a `T?`,
   `0`, `false`, `""`, an empty list, or a fresh object of a class made with no arguments; an enum or a class whose
   constructor takes arguments has none, so a `fallback` there is an error: answer `T?` or `crash`); answer a `T?` when a

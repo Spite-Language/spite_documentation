@@ -323,7 +323,7 @@ rewritten.
 - A row of list items for a system: `var row: Moving = {position: positions[index], velocity:
   velocities[index]}` (`Moving` a `type`), then `mover.update_each(row)`. Its attributes are the items themselves, so
   `moving.position.left = 3.0` writes the list's item.
-- A generic runner builds the same row with a walk: `var row: $row_type = null`, then on the next line
+- A generic runner builds the same row with a walk: `var row = $row_type()`, then on the next line
   `fill_attributes(row, index)` whose template is `crash columns.attributes[attribute][index]` and then the line
   `row.attributes[attribute] = columns.attributes[attribute][index]`: a `[]` read answers a `T?` and a row holds
   items, so the template states each read with a `crash` line before the fill. The compiler writes those checks
@@ -354,8 +354,13 @@ rewritten.
   it has no plural.
 - `null` is only for `T?`: `var target: Monster = null` is an error; write `var target: Monster? = null`
   for none yet, or `var target = Monster()` for a default. In a generic class write `var system = $system_type()`,
-  in a template `var made = argument.class()`. `= null` stays only on an attribute the constructor assigns and on
-  a local a walk over its attributes fills (`var row: $row_type = null` then `fill_attributes(row, ...)`).
+  in a template `var made = argument.class()`, and a local a walk fills is `var row = $row_type()` then
+  `fill_attributes(row, ...)`. `= null` stays only on an attribute the constructor assigns at its top level: nothing
+  is made for it, and the constructor gives it its first value.
+- `null` assigned, passed, appended or answered where a type without `?` is wanted is a compile error too, never a
+  default (`0`, `false`, `""`, an enum's first value, an object of a class or a `type`): `'null' is given where a
+  Crate is needed, and a Crate never holds null: write 'Crate?' where none is a real answer, otherwise give it a real
+  Crate`.
 - To hand one stored component to a caller, return it straight from the singleton's storage: `func of(entity:
   Integer): $component_type?` ending `return column.values[row]`. The caller gets the stored item, so
   `layout.order = 3` writes the column; never return `.copy()` for this, since writes to a copy are lost.

@@ -391,7 +391,7 @@ and frees.
 
 ### An object let go before anything reads it is never made
 
-A row declared `var row: $row_type = null` holds a new object for each attribute until something assigns it. Once the
+A row declared `var row = $row_type()` holds a new object for each attribute until something assigns it. Once the
 fill is inlined, each of those objects would be made and let go with nothing reading it in between. Such an object is
 never made, when its class frees nothing but its own memory.
 

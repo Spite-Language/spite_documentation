@@ -631,7 +631,7 @@ A number that may be null never counts as 0: narrow it before `+ - * / %`, `< > 
 reading with `[]` answers one. A `Boolean?` is the one `T?` that is no condition, since its `false` would read as
 missing; `fallback flag` alone takes one, and asks that it is there and `true`. All of it is in
 [failure.md](failure.md), with the three outcomes a failure can have. Since `null` belongs to `T?` alone, `var target: Monster = null` is an error that asks for `Monster?` (none
-yet) or `Monster()` (a default), and a generic class makes the default of what it is bound to with `$name()`. For a
+yet) or `Monster()` (a default), as is `null` assigned, passed, appended or answered where a `Monster` is wanted, and a generic class makes the default of what it is bound to with `$name()`. For a
 plain value the default is its literal: `0`, `0.0`, `false` or `""`, which the error writes for you.
 
 A `var` may be written again in the same scope, and the new one may hold another type:
@@ -956,7 +956,7 @@ This is what makes fast, JSON-shaped code possible: accept a `type`, and both a 
 plain `{ key: value }` literal work. The empty `type`, which every object fits, is built in as `Anything`
 (`component: Anything`, `List<Anything>()`; see [functions_and_operators.md](functions_and_operators.md)):
 never declare an empty `type` of your own. `Anything` never holds `null`: `null` given to one is a compile error,
-and `Anything?` is a smell kept for where none is a real answer ([functions_and_operators.md](functions_and_operators.md#anything-never-holds-null)).
+and `Anything?` is a smell kept for where none is a real answer ([functions_and_operators.md](functions_and_operators.md#null-only-goes-where-a-t-is-wanted)).
 A `type`, like an `enum` and a `union`, takes no `=` and no commas.
 
 An attribute of a `type` may itself be a union, met by that union or one of its classes; one whose type is another
@@ -965,8 +965,10 @@ function value is met by a function value with the same parameter types and answ
 fit and the error names the attribute.
 
 A `type` of attributes only has a default like a class does: the object literal with each attribute at its own
-default, whose `.class` answers `Object`. So `var target = $target_type()` in a generic class bound to such a
-`type` holds a real object, and what is written through it stays written.
+default, whose `.class` answers `Object`, made when it is asked for with `$target_type()`. So `var target =
+$target_type()` in a generic class bound to such a `type` holds a real object, and what is written through it stays
+written. A default is never made from `null`: `null` given to a `type`, like to any type without `?`, is a compile
+error ([functions_and_operators.md](functions_and_operators.md#null-only-goes-where-a-t-is-wanted)).
 
 A `type` may require functions as well as attributes, and a member has one form: `render: Spite.Function<Integer, String>`
 takes an `Integer` and answers a `String`, and `finish: Spite.Function<Nothing>` answers nothing. It names the types
