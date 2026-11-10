@@ -76,9 +76,11 @@ gzip ([below](#bytes-base64-compression-hashes-and-passwords)). TLS belongs to i
 
 ## `String`
 
-Immutable. A text is one reference-counted block holding the `String`, its `Buffer` and room for 47 bytes, so short
-text is one allocation and longer text moves its bytes out once they outgrow the room
-([optimizations.md](optimizations.md#short-text-lives-inside-the-string)), and none of it changes what a program means. A value is placed inside written text, `"hello {name}"`, and two values join
+Immutable. How a text is held is the compiler's, and no program can tell: a short text a function makes and keeps
+to itself lives in the function's frame and allocates nothing, and any other text is one reference-counted block
+holding the `String`, its `Buffer` and room for 47 bytes, so short text is one allocation and longer text moves its
+bytes out once they outgrow the room ([optimizations.md](optimizations.md#short-text-lives-inside-the-string)).
+Holding text inline changes only the allocation counts and the time, never what a program prints, compares or answers. A value is placed inside written text, `"hello {name}"`, and two values join
 with `+` ([values_and_types.md](values_and_types.md#string)). `==`, `!=`, `<` and `>` compare by content. `copy()` and
 `deep_copy()` both answer a new text with the same bytes.
 

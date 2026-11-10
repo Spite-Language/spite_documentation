@@ -530,9 +530,14 @@ written text, a join and a first append get room for 47 bytes or for the whole t
 text never needs a block of its own for its bytes. When the bytes outgrow the room they move to storage of their own,
 and the room inside is not used again. Freeing the `String` frees the block.
 
+A text whose bytes fit that room (47 bytes) and that never leaves the function making it (it is read, compared,
+looked up or handed to calls that keep nothing of it, never stored, answered or handed out) is not allocated at all:
+its block is room in the function's frame, so `"id{digit}"` made in a loop and only measured costs nothing. A join
+whose length is known only when it runs takes the frame's room when it fits and the heap when it does not.
+
 It does not apply to a program whose `String` keeps an attribute other than its buffer and length, or whose `String`
 or `Buffer` has a `drop()`: it then makes the `String` and its `Buffer` apart. What you can observe: one allocation
-per text and the time.
+per text that leaves its function, none for a short one that does not, and the time.
 
 ### Small blocks come from the program's own free lists
 
