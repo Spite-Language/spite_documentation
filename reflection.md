@@ -422,15 +422,19 @@ the code, the way a class name is written for a `Spite.Class`:
 | a union the code can name, `Pet` | each of its member classes |
 | a class, `Monster` or `List<Integer>` | that class, its generic arguments included |
 | `Anything` | every class |
-| `Number` | every number class: `Byte`, `Tiny`, `Short`, `UnsignedShort`, `Integer`, `UnsignedInteger`, `Long`, `UnsignedLong`, `Float` and `Double`, and nothing else |
+| `Number` | a class answering a number's operators: every number class, `Byte` to `Double`, and a program's own |
 
-`Number` is the compiler's own: a program names it here and cannot declare it, nor hold a value typed `Number`. It
-is closed, like a union of the classes the compiler stores as numbers, so a class of the program with a `sum` of its
-own is not one.
+`Number` is the compiler's own `type`, the operators a number answers: `sum`, `subtract`, `multiply`, `divide` and
+`remainder` (`+`, `-`, `*`, `/` and `%`), each taking the class and answering it, and `equals`, `less_than` and
+`greater_than` (`==`, `<` and `>`), each taking the class and answering a `Boolean`. It is broad, so a program's own
+number class fits it the way any class fits a `type`: a fixed-point or big-number class of a custom math library
+with those eight functions satisfies `Number`, and one missing `remainder` does not. A program names it here and
+cannot declare it, nor hold a value typed `Number`. `$value_type.is_number` is narrower: it asks whether a type is
+one of the library's number classes, the ones stored as machine numbers.
 
-The rule is the one the compiler checks a member's type against a `type` with, so a class stands in for a `type` only
-when it is an object class: a number or a `Boolean` value is converted when it is given where a `type` is wanted, and
-`Integer.satisfies_type(Textual)` is `false` even though `var shown: Textual = 5` compiles.
+The rule is the one the compiler checks every fit with ([values_and_types.md](values_and_types.md#what-fits-a-type)),
+numbers included: `Integer.satisfies_type(Textual)` is `true`, as `var shown: Textual = 5` compiles, and an enum
+satisfies a `type` that asks only for `to_string`.
 
 The answer is decided while compiling, so it costs nothing at run time: asked of a class named in the code, `$T`, or
 a walk's `attribute.class`, it is a `true` or a `false`, and an `if` on it keeps only the branch taken. That is how a

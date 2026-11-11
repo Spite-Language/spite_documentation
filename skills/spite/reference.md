@@ -451,7 +451,11 @@ rewritten.
   refused as a member, so wrap it in a class of your own that keeps it in an attribute.
 - A `type` declares a shape (`label: String` and `render: Spite.Function<Integer, String>`, one per line, with `Spite.Function<Nothing>` for no answer and never a call form `render(Integer): String`, which the compiler rewrites; a function of the class or an attribute holding such a function meets it, and `item.render(12)` calls either; a required function
   naming the *types* it takes and never the names) and accepts any class, or
-  object literal `{ label: "x" }`, with those attributes and functions. A `T?` fits a `type` that asks only for
+  object literal `{ label: "x" }`, with those attributes and functions, typed as the `type` says. One rule decides
+  every fit (a value given, a member's type, a `generic` constraint, `$T == Named`, `satisfies_type`): if the
+  contract matches it fits, numbers included (`Integer` fits `type Textual { to_string: Spite.Function<String> }`),
+  an enum fits a `type` asking only `to_string`, a union fits when each class does. To admit only some classes write
+  a `union`, not a `type`. A `T?` fits a `type` that asks only for
   `to_string()` and `to_debug()` (null answers both with `null`); any other `type` needs it narrowed or proven present
   first (`this value may be null (it is a Rock?), but a Singer is needed: ...`).
 - `Anything` is the built-in empty `type`, the counterpart of `Nothing`: `component: Anything` and
@@ -459,10 +463,13 @@ rewritten.
   `Anything` never holds `null`: `null` assigned, passed, appended, answered or declared into a plain `Anything` is a
   compile error (`'null' is given where an Anything is needed, and an Anything never holds null: ...`). `Anything?`
   is a smell: write it only where none is a real answer, and prefer a real type.
-- No `type` stands for every number. Write number code as a generic class that declares the `type` its codegen
+- No value or constraint is typed `Number`. Write number code as a generic class that declares the `type` its codegen
   value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum: Spite.Function<Measure, Measure> }`);
   every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,
-  `less_than`, `greater_than`. Ask `$value_type.is_number` (never ten comparisons) to tell a number apart in a walk.
+  `less_than`, `greater_than`, and so may a class of your own (a custom math library). Ask `$value_type.is_number`
+  (never ten comparisons) to tell a library number apart in a walk, and `kind.satisfies_type(Number)` for any class
+  answering a number's operators (`sum`, `subtract`, `multiply`, `divide`, `remainder` taking and answering the
+  class, `equals`, `less_than`, `greater_than` answering a `Boolean`).
   Inside a `type`, its own name in a signature is the class that fits.
 
 ## Nothing, null, and failure
@@ -607,8 +614,9 @@ rewritten.
   `attribute.name == "health"` and `attribute.class == List<Integer>`, which compares the generic arguments too
   (`List<String>` is false; `attribute.class == List` is any list), so the branch not taken is never compiled.
   `attribute.class.satisfies_type(Number)` folds the same way: whether the class can stand in for a type, given by
-  name (a `type`, a union, a class, `Anything`, or `Number`, the compiler's own type every number class `Byte` to
-  `Double` satisfies and nothing else does; `Number` cannot be declared or hold a value). Asked of a class known
+  name (a `type`, a union, a class, `Anything`, or `Number`, the compiler's own type of a number's operators, which
+  every number class `Byte` to `Double` and a program's own number class with them satisfy; `Number` cannot be
+  declared or hold a value). Asked of a class known
   only at run time (`value.class` through `Anything`) it is a compile error. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
   A reflection object a walk hands a function has no run-time value: never `append` it to a list or keep it in an
   attribute (an error); keep what you read from it, such as `attribute.name`. A template that would make a function

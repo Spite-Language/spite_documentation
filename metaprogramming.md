@@ -225,8 +225,8 @@ var read_count = update.reads.count()
 Whether a class can stand in for a type is the one question that takes an argument, the type's name:
 `attribute.class.satisfies_type(Number)` in a walk is `true` in the copies for numbers and `false` in the others, so
 a walker branches on numbers with no test left at run time. It takes a `type`, a union, a class, `Anything` or
-`Number`, the compiler's own type every number class satisfies
-([reflection.md](reflection.md#whether-a-class-satisfies-a-type)):
+`Number`, the compiler's own type of the operators a number answers, which every number class and a program's own
+number class satisfy ([reflection.md](reflection.md#whether-a-class-satisfies-a-type)):
 
 ```gdscript
 func write_number(attribute: Spite.AttributeDeclaration) {
@@ -907,8 +907,10 @@ check is the compiler's, and the class made is the one an unconstrained line wou
 When a codegen value is a type, `if $value_type == String { }` asks which type it is. The answer is known when
 the class is made, so only the branch taken is compiled, and each branch may use what only that type has. Besides
 naming a type exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Enum` (any enum),
-and a `type` name asks whether the type fits it. `$value_type.is_number` asks whether it is a number class, `Tiny` to
-`Double`, as `$value_type.satisfies_type(Number)` does. A union name is true for any of its members. Such a test always folds, in a `--development` build too,
+and a `type` name asks whether the type fits it, by the rule every fit uses, so `$value_type == Named` and
+`$value_type.satisfies_type(Named)` always agree ([values_and_types.md](values_and_types.md#what-fits-a-type)).
+`$value_type.is_number` asks whether it is one of the library's number classes, `Tiny` to `Double`;
+`$value_type.satisfies_type(Number)` also takes a program's own number class. A union name is true for any of its members. Such a test always folds, in a `--development` build too,
 because the branch it rules out would not compile.
 
 What the branch ruled out is not compiled at all, and neither is what only it reaches. Below, `Field<Integer>`

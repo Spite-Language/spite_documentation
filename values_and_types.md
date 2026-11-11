@@ -233,9 +233,10 @@ any class reaches an attribute through `set_x` and `get_x`, and `set_this` check
 (`crash value >= _smallest_value and value <= _largest_value`, with `-128` and `127` named in `Tiny`), and the
 compiler reads the width and the sign from that range. A program that loads no standard library has no number
 classes at all: `Integer` is then an unknown type. Reading and writing `this` are the compiler's own, so
-`count.get_this()` and `count.set_this(4)` are errors that tell you to write `count` and `count = 4`. There is no
-type for "any number": `Number` names nothing, and a class written over numbers is generic
-([below](#a-number-library-declares-the-type-it-needs)).
+`count.get_this()` and `count.set_this(4)` are errors that tell you to write `count` and `count = 4`. `Number`, the
+operators a number answers, is only asked about (`kind.satisfies_type(Number)`,
+[reflection.md](reflection.md#whether-a-class-satisfies-a-type)): no value is typed `Number`, and a class written
+over numbers is generic ([below](#a-number-library-declares-the-type-it-needs)).
 A reopening file:
 
 ```gdscript title=number_methods/integer.spite
@@ -405,13 +406,14 @@ its default where it is read, so it compiles to the number itself, and it bounds
 
 ### A number library declares the type it needs
 
-No `type` stands for every number. A class written over numbers is generic, and declares, as a `type` of its own,
+No value or constraint is typed `Number`. A class written over numbers is generic, and declares, as a `type` of its own,
 the functions its codegen value must have, listing only the operators and functions it uses
 ([shapes](#inline-types-and-duck-typing)). The operators `+`, `-`, `*`, `/` and `%` are the functions `sum`,
 `subtract`, `multiply`, `divide` and `remainder`, and `<` and `>` (with `<=` and `>=`) are `less_than` and
 `greater_than`; the type's own name in them stands for the class that fits, so an `Integer` adds an `Integer` and
 answers one. Every number class, `Tiny` to `Double`, has these functions, so it fits such a type the way any class
-fits a type, by having its members, and `Boolean` fits none of them. The class is compiled once per number class it
+fits a type, by having its members ([what fits a type](#what-fits-a-type)), and so does a program's own number
+class that has them, and `Boolean` fits none of them. The class is compiled once per number class it
 is given, so the values stay plain machine numbers and nothing is boxed. `$value_type.is_number` asks, while
 compiling, whether a type is a number class, which is how a walk over types tells numbers apart
 ([metaprogramming.md](metaprogramming.md#asking-what-a-generic-was-given)):
@@ -963,6 +965,24 @@ An attribute of a `type` may itself be a union, met by that union or one of its 
 `type` is met by that `type`, or by a class or a union whose classes each have its members; one whose type is a
 function value is met by a function value with the same parameter types and answer. Anything else does not
 fit and the error names the attribute.
+
+### What fits a type
+
+One rule decides whether a class fits a `type`, wherever the compiler asks: a value given where the `type` is
+wanted, a class's attribute or function checked against a member's type, a generic's constraint
+(`generic $item_type: Named`), `$item_type == Named`, and `kind.satisfies_type(Named)`
+([reflection.md](reflection.md#whether-a-class-satisfies-a-type)). As long as the contract matches, it fits: a class
+fits when it has each member the `type` writes, in its form and typed as the `type` says. An attribute member needs
+an attribute; a function member needs a function with as many parameters, each of the type asked, answering the
+type asked, or an attribute holding such a function that cannot be `null`, or a function one of the class's member
+templates makes. The `type`'s own name in a member stands for the class that fits.
+
+Number classes fit by the same rule as any class: `Integer` has `to_string`, so it fits a `type` asking only for
+`to_string: Spite.Function<String>`, and `var shown: Textual = 5`, a class whose `amount: Integer` meets a member
+`amount: Textual`, and `Integer.satisfies_type(Textual)` all agree. An enum value answers only `to_string`, so it
+fits a `type` that asks for nothing else. A union fits when each of its classes does. A `T?` fits only a `type`
+`null` answers too, `to_string()` and `to_debug()`, unless what is wanted is itself a `?`. When only some classes
+should fit, the `type` was meant to be a union ([unions](#unions)); to keep a class out, ask for more in the `type`.
 
 A `type` of attributes only has a default like a class does: the object literal with each attribute at its own
 default, whose `.class` answers `Object`, made when it is asked for with `$target_type()`. So `var target =
