@@ -281,6 +281,12 @@ file is ordered: the singleton line, generic lines, enums, unions, types, variab
 without one, the constructor, conversions, presets, then functions. In a generic class this is how an attribute of
 `$held_type` is declared, `var held: $held_type`, whatever type is given.
 
+#### A class of a fixed layout keeps its order
+
+The standard library's `Buffer`, `ForeignCallback` and `Spite` reflection classes are laid out in memory in the
+order their attributes are written, and the compiler builds and reads them by that layout. Their attributes stay
+where they are written: one without a default may sit above one with a default, and nothing moves it.
+
 ### A default the constructor replaces is removed
 
 A default the constructor always replaces before anything reads it is removed, and the attribute is declared with

@@ -105,7 +105,7 @@ func is_alive(): Boolean {
 - The file name is the class name (`monster.spite` is `Monster`). A file holds declarations only, in this
   order: a `singleton` line, `generic $name` lines, enums, unions, types, variables with a default, variables without one, the constructor, conversions, presets, then
   functions (`a file holds declarations and nothing else` for a statement at file level). A file in
-  the wrong order is put back in order by the compiler (`fixed: ... moved it up, since a file is ordered`). Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
+  the wrong order is put back in order by the compiler (`fixed: ... moved it up, since a file is ordered`), except the library's `Buffer`, `ForeignCallback` and `Spite.*` classes, whose attributes keep their written order because the compiler lays them out as written. Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
   default may only read or write attributes declared above it (directly or through a function of its object, so a
   function a default calls that sets another attribute counts as a write). One reading or writing an attribute
   declared below it in the same file is moved for you (`fixed: '_hundred' was declared below 'tripled', whose
