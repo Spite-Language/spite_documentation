@@ -210,6 +210,8 @@ A mistake with exactly one fix is not an error: the compiler writes the fix into
   read `_name`), and a keyword one letter off at the start of a line (`retrun`);
 - a local or attribute nothing reads whose value and every write do nothing, and statements after a `return`;
 - a load of the library's `common` folder alone, which becomes a load of `windows` beside it (which loads `common`);
+- a line ending in `\r\n` or a lone `\r`: a Spite file ends every line with `\n`, and the whole file is written
+  back that way;
 - a check on a proven value (`fallback`, `crash` or `if`), a local copied only to narrow, an `if` that only returns
   what `fallback` answers, and an `if` or `while` the compiler decides while compiling (an `if` always true becomes its
   body; a `while` always false goes). A local taken from a narrowed path is proven too (`crash thing.store`,

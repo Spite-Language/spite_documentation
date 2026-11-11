@@ -25,6 +25,9 @@ the program again, so what it compiles is the formatted file. Nothing turns this
 that only formats: `--check` formats and checks without building ([compiler.md](compiler.md#formatting)):
 
 - 4 spaces per level, never a tab; no trailing whitespace; one line break at the end of the file.
+- Every line ends with `\n` alone. A line written with `\r\n` or a lone `\r` is read as one line break, and the
+  file is written back with `\n` and a `fixed:` line. Each Spite repository's `.gitattributes` holds
+  `* text=auto eol=lf`, so a Windows checkout has `\n` too.
 - K&R braces: `func name() {`, `} else {`, `} else if other {`. An empty body is `{ }`, and an empty `else` is
   dropped.
 - A comment is `# text`, one space after `#`. What is between a text's quotes is never touched, escapes and all.
