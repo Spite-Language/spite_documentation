@@ -681,8 +681,8 @@ a program's settings live.
 generic $left_type
 generic $right_type
 
-var left: $left_type = null
-var right: $right_type = null
+var left: $left_type
+var right: $right_type
 
 func Pair(new_left: $left_type, new_right: $right_type) {
     left = new_left
@@ -715,9 +715,10 @@ One line declares one value, and the lines sit at the top of the file, so skimmi
 accepts. Every hole is filled at every call: there are no defaults, and the wrong number of values is an error
 that lists the class's values in order (the second program below). A generic class needs no constructor
 (`library/list.spite` is `generic $element_type` and its functions), and when the constructor's arguments say
-every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, Integer>`. `Pair` may declare `var left: $left_type = null` because its constructor
-assigns `left` at once, even when `$left_type` is a `type` that requires a function and so has no default to make; anywhere else `null` belongs to `T?` alone, and `var left = $left_type()` makes
-the default of whatever `$left_type` is bound to.
+every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, Integer>`. `Pair` declares `var left: $left_type` with no default, since its constructor gives it its value
+([classes_and_files.md](classes_and_files.md#an-attribute-the-constructor-fills-has-no-default)), whatever type is
+given for `$left_type`; `var left: $left_type = $left_type()` is a default only when every type given is made with
+no arguments.
 
 The `generic` lines come first in the file, after a `singleton` line if there is one and before everything else, one
 value per line: `generic $left_type, $right_type` is an error asking for two lines, and so is a `generics` list, a

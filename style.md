@@ -89,7 +89,7 @@ var label = "late"
 late
 ```
 ```diagnostic
-fixed: a variable came after the constructor here; moved it up, since a file is ordered: the singleton line, generic lines, enums, unions, types, variables, the constructor, conversions, presets, then functions
+fixed: a variable came after the constructor here; moved it up, since a file is ordered: the singleton line, generic lines, enums, unions, types, variables with a default, variables without one, the constructor, conversions, presets, then functions
 ```
 
 ## The compiler fixes what has one fix

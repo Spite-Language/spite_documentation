@@ -103,7 +103,7 @@ func is_alive(): Boolean {
 ```
 
 - The file name is the class name (`monster.spite` is `Monster`). A file holds declarations only, in this
-  order: a `singleton` line, `generic $name` lines, enums, unions, types, variables, the constructor, conversions, presets, then
+  order: a `singleton` line, `generic $name` lines, enums, unions, types, variables with a default, variables without one, the constructor, conversions, presets, then
   functions (`a file holds declarations and nothing else` for a statement at file level). A file in
   the wrong order is put back in order by the compiler (`fixed: ... moved it up, since a file is ordered`). Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
   default may only read or write attributes declared above it (directly or through a function of its object, so a
@@ -357,8 +357,10 @@ rewritten.
 - `null` is only for `T?`: `var target: Monster = null` is an error; write `var target: Monster? = null`
   for none yet, or `var target = Monster()` for a default. In a generic class write `var system = $system_type()`,
   in a template `var made = argument.class()`, and a local a walk fills is `var row = $row_type()` then
-  `fill_attributes(row, ...)`. `= null` stays only on an attribute the constructor assigns at its top level: nothing
-  is made for it, and the constructor gives it its first value.
+  `fill_attributes(row, ...)`. An attribute the constructor gives a value on every path has no default:
+  `var target: Pet` (and `var held: $held_type` in a generic class), below the attributes with a default; a path that
+  leaves it without a value is an error naming the path. A default the constructor always replaces that makes
+  nothing else (a literal, an empty `List`/`Dictionary`) is removed by a `fixed:` line; one like `Pet()` stays and runs.
 - `null` assigned, passed, appended or answered where a type without `?` is wanted is a compile error too, never a
   default (`0`, `false`, `""`, an enum's first value, an object of a class or a `type`): `'null' is given where a
   Crate is needed, and a Crate never holds null: write 'Crate?' where none is a real answer, otherwise give it a real
@@ -1007,7 +1009,8 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `"hello ${name}"` | *silent*: prints `hello $` and the name | `"hello {name}"` |
 | `'hello'` for text | `'hello' in single quotes is an enum value literal, and text is wanted here: text is always written in double quotes` | `"hello"`: single quotes are enum values only |
 | `flags.bits_and(mask)` with a wider `mask` | `'flags.bits_and(mask)' works in a Byte, since a bitwise function takes its receiver's type` | widen the receiver first: `var wide: Long = flags` |
-| `var held: $held_type = null` that no constructor assigns | `the attribute 'held' is declared '$held_type', not '$held_type?', so '= null' would make a default $held_type rather than nothing: ...` | `$held_type?`, or assign it at the top of the constructor (then `= null` is fine, a `type` that requires a function included) |
+| `var held: $held_type = null` | `the attribute 'held' is declared '$held_type', not '$held_type?', so it never holds null: ...` | `var held: $held_type` with no default when the constructor gives it its value; `$held_type?` for none yet |
+| `var target: Pet` the constructor fills on one side of an `if` only | `the attribute 'target' has no default, so the constructor gives it its value, but the 'if' at line 5 gives it one on one side only: ...` | give it a value on every path, or write a default |
 | `for item in list` | `Spite only has 'while' loops; there is no 'for'` | `each_<member>()`, `map_`/`filter_<member>()`, or `list.each(function)` with a function of yours; `while index < list.count()` when the body needs more |
 | `break`, `continue` | `Spite has no 'break': a loop stops in its own condition` | the loop's own condition: `while index < count and not found` |
 | `list.add(x)`, `list.pop()` | `List has no method 'add', which does not say where` | `append`/`prepend`, `remove_last()`/`remove_first()` |

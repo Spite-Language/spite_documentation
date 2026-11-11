@@ -258,8 +258,23 @@ func packed(): Crate {
 'null' is given where a Crate is needed, and a Crate never holds null: write 'Crate?' where none is a real answer, otherwise give it a real Crate
 ```
 
-An attribute written `= null` that its constructor assigns at its top level is not given `null`: nothing is made
-for it, and the constructor gives it its first value. A local a walk fills is made first, `var row = $row_type()`.
+A local a walk fills is made first, `var row = $row_type()`.
+
+### `= null` on an attribute
+
+An attribute whose type has no `?` never holds null, so `= null` on it is refused; the words point to the forms
+that fit ([classes_and_files.md](classes_and_files.md#an-attribute-the-constructor-fills-has-no-default)):
+
+```spite
+var target: Pet = null
+
+func Hunt(new_target: Pet) {
+    target = new_target
+}
+```
+```diagnostic
+the attribute 'target' is declared 'Pet', not 'Pet?', so it never holds null: write 'var target: Pet' with no default when the constructor gives it its value, 'var target: Pet = Pet()' for a default, or 'var target: Pet? = null' for none yet, narrowed before use
+```
 
 `Anything` is every class except `Null` and `Nothing`, so a plain `Anything` always holds a value too, and its words
 add that a real type says more:

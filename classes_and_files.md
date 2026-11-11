@@ -184,7 +184,7 @@ plainly: write 'Bunda.Pet'`.
 A function named exactly like its class is the constructor:
 
 ```gdscript title=person_basics/person.spite
-var age = 0
+var age: Integer
 
 func Person(new_age: Integer) {
     age = new_age
@@ -254,6 +254,55 @@ Every `var` is written with its default, so an object made with no arguments is 
 ([failure.md](failure.md)). A constructor is setup, not logic: `fallback` is not allowed in one, and `crash` is how
 it says something is a bug ([failure.md](failure.md#fallback-is-not-allowed-in-a-constructor)). There is no `new`:
 `Person(30)` makes one.
+
+### An attribute the constructor fills has no default
+
+An attribute the constructor gives a value on every path is declared with its type and no default, below the
+attributes that have one, so it sits next to the constructor that fills it:
+
+```spite
+var score = 0
+var target: Pet
+
+func Hunt(given: Pet) {
+    target = given
+}
+```
+
+Every path of the constructor gives it a value before it ends: one on each side of an `if`, or before a `return`.
+A path that leaves it without one is an error that names the attribute and the path:
+
+```diagnostic
+the attribute 'target' has no default, so the constructor gives it its value, but the 'if' at line 5 gives it one on one side only: give it a value on every path of the constructor, or write a default
+```
+
+An attribute without a default written above one with a default is moved below it (a `fixed:` line), since a
+file is ordered: the singleton line, generic lines, enums, unions, types, variables with a default, variables
+without one, the constructor, conversions, presets, then functions. In a generic class this is how an attribute of
+`$held_type` is declared, `var held: $held_type`, whatever type is given.
+
+### A default the constructor replaces is removed
+
+A default the constructor always replaces before anything reads it is removed, and the attribute is declared with
+no default instead (a `fixed:` line):
+
+```spite
+var values = List<Integer>()
+
+func Holder(start: Integer) {
+    values = List<Integer>()
+    values.append(start)
+}
+```
+```output
+fixed: the default of 'values' was made and then replaced by the constructor on every path; removed it, 'var values: List<Integer>'
+```
+
+It applies when the default makes nothing else (a number, a text, `true`, `false`, an enum value, or an empty `List`
+or `Dictionary`), no other default reads it, and the constructor assigns it among its first plain assignments,
+before any statement that reads it, names `this` or calls a function of its own class. A default whose making can
+do more, such as `Pet()`, stays and runs as written; write the attribute without a default yourself when the
+constructor fills it.
 
 ### A default reads only what is above it
 

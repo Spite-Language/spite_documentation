@@ -143,6 +143,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
   children) are plain references: the compiler finds the back reference and frees the cycle.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
+- An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
+  with one; every other attribute has a real default, never `var pet: Pet = null` (`null` only goes where a `T?` is
+  wanted).
 - Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
   of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
   to `Byte` that keeps a list of it).
