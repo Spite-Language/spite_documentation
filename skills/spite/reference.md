@@ -360,7 +360,7 @@ rewritten.
   `fill_attributes(row, ...)`. An attribute the constructor gives a value on every path has no default:
   `var target: Pet` (and `var held: $held_type` in a generic class), below the attributes with a default; a path that
   leaves it without a value is an error naming the path. A default the constructor always replaces that makes
-  nothing else (a literal, an empty `List`/`Dictionary`) is removed by a `fixed:` line; one like `Pet()` stays and runs.
+  nothing else (a literal, `null` for a `T?`, an empty `List`/`Dictionary`) is removed by a `fixed:` line; one like `Pet()` stays and runs, and `= null` on a type without `?` stays an error.
 - `null` assigned, passed, appended or answered where a type without `?` is wanted is a compile error too, never a
   default (`0`, `false`, `""`, an enum's first value, an object of a class or a `type`): `'null' is given where a
   Crate is needed, and a Crate never holds null: write 'Crate?' where none is a real answer, otherwise give it a real

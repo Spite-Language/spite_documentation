@@ -304,8 +304,8 @@ func Holder(start: Integer) {
 fixed: the default of 'values' was made and then replaced by the constructor on every path; removed it, 'var values: List<Integer>'
 ```
 
-It applies when the default makes nothing else (a number, a text, `true`, `false`, an enum value, or an empty `List`
-or `Dictionary`), no other default reads it, and the constructor assigns it among its first plain assignments,
+It applies when the default makes nothing else (a number, a text, `true`, `false`, an enum value, `null` for a `T?`,
+or an empty `List` or `Dictionary`), no other default reads it, and the constructor assigns it among its first plain assignments,
 before any statement that reads it, names `this` or calls a function of its own class. A default whose making can
 do more, such as `Pet()`, stays and runs as written; write the attribute without a default yourself when the
 constructor fills it.
