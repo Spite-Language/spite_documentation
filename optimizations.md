@@ -607,6 +607,23 @@ they grew to. An inner list held anywhere else is replaced by a new one, and eve
 It does not apply when anything else is between the `clear()` and the loop, or the loop does more than make and
 append.
 
+### A list used as a set keeps a hash index
+
+A `List` of texts or whole numbers that the program only appends to, searches (`contains`, `index_of`, or a loop
+that answers the place of the first item equal to a name) and reads keeps a hash index beside its items once its
+searches have read 16 times as many items as it holds (and it holds at least 16), so from then on a search takes
+the same time however long the list is, and a list searched only a few times never pays for an index. `if not seen.contains(name) {
+seen.append(name) }` is the plain way to write a set: write it, not a `Dictionary` kept beside the list.
+
+The items stay in their order, so `list[index]`, `count()` and `each` read them as before, and an item appended
+twice is found at its first place. The compiler follows the list through names, parameters, answers, attributes
+and the lists and dictionaries that hold it, and keeps no index when any of them writes it otherwise (`list[index]
+= `, `insert`, `prepend`, `remove_*`, `clear`, `reverse`, `swap`, `truncate`), hands it to a foreign function, a
+function value, a call through a `type`, a union or a shape, or when its items are decimals or objects. Such a
+list is searched item by item, as written. An inspectable build keeps no index.
+
+What you can notice is time and memory: the index is a `Dictionary` the list holds, and `--debug-memory` counts it.
+
 ## Text and bytes
 
 ### Text joined in one piece

@@ -44,7 +44,10 @@ var empty = List<String>()
 | `copy()` / `deep_copy()` | `List<T>` | one level, or all the way down ([memory.md](memory.md)) |
 
 `append`, `remove_last`, `list[index]` and their kin take the same time however long the list is; `prepend`,
-`insert`, `remove_first` and `remove_at` move every later element, and `contains` looks at each in turn. An empty
+`insert`, `remove_first` and `remove_at` move every later element, and `contains` looks at each in turn, unless
+the list is only appended to, searched and read: then the compiler keeps a hash index beside it and `contains` and
+`index_of` take the same time however long it is
+([a list used as a set](optimizations.md#a-list-used-as-a-set-keeps-a-hash-index)). An empty
 list has no buffer; the first element gets one of four slots, and a full buffer is resized to twice its size.
 
 Names say where: `append` and `prepend`, never `add`; `remove_last`, never `pop`, and the error says
