@@ -1227,9 +1227,12 @@ func advance() {
 ```
 
 The program's own thread runs the first band and waits for the others, so whatever comes after the loop runs after
-every pass, as written.
+every pass, as written. No band owns a fixed slice of the list: the list is cut into chunks, eight for each band,
+and a band that finishes its chunk takes the next one nobody has taken, so a few heavy elements do not leave the
+other threads waiting ([a band that finishes early takes the next chunk](#a-band-that-finishes-early-takes-the-next-chunk)).
 
-**When it pays.** Starting a band costs a thread, so the compiler weighs the pass while compiling: a pass that
+**When it pays.** Starting a band costs a thread, so the compiler weighs the pass while compiling (a loop counted
+to a literal or to a named constant nothing writes, `while round < _rounds`, weighs that many passes): a pass that
 weighs little never runs in bands (it is bound by memory, not by the processor), and for a heavier pass the loop
 compares the list's count with the smallest count at which bands pay and runs in order below it. A list may hold one
 object twice, and two bands would then write it at once, so the loop first reads each element's reference count and
@@ -1274,6 +1277,17 @@ too.
 
 What you can observe: the time and the same output. A crash reports its band's frames, and of two passes that would
 crash, either may be the one reported. Not in an inspectable build.
+
+### A band that finishes early takes the next chunk
+
+Passes are rarely even: a loop over a program's functions spends most of its time on a few large ones. So the bands
+of either loop above do not each own a slice of the list. The list is cut into chunks, eight for each band, and each
+band takes the next chunk nobody has taken, runs it, and takes another until none is left; a band whose chunks were
+light takes more of them. Every element is still run exactly once, by one band, and the passes were already proven
+to write only what they alone reach, so which band runs an element, and when, changes nothing a program sees. Taking
+a chunk is one locked addition. A short list, or one holding an element twice, runs in order as before.
+
+What you can observe: the time and the same output.
 
 ### Calls in a row that only compute a number run at once
 

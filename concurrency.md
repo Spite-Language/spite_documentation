@@ -111,7 +111,9 @@ proves each pass touches only its own element and the list is long enough for th
 otherwise, with the same output
 ([optimizations.md](optimizations.md#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)). A pass may
 make objects and lists of its own, keep them in its element, and read anything no pass writes (a shared
-table): what one pass makes no other pass can see.
+table): what one pass makes no other pass can see. Uneven elements balance on their own: the list is cut into small
+chunks and a thread that finishes one takes the next
+([optimizations.md](optimizations.md#a-band-that-finishes-early-takes-the-next-chunk)).
 
 ### A loop over a list's positions runs in bands
 
