@@ -619,8 +619,10 @@ The items stay in their order, so `list[index]`, `count()` and `each` read them 
 twice is found at its first place. The compiler follows the list through names, parameters, answers, attributes
 and the lists and dictionaries that hold it, and keeps no index when any of them writes it otherwise (`list[index]
 = `, `insert`, `prepend`, `remove_*`, `clear`, `reverse`, `swap`, `truncate`), hands it to a foreign function, a
-function value, a call through a `type`, a union or a shape, or when its items are decimals or objects. Such a
-list is searched item by item, as written. An inspectable build keeps no index.
+function value, a call through a `type`, a union or a shape, or when its items are decimals or objects. A list
+searched or appended to from code the compiler runs at once (the bands of a loop, calls overlapped with each other,
+and everything they call) keeps no index either, since building one is a write. Such a list is searched item by
+item, as written. An inspectable build keeps no index.
 
 What you can notice is time and memory: the index is a `Dictionary` the list holds, and `--debug-memory` counts it.
 
