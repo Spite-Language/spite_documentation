@@ -751,8 +751,9 @@ rewritten.
 - Memory and threads belong to the compiler: a program never names an address, an allocator, an allocation count,
   where an object lives, or the live instances of a class. A class that needs room for bytes holds a `Buffer`; a
   container of your own is written over a `List` or a `Buffer`. Only `--debug-memory` reports leaks, from outside the
-  program. How a text is held is the compiler's too: a short text a function keeps to itself allocates nothing, so
-  write the plain join and never reshape code to make fewer texts.
+  program. How a text is held is the compiler's too: a short text a function keeps to itself allocates nothing, a
+  literal is made once in the program's data, and `text.split(separator).contains(word)` makes no list, so write the
+  plain join or split and never reshape code to make fewer texts.
 
 ## Built in classes
 

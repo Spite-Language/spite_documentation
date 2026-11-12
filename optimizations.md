@@ -647,6 +647,24 @@ func words(count: Integer): String {
 It does not apply to a piece that names the text itself, a `String?` or a symbol, or an assignment to an attribute or
 a list slot. What you can observe: the time, and a text's room, which can be up to twice its length.
 
+### A text literal is made once in the program's data
+
+`"gold"` holds the same bytes every time it runs, so the compiler writes it once into the executable's data and
+evaluating it is its address: no allocation and nothing let go, in a loop or handed to a function that keeps it (a
+list, a dictionary key, a fallback's report). This holds when the compiler proves that the program writes a text
+only while one local holds it (true of every program that writes text through the library), and it does not apply
+to a literal that starts a text the function then writes into (`var made = ""` followed by `made.append_code(code)`),
+which is made each time as before. Appending in place (`text = "{text}more"`) copies the literal at the first
+append. It is off in `--development`, `--repl` and `--hot-reload` builds. What you can observe: fewer allocations
+under `--debug-memory`, and two evaluations of one literal answer the same object.
+
+### A text split only to search it makes no list
+
+`key.split(" ").contains(word)`, or a local holding `key.split(" ")` that is only searched with `.contains(...)`,
+makes no list and no texts: the compiler scans `key` for `word` between the separators where it lies. It applies
+when the text and the separator are literals or names nothing assigns again, and the program writes no text another
+place holds. What you can observe: fewer allocations under `--debug-memory`, and the time; the answer is the same.
+
 ### Bytes are copied in one block
 
 The library's text and bytes functions (`slice`, `sum`, `replace`, `split`, `trim`, `upper_case`, `to_buffer`,
