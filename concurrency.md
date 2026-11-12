@@ -175,7 +175,8 @@ state at the same time. The helper thread runs the system call and nothing else.
 
 **When blocking is faster, the compiler blocks.** A program with no state machine has no event loop and no helper
 threads: every wait is the plain blocking call. Inside a program that has them, a wait is the plain call whenever
-nothing else could run. It is the same rule as everywhere else in Spite: you write what you mean, and the compiler
+nothing else could run, and a program whose only work runs in bands or `Parallel`s (no `Concurrent`, no frame's
+call, no read in a row) has no state machine to run meanwhile, so every wait in it is the plain call. It is the same rule as everywhere else in Spite: you write what you mean, and the compiler
 picks the fast way to do it.
 
 ### A wait in a frame does not hold the frame
