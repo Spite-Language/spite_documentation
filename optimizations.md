@@ -665,6 +665,16 @@ makes no list and no texts: the compiler scans `key` for `word` between the sepa
 when the text and the separator are literals or names nothing assigns again, and the program writes no text another
 place holds. What you can observe: fewer allocations under `--debug-memory`, and the time; the answer is the same.
 
+### An interpolation only compared makes no text
+
+`words.contains("r{register}")`, `name == "{first} {last}"`, `line.contains("r{index} ")`, `key.starts_with("r{index}")`
+and `key.split(" ").contains("r{index}")` make no text for the interpolation: the compiler compares its pieces where
+they lie in the other text, a written piece byte for byte and an `Integer` or `Long` hole digit by digit. The holes
+are still worked out left to right first. It applies to an interpolation written straight into the comparison
+whose holes are texts, `Integer`s or `Long`s, in a program where the literals above live in the program's data; an
+interpolation on the left of `==` needs a name, `this` or a literal on the right. What you can observe: fewer
+allocations under `--debug-memory` for an interpolation longer than 47 bytes, and the time; the answer is the same.
+
 ### Bytes are copied in one block
 
 The library's text and bytes functions (`slice`, `sum`, `replace`, `split`, `trim`, `upper_case`, `to_buffer`,
