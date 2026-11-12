@@ -109,7 +109,31 @@ nothing of this in the program.
 Write `particles.each_step()` and nothing more. The compiler runs the walk in bands across the processors when it
 proves each pass touches only its own element and the list is long enough for the bands to pay, and in order
 otherwise, with the same output
-([optimizations.md](optimizations.md#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)).
+([optimizations.md](optimizations.md#a-loop-whose-passes-write-only-their-own-item-runs-in-bands)). A pass may
+make objects and lists of its own, keep them in its element, and read anything no pass writes (a shared
+table): what one pass makes no other pass can see.
+
+### A loop over a list's positions runs in bands
+
+```gdscript
+func reshape(shapes: List<Shape>) {
+    var index = 0
+    while index < shapes.count() {
+        var shape = shapes[index]
+        var worker = Worker(shape)
+        shapes[index] = worker.transformed()
+        index = index + 1
+    }
+}
+```
+
+A `while` that steps a counter by one to a list's `count()`, takes the item at that position first and steps the
+counter last runs in bands too, when every pass writes only its item, what the item alone reaches (its lists, the
+objects in them) and what the pass made (the `Worker` and its scratch lists), and writes back only its own slot.
+Whether two items share something a pass writes is known only when the loop runs, so the loop first checks that
+each item, and everything a pass writes through it, is held once; anything shared runs the whole loop in order.
+A pass that takes a `fallback` runs in order for now. This is how the compiler's own passes over its functions spread across the
+processors ([optimizations.md](optimizations.md#a-loop-over-a-lists-positions-runs-in-bands)).
 
 ### The first crash stops the program
 

@@ -824,8 +824,10 @@ all), so a protocol violation is never silent. `close()` sends the close and `re
 peer's close arrives.
 A program never says what runs at once: call the function itself. The compiler runs independent calls in a row at once (only `var name = attribute.function(numbers)` declarations
 whose functions only compute a number; blocking IO runs on the pool's helper threads),
-a loop over a list of different classes at once, and an `each_<member>()` walk in bands when it proves each pass
-touches only its own element; what it runs at once prints what running in order prints, and the first crash stops
+a loop over a list of different classes at once, an `each_<member>()` walk in bands when it proves each pass
+touches only its own element and what it made, and a `while index < list.count()` loop that takes `list[index]`
+first and steps `index` last in bands when each pass writes only its item, what the item alone reaches, what it
+made and its own slot (checked held once when it runs); what it runs at once prints what running in order prints, and the first crash stops
 the program. There is no lock, atomic or thread-local class to name: keep per-thread data in locals and shared data
 in singletons. There is no `async`/`await`: a function
 that reads, sleeps or waits is an ordinary function, and the compiler suspends it there when something else can

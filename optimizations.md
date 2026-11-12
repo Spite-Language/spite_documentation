@@ -1216,12 +1216,45 @@ compares the list's count with the smallest count at which bands pay and runs in
 object twice, and two bands would then write it at once, so the loop first reads each element's reference count and
 runs in order when any element is held anywhere else too.
 
+A pass may also make what it works with: the objects and lists it makes are its own, so it may fill them, keep
+them in any attribute of its element and read anything no pass writes (a shared table of weights). The compiler
+follows every function the pass reaches, the library's included, and runs it in order when it takes a `fallback`,
+reads a singleton, calls a function value, or writes anything else.
+
 A `while` whose body is only such a call and the step of a counter up to a literal starts the bands once: each band
 runs all the passes of its own elements, one element after another, and the counter ends at the bound.
 
 What you can observe: the time and the same output. A pass whose checked arithmetic overflows still halts the program
 with the same message, but the frames it reports are those of its band, and when several passes would overflow, the
 one reported may be another than the first in the list's order. Not in an inspectable build.
+
+### A loop over a list's positions runs in bands
+
+```spite
+func reshape(shapes: List<Shape>) {
+    var index = 0
+    while index < shapes.count() {
+        var shape = shapes[index]
+        var worker = Worker(shape)
+        shapes[index] = worker.transformed()
+        index = index + 1
+    }
+}
+```
+
+A `while` that steps a counter by one to a list's `count()`, takes the item at that position first and steps the
+counter last runs in bands when every pass writes only its item, what it reaches through the item, and what it made,
+and writes back only its own slot. It may read anything no pass writes, and call functions through function values it
+passes down (`seen.each(note)`); a pass that takes a `fallback` runs in order. The body moves into a function of its own that each band runs
+over its positions; the counter ends at the list's count, as the loop leaves it.
+
+**What is checked when it runs.** Two items may share a list a pass writes, so the loop first walks every item and
+everything a pass writes through it (only along attributes and items that can lead there) and checks each is held
+exactly once. Anything held twice runs the whole loop in order. Below the count at which bands pay, it runs in order
+too.
+
+What you can observe: the time and the same output. A crash reports its band's frames, and of two passes that would
+crash, either may be the one reported. Not in an inspectable build.
 
 ### Calls in a row that only compute a number run at once
 

@@ -587,6 +587,16 @@ The rules are on [Concurrency](concurrency.md) and in
 - **Buys**: the passes run in bands on several threads.
 - **Falls back**: the loop in order.
 
+### Passes that write only what they alone reach
+
+- **Proves**: the passes of `list.each_f()`, or of a loop over a list's positions, are independent.
+- **Rule**: everything a pass handles, through every function it reaches, is either made by the pass, its own
+  item (and, for a loop over positions, what the item reaches), or shared; a pass writes only what it made and its
+  own item, writes back only its own slot, and never handles a shared value that could be another pass's item.
+  What a pass writes through its item is checked to be held once when the loop runs.
+- **Buys**: the passes run in bands on several threads.
+- **Falls back**: the loop in order.
+
 ### Which calls suspend started work
 
 - **Proves**: which functions need a resumable form.
