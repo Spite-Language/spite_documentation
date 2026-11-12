@@ -202,7 +202,8 @@ error, because the next pass would read it unproven: narrow it inside the loop i
 again after what undid it, before reading it, reads it narrowed on every pass, and is accepted.
 
 Narrow the name or the path itself, never a copy of it: the compiler drops a local that only copies a value so it can be narrowed, and
-its uses name what it copied.
+every one of its uses names what it copied. A copy of such a copy goes too, and its uses name the first source:
+`var receiver = call.inner` and then `var source = receiver.inner` leave `call.inner` and `call.inner.inner`.
 
 ```gdscript title=copy_to_narrow_error/tracker.spite
 var drops = 0
