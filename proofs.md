@@ -536,6 +536,18 @@ The rules are on [Concurrency](concurrency.md) and in
 - **Buys**: plain counts for every other class whose objects' class is known where they are counted.
 - **Falls back**: an atomic count wherever the class is not known while compiling, or another thread may count it.
 
+### A function only one thread runs counts plainly
+
+- **Proves**: a function runs only while no other thread the compiler made runs, so every count it takes or lets go is
+  plain arithmetic, whatever the class.
+- **Rule**: a function runs alone when nothing the compiler starts on another thread reaches it (the work itself,
+  everything it calls, a `drop`, and a function that starts work itself), every start is joined in the block that
+  made it, and nothing else runs beside the program: no `ForeignCallback`, no prompt or hot reload. A function the
+  bands and the code around them both call is written twice: the bands call the copy with atomic counts, the code
+  around them the copy with plain ones.
+- **Buys**: plain counts in all the code around the bands.
+- **Falls back**: the counts of [no other thread counts a class](#no-other-thread-counts-a-class).
+
 ### Which singletons a `ForeignCallback` reaches
 
 - **Proves**: which singletons need a lock.

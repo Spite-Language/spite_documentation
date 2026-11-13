@@ -152,8 +152,10 @@ the call that ran apart.
 Work the compiler runs at once never shares anything one of them writes, so it needs no lock, and there is no
 lock, thread-local, atomic or scheduler class for a program to name (`Lock`, `Atomic<Integer>`, `ThreadLocal<Integer>`
 and `Scheduler` are unknown, as any misspelt class is); naming anything in `Spite.Internal` is a compile error.
-A program that starts a thread counts references with atomic operations, and every other program keeps the plain,
-cheaper counts ([optimizations.md](optimizations.md#plain-counts-where-no-other-thread-counts-a-class)).
+A program that starts a thread counts references with atomic operations where another thread may count them at
+the same time, and every other program keeps the plain, cheaper counts: the code around a loop that runs in bands
+counts plainly, since no band runs while it does
+([optimizations.md](optimizations.md#plain-counts-where-no-other-thread-counts-a-class)).
 
 ## What the compiler does at a wait
 

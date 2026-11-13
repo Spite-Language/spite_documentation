@@ -831,7 +831,8 @@ touches only its own element and what it made, and a `while index < list.count()
 first and steps `index` last in bands when each pass writes only its item, what the item alone reaches, what it
 made and its own slot (checked held once when it runs); bands take small chunks of the list in turn, so uneven
 passes balance across the threads; what it runs at once prints what running in order prints, and the first crash stops
-the program. There is no lock, atomic or thread-local class to name: keep per-thread data in locals and shared data
+the program. Counts are atomic only in code a band or other work runs; the code around the bands counts plainly.
+There is no lock, atomic or thread-local class to name: keep per-thread data in locals and shared data
 in singletons. There is no `async`/`await`: a function
 that reads, sleeps or waits is an ordinary function, and the compiler suspends it there when something else can
 run ([concurrency.md](https://github.com/Spite-Language/spite_documentation/blob/master/concurrency.md)), wherever the

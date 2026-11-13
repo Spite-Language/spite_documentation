@@ -352,6 +352,13 @@ A loop over a list's positions that runs in bands counts plainly the classes onl
 the scratch lists each pass makes and drops are seen by no other band, so they never need a locked count, while
 the items and what they reach keep theirs.
 
+The code around the bands counts plainly too, whatever the class: bands are started and joined inside one function,
+so a function nothing the bands run can reach only ever runs while no other thread does
+([a function only one thread runs](proofs.md#a-function-only-one-thread-runs-counts-plainly)). A function both call,
+a list's `each` say, is written twice, once with locked counts for the bands and once with plain ones for the rest.
+A program that makes a `ForeignCallback`, keeps work running past the block that started it, or is built for the
+prompt or hot reload counts as before.
+
 ## Where objects live
 
 ### Objects that never leave their function live in registers or the frame

@@ -15,7 +15,7 @@ caller's object, but assigning the parameter a different object only changes whi
 is read back through the dictionary.
 
 What that costs while the program runs is a count in every object and one addition or subtraction each time a
-reference is kept or let go (plain arithmetic, atomic only in a program that starts a thread) and nothing
+reference is kept or let go (plain arithmetic, atomic only where another thread may count it at once) and nothing
 else: no collector, no runtime to ship. A singleton is not counted at all, and a number, a `Boolean` or an enum
 value is never an object.
 
