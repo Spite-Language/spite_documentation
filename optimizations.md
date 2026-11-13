@@ -624,6 +624,9 @@ searched or appended to from code the compiler runs at once (the bands of a loop
 and everything they call) keeps no index either, since building one is a write. Such a list is searched item by
 item, as written. An inspectable build keeps no index.
 
+Until the index is built a search costs what the plain search costs, with a few counts beside it, copied where the
+search is written: a small set, or one made from a literal and searched once, is as fast as a list that is not one.
+
 What you can notice is time and memory: the index is a `Dictionary` the list holds, and `--debug-memory` counts it.
 
 ## Text and bytes

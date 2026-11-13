@@ -293,7 +293,7 @@ rewritten.
 - `List<T>`: `[1, 2, 3]`, `append`, `prepend`, `insert`, `remove_at`, `remove_last`, `remove_first`, `first`,
   `last` (both a `T?`, `null` on an empty list, like `[]`: `var first = names.first()` then `crash first`), `count`, `contains` (elements that are numbers, `Boolean`, `String`
   or an enum only: on a list of a class use `any(f)` or `find_by_<member>`; a list of texts or whole numbers only
-  appended to, searched and read gets a hash index from the compiler, so `if not seen.contains(name) {
+  appended to, searched and read gets a hash index from the compiler (a small one costs what a plain search costs), so `if not seen.contains(name) {
   seen.append(name) }` is how to write a set, never a `Dictionary` kept beside it), `index_of` (an `Integer?`, the same
   elements as `contains`), `is_empty`, `clear`, `reverse`,
   `join` (text, numbers, `Boolean` and enum values all join), never `add` or `pop`. `list[index]` is a `T?` (out of range gives nothing), and `crash names[index]` narrows it like a path,
