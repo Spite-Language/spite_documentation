@@ -675,7 +675,9 @@ only while one local holds it (true of every program that writes text through th
 to a literal that starts a text the function then writes into (`var made = ""` followed by `made.append_code(code)`),
 which is made each time as before. Appending in place (`text = "{text}more"`) copies the literal at the first
 append. It is off in `--development`, `--repl` and `--hot-reload` builds. What you can observe: fewer allocations
-under `--debug-memory`, and two evaluations of one literal answer the same object.
+under `--debug-memory`, and two evaluations of one literal answer the same object. `--optimization-report` lists
+each literal still made, and why, under "Text literals made on each evaluation"
+([compiler.md](compiler.md#read-what-was-not-optimised)).
 
 ### A text split only to search it makes no list
 

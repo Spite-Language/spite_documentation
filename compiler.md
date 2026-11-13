@@ -380,6 +380,14 @@ The report has one section per optimisation, with how many places it lists:
   because the call or the frame writes something back from a value it read before a wait
   (`` `tally.add_late()` waits in place: Tally.add_late writes `count` from a value it read before a wait, and the
   frame could write it while the call waits ``). Read the value again after the wait, and the line goes.
+- **Text literals made on each evaluation**: each text literal that still allocates every time it runs
+  ([optimizations.md](optimizations.md#a-text-literal-is-made-once-in-the-programs-data)), with why: it starts a
+  local the function writes into (`` `""` is made on each evaluation: it starts `made`, which is written in place,
+  so each evaluation makes a text of its own ``), or a function answers it and its caller writes that answer. When
+  the program writes a text something else may hold, or the build is inspectable, every literal is made each time,
+  and the section has one line instead, at the place that does it (`` every text literal is made on each
+  evaluation: `loud` is written in place, but it starts from a text something else may hold ``). Write into a
+  copy of its own (`var loud = name.copy()`), and the line goes.
 
 A line looks like this, its link relative to the report's folder so it opens from wherever the file is read:
 
