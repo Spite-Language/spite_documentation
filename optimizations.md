@@ -1315,6 +1315,31 @@ a chunk is one locked addition. A short list, or one holding an element twice, r
 
 What you can observe: the time and the same output.
 
+### A call that only changes a singleton waits for the join
+
+```spite
+func settle() {
+    var corner = corners.first()
+    fallback corner
+    journal.note("settled")
+    total = total + corner.weight
+}
+```
+
+A band never makes a call that only changes a singleton (one that answers nothing, given at most two numbers,
+`Boolean`s, enums or texts written in the source): it writes the call down, and after the loop the program's own
+thread makes every band's calls in the order of the list's positions. Every taken `fallback` is such a call: it
+notes its site in the ring of the last 32 fallbacks a crash report prints. So `shapes.each_settle()` runs in bands
+although `settle` may fall back, and `Journal` and the ring end exactly as running in order leaves them. A
+singleton only bands call this way takes no lock at all. The bands run copies of the functions they reach that
+write such calls down, so the same functions called anywhere else run as written, with nothing tested.
+The singleton is written plainly; the compiler picks this form, and
+`--optimization-report` names it under "Singletons other threads reach".
+
+What you can observe: the time and the same output. A `--trace-fallbacks` build prints a banded loop's fallback
+lines when the loop ends, in the same order. A crash inside a band may report a ring without the fallbacks of the
+positions before it, as a banded crash may already be a later position's.
+
 ### Calls in a row that only compute a number run at once
 
 ```spite

@@ -392,8 +392,12 @@ The report has one section per optimisation, with how many places it lists:
   that runs in order ([concurrency.md](concurrency.md#a-loop-over-a-lists-positions-runs-in-bands)), with the first thing its passes do that
   the compiler cannot prove keeps each pass to its own item, and the function where they do it
   (`` a loop over the positions of a `List<Shape>` runs in order: it writes `Driver.tally` of something it does not
-  own (in `Worker.tallied`) ``). A pass that takes a `fallback` is named too: bands do not take fallbacks yet. Only
-  a build fills this section; `--check` chooses no bands.
+  own (in `Worker.tallied`) ``). Only a build fills this section; `--check` chooses no bands.
+- **Singletons other threads reach**: each singleton that bands, overlapped work or a `Parallel` reach, with the
+  form the compiler chose for it and why (`` `Journal` takes no lock: nothing another thread runs touches what
+  changes in it; a band writes down its calls that only change it and makes them in order after the join ``): no
+  lock when it never changes, atomic updates for a counter or flag, a lock (shared by a counted loop of reads), or
+  its own lock. Only a build fills this section.
 
 A line looks like this, its link relative to the report's folder so it opens from wherever the file is read:
 

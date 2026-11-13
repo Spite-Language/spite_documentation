@@ -115,6 +115,14 @@ table): what one pass makes no other pass can see. Uneven elements balance on th
 chunks and a thread that finishes one takes the next
 ([optimizations.md](optimizations.md#a-band-that-finishes-early-takes-the-next-chunk)).
 
+A pass may take `fallback`s, and call a singleton's function that only changes it (one that answers nothing, given
+at most two numbers, `Boolean`s, enums or texts written in the source, like `journal.note("skipped")`): a band
+writes those calls down and the program's own thread makes them after the loop, in the list's order, so the
+singleton ends exactly as running in order leaves it, with no lock
+([optimizations.md](optimizations.md#a-call-that-only-changes-a-singleton-waits-for-the-join)). Write the singleton
+plainly: the compiler picks how threads share it. A `--trace-fallbacks` build prints a banded loop's fallback lines
+when the loop ends, in order.
+
 ### A loop over a list's positions runs in bands
 
 ```gdscript
@@ -134,7 +142,7 @@ counter last runs in bands too, when every pass writes only its item, what the i
 objects in them) and what the pass made (the `Worker` and its scratch lists), and writes back only its own slot.
 Whether two items share something a pass writes is known only when the loop runs, so the loop first checks that
 each item, and everything a pass writes through it, is held once; anything shared runs the whole loop in order.
-A pass that takes a `fallback` runs in order for now. This is how the compiler's own passes over its functions spread across the
+A pass may take `fallback`s, as in `each_` walks. This is how the compiler's own passes over its functions spread across the
 processors ([optimizations.md](optimizations.md#a-loop-over-a-lists-positions-runs-in-bands)).
 `--optimization-report` lists every such loop heavy enough for bands that still runs in order, under "Loops run in
 order", with the first thing its passes do that keeps them in order and the function that does it
