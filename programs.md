@@ -314,7 +314,8 @@ func Game() {
 
 A `load` of the standard library the program is compiled with, its system's folder or `common` (`load
 "../spite_standard_library/windows"`, from before D1872), is removed from the program's file with a `fixed:` line,
-so an old program converts itself the first time it is compiled:
+so an old program converts itself the first time it is compiled (a constructor that held nothing else goes with
+it, since a class without one is made from its defaults):
 
 ```
 game/game.spite:4: fixed: 'load "../spite_standard_library/windows"' loaded the standard library, which every program has without a load; removed it (in Game.Game)
