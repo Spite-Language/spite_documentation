@@ -348,6 +348,10 @@ count of any other class stays plain, in the whole program. A count whose class 
 function value) stays atomic in a program with threads, and a program that makes a `ForeignCallback` counts every
 class atomically.
 
+A loop over a list's positions that runs in bands counts plainly the classes only its passes make: a `Worker` and
+the scratch lists each pass makes and drops are seen by no other band, so they never need a locked count, while
+the items and what they reach keep theirs.
+
 ## Where objects live
 
 ### Objects that never leave their function live in registers or the frame
