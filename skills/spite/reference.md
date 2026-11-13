@@ -76,6 +76,18 @@ beside its own source through `class.source_files` (or `$item_type.source_files`
 class by name), a `List<File>` of every file that declares or reopens the class, and a namespace's
 `.source_directories` a `List<Directory>`: absolute paths on the machine that built it, never a path relative to where
 the program runs.
+`preload "assets"` is written like `load` (literal text on its own line, relative to the file, under an `if` only on
+`Build` fields) and carries a folder's whole tree, or one file (`preload "assets/logo.png"`), local or pinned in git
+(`preload "../art@a3f2c91/textures"`), in the executable as read-only data. Read it through a singleton beside the
+attributes, `var assets = Volume("assets")`, named by the last folder exactly as spelled on disk (never class-cased):
+`assets.file("levels/first.txt")` and `assets.directory("levels")` answer the usual `File` and `Directory`, whose path
+says the volume, `assets://levels/first.txt` (`File(that path)` is the same file; a plain path is always the disk).
+`entries()`, `read_as_string()`, `read_as_buffer()` (binary), `byte_count()` and `exists` read it; every writer answers
+its failure (`false`, `null`), and `Process`, its `working_directory` and `FileSystemWatcher` refuse a volume path.
+`Path` knows the form: rooted, `parent` stops at `assets://`, `is_on_a_volume`. Errors: a missing path (load's
+words), two folders making one volume name, a one-letter name or `https`, `http`, `ssh`, `git`, `file` (`rename the
+folder`), `Volume("x")` with nothing preloaded as `x`, a literal `File("x://...")` naming no volume, and a `preload`
+no `Volume` reads. A preloaded folder leaves out names starting with `.`.
 A name that resolves to no class is `unknown type 'X'`, with `did you mean
 'Component.Eye'?` when a class ends the same way: an environment's folder (`server/`) is not part of the name.
 A program's settings and arguments reach it as typed, from bash, PowerShell or `cmd` alike:

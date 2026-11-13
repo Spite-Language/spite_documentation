@@ -150,6 +150,10 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
   with one; every other attribute has a real default, never `var pet: Pet = null` (`null` only goes where a `T?` is
   wanted).
+- Files the program carries in its executable are preloaded, never read beside it at run time: `preload "assets"`
+  (written like `load`, a folder or one file) and `var assets = Volume("assets")` beside the attributes, named by the
+  last folder as spelled on disk; `assets.file("levels/first.txt")` is a read-only `File` whose path is
+  `assets://levels/first.txt`. A `preload` no `Volume` reads, or a `Volume` nothing preloads, is an error.
 - Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
   of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
   to `Byte` that keeps a list of it).

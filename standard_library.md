@@ -33,6 +33,7 @@ REPL can look at any of it.
 | `List<T>`, `Dictionary<Key, Value>` | containers, and the member templates | [collections.md](collections.md) |
 | `Console` | the terminal: print, read a line | [below](#console) |
 | `File`, `Directory` | files and folders | [below](#read-and-write-a-file) |
+| `Volume` | the files the program preloaded into its executable, read through `File` and `Directory` | [programs.md](programs.md#preloaded-files) |
 | `FileSystemWatcher` | the paths that changed under a file or a folder, told by the operating system | [below](#watch-files-and-folders) |
 | `Process` | run another program | [below](#run-a-process) |
 | `Program` | this program: what it was started with, exit, sleep, environment variables, its own path | [below](#program) |
@@ -295,6 +296,7 @@ separator goes, so `"./a/b/../c/"` is `a/c`, and a path that starts at the root 
 | `parent` | `Path` | everything but the last piece; `.` when there is none |
 | `is_rooted` | `Boolean` | starts at the root (`/`) or a drive (`C:`) |
 | `joined(other)` | `Path` | `other` inside this one; a rooted `other` is itself |
+| `is_on_a_volume` | `Boolean` | written `name://...` in a program that preloads: a file of a volume, not of the disk ([programs.md](programs.md#preloaded-files)) |
 | `written` | `String` | the text as it was given, untidied |
 | `==`, `to_string()` | | two paths are equal when their tidied text is |
 

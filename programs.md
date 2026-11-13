@@ -342,6 +342,59 @@ What the executable does around the entry constructor (handing over the command 
 returns) is small. The executable leaves the command line to `Environment()`, constructs the entry class, releases the
 singletons and class objects, and, built with `--debug-memory`, prints the allocation balance.
 
+## Preloaded files
+
+`preload` carries files in the executable. It is written like `load`: literal text on a line of its own in a
+function, relative to the file that writes it, compiled to nothing at run time, and it may sit under an `if` on a
+`Build` field. It takes a folder or one file, on this machine or in a git repository pinned to a commit (the same
+`.spite/git` copy a `load` of that text uses, so the program needs no git when it runs). The program reads what it
+preloaded through `Volume`, a singleton named by the volume, which is the last folder of what was preloaded, exactly
+as it is spelled on disk:
+
+```gdscript
+var console = Console()
+var assets = Volume("assets")
+
+func Game() {
+    load "../spite_standard_library/windows"
+    preload "assets"
+    var level = assets.file("levels/first.txt")
+    var text = level.read_as_string()
+    fallback text
+    console.print(text)
+}
+```
+
+| Written | Its volume | What the volume holds |
+|---|---|---|
+| `preload "bunda"` | `Volume("bunda")` | the whole tree of `bunda` |
+| `preload "bunda/cu.spite"` | `Volume("bunda")` | only `cu.spite` |
+| `preload "../dependency/bin/tool.exe"` | `Volume("bin")` | only `tool.exe` |
+| `preload "github.com/x/art@a3f2c91/textures"` | `Volume("textures")` | the tree of `textures` at that commit |
+
+`volume.file(path)` and `volume.directory(path)` answer the same `File` and `Directory` as the disk, reading another
+disk. A file on a volume says so in its path, `assets://levels/first.txt`, the volume's name then the path on it, and
+`File(level.path)` is the same file; a plain path always means the system's disk. `Path` knows the form: such a path
+is rooted, its `parent` stops at `assets://`, and `is_on_a_volume` answers it. `entries()` walks a volume's folders
+as it walks the disk's, sorted, `read_as_buffer` reads a binary file, and a path naming nothing on the volume answers
+as a missing file does. A volume is read only: the writers (`write_string`, `remove`, `move_to`, `create`, ...)
+answer their failure, `last_written` and `lock` answer `null`, and what needs a real file (`Process`, its
+`working_directory`, `FileSystemWatcher`) answers its failure on such a path: write the file to the disk first to run
+it.
+
+The files are read-only data in the executable, as text literals are, stored by their path on the volume and sorted,
+so the same source gives the same executable on any machine; nothing is read or allocated when the program starts. A
+preloaded folder leaves out what starts with `.` (`.git`, `.spite`), as the compiler does with folders it reads. A
+program with no `preload` compiles the volume checks of `File`, `Directory` and `Path` away. The compiler refuses:
+
+- a `preload` of a path that does not exist, or a bad git path, in the words of `load`;
+- two different folders that make one volume name (names compare as exact text; two files preloaded from one folder
+  are one volume);
+- a volume named by a single letter (`c://` is a drive on Windows) or by `https`, `http`, `ssh`, `git` or `file`,
+  which open a URL: rename the folder;
+- `Volume("x")` when nothing preloads `x`, a literal `File("x://...")` naming no preloaded volume, and a `preload`
+  that no `Volume` reads.
+
 ## Configuration is a class
 
 There is no configuration file format. A configuration is an ordinary class whose constructor sets its state,
