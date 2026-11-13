@@ -136,6 +136,9 @@ Whether two items share something a pass writes is known only when the loop runs
 each item, and everything a pass writes through it, is held once; anything shared runs the whole loop in order.
 A pass that takes a `fallback` runs in order for now. This is how the compiler's own passes over its functions spread across the
 processors ([optimizations.md](optimizations.md#a-loop-over-a-lists-positions-runs-in-bands)).
+`--optimization-report` lists every such loop heavy enough for bands that still runs in order, under "Loops run in
+order", with the first thing its passes do that keeps them in order and the function that does it
+([compiler.md](compiler.md#read-what-was-not-optimised)).
 
 ### The first crash stops the program
 

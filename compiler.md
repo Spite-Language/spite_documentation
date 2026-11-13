@@ -388,6 +388,12 @@ The report has one section per optimisation, with how many places it lists:
   and the section has one line instead, at the place that does it (`` every text literal is made on each
   evaluation: `loud` is written in place, but it starts from a text something else may hold ``). Write into a
   copy of its own (`var loud = name.copy()`), and the line goes.
+- **Loops run in order**: each `while index < list.count()` loop over a list's positions, heavy enough for bands,
+  that runs in order ([concurrency.md](concurrency.md#a-loop-over-a-lists-positions-runs-in-bands)), with the first thing its passes do that
+  the compiler cannot prove keeps each pass to its own item, and the function where they do it
+  (`` a loop over the positions of a `List<Shape>` runs in order: it writes `Driver.tally` of something it does not
+  own (in `Worker.tallied`) ``). A pass that takes a `fallback` is named too: bands do not take fallbacks yet. Only
+  a build fills this section; `--check` chooses no bands.
 
 A line looks like this, its link relative to the report's folder so it opens from wherever the file is read:
 

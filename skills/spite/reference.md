@@ -25,7 +25,7 @@ spite --debug-memory                    print the allocation balance at the end
 spite --repl-port=4000                  serve the REPL; spite --connect=4000 --command="..." asks it
 spite --check                           format and compile: the errors, if any (builds nothing, keeps an old executable)
 spite --build                           build .spite/build/program.exe without running it
-spite --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies, overflow checks, text literals still made), each with its line and why
+spite --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies, overflow checks, text literals still made, loops kept out of bands), each with its line and why
 spite --player-count=2                  a field the program's build.spite declares (kebab-case)
 ```
 
