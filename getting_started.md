@@ -66,7 +66,6 @@ A program is a folder, and its entry file is the file named after the folder. Ma
 var console = Console()
 
 func HelloWorld() {
-    load "../spite_standard_library/windows"
     console.print("Hello, Spite!")
 }
 ```
@@ -113,7 +112,6 @@ func Person(new_age: Integer, new_job: Job) {
 var console = Console()
 
 func TourClasses() {
-    load "../spite_standard_library/windows"
     var party = List<Person>()
     var knight = Person(22, 'knight')
     party.append(knight)

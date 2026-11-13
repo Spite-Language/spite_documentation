@@ -65,7 +65,6 @@ var player_age = 20
 var monsters = List<Monster>()
 
 func ReplProgram() {
-    load "../spite_standard_library/windows"
     var goblin = Monster("Goblin", 30)
     monsters.append(goblin)
     var orc = Monster("Orc", 50)
@@ -296,7 +295,6 @@ var console = Console()
 var world = World()
 
 func ReplWorld() {
-    load "../spite_standard_library/windows"
     world.spawn(3, 4)
     world.spawn(7, 1)
     var count = world.entity_count()
@@ -360,7 +358,6 @@ var volumes = Dictionary<String, Integer>()
 var station = "city"
 
 func ReplRadio() {
-    load "../spite_standard_library/windows"
     news.messages.append("storm tonight")
     volumes["news"] = 7
     volumes["music"] = 4
@@ -531,7 +528,6 @@ var visits = 0
 var monster = Monster("Goblin")
 
 func HotCounter() {
-    load "../spite_standard_library/windows"
     visits = 1
     var welcome = greeting()
     console.print(welcome)
@@ -626,7 +622,6 @@ var reload = Reload()
 var cooked = 0
 
 func Recooking() {
-    load "../spite_standard_library/windows"
     cook_again_if_changed()
     console.print("cooked with generation {cooked}")
 }

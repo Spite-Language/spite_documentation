@@ -35,7 +35,6 @@ So an entry constructor with parameters is an error that names both:
 var console = Console()
 
 func EntryArgumentsError(name: String) {
-    load "../spite_standard_library/windows"
     console.print(name)
 }
 ```
@@ -72,7 +71,6 @@ var console = Console()
 var environment = Environment()
 
 func ProgramSettings() {
-    load "../spite_standard_library/windows"
     if environment.endpoint == "production" {
         console.print("using the production endpoint")
     } else {
@@ -151,7 +149,6 @@ var console = Console()
 var environment = Environment()
 
 func SettingTypeError() {
-    load "../spite_standard_library/windows"
     console.print(environment.workers)
 }
 ```
@@ -178,7 +175,6 @@ var build = Build()
 var environment = Environment()
 
 func BuildSettings() {
-    load "../spite_standard_library/windows"
     if build.serve {
         console.print("serving as", environment.name)
     } else {
@@ -209,7 +205,6 @@ executable is given `--name=tester` itself.
 var console = Console()
 
 func UnknownFlagError() {
-    load "../spite_standard_library/windows"
     console.print("never built")
 }
 ```
@@ -280,7 +275,6 @@ var console = Console()
 var build = Build()
 
 func TargetSystem() {
-    load "../spite_standard_library/windows"
     var target = build.target_operating_system
     var known = target == "windows" or target == "linux" or target == "mac"
     console.print("known system", known)

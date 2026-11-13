@@ -47,7 +47,6 @@ The first of them is the type checker's to enforce, so the mistake never runs:
 var console = Console()
 
 func TimeReadingIsNotInstant() {
-    load "../spite_standard_library/windows"
     var meeting_day = Date(2024, 3, 10)
     var meeting_time = Time(9, 30, 0, 0)
     var meeting = DateTime(meeting_day, meeting_time)
@@ -80,7 +79,6 @@ var _half_second_milliseconds = 500
 var _two_hours_in_minutes = 120
 
 func TimeInstants() {
-    load "../spite_standard_library/windows"
     var launch_since_1970 = Duration(_launch_seconds_since_1970, 'seconds')
     var launch = Instant(launch_since_1970)
     var hour = Duration(1, 'hours')
@@ -123,7 +121,6 @@ around it: the setup before the line and the printing after it are not timed.
 var console = Console()
 
 func TimeBenchmark() {
-    load "../spite_standard_library/windows"
     var benchmark = Benchmark(sum_to_a_million)
     console.print("sum", benchmark.answer)
     var took = benchmark.duration
@@ -182,7 +179,6 @@ var _birth_year = 1990
 var _current_year = 2024
 
 func TimeCalendar() {
-    load "../spite_standard_library/windows"
     var end_of_january = Date(_leap_year, 1, 31)
     var month = Period(1, 'months')
     var leap = end_of_january + month
@@ -255,7 +251,6 @@ var _launch_seconds_since_1970 = 1710054000
 var _clock_change_year = 2024
 
 func TimeZonesNamed() {
-    load "../spite_standard_library/windows"
     var new_york = zones.find("America/New_York")
     crash new_york
     var launch_since_1970 = Duration(_launch_seconds_since_1970, 'seconds')
@@ -299,7 +294,6 @@ var zones = TimeZones()
 var _saturday_seconds_since_1970 = 1709996400
 
 func TimeTomorrow() {
-    load "../spite_standard_library/windows"
     var new_york = zones.find("America/New_York")
     crash new_york
     var saturday_since_1970 = Duration(_saturday_seconds_since_1970, 'seconds')
@@ -332,7 +326,6 @@ var _launch_seconds_since_1970 = 1710054000
 var _india_offset_minutes = 330
 
 func TimeOffsets() {
-    load "../spite_standard_library/windows"
     var launch_since_1970 = Duration(_launch_seconds_since_1970, 'seconds')
     var launch = Instant(launch_since_1970)
     var india_offset = Duration(_india_offset_minutes, 'minutes')
@@ -408,7 +401,6 @@ is `null` too: no type holds it, and reading it as `23:59:59` would change the v
 var console = Console()
 
 func TimeTextReading() {
-    load "../spite_standard_library/windows"
     var exact: Instant? = "2024-03-10T03:00:00-04:00[America/New_York]"
     crash exact
     var local: DateTime = "2024-03-10 02:30"

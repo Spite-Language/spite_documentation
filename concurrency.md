@@ -39,7 +39,6 @@ afterwards can tell: the values are the same, and a file written by the next sta
 var console = Console()
 
 func ReadsInARow() {
-    load "../spite_standard_library/windows"
     var settings_file = File(".spite/documentation_settings.txt")
     var scores_file = File(".spite/documentation_scores.txt")
     crash settings_file.write_string("volume=7")
@@ -223,7 +222,6 @@ var report = ReportFile()
 var frames = 0
 
 func FrameWaits() {
-    load "../spite_standard_library/windows"
     var one_millisecond = Duration(1, 'milliseconds')
     var file = File(".spite/documentation_report.txt")
     crash file.write_string("sales are up")
@@ -287,7 +285,6 @@ var running = true
 var _frames_to_run = 200
 
 func FrameLoop() {
-    load "../spite_standard_library/windows"
     var ten_milliseconds = Duration(10, 'milliseconds')
     while running and frame < _frames_to_run {
         frame = frame + 1
@@ -327,7 +324,6 @@ var running = true
 var _passes_to_run: Long = 300000000
 
 func BusyLoop() {
-    load "../spite_standard_library/windows"
     while running and passes < _passes_to_run {
         passes = passes + 1
     }

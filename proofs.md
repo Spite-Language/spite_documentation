@@ -75,7 +75,6 @@ accepted or refused whatever the optimisation settings.
 
 ```spite title=proofs/narrowing.spite entry
 func Narrowing(): Integer {
-    load "../spite_standard_library/windows"
     var names = ["ada", "grace"]
     var first = names[0]
     if first {
@@ -249,7 +248,6 @@ See [Switch over values](control_flow.md#switch-over-values).
 
 ```spite title=proofs/proven_read.spite entry
 func Proven(): Integer {
-    load "../spite_standard_library/windows"
     var values = [4, 8, 15]
     var total = 0
     var index = 0
@@ -337,7 +335,6 @@ func Proven(): Integer {
 
 ```spite title=proofs/range.spite entry
 func Ranged(): Long {
-    load "../spite_standard_library/windows"
     var values = [2000000000, 2000000000, 2000000000]
     var sum: Long = 0
     var index = 0

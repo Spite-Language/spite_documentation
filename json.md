@@ -40,7 +40,6 @@ var count = 1
 var console = Console()
 
 func JsonBasics() {
-    load "../spite_standard_library/windows"
     var order = Order()
     order.id = 7
     order.customer = "Ada \"the\" first"
@@ -125,7 +124,6 @@ var version = Version(0, 1)
 var console = Console()
 
 func JsonConverted() {
-    load "../spite_standard_library/windows"
     var reader = JsonReader<Release>()
     var release = reader.read("\{\"name\": \"spite\", \"version\": \"2.7\"}")
     crash release
@@ -175,7 +173,6 @@ var count = 1
 var console = Console()
 
 func BinaryBasics() {
-    load "../spite_standard_library/windows"
     var order = Order()
     order.id = 7
     order.customer = "Ada"
@@ -251,7 +248,6 @@ var turn = 0
 var console = Console()
 
 func BinaryStream() {
-    load "../spite_standard_library/windows"
     var played = Turn()
     played.names = ["ada", "bo", "cy"]
     played.turn = 12
@@ -353,7 +349,6 @@ var down = 0
 var console = Console()
 
 func SchemaHeader() {
-    load "../spite_standard_library/windows"
     var writer = BinaryWriter<Point>()
     var reader = BinaryReader<Point>()
     var other_writer = BinaryWriter<Place>()
@@ -408,7 +403,6 @@ var tags = List<String>()
 var console = Console()
 
 func JsonInput() {
-    load "../spite_standard_library/windows"
     var partial_reader = JsonReader<Reading>()
     var partial = partial_reader.read("\{ \"name\": \"probe\", \"vendor\": \{ \"id\": [1, 2] } }")
     crash partial
@@ -455,7 +449,6 @@ var sell_price_each = 0.0
 var console = Console()
 
 func JsonCamelCase() {
-    load "../spite_standard_library/windows"
     var reader = JsonReader<Price>()
     var price = reader.read("\{\"name\": \"potion\", \"buyPrice\": 30, \"SellPriceEach\": 7.5}")
     crash price
@@ -530,7 +523,6 @@ func json_key_minimum_level_of_detail(): String {
 var console = Console()
 
 func JsonKeyFunction() {
-    load "../spite_standard_library/windows"
     var reader = JsonReader<MeshRecord>()
     var mesh = reader.read("\{\"name\": \"rock\"}")
     crash mesh
@@ -553,7 +545,6 @@ All four take any type, not only classes: `JsonWriter<Dictionary<String, Integer
 var console = Console()
 
 func JsonValues() {
-    load "../spite_standard_library/windows"
     var scores = Dictionary<String, Integer>()
     scores["ada"] = 3
     scores["bo"] = 5

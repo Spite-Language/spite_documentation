@@ -77,7 +77,6 @@ var name = "mine"
 var console = Console()
 
 func OwnEntryClass() {
-    load "../spite_standard_library/windows"
     var entry = Entry()
     console.print(entry.name)
 }
@@ -181,7 +180,6 @@ func shouted(): String {
 var console = Console()
 
 func ReopenString() {
-    load "../spite_standard_library/windows"
     var greeting = "hello"
     var shouted = greeting.shouted()
     console.print(shouted)
@@ -263,7 +261,6 @@ func dotted_name(): String {
 var console = Console()
 
 func ReopenSpiteClass() {
-    load "../spite_standard_library/windows"
     var console_class_name = console.class.dotted_name()
     console.print(console_class_name)
 }
@@ -287,7 +284,6 @@ func is_singleton(): Boolean {
 var console = Console()
 
 func ReopenedReflectionFunction() {
-    load "../spite_standard_library/windows"
     console.print(console.class.is_singleton)
 }
 ```
@@ -330,7 +326,6 @@ function that loads something says what, `load_texture`.
 
 ```gdscript title=load_parentheses_error/load_parentheses_error.spite entry error
 func LoadParenthesesError() {
-    load "../spite_standard_library/windows"
     load("level")
 }
 ```

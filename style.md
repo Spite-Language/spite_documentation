@@ -79,7 +79,6 @@ right above it) and says so, then compiles the fixed file:
 var console = Console()
 
 func DeclarationOrderError() {
-    load "../spite_standard_library/windows"
     console.print(label)
 }
 
@@ -167,7 +166,6 @@ var console = Console()
 var msg = ""
 
 func LintError() {
-    load "../spite_standard_library/windows"
     console.print(msg)
 }
 ```
@@ -192,7 +190,6 @@ var console = Console()
 var n = 0
 
 func SingleLetter() {
-    load "../spite_standard_library/windows"
     console.print(n)
 }
 ```
@@ -224,7 +221,6 @@ class ([reflection.md](reflection.md#reflection-is-read-only)).
 var console = Console()
 
 func UnusedError() {
-    load "../spite_standard_library/windows"
     var greeting = "hello"
     var forgotten = greeting.length()
     console.print(greeting)
@@ -243,7 +239,6 @@ removing it would drop the call.
 var console = Console()
 
 func WrittenNotRead() {
-    load "../spite_standard_library/windows"
     var total = 1
     total = "hello".length()
     console.print("hello")
@@ -273,7 +268,6 @@ var console = Console()
 var mover = Mover()
 
 func UnusedMarker() {
-    load "../spite_standard_library/windows"
     Mover.attributes.each(classify)
     console.print(mover.class)
 }
@@ -355,7 +349,6 @@ var console = Console()
 
 # prints a greeting
 func ProseCommentError() {
-    load "../spite_standard_library/windows"
     console.print("hello")
 }
 ```
@@ -456,7 +449,6 @@ declarations one blank line stays.
 var console = Console()
 
 func CallArgumentError() {
-    load "../spite_standard_library/windows"
     var source = "spite is small"
     console.print(source.slice(0, 5))
 }
@@ -476,7 +468,6 @@ func Token(new_text: String) {
 var console = Console()
 
 func CallArgumentFixed() {
-    load "../spite_standard_library/windows"
     var source = "spite is small"
     var first_word = source.slice(0, 5)
     crash first_word
@@ -516,7 +507,6 @@ func Label(starting_text: String) {
 var console = Console()
 
 func ConstructorArgumentError() {
-    load "../spite_standard_library/windows"
     var labels = List<Label>()
     labels.append(Label("new"))
     var count = labels.count()
@@ -545,7 +535,6 @@ right side of `and` or `or` are not reported.
 var console = Console()
 
 func RepeatedBranchError() {
-    load "../spite_standard_library/windows"
     var source = "spite"
     var shout = true
     if shout {
@@ -569,7 +558,6 @@ work out the receiver before reading the call, so the value is named first:
 var console = Console()
 
 func ComputedReceiverError() {
-    load "../spite_standard_library/windows"
     var first = 3
     var second = 4
     var largest = (first + second).maximum(5)

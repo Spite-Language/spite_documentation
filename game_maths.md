@@ -37,7 +37,6 @@ classes do: a `nan` part stays `nan` in the answer, it is not ignored in favour 
 var console = Console()
 
 func GameVectorsBasics() {
-    load "../spite_standard_library/windows"
     var position = Vector3(1.0, 2.0, 2.0)
     var velocity = Vector3(0.5, 0.0, -1.0)
     var moved = velocity.scaled(2.0)
@@ -63,7 +62,6 @@ so `Vector3(3, 4, 12).normalized()` is `(0, 0, 0)`:
 var console = Console()
 
 func GameGridVectors() {
-    load "../spite_standard_library/windows"
     var step = Vector2(5, 1)
     var diagonal = Vector2(1, 1)
     var direction = step.normalized()
@@ -105,7 +103,6 @@ from 0 at `near` to 1 at `far`.
 var console = Console()
 
 func GameMatricesBasics() {
-    load "../spite_standard_library/windows"
     var model = Matrix4<Float>()
     var place = Vector3(1.0, 2.0, 3.0)
     var turn = Quaternion<Float>()
@@ -152,7 +149,6 @@ and "'Integer' does not fit type 'Element'", the types the classes require of th
 var console = Console()
 
 func DoublePrecision() {
-    load "../spite_standard_library/windows"
     var world = Matrix4<Double>()
     var far_away = Vector3<Double>(1000000.0, 0.0, 0.0)
     world.translation = far_away
@@ -185,7 +181,6 @@ answers `null`, which is why `inverse()` is a `Quaternion?`.
 var console = Console()
 
 func GameRotationsBasics() {
-    load "../spite_standard_library/windows"
     var turn = Quaternion<Float>()
     var axis = Vector3(0.0, 0.0, 1.0)
     var quarter_turn = Float.Pi() * 0.5
@@ -233,7 +228,6 @@ and a ray that starts inside a box hits it where it leaves.
 var console = Console()
 
 func GamePickingBasics() {
-    load "../spite_standard_library/windows"
     var low = Vector3(-1.0, -1.0, -1.0)
     var high = Vector3(1.0, 1.0, 1.0)
     var box = AxisAlignedBox(low, high)
@@ -327,7 +321,6 @@ var console = Console()
 var easing = Easing()
 
 func GameCurvesBasics() {
-    load "../spite_standard_library/windows"
     var start = Vector2(0.0, 0.0)
     var first_handle = Vector2(0.5, 0.0)
     var second_handle = Vector2(0.5, 1.0)
@@ -358,7 +351,6 @@ which a program may use too.
 var console = Console()
 
 func HalfPrecisionBasics() {
-    load "../spite_standard_library/windows"
     var tenth: Float = 0.1
     var packed = tenth.to_half_precision()
     var unpacked = packed.half_precision_to_float()

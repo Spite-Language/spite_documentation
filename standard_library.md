@@ -108,7 +108,6 @@ names never changes under the other one.
 var console = Console()
 
 func StringMembers() {
-    load "../spite_standard_library/windows"
     var line = "  ada, grace, linus  "
     var names = line.trim().split(", ")
     var first = names.first()
@@ -184,7 +183,6 @@ var irregulars = {"person": "people", "sheaf": "sheaves"}
 var console = Console()
 
 func InflectionWords() {
-    load "../spite_standard_library/windows"
     var sheaf = "sheaf".pluralize()
     var back = "sheaves".singularize()
     var people = "person".pluralize()
@@ -351,7 +349,6 @@ bug ([failure.md](failure.md#an-answer-is-used)).
 var console = Console()
 
 func FileTasks() {
-    load "../spite_standard_library/windows"
     var log_file = File(".spite/documentation_demo_log.txt")
     crash log_file.write_string("first line")
     crash log_file.append_string(", second line")
@@ -389,7 +386,6 @@ var _first_record_value: Long = 1111
 var _second_record_value: Long = 2222
 
 func ByteRecords() {
-    load "../spite_standard_library/windows"
     var store = File(".spite/documentation_byte_records.bin")
     var record = Buffer(8)
     record.append_long_little_endian(_first_record_value)
@@ -432,7 +428,6 @@ nothing to move, or when the system cannot move it (a folder to another drive).
 var console = Console()
 
 func MovingFiles() {
-    load "../spite_standard_library/windows"
     var folder = Directory(".spite/documentation_moving")
     crash folder.create()
     var draft = File(".spite/documentation_moving/draft.txt")
@@ -489,7 +484,6 @@ Everything else, `Process.run()` included, blocks the thread that calls it.
 var console = Console()
 
 func DirectoryTasks() {
-    load "../spite_standard_library/windows"
     var target = Directory(".spite/documentation_demo_dir")
     crash target.create()
     var target_exists = target.exists()
@@ -522,7 +516,6 @@ so a `switch` tells them apart and a folder is walked by calling the same functi
 var console = Console()
 
 func DirectoryWalk() {
-    load "../spite_standard_library/windows"
     var root = Directory(".spite/documentation_walk")
     var inner_path: Path? = "{root.path}/inner"
     crash inner_path
@@ -592,7 +585,6 @@ var program = Program()
 var _most_tries = 250
 
 func WatchFolder() {
-    load "../spite_standard_library/windows"
     var folder = Directory(".spite/documentation_watch")
     crash folder.create()
     var watcher = FileSystemWatcher()
@@ -637,7 +629,6 @@ not the code, and not the lookups of the system's functions ([optimizations.md](
 var console = Console()
 
 func ProcessTasks() {
-    load "../spite_standard_library/windows"
     var listing = Process("echo", ["build", "finished"])
     var code = listing.run()
     crash code
@@ -694,7 +685,6 @@ var console = Console()
 var _patience_seconds = 300
 
 func ProcessLimits() {
-    load "../spite_standard_library/windows"
     var timed = Process("cmd", ["/c", "echo", "answer"])
     timed.keeps_errors_apart = true
     timed.time_limit = Duration(_patience_seconds, 'seconds')
@@ -771,7 +761,6 @@ func to_string(): String {
 var console = Console()
 
 func PrintableDoc() {
-    load "../spite_standard_library/windows"
     var ticket = Ticket("A12", 3)
     var boarding: Ticket.Stage = 'boarding'
     console.print("next:", ticket, boarding, true, 2.5, ticket.class)
@@ -808,7 +797,6 @@ func Ship(starting_name: String) {
 var console = Console()
 
 func DebugDoc() {
-    load "../spite_standard_library/windows"
     var crew = Crew()
     crew.captain = "Ana"
     crew.sailors.append("Bo")
@@ -827,7 +815,6 @@ Crew { captain: "Ana", sailors: ["Bo"], ship: Ship { name: "Gull", crew: Crew {.
 var console = Console()
 
 func ConsoleInputDoc() {
-    load "../spite_standard_library/windows"
     console.write("name? ")
     var name = console.read_line()
     if name {
@@ -871,7 +858,6 @@ var console = Console()
 var program = Program()
 
 func ProgramBasics() {
-    load "../spite_standard_library/windows"
     var missing = program.environment("SPITE_DOCUMENTATION_UNSET_VARIABLE")
     if missing {
         console.print("set to", missing)
@@ -912,7 +898,6 @@ var clock = Clock()
 var program = Program()
 
 func ClockBasics() {
-    load "../spite_standard_library/windows"
     var five_milliseconds = Duration(5, 'milliseconds')
     var started = clock.elapsed()
     program.sleep(five_milliseconds)
@@ -938,7 +923,6 @@ take one, and a datagram says who sent it with one.
 var console = Console()
 
 func IpAddressForms() {
-    load "../spite_standard_library/windows"
     var read: IpAddress = "2001:DB8:0:0:0:0:0:7"
     var is_ipv6 = read.is_ipv6()
     console.print("{read} {is_ipv6}")
@@ -995,7 +979,6 @@ var server = Tcp.Server()
 var _echo_port = 47401
 
 func TcpEcho() {
-    load "../spite_standard_library/windows"
     crash server.listen_locally(_echo_port)
     var client = Tcp.Client()
     crash client.connect_locally(_echo_port)
@@ -1069,7 +1052,6 @@ var console = Console()
 var _ping_port = 47402
 
 func UdpPing() {
-    load "../spite_standard_library/windows"
     var server = Udp.Server()
     crash server.open_locally(_ping_port)
     var client = Udp.Client()
@@ -1345,7 +1327,6 @@ var console = Console()
 var _first_record = 1200
 
 func ByteNumbers() {
-    load "../spite_standard_library/windows"
     var message = Buffer(10)
     message.append_unsigned_short_big_endian(2)
     message.append_integer_big_endian(_first_record)

@@ -38,7 +38,6 @@ func test_split_keeps_empty_pieces() {
 ```
 ```gdscript title=test_package/test_package.spite entry
 func TestPackage() {
-    load "../spite_standard_library/windows"
     var tester = Test(Checks)
     tester.run()
 }
@@ -85,7 +84,6 @@ func test_starts_from_its_own_setup() {
 ```
 ```gdscript title=test_setup/test_setup.spite entry
 func TestSetup() {
-    load "../spite_standard_library/windows"
     var tester = Test(Bank)
     tester.run()
 }
@@ -114,7 +112,7 @@ pass Checks.TextTests.test_trim_removes_the_spaces_around_text
 fail Checks.TextTests.test_split_keeps_empty_pieces
     spite: the program stopped at test_package/checks/text_tests.spite:8 in Checks.TextTests.test_split_keeps_empty_pieces, site 4205b4ca (pieces.count()=3)
     spite.frame	test_package/checks/text_tests.spite:8	Checks.TextTests	test_split_keeps_empty_pieces
-    spite.frame	test_package/test_package.spite:4	TestPackage	TestPackage
+    spite.frame	test_package/test_package.spite:3	TestPackage	TestPackage
 2 tests, 1 passed, 1 failed
 ```
 

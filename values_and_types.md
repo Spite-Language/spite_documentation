@@ -40,7 +40,6 @@ var _value_that_fits_a_byte = 200
 var _large_hash: UnsignedInteger = 4000000000
 
 func NumericOverflow() {
-    load "../spite_standard_library/windows"
     var wide = _value_that_fits_a_byte
     var cut: Byte = wide
     console.print("fits", cut)
@@ -110,7 +109,6 @@ var _hash_offset_basis: UnsignedLong = 1469598103934665603
 var _hash_prime: UnsignedLong = 1099511628211
 
 func WrappingByName() {
-    load "../spite_standard_library/windows"
     var hash: UnsignedLong = _hash_offset_basis
     var text = "spite"
     var index = 0
@@ -144,7 +142,6 @@ arithmetic is done in is an error too, instead of wrapping:
 var console = Console()
 
 func WiderFirst() {
-    load "../spite_standard_library/windows"
     var width = 65536
     var area: Long = 4294967296
     var scaled = width * area
@@ -159,7 +156,6 @@ func WiderFirst() {
 var console = Console()
 
 func ConstantOverflow() {
-    load "../spite_standard_library/windows"
     var pixels: Long = (65536 - 120) * 65536
     console.print(pixels)
 }
@@ -179,7 +175,6 @@ write the wider side first, with the comparison turned around:
 var console = Console()
 
 func CastingEdge() {
-    load "../spite_standard_library/windows"
     var progress: Integer = 0
     console.print("mathematically true", progress > -0.5)
 }
@@ -196,7 +191,6 @@ whole number never fits:
 var console = Console()
 
 func CastingFixed() {
-    load "../spite_standard_library/windows"
     var progress: Integer = 0
     console.print("mathematically true", -0.5 < progress)
     var price: Float = 3.0
@@ -247,7 +241,6 @@ func doubled(): Integer {
 var console = Console()
 
 func NumberMethods() {
-    load "../spite_standard_library/windows"
     var count = 21
     var doubled = count.doubled()
     var count_text = count.to_string()
@@ -321,7 +314,6 @@ var console = Console()
 var _upper_four_bits_set: Byte = 240
 
 func BitwiseBasics() {
-    load "../spite_standard_library/windows"
     var flags = 12
     var mask = 10
     console.print("{flags.bits_and(mask)} {flags.bits_or(mask)} {flags.bits_exclusive_or(mask)}")
@@ -367,7 +359,6 @@ that gives the Spite one: `Float has no function 'sqrt': Spite spells it 'square
 var console = Console()
 
 func MathsBasics() {
-    load "../spite_standard_library/windows"
     var side: Double = 2.0
     var diagonal = side.square_root()
     console.print("{diagonal} {Float.Pi()} {Double.Pi()}")
@@ -461,7 +452,6 @@ func kind(): String {
 var console = Console()
 
 func NumberTypeDoc() {
-    load "../spite_standard_library/windows"
     var scores: List<Integer> = [4, 9, 2]
     var score_statistics = Statistics<Integer>()
     var best_score = score_statistics.largest(scores)
@@ -517,7 +507,6 @@ var console = Console()
 var label = ""
 
 func LoneHole() {
-    load "../spite_standard_library/windows"
     var clicks = 3
     label = "{clicks}"
     console.print(label)
@@ -538,7 +527,6 @@ var console = Console()
 var label = ""
 
 func DirectText() {
-    load "../spite_standard_library/windows"
     var clicks = 3
     label = clicks
     var line = "clicks: {clicks}"
@@ -557,7 +545,6 @@ once when something does, so the other holder still sees the text it had.
 var console = Console()
 
 func TextBuilding() {
-    load "../spite_standard_library/windows"
     var line = "count:"
     var index = 0
     while index < 3 {
@@ -579,7 +566,6 @@ count: 0 1 2 done
 var console = Console()
 
 func StringBasics() {
-    load "../spite_standard_library/windows"
     var subject = "Spite"
     var greeting = "Hello, {subject}"
     console.print(greeting)
@@ -671,7 +657,6 @@ func is_knight(): Boolean {
 var console = Console()
 
 func EnumBasics() {
-    load "../spite_standard_library/windows"
     var hero = Player('mage')
     console.print("job", hero.job)
     var hero_is_knight = hero.is_knight()
@@ -724,7 +709,6 @@ enum Course {
 var console = Console()
 
 func EnumFromText() {
-    load "../spite_standard_library/windows"
     var names = ["dessert", "brunch"]
     var index = 0
     while index < names.count() {
@@ -761,7 +745,6 @@ var served: Course = 'soup'
 var console = Console()
 
 func EnumWalk() {
-    load "../spite_standard_library/windows"
     Course.values.each(list_course)
 }
 
@@ -796,7 +779,6 @@ enum Role {
 var console = Console()
 
 func NumberedRoles() {
-    load "../spite_standard_library/windows"
     var role: Role = 'user'
     console.print(role, role == 'user')
 }
@@ -824,7 +806,6 @@ enum Role {
 var console = Console()
 
 func RoleNumberTwice() {
-    load "../spite_standard_library/windows"
     var role: Role = 'guest'
     console.print(role)
 }
@@ -883,7 +864,6 @@ union Enemy {
 var console = Console()
 
 func UnionBasics() {
-    load "../spite_standard_library/windows"
     var enemy: Enemy = Monster(6)
     switch enemy {
         Player: console.print("a player", enemy.health)
@@ -934,7 +914,6 @@ type Loadout {
 var console = Console()
 
 func DuckTyping() {
-    load "../spite_standard_library/windows"
     var hero = Player(8)
     console.print("class of hero", hero.class)
     var hero_loadout: Loadout = hero
@@ -1021,7 +1000,6 @@ type Renderable {
 var console = Console()
 
 func ShapeFunctionsDoc() {
-    load "../spite_standard_library/windows"
     var badge = Badge("new")
     show(badge)
     var banner = Banner()
@@ -1081,7 +1059,6 @@ type Work {
 var console = Console()
 
 func ShapeValuesDoc() {
-    load "../spite_standard_library/windows"
     var jobs = List<Work>()
     var wash = Job("wash")
     jobs.append(wash)

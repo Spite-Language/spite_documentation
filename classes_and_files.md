@@ -96,7 +96,6 @@ var console = Console()
 console.print("not allowed")
 
 func FileScopeError() {
-    load "../spite_standard_library/windows"
     console.print("a statement inside a function is fine")
 }
 ```
@@ -140,7 +139,6 @@ func Crate(new_count: Integer) {
 var console = Console()
 
 func OrderedFile() {
-    load "../spite_standard_library/windows"
     var inventory = Inventory<Crate>()
     var small_crate = Crate(3)
     inventory.add(small_crate)
@@ -194,7 +192,6 @@ func Person(new_age: Integer) {
 var console = Console()
 
 func PersonBasics() {
-    load "../spite_standard_library/windows"
     var person = Person(30)
     console.print("age", person.age)
 }
@@ -214,7 +211,6 @@ var level = 1
 var console = Console()
 
 func TeamRoster() {
-    load "../spite_standard_library/windows"
     var members = List<Member>()
     var first_member = Member()
     members.append(first_member)
@@ -240,7 +236,6 @@ func Holder() { }
 var console = Console()
 
 func EmptyConstructorError() {
-    load "../spite_standard_library/windows"
     var holder = Holder()
     console.print(holder.held)
 }
@@ -325,7 +320,6 @@ var tripled: Integer = _hundred * 3
 var _hundred = 100
 
 func DefaultOrder() {
-    load "../spite_standard_library/windows"
     console.print(tripled)
 }
 ```
@@ -345,7 +339,6 @@ var started: Boolean = start()
 var _ready = false
 
 func DefaultWriteOrder() {
-    load "../spite_standard_library/windows"
     console.print(started, _ready)
 }
 
@@ -370,7 +363,6 @@ var _first: Integer = _second + 1
 var _second: Integer = _first + 1
 
 func DefaultCircle() {
-    load "../spite_standard_library/windows"
     console.print(_first, _second)
 }
 ```
@@ -409,7 +401,6 @@ func Report(text: String) {
 ```
 ```gdscript title=dropped_report/dropped_report.spite entry error
 func DroppedReport() {
-    load "../spite_standard_library/windows"
     Report("the door opens")
 }
 ```
@@ -448,7 +439,6 @@ func Marathon(): Meters {
 var console = Console()
 
 func Distances() {
-    load "../spite_standard_library/windows"
     var run = Meters.Marathon()
     console.print(run.amount)
     var walked: Meters = "1200"
@@ -504,7 +494,6 @@ var home = Scoreboard()
 var away = Scoreboard()
 
 func SingletonBasics() {
-    load "../spite_standard_library/windows"
     home.score(2)
     away.score(3)
     var is_singleton = Scoreboard.is_singleton
@@ -566,7 +555,6 @@ var music = Channel(2)
 var news_again = Channel(1)
 
 func Radio() {
-    load "../spite_standard_library/windows"
     news.messages.append("storm tonight")
     music.messages.append("song")
     news_again.messages.append("roads closed")
@@ -610,7 +598,6 @@ var again = Column<Integer>()
 var words = Column<String>()
 
 func GenericSingleton() {
-    load "../spite_standard_library/windows"
     numbers.values.append(1)
     again.values.append(2)
     var number_count = again.values.count()
@@ -640,7 +627,6 @@ read: remove it`.
 var console = Console()
 
 func SingletonInlineError() {
-    load "../spite_standard_library/windows"
     console.print("built for {Build().target_operating_system}")
 }
 ```
@@ -677,7 +663,6 @@ func Member(new_name: String) {
 var console = Console()
 
 func LevelUp() {
-    load "../spite_standard_library/windows"
     var hero = Member("Aria")
     bump_level(hero)
     console.print("name", hero.name, "level", hero.level)
@@ -702,7 +687,6 @@ var level = 1
 var console = Console()
 
 func SharedMember() {
-    load "../spite_standard_library/windows"
     var original = Member()
     var alias = original
     var independent = original.copy()
@@ -745,7 +729,6 @@ func join(registry: Registry) {
 var console = Console()
 
 func ThisBasics() {
-    load "../spite_standard_library/windows"
     var registry = Registry()
     var tea = Drink("tea")
     tea.join(registry)
@@ -785,7 +768,6 @@ func to_string(): String {
 var console = Console()
 
 func PrintingAClass() {
-    load "../spite_standard_library/windows"
     var lamp = Lamp("hall")
     console.print(lamp)
     console.debug(lamp)
@@ -871,7 +853,6 @@ var height = 0.0
 var console = Console()
 
 func OwnVector() {
-    load "../spite_standard_library/windows"
     var point = Geometry.Vector3()
     console.print(point.height)
 }

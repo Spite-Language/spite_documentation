@@ -27,7 +27,6 @@ func alive(): Boolean {
 var console = Console()
 
 func Battle() {
-    load "../spite_standard_library/windows"
     var monsters = [Monster("slime", 12), Monster("ghost", 0), Monster("troll", 30)]
     var standing = monsters.filter_alive().sum_health()
     console.print("health still standing:", standing)
