@@ -47,8 +47,14 @@ read from its variable (`PLAYER_COUNT=2`), then from a `.env` line in the folder
 sets `Build.target_operating_system`: the executable is always Windows x64. Every answer is one JSON line. The
 commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
-A program lives in its own folder, and `spite` run in it runs it: the first line of its entry function loads the standard
-library by its relative path (`load "../spite_standard_library/windows"`, which loads `common` itself; never `common` alone), and `game/`'s every sub folder is a
+A program lives in its own folder, and `spite` run in it runs it. Every program has the standard library with no
+`load` line: the compiler reads the folder of the system it compiles for (`windows`, or `--target-operating-system`'s),
+which loads `common` itself, from the library installed with the compiler (the `spite_standard_library` folder nearest
+above `spite.exe`) or the folder `--standard-library=<folder>` names (relative to the program's folder; `Build.standard_library`).
+A flag naming no folder or a folder without `common` and the system's folder is an error. A `load` of the library in use
+(`load "../spite_standard_library/windows"`, from older programs) is removed with a `fixed:` line, and a `load` of
+another library is an error naming `--standard-library=` instead. Errors and crash reports name a library file
+`spite_standard_library://common/list.spite`, the same on every machine. `load` is for the program's own packages, and `game/`'s every sub folder is a
 namespace and nothing else (`game/engine/renderer/shader.spite` is `Engine.Renderer.Shader`, and
 `game/engine/physics/physics.spite` is `Engine.Physics.Physics`: no file is special). A file and a folder of one
 name side by side (`engine/renderer.spite` beside `engine/renderer/`) is an error, since a dotted name means one
@@ -221,7 +227,7 @@ A mistake with exactly one fix is not an error: the compiler writes the fix into
 - a local or parameter name with one right spelling (camelCase, a doubled `_`, an abbreviation with one expansion, a
   read `_name`), and a keyword one letter off at the start of a line (`retrun`);
 - a local or attribute nothing reads whose value and every write do nothing, and statements after a `return`;
-- a load of the library's `common` folder alone, which becomes a load of `windows` beside it (which loads `common`);
+- a `load` of the standard library in use (its system folder or `common`), which is removed: every program has it;
 - a line ending in `\r\n` or a lone `\r`: a Spite file ends every line with `\n`, and the whole file is written
   back that way;
 - a check on a proven value (`fallback`, `crash` or `if`), a local copied only to narrow (every use names the source, a

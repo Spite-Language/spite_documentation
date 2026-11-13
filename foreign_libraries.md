@@ -279,8 +279,8 @@ func environment_address(name: String): Long {
 ```
 
 and the shared `Program` calls `exit_process` and `environment_address` without declaring them, because every
-system's folder defines them with the same signature. A program loads exactly one of these folders, the one for its
-system, and it loads `common` itself ([programs.md](programs.md#how-a-program-is-loaded)), so their functions replace
+system's folder defines them with the same signature. The compiler reads exactly one of these folders, the one for the
+system a program is compiled for, and it loads `common` itself ([programs.md](programs.md#the-standard-library-needs-no-load)), so their functions replace
 or add members by the ordinary reopening rule ([packages.md](packages.md#monkey-patching-mods)).
 `--final-classes` prints each class as it came out, its system's functions included.
 

@@ -4,7 +4,7 @@ The compiler compiles one program. A program is a folder, and its entry file is 
 compiling `game` compiles `game/game.spite`, whose class `Game` is constructed to start the program. The compiler
 builds the folder it is run from: `cd game`, then `spite`. The compiler
 is written in Spite, builds itself, and writes machine code directly (Windows x64): there is no C compiler, linker
-or other toolchain behind it, and nothing to install beside the compiler and the standard library's folder, which the program loads by its path. The command
+or other toolchain behind it, and nothing to install beside the compiler and the standard library's folder, which every program has without a `load` line ([where the standard library comes from](#where-the-standard-library-comes-from)). The command
 below is written `spite`, for the compiler's executable, `spite.exe`.
 
 The compiler first reads the **whole** program (the standard library, the program's folder, its `build.spite`
@@ -67,8 +67,50 @@ compiler compiles itself the same way, `cd spite_compiler` then `spite`, whose e
 
 ## How a program is loaded
 
-The compiler follows the `load` lines of the program's entry file in order, then of each file it reaches.
+The compiler reads the standard library for the system the program is compiled for, then follows the `load` lines
+of the program's entry file in order, then of each file it reaches.
 [programs.md](programs.md#how-a-program-is-loaded) walks through it.
+
+## Where the standard library comes from
+
+Every program has the standard library with no `load` line (D1872). The compiler reads the folder of the system the
+program is compiled for (`windows`, or the one `--target-operating-system` names), which reopens `common`, from one
+place:
+
+- `--standard-library=<folder>` names the folder that holds the library's `common` and system folders, relative to
+  the program's folder or absolute. It is how a branch, a fork or a copy of the library is compiled with, and a
+  program reads it as `Build.standard_library`.
+- With no flag, the library installed with the compiler: the `spite_standard_library` folder nearest above the
+  compiler's own executable, so `spite_compiler/.spite/spite.exe` takes the `spite_standard_library` cloned beside
+  `spite_compiler` (D2241). A later compiler carries the library inside its own executable instead (D1880).
+
+```
+spite --standard-library=../my_library     compile with the library in ../my_library
+```
+
+A flag that names no folder, one that is not a library, a bare flag, and an installation with no library are
+errors, each naming the fix:
+
+```
+'--standard-library=nowhere' names no folder: give the folder that holds the standard library, with its 'common' and 'windows' folders, or leave the flag out to use the library installed with the compiler
+'--standard-library=assets' names a folder that is not a standard library: a standard library holds a 'common' folder and one for each system, and it has no 'common' folder
+```
+
+A `load` of the library in use is removed from the program's file with a `fixed:` line, and a `load` of another
+library is an error that names the flag to give instead ([programs.md](programs.md#the-standard-library-needs-no-load)).
+
+### A library file is named the same on every machine
+
+An error, a crash report and the `.crashes` map name a file of the standard library by its place in the library,
+`spite_standard_library://common/list.spite`, never by where the library sits on the disk, so the same program prints
+the same words on every machine and with either source:
+
+```
+spite: the program stopped at spite_standard_library://common/buffer.spite:431 in Buffer.append_buffer, site 50ee37c2 (start=1, wanted=-1, item_count=0)
+```
+
+The library's own frames and fallbacks are left out of a crash's call chain, as before
+([failure.md](failure.md#what-a-crash-reports)).
 
 ## Where it runs
 
@@ -175,8 +217,7 @@ A program may give an option a different default by reopening `Build` in its own
 (`var debug_memory = true` to always count its memory), and add options of its own the same
 way. No option is read before the program is, so every one of them, the outputs included, can be given a default
 there, written as a literal (`true`, a number, or a text without `{}` in it), since the compiler reads it before
-anything runs. A program that loads no standard library has no `Build`, and takes only `--debug-memory` and
-`--optimized`. Every `Build` field is
+anything runs. Every `Build` field is
 a constant in the built program, so with `var build = Build()` beside the attributes, `if build.debug_memory { }`
 keeps one branch.
 

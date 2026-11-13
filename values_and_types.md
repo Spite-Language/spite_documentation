@@ -231,8 +231,7 @@ class the way it reopens any class ([packages.md](packages.md#monkey-patching-mo
 How wide a number is comes from its class too: each one reaches its own value through `set_this` and `get_this`, as
 any class reaches an attribute through `set_x` and `get_x`, and `set_this` checks the range it holds
 (`crash value >= _smallest_value and value <= _largest_value`, with `-128` and `127` named in `Tiny`), and the
-compiler reads the width and the sign from that range. A program that loads no standard library has no number
-classes at all: `Integer` is then an unknown type. Reading and writing `this` are the compiler's own, so
+compiler reads the width and the sign from that range. Reading and writing `this` are the compiler's own, so
 `count.get_this()` and `count.set_this(4)` are errors that tell you to write `count` and `count = 4`. `Number`, the
 operators a number answers, is only asked about (`kind.satisfies_type(Number)`,
 [reflection.md](reflection.md#whether-a-class-satisfies-a-type)): no value is typed `Number`, and a class written

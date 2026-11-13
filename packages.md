@@ -29,9 +29,8 @@ func Game() {
   the folder neither a package nor a namespace.
 - `load` takes literal text on its own line: a folder's path relative to the file it is written in, or, with an
   `@` in it, a repository pinned to a commit ([below](#loading-a-repository-pinned-to-a-commit)). A variable or
-  expression there is an error, so the compiler always knows every bundle statically. `load ""` names no folder and is an error. A `load` may sit under an `if` on a `Build` field the compiler already knows,
-  which is how one entry function loads the standard library folder of the system it is built for
-  ([programs.md](programs.md#how-a-program-is-loaded)).
+  expression there is an error, so the compiler always knows every bundle statically. `load ""` names no folder and is an error. A `load` may sit under an `if` on a `Build` field the compiler already knows.
+  The standard library is never loaded: every program has it ([programs.md](programs.md#the-standard-library-needs-no-load)).
 - Folder names are always lowercase `snake_case`, package roots included: `window_plugin`, never
   `window-plugin`. A folder of the program with one right spelling is renamed by the compiler, with every `load`
   that names it ([classes_and_files.md](classes_and_files.md#a-misnamed-file-or-folder-is-renamed)); any other

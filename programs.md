@@ -136,7 +136,7 @@ compiled in.
 That reading is the whole run-time cost: one pass over the command line and one environment lookup per declared
 field, once, when `Environment()` is first made. A program given any argument makes `Environment()` before its
 entry starts, so one that never makes it still refuses a flag it does not declare, and a program given none pays
-nothing. A program that loads no standard library has no such check and reads no argument at all.
+nothing.
 
 A setting may be named like one of the compiler's own options: `var check = "none"` in `environment.spite` is read from
 `--check=yes` on the built program's command line, and the compiler's `--check` is a different flag, given to `spite`.
@@ -293,41 +293,56 @@ compiled for this machine true
 ```
 
 Neither `operating_system` nor `program` can be given as a flag or declared in `build.spite`: the compiler supplies both. Which operating
-system a program targets is the one whose folder of the standard library it loads, which is the next
-section.
+system a program targets is `Build.target_operating_system`, and the compiler reads that system's folder of the
+standard library, which is the next section.
 
 ## How a program is loaded
 
-Nothing about starting a program is hidden in the compiler. The program is the entry point: its entry function names
-the standard library in its first lines, with `load` paths that are relative to the entry file, and the compiler
-follows those lines. The compiler looks for no library of its own and reads no environment variable that names one.
+Nothing about starting a program is hidden in the compiler. The program is the entry point: the compiler constructs
+its entry class, and there is no launcher around it (D628). What it reads first is the standard library, which every
+program has without a line asking for it, then the program's own folder and the folders its `load` lines name.
+
+### The standard library needs no load
+
+Every program has the standard library for the system it is compiled for, with no `load` line (D1872). The library
+holds `common`, what every system shares, and one folder for each operating system (`windows`, `linux`, `mac`) whose
+files reopen the classes that system does differently
+([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)). The compiler reads the
+folder of the system the program is compiled for, `windows` or the one `--target-operating-system` names, and that
+folder loads `common` itself. Where the library comes from, the one installed with the compiler or the folder
+`--standard-library=<folder>` names, is in [compiler.md](compiler.md#where-the-standard-library-comes-from).
 
 ```gdscript
 func Game() {
-    load "../spite_standard_library/windows"
     ...
 }
 ```
 
-A program two folders down from the clones writes `load "../../spite_standard_library/windows"`. The standard library
-is a folder like any other, so anyone can bring their own. It holds `common`, what every system shares, and one
-folder for each operating system (`windows`, `linux`, `mac`) whose files reopen the classes that system does
-differently ([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)). A program
-loads only the folder of the system it is compiled for, and that folder loads `common` itself, so one line is the
-whole library. A program never loads `common` alone: the compiler changes such a load in your file to the
-`windows` folder beside it (a `fixed:` line), and refuses it in a library or package file, which it never rewrites.
-Loading both stays allowed. A program that targets several systems loads each under an `if` on a `Build` field:
-`load` takes literal text, though it may sit under an `if` on a `Build` field
-([packages.md](packages.md#load-is-a-bundle-boundary)). The program's own folder needs no `load`: it is the root the
-entry file sits in. The entry class is constructed when the executable starts, and its exit code is what the
-constructor answers.
+A `load` of the standard library the program is compiled with, its system's folder or `common` (`load
+"../spite_standard_library/windows"`, from before D1872), is removed from the program's file with a `fixed:` line,
+so an old program converts itself the first time it is compiled:
+
+```
+game/game.spite:4: fixed: 'load "../spite_standard_library/windows"' loaded the standard library, which every program has without a load; removed it (in Game.Game)
+```
+
+A `load` of another standard library, a folder holding `common` and the system's folder somewhere else, is an error
+that names the flag: a program is compiled with one library, and the command line says which.
+
+```
+game/game.spite:4: error: 'load "../other/spite_standard_library/windows"' loads the standard library at 'D:/other/spite_standard_library', and a program does not load the standard library: every program has one. To compile with that one, remove this load and give --standard-library=D:/other/spite_standard_library (in Game.Game)
+```
+
+`load` stays for the program's own folders and its packages ([packages.md](packages.md#load-is-a-bundle-boundary)),
+and it may sit under an `if` on a `Build` field. The program's own folder needs no `load`: it is the root the entry
+file sits in. The entry class is constructed when the executable starts, and its exit code is what the constructor
+answers.
 
 ```gdscript title=loaded_program/loaded_program.spite entry
 var console = Console()
 var build = Build()
 
 func LoadedProgram() {
-    load "../spite_standard_library/windows"
     var named_folder = build.program.ends_with("loaded_program")
     console.print("loaded from", named_folder)
     console.print("for this machine", build.target_operating_system == build.operating_system)

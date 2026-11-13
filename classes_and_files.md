@@ -882,4 +882,4 @@ the class 'Geometry.Vector3' is named like the standard library's class 'Vector3
 
 ---
 
-Next: [Programs](programs.md), the entry file, how a program loads the standard library, and its settings.
+Next: [Programs](programs.md), the entry file, the standard library every program has, and its settings.

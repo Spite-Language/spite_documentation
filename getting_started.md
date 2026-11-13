@@ -18,8 +18,9 @@ the same bytes, and leaves that compiler in `spite_compiler/.spite/spite.exe`; p
 [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md) says how it is built.
 Only Windows x64 is written for now.
 
-A program loads the standard library by its path, in the first lines of its entry function, so a program in a
-folder beside the two clones starts with `load "../spite_standard_library/windows"`.
+Every program has the standard library with no `load` line: the compiler takes the `spite_standard_library` clone
+beside `spite_compiler`, and `--standard-library=<folder>` names another
+([compiler.md](compiler.md#where-the-standard-library-comes-from)).
 
 Then `cd hello_world` and `spite` compile the program of the [next section](#hello-world): the compiler builds the
 folder it is run from.
@@ -33,7 +34,7 @@ cd spite_compiler
 .spite/spite.exe --build --executable-path=.spite/spite_next.exe
 ```
 
-It runs in the compiler's folder, whose entry file loads `../spite_standard_library/windows`, the clone beside it. The next compiler is kept when it rebuilds itself to the same bytes. A build
+It runs in the compiler's folder and reads the standard library cloned beside it. The next compiler is kept when it rebuilds itself to the same bytes. A build
 from nothing, when no `spite.exe` exists yet, is the chain
 [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md#how-the-compiler-is-built)
 describes.

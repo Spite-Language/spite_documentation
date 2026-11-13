@@ -1,6 +1,6 @@
 # Standard library
 
-The standard library is ordinary Spite, a folder of its own that a program loads by its path, and a program reads it the way it reads its own code:
+The standard library is ordinary Spite, a folder of its own that every program has without a `load` line ([programs.md](programs.md#the-standard-library-needs-no-load)), and a program reads it the way it reads its own code:
 every class a program can name (`String`, `List`, `Integer`, `File`) is a file there, and
 `--final-classes` prints each one as the program uses it. Its values are reference counted like every other
 object ([memory.md](memory.md)). When an operation cannot succeed it says so in its type rather than crashing:

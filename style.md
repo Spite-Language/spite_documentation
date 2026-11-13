@@ -116,8 +116,8 @@ What the compiler fixes for you, and what it leaves as an error:
   what it copied. Statements after a `return` go.
 - **Unused things with no effect.** An unread local or attribute, or a `load` nothing names, whose value and writes do
   nothing is removed with every write; one a call makes or writes stays an error.
-- **Loads.** A load of the standard library's `common` folder alone becomes a load of the `windows` folder beside it,
-  which loads `common` ([programs.md](programs.md#how-a-program-is-loaded)).
+- **Loads.** A `load` of the standard library the program is compiled with is removed, since every program has it
+  ([programs.md](programs.md#the-standard-library-needs-no-load)).
 - **Names.** A local or parameter with one right spelling is renamed, and a keyword one letter off is corrected. A
   file or folder of the program with one right spelling is renamed on the disk, with every `load` that names it
   ([classes_and_files.md](classes_and_files.md#a-misnamed-file-or-folder-is-renamed)).
