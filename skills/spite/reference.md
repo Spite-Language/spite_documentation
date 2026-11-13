@@ -755,7 +755,7 @@ rewritten.
   where an object lives, or the live instances of a class. A class that needs room for bytes holds a `Buffer`; a
   container of your own is written over a `List` or a `Buffer`. Only `--debug-memory` reports leaks, from outside the
   program. How a text is held is the compiler's too: a short text a function keeps to itself allocates nothing, a
-  literal is made once in the program's data, `text.split(separator).contains(word)` makes no list, and an
+  literal is made once in the program's data and never counted, `text.split(separator).contains(word)` makes no list, and an
   interpolation only compared (`key == "r{index}"`, `line.contains("r{index} ")`) makes no text, so write the plain
   join or split and never reshape code to make fewer texts.
 

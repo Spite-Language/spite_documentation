@@ -272,6 +272,16 @@ declared answer is a singleton class returns it without counting it, and a local
 assigned again is the singleton itself, read as it is. It does not apply to a function whose declared answer is a
 union, a shape or a nullable, or to a local that is assigned again.
 
+### A text literal in the program's data is never counted
+
+A text literal the compiler writes once into the program's data ([below](#a-text-literal-is-made-once-in-the-programs-data))
+and a singleton laid out there are never freed, so taking and letting go of their counts decides nothing. Wherever
+a name or a value holds such a literal on every path (the literal itself, an `if` that picks one of two literals, or
+the answer of a function that answers only literals), the compiler leaves its counts out. In a program with threads
+those were locked updates every thread made on the same count, so they also stop slowing each other down. A literal
+read back from a list, an attribute or a parameter is counted as any text, and is still never freed. What you can
+observe: the time.
+
 ### Who holds an object is decided while compiling
 
 The compiler works out, for the whole program, which parameters a function *keeps*: a parameter nothing assigns,
