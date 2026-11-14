@@ -262,9 +262,10 @@ A `switch` is over a union (or a `T?`, which is the union of a type and `Null`) 
 Inside each case the value is narrowed to that member. A switch over a `T?` therefore needs a `Null:` case beside
 the class (or every member of the union), so a null cannot be forgotten: leaving it out is `this switch over
 'target' has no case for Null`. A switch whose every case leaves the function (a `return` or a `crash` in each)
-leaves too: it may end a function that answers a value, and `if not found { switch ... }` with every case
-returning narrows `found` below it. A case is one statement: when a member needs more than
-that, the case calls a function named for what it does, so a switch reads as a list of what happens to each member.
+leaves too, a `T?` switch with its `Null:` first or last included: it may end a function that answers a value, and
+`if not found { switch ... }` with every case returning narrows `found` below it. A switch missing a case is refused
+for that case, and one with a case that does not leave still reaches the function's end. A case is one statement:
+when a member needs more than that, the case calls a function named for what it does, so a switch reads as a list of what happens to each member.
 
 ```gdscript title=switch_cases/cat.spite
 func sound(): String {

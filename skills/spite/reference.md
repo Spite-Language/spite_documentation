@@ -627,7 +627,8 @@ rewritten.
   closing `}` is an error naming it (`'sign_of' answers a String, but when 'value < 0' is false (line 12, an 'if'
   with no 'else') it reaches its end without a 'return'`); in a generic class it names the instance that falls off
   (`but in Marker<Label> it reaches its end`). An `if`/`else` whose branches both return, and a `switch`
-  whose cases all return (or `crash`), end the path; an `if` with no `else` and any `while` do not (`while true` is an
+  that covers every case and whose cases all return (or `crash`), end the path (`Monster:` and `Null:` both
+  returning, in either order); an `if` with no `else` and any `while` do not (`while true` is an
   error), so write the last `return` after them, `return null` included.
 - A native fault (a null read or an illegal instruction inside a foreign library, a stack overflow) is never
   silent either: the program prints `spite.fault<TAB>kind<TAB>path:line<TAB>Class<TAB>function<TAB>...`, then
