@@ -433,14 +433,14 @@ rewritten.
   items.count()`, `total = total + items[index].price`, `index = index + 1`) is an error naming
   `items.sum_price()`: `this 'while' walks every element of 'items' only to add up 'price': write 'var total =
   items.sum_price()'`. The same goes for a `while` that only passes each element to one function of yours:
-  `say_hello(names[index])` is `names.each(say_hello)`, and likewise `filter`, `count`, `sum`, `find`,
+  `say_hello(names[index])` is `names.each(say_hello)`, and likewise `filter`, `count`, `sum_by`, `find`,
   `any` and `all`, on a list of anything, numbers and text included. Keep `while` for loops that need the index,
   pass more than the element, or walk state.
 - A template sees only the element and the list, never your class: `names.each_say_hello()` looks for a member
   `say_hello` of each name, and says `a template reads a member of each element, never a function of this class,
   so pass this class's 'say_hello' instead: 'each(say_hello)'`. To call a function of yours with each element, pass it: `names.each(say_hello)`,
   `names.filter(is_short)`, and `any`, `all`, `count`, `find` (the first element it is true
-  for, a `T?`), `sort_by` and `sum` the same way, on a list of anything (a `Dictionary` takes only `each`, `filter` and `sum`,
+  for, a `T?`), `sort_by` and `sum_by` the same way, on a list of anything (a `Dictionary` takes only `each`, `filter` and `sum_by`,
   through its values; ask `dictionary.values().any(f)` for the others), chained with the member
   templates or not (`people.filter_active().each(greeter.greet)`). The function takes the element as its only
   argument and is bound to its owner: `greeter.greet` is `greeter`'s, and a library value's works the same:

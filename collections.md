@@ -544,7 +544,7 @@ but 'count_' needs it to return Boolean (to add up a numeric member use 'sum_sta
 
 **A `while` that only does what a template does is an error naming the template**: a
 counter walking a list from `0` to its `count()`, doing nothing with each element but what one template does
-with one of its members, or what `each`, `filter`, `count`, `sum`, `find`, `any` or `all` does with a
+with one of its members, or what `each`, `filter`, `count`, `sum_by`, `find`, `any` or `all` does with a
 function passed the element, on a list of anything, numbers and text included. Loops that need the index, pass
 more than the element, stop early for another reason, or walk state keep their `while`. A function that needs more than the element
 (`print_statement(statement, depth)`) keeps its `while`, and so does a `while` that collects what a function answers for
@@ -683,14 +683,14 @@ instead: `names.each(say_hello)` calls `say_hello` once for every name, in order
 classes are no different: `keys.filter(counts.contains)` asks the dictionary `counts`, and
 `words.filter(greeting.contains)` asks the text `greeting`.
 
-`each`, `filter`, `any`, `all`, `count`, `find`, `sort_by` and `sum` each take such a function, which takes
+`each`, `filter`, `any`, `all`, `count`, `find`, `sort_by` and `sum_by` each take such a function, which takes
 the element as its only argument: `filter`, `any`, `all`, `count` and `find` want one returning `Boolean` (`find`
-answers the first element it is true for, or `null`), `sum` one returning a number, `sort_by` one returning a
+answers the first element it is true for, or `null`), `sum_by` one returning a number, `sort_by` one returning a
 number or text. There is no `map(function)`: a value collected from each element is a member of the element
 ([above](#member-templates-loops-you-do-not-write)), named and collected with `map_<member>()`. This works on a list of anything (numbers included, which
-have no members of their own for a template to name). A `Dictionary` takes `each`, `filter` and `sum` directly,
+have no members of their own for a template to name). A `Dictionary` takes `each`, `filter` and `sum_by` directly,
 through its values; for the other forms ask for the values first, as in `team.values().any(is_short)`. A function that
-answers the wrong type is an error naming the form: `any`, `all`, `count` and `find` want `Boolean`, `sum` an
+answers the wrong type is an error naming the form: `any`, `all`, `count` and `find` want `Boolean`, `sum_by` an
 `Integer`, `sort_by` a number or text. `remove_where(f)` is for a `List` only; a `Dictionary` has no `remove_where`, since
 its templates work on a copy of its values: walk `keys()` and call `remove_at(key)` for each key to remove.
 
@@ -712,7 +712,7 @@ func PassedFunction() {
     var short_names = names.filter(is_short)
     var joined = short_names.join(", ")
     console.print("short:", joined)
-    var letters = names.filter(is_short).sum(doubled_length)
+    var letters = names.filter(is_short).sum_by(doubled_length)
     console.print("letters, doubled:", letters)
     var first_long = names.find(is_long)
     crash first_long
@@ -783,7 +783,7 @@ func PlainVector() {
     weights.append(4.0)
     var found = List<Float>()
     weights.each(found.append)
-    var heavy = weights.filter(is_heavy).sum(double_of)
+    var heavy = weights.filter(is_heavy).sum_by(double_of)
     crash weights[0]
     var first = weights[0]
     weights.append(8.0)
@@ -801,6 +801,33 @@ func double_of(weight: Float): Float {
 ```
 ```output
 1.5, 2.5, 4 13 1.5
+```
+
+### Sum adds the members up
+
+`sum()` adds a list's members with their own `+`, so it works on a list of any class that has one: numbers, text,
+or a class of yours with `func sum(other: Step): Step`. It answers the element's type, or `null` for an empty list,
+so `var total = counts.sum()` is followed by `crash total` where the list cannot be empty. A list of a class without
+`+` is an error naming its missing `sum(other)`. `sum_by(measure)` adds what a function answers for each member
+instead, `0` for an empty list (above).
+
+```gdscript title=list_sum/list_sum.spite entry
+var console = Console()
+
+func ListSum() {
+    var counts = [3, 4, 5]
+    var total = counts.sum()
+    crash total
+    var words = ["ab", "cd"]
+    var joined = words.sum()
+    crash joined
+    var empty = List<Integer>()
+    var nothing = empty.sum()
+    console.print(total, joined, nothing)
+}
+```
+```output
+12 abcd null
 ```
 
 ## Chains run as one loop

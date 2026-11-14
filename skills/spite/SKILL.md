@@ -171,6 +171,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   is a statement of its own.
 - A `List<Health>` is refused where a `List<Anything>` (or a list of any other element) is wanted: a list is never
   cast. Make the list with the element the receiver wants.
+- `list.sum()` adds the members with their own `+` (numbers, text, any class with `sum(other)`) and answers a `T?`,
+  `null` when empty; `list.sum_by(measure)` adds what a function answers for each, an `Integer`.
 - Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
   of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
   to `Byte` that keeps a list of it).
