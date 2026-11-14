@@ -77,23 +77,23 @@ Every program has the standard library with no `load` line (D1872). The compiler
 program is compiled for (`windows`, or the one `--target-operating-system` names), which reopens `common`, from one
 place:
 
-- `--standard-library=<folder>` names the folder that holds the library's `common` and system folders, relative to
-  the program's folder or absolute. It is how a branch, a fork or a copy of the library is compiled with, and a
-  program reads it as `Build.standard_library`.
-- With no flag, the library installed with the compiler: the `spite_standard_library` folder nearest above the
-  compiler's own executable, so `spite_compiler/.spite/spite.exe` takes the `spite_standard_library` cloned beside
-  `spite_compiler` (D2241). A later compiler carries the library inside its own executable instead (D1880).
+- `--standard-library-path=<folder>` names the folder that holds the library's `common` and system folders,
+  relative to the program's folder or absolute. It is how a branch, a fork or a copy of the library is compiled
+  with, and a program reads it as `Build.standard_library_path`, a `Path`.
+- With no flag, the library inside the compiler's own executable: the compiler preloads `spite_standard_library`
+  when it is itself built ([programs.md](programs.md#preloaded-files)), so `spite.exe` alone is a whole
+  installation, and the library's files are `spite_standard_library://windows/...` (D1880, D2241).
+  `Build.standard_library_path` is then `spite_standard_library://`.
 
 ```
-spite --standard-library=../my_library     compile with the library in ../my_library
+spite --standard-library-path=../my_library     compile with the library in ../my_library
 ```
 
-A flag that names no folder, one that is not a library, a bare flag, and an installation with no library are
-errors, each naming the fix:
+A flag that names no folder, one that is not a library, and a bare flag are errors, each naming the fix:
 
 ```
-'--standard-library=nowhere' names no folder: give the folder that holds the standard library, with its 'common' and 'windows' folders, or leave the flag out to use the library installed with the compiler
-'--standard-library=assets' names a folder that is not a standard library: a standard library holds a 'common' folder and one for each system, and it has no 'common' folder
+'--standard-library-path=nowhere' names no folder: give the folder that holds the standard library, with its 'common' and 'windows' folders, or leave the flag out to use the library built into the compiler
+'--standard-library-path=assets' names a folder that is not a standard library: a standard library holds a 'common' folder and one for each system, and it has no 'common' folder
 ```
 
 A `load` of the library in use is removed from the program's file with a `fixed:` line, and a `load` of another

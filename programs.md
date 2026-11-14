@@ -303,8 +303,8 @@ holds `common`, what every system shares, and one folder for each operating syst
 files reopen the classes that system does differently
 ([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)). The compiler reads the
 folder of the system the program is compiled for, `windows` or the one `--target-operating-system` names, and that
-folder loads `common` itself. Where the library comes from, the one installed with the compiler or the folder
-`--standard-library=<folder>` names, is in [compiler.md](compiler.md#where-the-standard-library-comes-from).
+folder loads `common` itself. Where the library comes from, the one inside the compiler or the folder
+`--standard-library-path=<folder>` names, is in [compiler.md](compiler.md#where-the-standard-library-comes-from).
 
 ```gdscript
 func Game() {
@@ -325,7 +325,7 @@ A `load` of another standard library, a folder holding `common` and the system's
 that names the flag: a program is compiled with one library, and the command line says which.
 
 ```
-game/game.spite:4: error: 'load "../other/spite_standard_library/windows"' loads the standard library at 'D:/other/spite_standard_library', and a program does not load the standard library: every program has one. To compile with that one, remove this load and give --standard-library=D:/other/spite_standard_library (in Game.Game)
+game/game.spite:4: error: 'load "../other/spite_standard_library/windows"' loads the standard library at 'D:/other/spite_standard_library', and a program does not load the standard library: every program has one. To compile with that one, remove this load and give --standard-library-path=D:/other/spite_standard_library (in Game.Game)
 ```
 
 `load` stays for the program's own folders and its packages ([packages.md](packages.md#load-is-a-bundle-boundary)),

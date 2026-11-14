@@ -49,11 +49,11 @@ commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/
 
 A program lives in its own folder, and `spite` run in it runs it. Every program has the standard library with no
 `load` line: the compiler reads the folder of the system it compiles for (`windows`, or `--target-operating-system`'s),
-which loads `common` itself, from the library installed with the compiler (the `spite_standard_library` folder nearest
-above `spite.exe`) or the folder `--standard-library=<folder>` names (relative to the program's folder; `Build.standard_library`).
+which loads `common` itself, from the library built into the compiler's executable (`spite_standard_library://`) or the folder
+`--standard-library-path=<folder>` names (relative to the program's folder; `Build.standard_library_path`, a `Path`).
 A flag naming no folder or a folder without `common` and the system's folder is an error. A `load` of the library in use
 (`load "../spite_standard_library/windows"`, from older programs) is removed with a `fixed:` line, and a `load` of
-another library is an error naming `--standard-library=` instead. Errors and crash reports name a library file
+another library is an error naming `--standard-library-path=` instead. Errors and crash reports name a library file
 `spite_standard_library://common/list.spite`, the same on every machine. `load` is for the program's own packages, and `game/`'s every sub folder is a
 namespace and nothing else (`game/engine/renderer/shader.spite` is `Engine.Renderer.Shader`, and
 `game/engine/physics/physics.spite` is `Engine.Physics.Physics`: no file is special). A file and a folder of one
