@@ -195,6 +195,14 @@ func is_alive(): Boolean {
   (`x.attributes[attribute]`). An attribute kept as a marker that a walk inspects through `attribute.name` or
   `attribute.class` is unused, so say what the marker means some other way. A function nobody calls still
   reads what it names.
+- A write to an object only this function holds, never read after it, is an error (`'made.count' is written here
+  and 'made' is never read after it: 'made' is a 'Tally' only this function holds, so the write is lost when it is
+  let go. ...`). The object is one a constructor, `copy()` or a function that always answers a new one made: an own
+  function, another object's (`maker.make()`), or one answering a local it made and only reads or writes through
+  (`var made = Tally()`, `made.count = 1`, `return made`); a later `made = Tally()` counts too. A write inside a
+  `while` to a local made outside it is judged when the loop only writes that local and nothing after the loop
+  names it, and so is `first = 3` in a loop to a local read from a list item. A read anywhere in the loop, a call
+  through the local, or handing it on keeps the write.
 - The words other languages use for things Spite writes differently (`none`, `nil`, `undefined`, `self`,
   `new`, `import`, `require`, `elif`) are errors wherever they appear, naming the Spite form, so none of them
   can name a variable or a parameter either: `var none: Long = 0` says to write `null`. Pick another name

@@ -585,8 +585,10 @@ The rules are on [Concurrency](concurrency.md) and in
 ### A write to an object only this function holds must be read
 
 - **Proves**: no lost write.
-- **Rule**: a write to a local only this function holds (a constructor's result, a copy, an always-new result),
-  never read after it, is refused.
+- **Rule**: a write to a local only this function holds (a constructor's result, a copy, an always-new result of
+  its own class or another object's, or a local such a function made and only reads or writes through), never
+  read after it, is refused; the last whole assignment before the write says what the local holds. A write inside
+  a loop to a local made outside it is judged when the loop names the local only to write it.
 
 ### Passes that write only their own item
 
