@@ -640,10 +640,11 @@ whether an attribute's class is a singleton is `attribute.class.is_singleton`, n
 
 A function value is an instance of `Spite.Function`, so it fits `Anything` (and any `type` whose members
 `Spite.Function` has) like any other object. Named where it is made (`var held: Anything = shout`), it is the bound
-function above, with its name. Read from a place that only holds it at run time, such as an attribute
-`var on_press: Spite.Function<Nothing>? = null` walked through `fresh.attributes` with `fresh: Anything`, it is a
-`Spite.Function` whose `.name` is empty, since the value no longer says which function it is; `call_function()`
-calls it when it takes nothing and answers nothing, and halts otherwise. A `null` there stays `null`.
+function above. Read from a place that only holds it at run time, such as an attribute
+`var on_press: Spite.Function<Nothing>? = null` walked through `fresh.attributes` with `fresh: Anything`, it is the
+same `Spite.Function` as if it were named there: the compiler knows every function the program takes as a value, finds
+the one held by its signature and its address, and answers its declaration and its owner. A function's name is its
+declaration's, so `.name` is never empty. A `null` there stays `null`.
 
 ### `Spite.Call`
 

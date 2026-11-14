@@ -786,8 +786,8 @@ rewritten.
   of the instance it answers on, and a class name reads its own class object: `Monster.name` is `"Monster"`.
   A bound `Spite.Function` answers only `.name`, `.owner`, `.declaration` and `call_function()`: ask `.arguments`,
   `.returns`, `.reads` and the rest of `function.declaration` (`a Spite.Function has no 'returns' of its own`). A function value is a `Spite.Function` and fits `Anything`: read only at
-  run time (a `Spite.Function<Nothing>?` attribute through `fresh.attributes`) its `.name` is empty, and `call_function()` runs it
-  only when it takes and answers nothing. A walk
+  run time (a `Spite.Function<Nothing>?` attribute through `fresh.attributes`) it answers the same declaration, name and
+  owner as where it was named: `.name` is always its declaration's name. A walk
   over `Monster.attributes` hands `Spite.AttributeDeclaration`s and a walk over `troll.attributes` hands
   `Spite.Attribute`s; a parameter of the other kind is an error. An object literal's `.class` is `Object`.
 - A class whose file starts with a `singleton` line has one instance: `Journal()` always returns it. A
