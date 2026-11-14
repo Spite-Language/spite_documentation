@@ -826,7 +826,9 @@ A tagged union. A `switch` must cover every member, and narrows the value inside
 shares a function/attribute of the same shape, it can be called directly on the union value without a
 `switch` at all (duck-typed, the same way a `type` is; see below).
 
-A union is declared in the class that consumes it. Two classes of a program that declare one name with one content
+A union is declared in the class that consumes it, and another class names it through that class (`Shelter.Pet`,
+[classes and files](classes_and_files.md#naming-another-classs-union-or-type)); it does not declare a copy of its own.
+Two classes of a program that declare one name with one content
 have it moved to the entry class of the namespace holding both, the class named like its folder, which the others name
 `Bunda.Pet` (see [packages](packages.md)). Two with other names or members stay apart: a
 `Shelter.Pet` passes where a `Groomer.Pet` is wanted when every member of it is a member of `Groomer.Pet`, at no cost.

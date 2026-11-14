@@ -873,9 +873,8 @@ var weight = 3
 'Rock' does not fit type 'Singer', which 'Chorus' requires of $singer_type: it has no function 'sing'
 ```
 
-The constraint is optional and names a `type` the class declares itself, or its namespace's entry class holds:
-another class's `type` is never named outside it, so `Shelf` declares its own `Printable`, the same as `Console`'s
-(naming `Other.Printable` is an error saying so). What fits is what the `type` would accept anywhere: a class with
+The constraint is optional and names a `type`: one the class declares itself, or another class's named through that
+class (`generic $item_type: Console.Printable`), as anywhere else. What fits is what the `type` would accept anywhere: a class with
 the functions and attributes listed, `String`, a number, an enum, a `List` or `Dictionary` that has what the `type`
 needs (a `count(): Integer` is enough for either), and the `type` itself. Each member is compared by its type as well
 as its name, so a `weight` that answers a `String` does not fit a `type` that needs an `Integer`. A `T?` fits when its `T`

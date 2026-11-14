@@ -467,7 +467,12 @@ rewritten.
 - A union is declared in the class that consumes it. One name and content declared by two classes of a root is moved
   by the compiler to the entry class of the lowest namespace holding both (the class named like its folder, its file
   created if missing), and every use is rewritten: `Bunda.Pet` in a class of that namespace or below, plain `Pet` only in
-  the entry class. Outside that namespace it is never named. A union value fits another
+  the entry class. Any other class names a union or `type` through the class that declares it: `Sibling.Pet` in the
+  same namespace, `Namespace.Class.Pet` from anywhere else (an entry class's from outside its namespace:
+  `Bunda.Bunda.Pet`, since `Bunda.Pet` reaches it only from within); written bare outside its class it is an error naming that
+  path (`'Pet' is declared by the class 'Shelter' and belongs to it: outside that class, name it through the class,
+  'Shelter.Pet'`); it compiles exactly as a copy declared in the class would. (This replaced "declare your own copy": a class no
+  longer copies another class's union or type to use it.) A union value fits another
   union when all its members are members of it, and a caller passes the member value itself; a `Gitty?` fits a `Place?`
   (a member's `T?` into the union's `T?`) with no narrowing, a plain `Place` only once narrowed. Unions with the same
   members are one type inside a generic (`List<A.Pet>` is `List<B.Pet>`).
@@ -729,8 +734,8 @@ rewritten.
   function that takes any object takes `Anything` or a `type`. `if $value_type == Integer { }` is decided at compile time. `generic $item_type: Printable` (with the class's own `type Printable`) accepts
   only classes that fit that `type` (a function value never fits; a `T?` fits when its `T` does and the `type` needs
   only `to_string()` or `to_debug()`, which null answers as `null`, so `Shelf<String?>` prints a null item as `null`); any other is an error where the class is
-  named, not inside the generic. Only an enum is named outside its class (`Player.Job`): a `union` or `type` belongs to
-  the class that declares it, or to its namespace's entry class. From outside a namespace an entry class's enum is
+  named, not inside the generic. An enum, a `union` or a `type` is named outside its class through that class
+  (`Player.Job`, `Shelter.Pet`, `generic $item_type: Console.Printable`), never bare. From outside a namespace an entry class's enum is
   named through that class too, `Game.Game.Job` (`game/game.spite`), never `Game.Job` (rewritten in your files, an error in a loaded package's). One value per `generic` line, at the top of the file
   after any `singleton` line: `generic $a, $b`, a `generics` list and a `generic` line inside a function are errors.
 - Settings: reopen `Environment` in the program's `environment.spite` with one `var` per setting and a literal

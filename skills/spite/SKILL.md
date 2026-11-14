@@ -165,7 +165,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
   entry class is never generic; put what needs `generic` lines in a class it makes.
 - A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class
-  named like the folder); the other classes write `Bunda.Pet`, only the entry class writes `Pet`.
+  named like the folder); the other classes of that namespace write `Bunda.Pet`, a class outside it
+  `Bunda.Bunda.Pet`, and only the entry class writes `Pet`.
+- Name another class's union or `type` through its class, never bare and never by declaring a copy: `Sibling.Type` in
+  the same namespace, `Namespace.Class.Type` from elsewhere (`func shown(component: Framework.Component)`). It compiles
+  exactly as a copy declared in your own class would, so a shared `type` serves where `Anything` was a stand-in.
 - The compiler fixes what has one fix, and prints `fixed:` for each: declarations out of order, a local or parameter
   with one right spelling, a file or folder of the program with one right spelling (renamed on the disk with every
   `load` naming it: `ToolHelper.spite` becomes `tool_helper.spite`), a keyword one letter off, a local or attribute that does nothing and is never read, a

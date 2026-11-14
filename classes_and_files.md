@@ -79,8 +79,9 @@ A file contains only declarations, in this order:
 3. `enum`, `union` and `type` declarations, which belong to the class: plain `Job` inside it, `Player.Job`
    everywhere else ([packages.md](packages.md)). An enum always lives inside the class that uses it: a file
    holding nothing but an enum, a union or a type of its own name is an error; a union or a type is declared in
-   the class that consumes it, and one that two classes of a namespace declare moves to that namespace's entry class
-   ([packages.md](packages.md)). Other classes give its values by their short form
+   the class that consumes it, other classes name it through that class (`Shelter.Pet`, [below](#naming-another-classs-union-or-type)),
+   and one that two classes of a namespace declare moves to that namespace's entry class
+   ([packages.md](packages.md)). Other classes give an enum's values by their short form
    (`'mage'`) and write `Player.Job` only where a variable must hold one;
 4. `var` declarations: the attributes, each with a default value;
 5. the constructor;
@@ -163,6 +164,64 @@ calls on one of those whose functions declare their answer types. With `func siz
 the type of 'base' is not written, and its value is not one the compiler reads before the functions: write it, 'var base: Type = ...'
 ```
 
+### Naming another class's union or type
+
+A union or a `type` belongs to the class that declares it, and another class names it through that class, as it
+names an enum: `Shelter.Pet` from a class of the same namespace, `Zoo.Shelter.Pet` from anywhere
+else. Naming it shares the declaration, not a value at run time: each use is still compiled
+for the classes that actually reach it, so a function taking `Shelter.Pet` compiles as one taking a copy declared in
+its own class would.
+
+```gdscript title=named_through_its_class/shelter.spite
+union Pet {
+    Cat
+    Dog
+}
+
+var taken = List<String>()
+
+func take(pet: Pet) {
+    var name = pet.name()
+    taken.append(name)
+}
+```
+```gdscript title=named_through_its_class/cat.spite
+func name(): String {
+    return "cat"
+}
+```
+```gdscript title=named_through_its_class/dog.spite
+func name(): String {
+    return "dog"
+}
+```
+```gdscript title=named_through_its_class/named_through_its_class.spite entry
+var console = Console()
+
+func NamedThroughItsClass() {
+    load "../spite_standard_library/windows"
+    var shelter = Shelter()
+    var cat = Cat()
+    var pet: Shelter.Pet = cat
+    shelter.take(pet)
+    var name = named(pet)
+    var taken = shelter.taken.count()
+    console.print(name, taken)
+}
+
+func named(pet: Shelter.Pet): String {
+    return pet.name()
+}
+```
+```output
+cat 1
+```
+
+The plain name stays the declaring class's own. Written bare in another class it is an error naming the path to
+write: `'Pet' is declared by the class 'Shelter' and belongs to it: outside that class, name it through the class,
+'Shelter.Pet'`. Each class used to declare its own copy of a union or type it took from another class, and naming
+another class's was an error; that rule is gone, and a copy declared alike is now moved away as a repeat (below).
+
 ### A union or type two classes declare
 
 Declare a union or a `type` in the class that takes, holds or switches on it, and leave it there. When two classes
@@ -170,8 +229,8 @@ of one namespace declare the same union, with the same name and the same members
 moves it for you: it goes to the entry class of the namespace, the class named like its folder (`Bunda.Bunda` in
 `bunda/bunda.spite`), it creates that file if the namespace has none, and each class that used the union now names
 it through the entry class, `Bunda.Snack`. Each move is a `fixed:` line, and the entry class writes the plain name.
-A union declared by classes in different folders goes to the lowest namespace that holds every copy, and an outside
-class that needs one declares a copy of its own, which the fix then moves up with the others. Only the same name
+A union declared by classes in different folders goes to the lowest namespace that holds every copy, and a class
+outside the namespace names it through the entry class like any other class's, `Bunda.Bunda.Pet`. Only the same name
 with the same content counts: the same members under another name are another union, since they may mean another
 thing, and a union with fewer members is a different one too. A `type` moves the same way: two classes of one
 namespace declaring a `type` of one name, with the same fields and functions of the same types (in any order),
@@ -184,7 +243,8 @@ a copy in files the compiler does not write (the library, a pinned package, or a
 lines of the entry function, which count as library: a pair of classes in one of those that repeats a union is told to
 move it by hand), and an entry class whose new file
 would take a name the namespace already reaches. The fix for the refusal is a rename or moving the union by hand.
-A class outside the namespace cannot write the plain name, and neither can a side class of the same namespace:
+Only the entry class writes the plain name; every other class writes the path, a side class of the same namespace
+included:
 `'Pet' is a union of 'Bunda.Bunda', the entry class of this class's namespace, and only that class names it
 plainly: write 'Bunda.Pet'`.
 

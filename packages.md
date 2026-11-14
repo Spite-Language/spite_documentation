@@ -85,12 +85,14 @@ func OwnEntryClass() {
 mine
 ```
 
-- From outside its class, an enum is named through its owner (`Player.Job`). A union or a `type` is not, with one
-  exception: the entry class of a namespace, the class named like its folder (`bunda/bunda.spite`), holds what the
-  namespace shares, and every class of that namespace or below names it through that class, `Bunda.Pet`. Only the entry
-  class itself writes the plain `Pet`. Two classes that declare one name with one content have it moved there by the
-  compiler, which creates the file when the namespace has none. A class outside the namespace declares its own, and
-  the compiler then moves both up to the namespace holding both. Two declarations that stay apart, a library's and a
+- From outside its class, an enum, a union or a `type` is named through its owner: `Player.Job`, `Shelter.Pet` from a
+  class of the same namespace, `Game.Shelter.Pet` from anywhere else; the plain name alone is the owner's
+  ([classes_and_files.md](classes_and_files.md#naming-another-classs-union-or-type)). The entry class of a namespace,
+  the class named like its folder (`bunda/bunda.spite`), holds what the namespace shares: every class of that
+  namespace or below names it `Bunda.Pet`, and a class outside it writes the whole path, `Bunda.Bunda.Pet`. Only the entry class itself writes the plain `Pet`. Two classes that declare one
+  name with one content have it moved there by the compiler, which creates the file when the namespace has none; a
+  class outside the namespace that declared a copy too has all of them moved up to the namespace holding both. A class
+  used to declare its own copy instead of naming another class's union or type; that is no longer needed. Two declarations that stay apart, a library's and a
   program's `type Buildable`, are one type when their members are the same, so a `List<Buildable>` of one goes where
   the other's is wanted.
 
