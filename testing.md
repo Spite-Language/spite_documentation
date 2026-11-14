@@ -93,6 +93,23 @@ pass Bank.AccountTests.test_withdraws
 pass Bank.AccountTests.test_starts_from_its_own_setup
 2 tests, 2 passed, 0 failed
 ```
+### Tests in a loaded package
+
+A package may keep its tests in a namespace of its own, `pkg/pkg/tests/` for `Pkg.Tests`. A check program in
+another folder loads the package and hands that namespace to `Test`, with no other line naming its classes:
+
+```gdscript
+func PkgCheck() {
+    load "../spite_standard_library/windows"
+    load "../packages/pkg"
+    var tester = Test(Pkg.Tests)
+    tester.run()
+}
+```
+
+Naming the namespace keeps the `load`, every file of the package is read and checked
+([packages.md](packages.md#a-loaded-package-is-checked-whole)), and each test is built and run as one of the
+program's own.
 
 ## Each test runs on its own
 
