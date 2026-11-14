@@ -612,8 +612,9 @@ rewritten.
     `grep <id> program.crashes` finds a fallback's condition. A bare `crash` marks a branch that cannot happen (`crash false` is formatted to it).
     A failed narrowing names what is absent instead of a value: `clip.keys[start + 9] is missing: index 11990,
     count 11500`, `scores[key] is missing: key "bea"`, `rig.skeleton is null`. Read it as an index past the end or
-    a key never set, not as a zero. A `fallback` taken prints nothing as it fails; it shows up only in a crash's
-    trace, unless the program is built with `--trace-fallbacks`, which prints each one as it fails.
+    a key never set, not as a zero. An element or a key's value that is there and null is `flags[1] is null`, and a
+    `Boolean?` there and `false` (a `crash` needs it there and `true`) shows its value: `flags[0]=false`. A
+    `fallback` taken prints nothing as it fails; it shows up only in a crash's trace, unless the program is built with `--trace-fallbacks`, which prints each one as it fails.
 - Narrowing tests presence, never the value: `crash keys[index]` passes on an element holding `0.0`, and `if count`
   runs on an `Integer?` holding `0`.
 - Reading a number from text answers a `T?`: `var read: Integer? = text` is an `Integer?`, `null` for `"forty two"`,

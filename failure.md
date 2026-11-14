@@ -1124,7 +1124,11 @@ spite.frame	crash_compound/crash_compound.spite:7	CrashCompound	CrashCompound
 
 A crash that narrows a `T?` fails because something is not there, so it never prints a value for it: a default would
 read like a real `0`. It reports only the first link of the path that is missing, and for a `[ ]` read what was asked
-for: the index and the count of a list, the key of a dictionary.
+for: the index and the count of a list, the key of a dictionary. A `[ ]` read that found its place holding null is
+`name is null` instead, so the three causes read apart: `flags[5] is missing: index 5, count 2` (past the end),
+`flags[1] is null` (there, and null) and `flags[0]=false` (a `Boolean?` there and `false`, since a `crash` on one
+needs it there and `true`). A key a dictionary does not hold is `is missing: key "c"`, and one it holds with null is
+`is null`.
 
 ```
 spite: the program stopped at crash_missing_item/crash_missing_item.spite:10 in CrashMissingItem.read, site c10758fe (keys[start + 1] is missing: index 3, count 2)
