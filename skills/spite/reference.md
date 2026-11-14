@@ -502,11 +502,6 @@ rewritten.
   `Anything` never holds `null`: `null` assigned, passed, appended, answered or declared into a plain `Anything` is a
   compile error (`'null' is given where an Anything is needed, and an Anything never holds null: ...`). `Anything?`
   is a smell: write it only where none is a real answer, and prefer a real type.
-- A `List<Health>` passes where a `List<Anything>` is wanted, and so does any list whose element fits the one wanted
-  (a class into a `type` or a union holding it, a smaller union into a larger one, `Integer` into `Long`, `T` into
-  `T?`): the receiver gets a new list of the same elements, cast, so what it adds or removes never reaches yours.
-  Return the list, or take the wanted type yourself, when the caller must see the change
-  ([collections.md](../../collections.md#a-list-is-cast-to-a-wider-list)).
 - No value or constraint is typed `Number`. Write number code as a generic class that declares the `type` its codegen
   value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum: Spite.Function<Measure, Measure> }`);
   every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,

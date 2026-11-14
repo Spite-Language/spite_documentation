@@ -169,8 +169,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   with `func size(given: Integer): Thing`); otherwise write it, `var base: Thing = ...`.
 - A `[` on a new line starts a list literal, never an index into the line above: `[Root].each(registry.register)`
   is a statement of its own.
-- A `List<Health>` goes where a `List<Anything>` (or any list whose element it fits) is wanted, as a new list of the
-  same elements: what the receiver adds or removes never reaches the caller's list.
+- A `List<Health>` is refused where a `List<Anything>` (or a list of any other element) is wanted: a list is never
+  cast. Make the list with the element the receiver wants.
 - Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
   of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
   to `Byte` that keeps a list of it).

@@ -226,8 +226,7 @@ func shout(...words: String) {
 value and `List<Anything>()` holds any. Do not declare an empty `type` of your own. A function taking `Anything`
 (or any `type`) is compiled once for each class that reaches it, so a number, a `Boolean` or an enum value passed to
 it arrives as itself; stored in a `List<Anything>` it keeps its class beside it, and `if component.class == Health`
-narrows it back. A `List<Health>` given where a `List<Anything>` is wanted is cast to a new list of the same elements
-([collections.md](collections.md#a-list-is-cast-to-a-wider-list)). A value of a union passed where a `type` is wanted brings the union's members into the shape, so
+narrows it back. A value of a union passed where a `type` is wanted brings the union's members into the shape, so
 a function the members share can be called on it. An enum value answers `to_string()` (its name) and `to_debug()`,
 which is all a shape can ask of it, and `.class` read through the shape names the value's real class (`Integer`,
 the enum). `Spite.Attribute.value`, the value an attribute holds, is typed `Anything?`. An empty `type` costs
