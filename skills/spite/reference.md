@@ -781,7 +781,8 @@ rewritten.
 - Text between tags is the `content` attribute, spaces collapsed: `<Label>{count} items</Label>` is
   `label.content = "{count} items"`. No `{` or `<` in text.
 - A lowercase tag `<health_bar filled={health} missing={missing}/>` calls `render_health_bar(health, missing)` of the
-  same file, attributes matched to parameters by name; nested tags go to a `children: List<Anything>` parameter.
+  same file, attributes matched to parameters by name; nested tags go to a `children: List<Anything?>` parameter, which
+  `append_children` takes as it is.
 - Generated locals are `<tag in snake case>_<line>` (`view_3`), so crash reports and `locals` read like the code.
   The formatter rewrites tags into one style; a file holding tags gets no fix found after building (told as an error).
 - `append_child` and `append_children` come from the library a tag's class belongs to (the render library), never
