@@ -632,6 +632,15 @@ What the function is (`.arguments`, `.returns` and the rest) is asked of its `.d
 the error `a Spite.Function has no 'returns' of its own: write 'function.declaration.returns'`. In the same way,
 whether an attribute's class is a singleton is `attribute.class.is_singleton`, never `attribute.is_singleton`.
 
+#### A function value is a `Spite.Function`
+
+A function value is an instance of `Spite.Function`, so it fits `Anything` (and any `type` whose members
+`Spite.Function` has) like any other object. Named where it is made (`var held: Anything = shout`), it is the bound
+function above, with its name. Read from a place that only holds it at run time, such as an attribute
+`var on_press: Spite.Function<Nothing>? = null` walked through `fresh.attributes` with `fresh: Anything`, it is a
+`Spite.Function` whose `.name` is empty, since the value no longer says which function it is; `call_function()`
+calls it when it takes nothing and answers nothing, and halts otherwise. A `null` there stays `null`.
+
 ### `Spite.Call`
 
 | Member | Answers | Example |

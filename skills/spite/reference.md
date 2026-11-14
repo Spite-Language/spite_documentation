@@ -224,6 +224,8 @@ A mistake with exactly one fix is not an error: the compiler writes the fix into
 
 - declarations out of the file's order, and a union or `type` that two classes of a namespace declare alike (moved to
   the namespace's entry class, see Values);
+- `Game.Job` written outside the namespace `Game` for an enum, union or type of its entry class `Game.Game`
+  (becomes `Game.Game.Job`);
 - a local or parameter name with one right spelling (camelCase, a doubled `_`, an abbreviation with one expansion, a
   read `_name`), and a keyword one letter off at the start of a line (`retrun`);
 - a local or attribute nothing reads whose value and every write do nothing, and statements after a `return`;
@@ -728,7 +730,8 @@ rewritten.
   only classes that fit that `type` (a function value never fits; a `T?` fits when its `T` does and the `type` needs
   only `to_string()` or `to_debug()`, which null answers as `null`, so `Shelf<String?>` prints a null item as `null`); any other is an error where the class is
   named, not inside the generic. Only an enum is named outside its class (`Player.Job`): a `union` or `type` belongs to
-  the class that declares it, or to its namespace's entry class. One value per `generic` line, at the top of the file
+  the class that declares it, or to its namespace's entry class. From outside a namespace an entry class's enum is
+  named through that class too, `Game.Game.Job` (`game/game.spite`), never `Game.Job` (rewritten in your files, an error in a loaded package's). One value per `generic` line, at the top of the file
   after any `singleton` line: `generic $a, $b`, a `generics` list and a `generic` line inside a function are errors.
 - Settings: reopen `Environment` in the program's `environment.spite` with one `var` per setting and a literal
   default (`var serve = false`), then bind `var environment = Environment()` and read `environment.serve`. The
@@ -758,7 +761,9 @@ rewritten.
   `Spite.Class.instances` (every class of the program and the packages it loads, not the standard library's). `class`, bare inside a class's function, is the class
   of the instance it answers on, and a class name reads its own class object: `Monster.name` is `"Monster"`.
   A bound `Spite.Function` answers only `.name`, `.owner`, `.declaration` and `call_function()`: ask `.arguments`,
-  `.returns`, `.reads` and the rest of `function.declaration` (`a Spite.Function has no 'returns' of its own`). A walk
+  `.returns`, `.reads` and the rest of `function.declaration` (`a Spite.Function has no 'returns' of its own`). A function value is a `Spite.Function` and fits `Anything`: read only at
+  run time (a `Spite.Function<Nothing>?` attribute through `fresh.attributes`) its `.name` is empty, and `call_function()` runs it
+  only when it takes and answers nothing. A walk
   over `Monster.attributes` hands `Spite.AttributeDeclaration`s and a walk over `troll.attributes` hands
   `Spite.Attribute`s; a parameter of the other kind is an error. An object literal's `.class` is `Object`.
 - A class whose file starts with a `singleton` line has one instance: `Journal()` always returns it. A
