@@ -154,6 +154,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   (written like `load`, a folder or one file) and `var assets = Volume("assets")` beside the attributes, named by the
   last folder as spelled on disk; `assets.file("levels/first.txt")` is a read-only `File` whose path is
   `assets://levels/first.txt`. A `preload` no `Volume` reads, or a `Volume` nothing preloads, is an error.
+- An attribute's type may be left out only when its default is a literal, a list or dictionary literal, a constructor,
+  a preset, or a chain of calls on one of those whose functions declare their answers (`var base = Thing().size(2)`
+  with `func size(given: Integer): Thing`); otherwise write it, `var base: Thing = ...`.
+- A `[` on a new line starts a list literal, never an index into the line above: `[Root].each(registry.register)`
+  is a statement of its own.
 - Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
   of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
   to `Byte` that keeps a list of it).

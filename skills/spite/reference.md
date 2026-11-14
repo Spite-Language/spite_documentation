@@ -623,6 +623,9 @@ rewritten.
   `var tester = Test(Checks)` then `tester.run()`: each class is built with its constructor (the setup) and each test
   runs in a run of its own, printing `pass`/`fail` per test and a count, exiting 1 when any fails; `SPITE_TEST=<Class>.<test>`
   runs one ([testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)).
+  A package keeps its own tests in a namespace of its own (`pkg/pkg/tests/`); a check program in another folder
+  runs them with `Test(Pkg.Tests)` alone: naming a namespace keeps its `load`, and every file of a loaded package
+  (not the standard library) is checked on every build, reached or not.
 
 ## Metaprogramming
 
