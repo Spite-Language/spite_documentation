@@ -294,7 +294,7 @@ separator goes, so `"./a/b/../c/"` is `a/c`, and a path that starts at the root 
 | `parent` | `Path` | everything but the last piece; `.` when there is none |
 | `is_rooted` | `Boolean` | starts at the root (`/`) or a drive (`C:`) |
 | `joined(other)` | `Path` | `other` inside this one; a rooted `other` is itself |
-| `is_on_a_volume` | `Boolean` | written `name://...` in a program that preloads: a file of a volume, not of the disk ([programs.md](programs.md#preloaded-files)) |
+| `is_on_a_volume` | `Boolean` | written `name://...`: a file of a volume, not of the disk, in every program (a program that preloads nothing reads none) ([programs.md](programs.md#preloaded-files)) |
 | `written` | `String` | the text as it was given, untidied |
 | `==`, `to_string()` | | two paths are equal when their tidied text is |
 
