@@ -815,7 +815,7 @@ next: A12 for 3 boarding true 2.5 Ticket
 `...values: List<Debuggable>` (`to_debug: Spite.Function<String>`), and every value answers that without writing anything: a
 class shows its name and every attribute, nesting into the attributes that are classes, a `List` shows `[a, b]`, a
 `Dictionary` `{"key": value}`, text is quoted, an enum value is written `'like_this'`, and an absent
-`T?` is `null`. An object already being shown further up (the same object, not one `==` calls equal) is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
+`T?` is `null`, an item of a `List<Anything?>` or a value of a `Dictionary<String, Integer?>` included (`[null, "kept"]`). An object already being shown further up (the same object, not one `==` calls equal) is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
 as the class it is, and an attribute that holds a singleton is shown too (`Holder { ledger: Ledger { entries: 4 }, label: "kept" }`). A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:
 the compiler writes the automatic one only for the classes a program debugs. The automatic one leaves out private

@@ -341,7 +341,8 @@ rewritten.
   entries, `{"cactus": "cacti", "foot": "feet"}` or `{1: 1, 2: 4}` (keyed `String` or `Integer` unless declared);
   a key written twice is an error, and an empty one is `{}` where its type is declared
   (`var scores: Dictionary<String, Integer> = {}`), `Dictionary<Key, Value>()` elsewhere. A list or a dictionary is not printable: `console.print(list)` is `'List<Integer>' does not fit type
-  'Printable'`; print `list.join(", ")`, or `console.debug(list)`.
+  'Printable'`; print `list.join(", ")`, or `console.debug(list)`. Both write a null item of a `List<T?>` (or a null value of a
+  `Dictionary<K, V?>` in `to_debug`) as `null`: `[null, 4]`.
 - A chain of templates, `teams.filter_active().map_leads().sum_age()`, runs as one loop with no list in between.
 - To remove many elements, never call `remove_at` or `remove_swapping` in a loop: `creatures.remove_where_dead()`
   or `numbers.remove_where(is_odd)` removes every one the test is true for in one pass and keeps the rest in
