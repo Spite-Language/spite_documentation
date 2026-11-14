@@ -356,9 +356,7 @@ by where it sits beside yours, or pinned to a commit (below). A condition the co
 one that reads a setting of `Environment()`, is an error rather than a folder that is quietly left out, and so is
 a `load` inside a `while` or a `switch`: a `load` goes on a line of its own in the function, or under an `if`
 the build decides. The `if` itself stays in the program, where `Build` folds it again. `Build` is read before the
-first package is loaded, so a package cannot add a field that decides a `load`. A field the program's own
-`build.spite` declares is never replaced by a package's declaration of it: the program decides its build, and a
-package's field is only a default.
+first package is loaded, so a package cannot add a field that decides a `load`.
 
 Two `load`s whose folders lie one inside the other would read the same files twice, so the later one is an error
 that says to load only the outer folder, whose subfolders are already its namespaces. Loading one folder again by
@@ -378,6 +376,22 @@ A `load` nothing in the program names is removed with a `fixed:` line ([style.md
 Naming a class of the package, an enum through its class, or one of its namespaces (`Test(Pkg.Tests)`) is a use,
 and so is a name that starts inside the package and does not resolve (`Pkg.Missing`): the load stays and the
 error names that name.
+
+## A package declares its own `Build` fields
+
+A package reopens `Build` in a `build.spite` of its own and declares the fields it reads, so a program built for
+production leaves out what only development needs: an assets package whose `var assets_cooked = false` guards its
+readers of raw files has them unreachable, and not built, in a program compiled with `--assets-cooked`. Its fields
+are the program's settings like the program's own: a flag sets one (`--assets-cooked`), and so does its variable
+(`ASSETS_COOKED=true`) or a line of the program's `.env`; the program and the package both read it as
+`build.assets_cooked`.
+
+A `build.spite` is a reopening of `Build` like any other, so two that declare one field follow load order: the
+program's folder is merged first and the folders it loads after it, so the declaration of the folder loaded last is
+the one that stays, a package's over the program's ([monkey patching](#monkey-patching-mods)). A flag still sets
+the field whoever declared it. So a package names its fields after itself (`assets_cooked`, `physics_substeps`):
+a generic name like `production` or `debug` is one a program or another package will declare too, and then only
+one of them decides it.
 
 ## Why a dependency is a line in `load`
 

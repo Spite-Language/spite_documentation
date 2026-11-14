@@ -73,8 +73,10 @@ declares loses wherever both declare a name, the constructor included, since loa
 replacement in a folder loaded after the one it replaces. Two `load`s of folders one inside the other are an error
 (load only the outer one). A `load` under an `if` must be decidable from `Build` fields and literals, and a `load`
 inside a `while` or `switch` is an error. A folder some file names in a `load` is a package of its own, never also a
-namespace. `Build` is the exception: a field the program's own `build.spite` declares keeps the
-program's value over a loaded package's (a flag, then the program, then the package). A repository pinned with
+namespace. `Build` follows the same order: a loaded package may reopen it in its own `build.spite` and declare
+fields (read and set by flag like the program's), and where it and the program's `build.spite` declare one field the
+package's declaration stays, a flag setting it either way, so a package names its fields after itself
+(`assets_cooked`, never `production`). A repository pinned with
 `load "../engine@6c7dca9/core"` is merged before the program, so the program's own declaration of a name wins over
 it, and two commits of one repository are one library: what both declare must agree, or the compile stops naming
 the declaration and both commits. A package opens the files
@@ -769,7 +771,7 @@ rewritten.
 - Build settings: reopen `Build` in `build.spite` the same way. A `Build` field is decided when compiling (`spite --serve=true`, else the `SERVE` variable, else a `SERVE=` line of the `.env` file in the folder built, else its default) and is a constant in the program, so `if build.serve { }`
   keeps only one branch; in a `--hot-reload` build the program's own reads of a field are made while it runs, and
   the standard library's stay constants. The compiler's own options (`optimized`, `debug_memory`, `check`, `build`, ...) and
-  `build.target_operating_system` are `Build` fields too; `target_operating_system`, `operating_system` and `program` cannot be declared in `build.spite` (the target is the flag's, the others the compiler's). A flag is kebab-case (`--debug-memory`) and sets the
+  `build.target_operating_system` are `Build` fields too; `target_operating_system`, `operating_system` and `program` cannot be declared in a program's or a package's `build.spite` (the target is the flag's, the others the compiler's). A package's own `build.spite` adds fields the same way. A flag is kebab-case (`--debug-memory`) and sets the
   snake_case field; an unknown flag is an error. A `Build` default may be arithmetic on literals or another field
   (`var attempts: Integer = retries`); the compiler's own options take only a literal. There is no `format` option: every compile formats.
 - Reflection: `value.class` (a `Spite.Class`: `.name` (always the short name, however the class was reached; `.name_with_namespaces` is the dotted one), `.namespace` (a `Spite.Namespace?`; narrow it before

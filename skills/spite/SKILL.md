@@ -56,6 +56,8 @@ Leave the loop only when you need to:
   before you call the work done.
 - Measure speed only on a production build: no `--repl`, `--repl-port`, `--hot-reload` or `--debug-memory`.
   `--optimized` only sets `Build.optimized`; it does not make the program faster.
+- A loaded package may reopen `Build` in its own `build.spite`; a field both it and the program declare is the one
+  loaded last's (the package's), so a package names its fields after itself (`assets_cooked`, never `production`).
 
 Every compile, a reload included, rewrites your files into the one style first: read a file back before editing it
 again. Every error comes as `path:line: error: message (in Class.function)` and says what to write instead: write

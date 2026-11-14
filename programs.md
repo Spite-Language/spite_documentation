@@ -229,26 +229,24 @@ func UnknownFlagError() {
   `build`, `executable_path`, `final_classes`, `optimization_report`, `high_ir`, `low_ir`) keep their declared value
   inside the program: a flag sets what the compile does, not what `build.low_ir` reads, which is `false` unless
   `build.spite` says otherwise. `check` and `build` both on, from the flags or from `build.spite`, is an error.
-- A loaded package may declare `Build` fields too, and the program decides: a field the program's own
-  `build.spite` declares keeps the program's default even when a package loaded after it declares the same field.
-  An engine's `var plugins_folder = "../../plugins"` is only its default for programs that say nothing. The order
-  is a flag, then the program, then the package:
+- A loaded package may reopen `Build` in a `build.spite` of its own and declare fields, which the program and the
+  package read alike and a flag sets like the program's own ([packages.md](packages.md#a-package-declares-its-own-build-fields)).
+  `build.spite` files are reopenings like any other and follow load order: where the program's `build.spite` and a
+  package loaded after it declare one field, the package's declaration stays, and a flag sets it either way. So a
+  package names its fields after itself, never `production` or `debug`:
 
 ```gdscript title=build_over_package/engine/build.spite
-var plugins_folder = "../../plugins"
-var engine = "forge"
+var engine_plugins_folder = "plugins"
+var engine_name = "forge"
 ```
-```gdscript title=build_over_package/build.spite
-var plugins_folder = "plugins"
-```
-```gdscript title=build_over_package/build_over_package.spite entry build=engine:ember
+```gdscript title=build_over_package/build_over_package.spite entry build=engine_name:ember
 var build = Build()
 var console = Console()
 
 func BuildOverPackage() {
     load "engine"
-    console.print("plugins from", build.plugins_folder)
-    console.print("engine", build.engine)
+    console.print("plugins from", build.engine_plugins_folder)
+    console.print("engine", build.engine_name)
 }
 ```
 ```output
