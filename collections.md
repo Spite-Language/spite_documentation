@@ -22,6 +22,9 @@ var names = [
 var empty = List<String>()
 ```
 
+A `[` reads an item only on the line of the value it follows, so a line that starts with `[` is a list literal
+starting a statement of its own: `[Root].each(registry.register)` below another statement stays its own statement.
+
 | Member | Result | Notes |
 |---|---|---|
 | `append(value)` / `prepend(value)` | | adds to the end / to the front (index 0) |
