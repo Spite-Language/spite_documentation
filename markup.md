@@ -100,9 +100,13 @@ such text in an attribute, `content="a < b"`.
 
 `<health_bar filled={health} missing={missing}/>` calls `render_health_bar` of the same class, written in the same
 file. The attributes are matched to its parameters by name and passed in the order it declares them:
-`render_health_bar(health, missing)`. Nested tags go to a parameter named `children: List<Anything?>`, built first in a
+`render_health_bar(health, missing)`. So a function's parameters are its tag's props: `func render_weapon(grade: Integer)`
+is used as `<weapon grade={1}/>`, and each value goes into its parameter with every conversion a value has there, as it
+would in the hand-written call (`grade="3"` gives an `Integer`, `tint="#ff8000"` a `Color`, `rarity='rare'` an enum value,
+a bare `shiny` a `true`). Nested tags go to a parameter named `children: List<Anything?>`, built first in a
 local (`var children_5 = List<Anything?>()`, then `children_5.append(...)` for each); a function with that parameter and
-no nested tags is given an empty list. Its answer is held in a local and added like any child.
+no nested tags is given an empty list, and a list already built is handed as `children={parts}` instead of nested tags.
+Its answer is held in a local and added like any child.
 
 ## Generated names
 
@@ -132,6 +136,9 @@ those found after building, which it tells as errors instead.
 '<health_bar>' sets 'colour', and 'render_health_bar' has no parameter 'colour': it takes filled, missing
 '<health_bar>' leaves out 'missing', a parameter of 'render_health_bar': set it on the tag, as in 'missing={value}'
 '<health_bar>' holds children, and 'render_health_bar' has no parameter 'children: List<Anything?>' to take them
+'<framed>' sets 'children' and holds children: hand them to 'render_framed' one way, as nested tags or as 'children={list}'
+'<framed>' hands its children to 'render_framed' as a List<Anything?>, and its parameter 'children' is a List<Label>: declare it 'children: List<Anything?>'
+'{parts}' is a list, and '<framed>' takes its children one by one into 'children': hand the list as 'children={parts}' with no nested children instead
 '{is_open}' is a Boolean, and a child is an object, a list of them or null: there is no 'condition && <Tag/>', so answer null from a 'render_' function when there is nothing to show
 a tag stands only after 'return' or 'var name =', which it is built before: build it into a local there and pass the local
 ```

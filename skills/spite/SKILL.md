@@ -144,7 +144,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - A user interface tree may be written as tags (JSX), only after `return` or `var name =`: each tag is a construction
   with no arguments, each attribute an assignment, a nested tag an `append_child`, an `{expression}` child
   `append_children` (a one-item list when it is one value); a lowercase tag calls
-  `render_<tag>` by parameter name. See the markup section of [reference.md](reference.md).
+  `render_<tag>` with its attributes as the parameters, by name (`<weapon grade={1}/>` is `render_weapon(1)`). See the markup section of [reference.md](reference.md).
 - A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
   blank lines: name the part and call it.
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
