@@ -759,6 +759,31 @@ rewritten.
   interpolation only compared (`key == "r{index}"`, `line.contains("r{index} ")`) makes no text, so write the plain
   join or split and never reshape code to make fewer texts.
 
+## Markup: JSX as sugar
+
+- Tags are sugar the compiler turns into ordinary statements before it resolves a name (D2300); nothing later knows
+  they were tags, and a function with tags builds to the same program as the same function written by hand.
+  [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md)
+- A tag stands only after `return` or `var name =`. `return <View padding={24} wrap><Text content="Face"/></View>`
+  is `var view_1 = View()`, `view_1.padding = 24` (through `set_padding` when there is one), `view_1.wrap = true`,
+  `var text_1 = Text()`, `text_1.content = "Face"`, `view_1.append_child(text_1)`, `return view_1`: leaves first,
+  attributes in the order written, then children. A tag never takes constructor arguments, and is never an argument.
+- `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
+  `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error at the
+  tag's line.
+- `{expression}` as a child: a `List` is `append_children(list)`, anything else `append_child(value)`, a `null` child
+  is passed and skipped by the library (a conditional child is a `render_part()` answering `null`), a `Boolean` is an
+  error. The type is read from what the file declares (literals, comparisons, typed or readable locals, parameters,
+  attributes, calls of this class's functions); a list it cannot see goes to `append_child`, so give it a typed local.
+- Text between tags is the `content` attribute, spaces collapsed: `<Label>{count} items</Label>` is
+  `label.content = "{count} items"`. No `{` or `<` in text.
+- A lowercase tag `<health_bar filled={health} missing={missing}/>` calls `render_health_bar(health, missing)` of the
+  same file, attributes matched to parameters by name; nested tags go to a `children: List<Anything>` parameter.
+- Generated locals are `<tag in snake case>_<line>` (`view_3`), so crash reports and `locals` read like the code.
+  The formatter rewrites tags into one style; a file holding tags gets no fix found after building (told as an error).
+- `append_child` and `append_children` come from the library a tag's class belongs to (the render library), never
+  from Spite. Markup by ordinary calls still works.
+
 ## Built in classes
 
 `Console()` (`print`, `write`, `error`, `debug`, `read_line(): String?`; each value printed is its `to_string()`, so

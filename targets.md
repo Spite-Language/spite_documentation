@@ -2,7 +2,7 @@
 
 What is decided about compiling one Spite program for more than one place: platform code chosen by
 reopening, a class compiled into a server bundle and a browser bundle at once, the browser reached as a
-library, markup without a second grammar, and the binary format the two bundles talk in. Compiling for one machine
+library, markup as calls or as tags the compiler desugars, and the binary format the two bundles talk in. Compiling for one machine
 is on [foreign_libraries.md](foreign_libraries.md) and [programs.md](programs.md).
 
 Every piece of it is chosen while compiling, so a bundle carries only what its target uses: the losing platform's
@@ -109,9 +109,11 @@ to, as `Mouse` sits on `DynamicLibrary`.
 
 ## Markup
 
-There is no JSX and no trailing block. Markup is `missing_function` plus
-literals, with as many children as the call has arguments. That costs no new feature, because a template
-function is generated per call site:
+Markup is written two ways, and both compile to ordinary calls. Tags (JSX) are sugar the compiler turns into
+statements before it resolves a name: each tag makes an object with no arguments, each attribute is an assignment
+through its setter, and each child is added with `append_child` ([markup.md](markup.md), D2300, which replaced D18's
+"no JSX"). Markup by calls still works: `missing_function` plus literals, with as many children as the call has
+arguments. That costs no new feature, because a template function is generated per call site:
 
 ```gdscript
 html.div({ class: "card" }, html.h1(title), TodoForm({ on_done: add_todo }))
@@ -121,11 +123,11 @@ It pulls together what already exists: tags come from `missing_function`, a list
 `todos.map_renders()`, a component is any class that fits a `type` requiring `render()`, a handler is a function
 value bound to its instance, and `when(condition, element)` returns an `Element?` that the framework skips.
 
-Rejected: a JSX like literal is a second grammar and fixes neither conditionals
-nor mapping; a trailing block (`f(x) { a b c }`) serves exactly one shape, since queries are
+Rejected: a trailing block (`f(x) { a b c }`) serves exactly one shape, since queries are
 `database.filter_age_greater_than(10).sort_by_name()` and routes are plain statements, so it would be one more
-meaning for `{ }` bought for a single case. The price is verbosity: markup written this way is tedious to type and
-still easy to read, and readability is what the language puts first.
+meaning for `{ }` bought for a single case. JSX was rejected with it until D2300: it was "a second grammar" that fixed
+neither conditionals nor mapping. As sugar removed in the front end it adds no grammar past the parser, a conditional
+child is one that answers `null`, and a mapped list is a `List` child added whole.
 
 ## The wire format
 

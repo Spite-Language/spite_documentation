@@ -1104,11 +1104,13 @@ sparse set per component and fill a row of borrowed items from it
 ## Markup is metaprogramming too
 
 A language can give markup, a tree of tags with children, a grammar of its own, and then give that grammar settings
-for what it turns into. Spite does neither. The tags are ordinary calls that a library answers with the same
-function and template features this page teaches: a tag becomes a function of the library, its children are variadic
-arguments, a component is picked by the shape of what it is given, and an event handler is a function bound to its
-instance. There is no second syntax to learn and nothing to configure below the source, so the markup in one project
-means what it means in every other.
+for what it turns into. Spite does neither. Tags (JSX) are sugar: the compiler turns them into ordinary statements
+before it resolves a name, a construction, an assignment per attribute and an `append_child` per child, so nothing
+after the parser knows they were tags ([markup.md](markup.md), D2300). Without tags, the same tree is ordinary calls
+that a library answers with the function and template features this page teaches: a tag becomes a function of the
+library, its children are variadic arguments, a component is picked by the shape of what it is given, and an event
+handler is a function bound to its instance. Either way there is nothing to configure below the source, so the markup
+in one project means what it means in every other.
 
 ## Tree shaking
 

@@ -123,32 +123,34 @@ with a link to the next.
     `Spite` classes and their members, what folds and what is known only at run time.
 13. [packages.md](packages.md): `load`, namespaces, reopening classes (mods), the reserved `Spite` namespace.
 14. [concurrency.md](concurrency.md): what the compiler runs at once, and waiting without `async`/`await`.
+15. [markup.md](markup.md): tags (JSX) as sugar the compiler turns into ordinary statements before it
+    resolves a name: what each tag, attribute and child becomes, and what it refuses.
 
 **The standard library**
 
-15. [standard_library.md](standard_library.md): every class at a glance; `String`, files, folders, processes,
+16. [standard_library.md](standard_library.md): every class at a glance; `String`, files, folders, processes,
     the console, the program, sockets, and the floor the library is built on.
-16. [collections.md](collections.md): `List` and `Dictionary` as library code, member templates, chains that
+17. [collections.md](collections.md): `List` and `Dictionary` as library code, member templates, chains that
     run as one loop, templates of your own.
-17. [json.md](json.md): `JsonWriter`/`JsonReader` and `BinaryWriter`/`BinaryReader`: any value to JSON text or
+18. [json.md](json.md): `JsonWriter`/`JsonReader` and `BinaryWriter`/`BinaryReader`: any value to JSON text or
     compact bytes and back.
-18. [time.md](time.md): instants, durations, the calendar, time zones as presentation, and ISO 8601 text.
-19. [game_maths.md](game_maths.md): vectors, matrices and quaternions for games: `Vector3`, `Matrix4`,
+19. [time.md](time.md): instants, durations, the calendar, time zones as presentation, and ISO 8601 text.
+20. [game_maths.md](game_maths.md): vectors, matrices and quaternions for games: `Vector3`, `Matrix4`,
     `Quaternion`, boxes, frustums and rays, column-major, Vulkan clip space, and what each operation costs.
-20. [foreign_libraries.md](foreign_libraries.md): `DynamicLibrary`, libraries written in C, C++, Rust, Zig and Go,
+21. [foreign_libraries.md](foreign_libraries.md): `DynamicLibrary`, libraries written in C, C++, Rust, Zig and Go,
     bindings that speak Spite, and how each operating system's folder reopens the classes it changes.
-21. [targets.md](targets.md): other targets, the web, isomorphic classes and the wire format.
+22. [targets.md](targets.md): other targets, the web, isomorphic classes and the wire format.
 
 **Tooling**
 
-22. [compiler.md](compiler.md): every command and flag, the outputs and where they go, `--final-classes`,
+23. [compiler.md](compiler.md): every command and flag, the outputs and where they go, `--final-classes`,
     `--development`, and which build to measure.
-23. [repl.md](repl.md): the local and remote REPL, `spite --connect`, live reload, and a replayed debugging
+24. [repl.md](repl.md): the local and remote REPL, `spite --connect`, live reload, and a replayed debugging
     session.
-24. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
-25. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if
+25. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
+26. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if
     anything) you could notice.
-26. [proofs.md](proofs.md): every fact the compiler proves while compiling, what each one buys, and when it does
+27. [proofs.md](proofs.md): every fact the compiler proves while compiling, what each one buys, and when it does
     not apply, so you know when to write the check yourself.
 
 ## About these pages

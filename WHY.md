@@ -216,7 +216,7 @@ that teach each part of the language say why.
 | A crash message written in prose | a crash that names the line and shows the values | [failure.md](failure.md#why-a-crash-carries-no-message) |
 | `async` and `await` colouring every caller | no colour: the compiler decides what runs at once | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
 | A runtime you bring, chosen by each library | one concurrency model in the language, no outside driver | [concurrency.md](concurrency.md#why-one-model-and-no-runtime-to-bring) |
-| Markup with a grammar of its own and settings for what it becomes | ordinary calls, variadic children, components matched by shape | [metaprogramming.md](metaprogramming.md#markup-is-metaprogramming-too) |
+| Markup with a grammar of its own, a runtime and settings for what it becomes | tags (JSX) the compiler turns into ordinary statements before it resolves a name, or ordinary calls with variadic children; either way no runtime and no setting | [markup.md](markup.md), [metaprogramming.md](metaprogramming.md#markup-is-metaprogramming-too) |
 | JSON between programs that compile from the same source | compile-time-derived binary; JSON only for foreign systems | [json.md](json.md) |
 | `static` functions | a function of the class object, overridden by the class file | [classes_and_files.md](classes_and_files.md#there-is-no-static) |
 | Lifetime annotations and borrow-checking noise | reference counting, `T?` and narrowing | [memory.md](memory.md#no-lifetimes-and-no-value-classes) |
