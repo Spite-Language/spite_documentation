@@ -673,7 +673,7 @@ An enum declaration takes no `=` and lists one value per line, with no commas (a
 quotes (single quotes mean an enum value and nothing else), and `'mage'` alone resolves without writing
 `Player.Job`, because the parameter, the annotation, the assignment or the comparison it is used in says which
 enum it belongs to. The enum itself belongs to `Player`: inside it, plain `Job`; in any other class, `Player.Job`,
-never plain `Job`. The path always goes through the class: an enum, union or type of the entry class `Game.Game`
+never plain `Job`. The path always goes through the class: an enum of the entry class `Game.Game`
 (`game/game.spite`) is `Game.Game.Job` from outside the namespace `Game`, and `Game.Job` there reaches it through
 the namespace, which holds only classes and namespaces, even when a package loaded as `load "game"` makes `Game`
 answer that class. That spelling has one fix, so the compiler rewrites it (`'Game.Job' reaches 'Job' through the

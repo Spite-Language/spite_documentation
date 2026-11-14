@@ -224,7 +224,7 @@ A mistake with exactly one fix is not an error: the compiler writes the fix into
 
 - declarations out of the file's order, and a union or `type` that two classes of a namespace declare alike (moved to
   the namespace's entry class, see Values);
-- `Game.Job` written outside the namespace `Game` for an enum, union or type of its entry class `Game.Game`
+- `Game.Job` written outside the namespace `Game` for an enum of its entry class `Game.Game`
   (becomes `Game.Game.Job`);
 - a local or parameter name with one right spelling (camelCase, a doubled `_`, an abbreviation with one expansion, a
   read `_name`), and a keyword one letter off at the start of a line (`retrun`);
