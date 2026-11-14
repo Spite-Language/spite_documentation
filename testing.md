@@ -16,6 +16,22 @@ func test_append_and_prepend_keep_order() {
 }
 ```
 
+## A number a test expects
+
+A number a test compares in its `crash` is the answer it expects, so it stands as written: `crash boxes.count() ==
+1001` inside a `test` or `test_...` function needs no named attribute
+([style.md](style.md#a-number-gets-a-name)). Only there: the same number elsewhere in the test (`var wanted =
+1001`), or the same `crash` in a function that is not a test, still asks for a name.
+
+```gdscript
+func test_a_thousand_and_one_is_counted() {
+    var thousand = 1000
+    var counted = thousand + 1
+    crash counted == 1001
+    crash counted > 999
+}
+```
+
 ## A test program runs `Test`
 
 A project keeps one entry point, and its tests are a program of their own beside it that `load`s the project. The

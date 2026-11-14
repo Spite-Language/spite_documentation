@@ -375,7 +375,9 @@ func days_of(cycles: Integer, remaining: Integer): Integer {
 `the number 146097 does not say what it means: declare a private attribute that names it, like 'var _what_it_means = 146097', and write the name here`.
 The rule starts narrow and grows: today it covers a whole number of three or more digits that is neither a power of
 ten nor a power of two, and a decimal that is a preset of the library (`3.14159` is refused, naming `Float.Pi()`).
-An attribute's default is where the number may stand, and so is the body of a preset. The name costs nothing: an
+An attribute's default is where the number may stand, and so is the body of a preset, and so is a test's
+expectation: a number compared inside a `crash` in a `test` or `test_...` function (`crash boxes.count() == 1001`,
+[testing.md](testing.md#a-number-a-test-expects)). The name costs nothing: an
 attribute nothing writes is read as its default where it is read, a constant as the number was
 ([values_and_types.md](values_and_types.md#named-numbers)).
 

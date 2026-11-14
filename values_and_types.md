@@ -388,7 +388,8 @@ A number that means something is given a name: a private attribute whose default
 (`var _days_in_400_years = 146097`), read by name where it is used. Written bare inside a function, a whole number
 of three or more digits that is neither a power of ten nor a power of two is an error asking for that attribute,
 and so is a decimal that is a library preset (`3.14159` names `Float.Pi()`); an attribute's default, the body of a
-preset, numbers of one or two digits and text are left alone. The rule and its exact message are in
+preset, a number compared inside a `crash` in a test (`crash total == 1001` in `test_...`), numbers of one or two
+digits and text are left alone. The rule and its exact message are in
 [style.md](style.md#a-number-gets-a-name). A named number costs nothing: an attribute nothing writes is read as
 its default where it is read, so it compiles to the number itself, and it bounds a range as the number does
 (`floor.minimum(_hundred) * 1000` keeps no overflow check). A preset may be the default

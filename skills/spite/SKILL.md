@@ -136,6 +136,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - `while given and turns < 2` narrows `given` in the body like an `if`, and each pass tests it again, so the body may
   write it. An `or` narrows nothing inside; `if amount > 100 or amount < 0 { return 1 }` proves both sides below it.
 - A number that may be null is narrowed before arithmetic, a comparison or a store, whatever its width; only `==` and `!=` take it as it is.
+- A whole number of three or more digits (not a power of ten or two) is named by a private attribute
+  (`var _days_in_400_years = 146097`), except the answer a test compares in its `crash`: `crash boxes.count() == 1001`
+  inside a `test_...` function stands as written.
 - Never write defensive code: a check on a value the compiler already proves is removed, and says so.
 - A `crash` whose condition the compiler decides is false, in a function the program always reaches, refuses the build.
 - No lambdas, no destructuring, no overloading, no `async`/`await`. Pass a named function; one name is one
