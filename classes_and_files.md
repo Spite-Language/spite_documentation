@@ -152,6 +152,17 @@ func OrderedFile() {
 7 by_name
 ```
 
+### An attribute takes the type of its default
+
+An attribute whose type is not written takes it from its default when the compiler can read it before the
+functions: a literal, a list or dictionary literal, a constructor or a preset (`var base = Thing()`), or a chain of
+calls on one of those whose functions declare their answer types. With `func size(given: Integer): Thing`,
+`var base = Thing().size(2).size(3)` is a `Thing`. Any other default needs its type written:
+
+```diagnostic
+the type of 'base' is not written, and its value is not one the compiler reads before the functions: write it, 'var base: Type = ...'
+```
+
 ### A union or type two classes declare
 
 Declare a union or a `type` in the class that takes, holds or switches on it, and leave it there. When two classes
