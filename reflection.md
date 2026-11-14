@@ -220,8 +220,8 @@ in the order they were filled, and the names it does take, or "it takes no argum
 the function answers: typed from the declaration when the function is named in the code (`var worth = call.call()` is
 an `Integer` for `func worth(): Integer`), and an `Anything?` when the call is known only at run time, the value itself
 (a number keeps its class) or `null` for a function that answers nothing; that one answer may be left unused, so
-`call.call()` on a line of its own runs a function that answers nothing. An answer of a kind not told apart while
-the program runs (a function value or a shape) halts `call()`, naming the function. `call.arguments` is a
+`call.call()` on a line of its own runs a function that answers nothing. A function value it answers comes back as
+a `Spite.Function`, as any function value does where `Anything` is wanted. `call.arguments` is a
 `Dictionary<String, Anything?>`, so `call.arguments["count"] = null` fills the argument with `null`: a nullable
 parameter (`count: Integer?`, `badge: Badge?`, `word: String?`) takes it, and `count: Integer` halts that it is not
 an Integer. A parameter that takes a function value is given the function bound to its object,
