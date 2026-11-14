@@ -683,8 +683,8 @@ never plain `Job`. The path always goes through the class: an enum of the entry 
 (`game/game.spite`) is `Game.Game.Job` from outside the namespace `Game`, and `Game.Job` there reaches it through
 the namespace, which holds only classes and namespaces, even when a package loaded as `load "game"` makes `Game`
 answer that class. That spelling has one fix, so the compiler rewrites it (`'Game.Job' reaches 'Job' through the
-namespace 'Game', which holds only classes and namespaces; named it through its class, 'Game.Game.Job'`); where the
-file is a loaded package's, which the compiler never rewrites, it is the error naming `Game.Game.Job`. Inside the
+namespace 'Game', which holds only classes and namespaces; named it through its class, 'Game.Game.Job'`), in the
+program's files and a loaded package's alike. Inside the
 namespace, `Game.Job` stays. Enums, unions, types and number classes take no `<>`: `Phase<Integer>` is an error that says to write
 `Phase` alone.
 

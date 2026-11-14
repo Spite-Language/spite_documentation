@@ -760,7 +760,7 @@ rewritten.
   only `to_string()` or `to_debug()`, which null answers as `null`, so `Shelf<String?>` prints a null item as `null`); any other is an error where the class is
   named, not inside the generic. An enum, a `union` or a `type` is named outside its class through that class
   (`Player.Job`, `Shelter.Pet`, `generic $item_type: Console.Printable`), never bare. From outside a namespace an entry class's enum is
-  named through that class too, `Game.Game.Job` (`game/game.spite`), never `Game.Job` (rewritten in your files, an error in a loaded package's). One value per `generic` line, at the top of the file
+  named through that class too, `Game.Game.Job` (`game/game.spite`), never `Game.Job` (rewritten, in a loaded package's files too). One value per `generic` line, at the top of the file
   after any `singleton` line: `generic $a, $b`, a `generics` list and a `generic` line inside a function are errors.
 - Settings: reopen `Environment` in the program's `environment.spite` with one `var` per setting and a literal
   default (`var serve = false`), then bind `var environment = Environment()` and read `environment.serve`. The
