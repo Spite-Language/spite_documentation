@@ -1000,6 +1000,30 @@ positive
 
 `crash` is allowed in a constructor, which is where a program that cannot start says so.
 
+### `crash` on a `Boolean?` halts on `false` too
+
+`crash flag` on a `Boolean?` goes on only when the flag is there and `true`; it halts on `null` and on `false`. So
+`crash flags[index]` on a `List<Boolean?>` halts on an element holding `false`, although the element is there. This
+is on purpose:
+
+- A `crash` asks one question, "is this a yes?", and a `Boolean` and a `Boolean?` answer it the same way. A missing
+  flag is not a yes, so the program never goes on past a `crash` on a flag nobody set. Turning a `List<Boolean>`
+  into a `List<Boolean?>` never quietly changes what its `crash` lines check.
+- `if flag` and `while flag` refuse a `Boolean?` because "there" and "true" are two questions. `crash` and
+  `fallback` take it by asking the stricter one, so the doubt can only stop the program, never let it go on.
+
+To test that the flag is there and nothing else, compare it with both values: a comparison takes a `Boolean?` as it
+is, and a flag is there exactly when it is one of them. Act on each value with `if flag == true` and
+`if flag == false`, the rest being `null`. Only the slot of a list is `crash index < flags.count()`.
+
+```gdscript
+func is_on(flags: List<Boolean?>, index: Integer): Boolean {
+    var flag = flags[index]
+    crash flag == true or flag == false
+    return flag == true
+}
+```
+
 **`crash` never takes a message, and neither does `fallback`.** There is no text to write
 after the condition: the report points at the line of code and shows the values there, and the reader opens
 that line and reads the data, which says more than a sentence about them would and cannot drift from the code. Do

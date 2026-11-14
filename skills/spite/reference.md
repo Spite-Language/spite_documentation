@@ -578,7 +578,10 @@ rewritten.
   local nothing reads whose value is a literal or a name is deleted the same way.
 - A `Boolean?` is not a condition (`which would only test that it is there, not that it is true`): narrow it
   first, or compare it `== true`. The exceptions are `fallback flag` and `crash flag`, which mean the flag is there
-  and `true` (as on a `Boolean`); there is no `flag != null`.
+  and `true` (as on a `Boolean`), so `crash flags[index]` on a `List<Boolean?>` halts on `false` as well as on a
+  missing element: a missing flag is never a yes, and the line checks the same on a `Boolean` and a `Boolean?`. There
+  is no `flag != null`: to test that it is there alone, `crash flag == true or flag == false`
+  ([failure.md](../../failure.md#crash-on-a-boolean-halts-on-false-too)).
 - There are no exceptions and no error values. Three outcomes only:
   - the compiler can know it: a compile error;
   - absence is fine: `fallback condition` ends the function when the condition is false, answering what the answer

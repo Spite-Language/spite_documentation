@@ -121,6 +121,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   constructor takes arguments has none, so a `fallback` there is an error: answer `T?` or `crash`); answer a `T?` when a
   caller must tell that from a real answer. `crash condition` halts on
   a developer mistake. Neither takes a message: the crash report shows the values.
+- `crash flag` and `fallback flag` on a `Boolean?` pass only when it is there and `true`: `crash flags[index]` on a
+  `List<Boolean?>` halts on `false` too. To test that it is there alone, write `crash flag == true or flag == false`.
 - A narrowing, a `[]` proof included, lasts until a write or a call that may undo it or shrink the list (the compiler follows the call, whatever its answer is used for). Narrow again after
   one: the new check stays and tests at run time. A write or a call inside a branch that returns leaves it standing
   below the branch. A call in a condition counts too: `if rack.item and clear(rack)` proves nothing about `rack.item`
