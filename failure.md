@@ -1019,7 +1019,9 @@ A function that answers a value says something the caller must hear, so calling 
 the answer goes nowhere, is a compile error. The library answers what the outside world did (a write that did
 not land is `false`, a file that is not there is `null`) and leaves the decision to the program, which uses the
 answer: keeps it, passes it, returns it, compares it, or at least writes `fallback` to carry on without it or
-`crash` when its absence is a bug.
+`crash` when its absence is a bug. One call may stand alone: `call.call()` of a `Spite.Call` known only at run
+time, whose `Anything?` is `null` for a function that answers nothing
+([reflection.md](reflection.md#a-call-built-before-it-runs)).
 
 ```gdscript title=dropped_answer_error/dropped_answer_error.spite entry error
 var console = Console()

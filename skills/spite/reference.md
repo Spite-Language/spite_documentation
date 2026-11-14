@@ -690,7 +690,8 @@ rewritten.
   while compiling it is the direct call. Known only at run time, `call()` halts on an argument missing, of another
   type, or not taken; `call.arguments["count"] = null` is a filled argument, taken by `count: Integer?` and halting
   for `count: Integer`. `call.call()` answers the function's answer: its declared type when known while compiling,
-  an `Anything?` when known only at run time (`null` for a function that answers nothing).
+  an `Anything?` when known only at run time (`null` for a function that answers nothing), which alone of all answers
+  may be dropped (`call.call()` on its own line).
   There is no `call_with`.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,
