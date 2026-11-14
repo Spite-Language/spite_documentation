@@ -642,7 +642,8 @@ and the lists and dictionaries that hold it, and keeps no index when any of them
 = `, `insert`, `prepend`, `remove_*`, `clear`, `reverse`, `swap`, `truncate`), hands it to a foreign function, a
 function value, a call through a `type`, a union or a shape, or when its items are decimals or objects. A list
 searched or appended to from code the compiler runs at once (the bands of a loop, calls overlapped with each other,
-and everything they call) keeps no index either, since building one is a write. Such a list is searched item by
+and everything they call) keeps no index either, since building one is a write, unless each pass of a band made
+that list itself: then no other thread reaches it, and its index is the band's own. Such a list is searched item by
 item, as written. An inspectable build keeps no index.
 
 Until the index is built a search costs what the plain search costs, with a few counts beside it, copied where the
