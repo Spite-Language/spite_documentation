@@ -96,8 +96,9 @@ fixed: a variable came after the constructor here; moved it up, since a file is 
 Anything with exactly one fix is treated like the order of a file (D1767): the compiler fixes it in the file and prints a
 `fixed:` line for it on the error output, `<path>:<line>: fixed: <what was wrong>; <what it did> (in
 <Class>.<function>)`, the line being the one the mistake was on, so you read what changed. Then it compiles the
-fixed file. A mistake whose fix needs a choice stays an error, and a file of
-the standard library or of a package is never rewritten, so there it stays the error.
+fixed file. A mistake whose fix needs a choice stays an error. A loaded package's files are fixed the same way
+([packages.md](packages.md#a-package-is-fixed-like-the-program)); a file of the standard library or of a repository
+pinned to a commit is never rewritten, so there it stays the error.
 
 What the compiler fixes for you, and what it leaves as an error:
 

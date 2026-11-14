@@ -187,7 +187,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `load` naming it: `ToolHelper.spite` becomes `tool_helper.spite`), a keyword one letter off, a local or attribute that does nothing and is never read, a
   `load` of the standard library (every program has it with no `load`; `--standard-library-path=<folder>` names another), a line ending in `\r\n` or `\r` (a
   Spite file ends every line with `\n`), a check on a proven value, an `if` or `while` decided while compiling, statements after a `return`. A choice stays
-  an error. It never rewrites the library or a package. A check or `if` it would remove because of a narrowing
+  an error. A loaded package's files are fixed the same way; it never rewrites the standard library or a repository
+  pinned to a commit. A check or `if` it would remove because of a narrowing
   stays when a later call or loop pass takes that narrowing back: the compile fails on that instead.
 
 ## Installing this skill in a project

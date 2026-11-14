@@ -445,7 +445,8 @@ The words say `writes` where the default only writes the attribute: `the default
 whose default reads 'started': ...` for a circle through a write, and `the default of '_count' writes '_count'
 itself: ...` for a default whose function sets its own attribute, a write its default would undo.
 
-A line is only moved inside its own file, and a file of the standard library or of a package is never rewritten.
+A line is only moved inside its own file, and a file of the standard library or of a pinned repository is never
+rewritten (a loaded package's file is, [packages.md](packages.md#a-package-is-fixed-like-the-program)).
 A default reading an attribute that a later file adds to its class, in a reopening, is the error `the default of
 'total' reads 'extra', declared below it in another file of the class: ...` (`writes 'extra'` when its function
 only sets it); one in a file the compiler never

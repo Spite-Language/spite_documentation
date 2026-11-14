@@ -393,6 +393,15 @@ the field whoever declared it. So a package names its fields after itself (`asse
 a generic name like `production` or `debug` is one a program or another package will declare too, and then only
 one of them decides it.
 
+## A package is fixed like the program
+
+The compiler fixes what has one fix in a loaded package's files exactly as in the program's own, and prints the same
+`fixed:` line naming the package's file ([style.md](style.md#the-compiler-fixes-what-has-one-fix)): a package is
+not shipped needing a fix, and when one is, the fix is in its files for its author to take. A rewritten file is
+formatted too. The standard library is never rewritten, and neither is a repository pinned to a commit, whose copy
+is read-only ([below](#loading-a-repository-pinned-to-a-commit)): there a mistake with one fix stays the error, to be
+fixed in its repository. A file or folder of a package is never renamed; only the program's own are.
+
 ## Why a dependency is a line in `load`
 
 Setting up a project is where many languages become a thousand ways to do one thing: build files, lock files,
