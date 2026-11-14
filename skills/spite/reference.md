@@ -828,7 +828,9 @@ rewritten.
 - `{expression}` as a child is always children: a `List` is `append_children(list)` as it is, anything else goes in
   a one-item list first (`var children_7: List<Anything?> = [badge_7]`, `append_children(children_7)`), so the
   library's `append_children` takes `List<Anything?>`. A `null` child is passed in its list and skipped by the
-  library (a conditional child is a `render_part()` answering `null`); a `Boolean` is an error. A list is told from
+  library (a conditional child is a `render_part()` answering `null`); a `Boolean` is an error. An `append_children`
+  whose body is only `items.each(append_child)` costs no list: the compiler passes the items straight to a copy of it,
+  so write it that way, not as a `while` over the list. A list is told from
   one value by what the file declares (literals, comparisons, typed or readable locals, parameters, attributes, calls
   of this class's functions); a list it cannot see is wrapped and refused by the ordinary type error, so give it a
   typed local.

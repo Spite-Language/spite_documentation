@@ -79,7 +79,9 @@ value (D2302):
   is; any other expression is held in a local before that (named for the function it calls, `badge_7` for
   `render_badge()`), since a call is never an argument. A child that answers `Anything?` and is `null` goes in its
   one-item list and the library skips it, which is how a child is shown only sometimes: a `render_badge()` that
-  answers `null` when there is no badge. So the library's `append_children` takes a `List<Anything?>`.
+  answers `null` when there is no badge. So the library's `append_children` takes a `List<Anything?>`. When
+  `append_children` only walks its list (`items.each(append_child)`), the one-item list is never made
+  ([optimizations.md](optimizations.md#a-list-made-only-to-be-walked-is-never-made)).
 - A `Boolean` is an error: there is no `condition && <Tag/>`.
 
 The compiler tells a list from one value by what the file declares, since it builds the statements before any name

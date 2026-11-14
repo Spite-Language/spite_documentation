@@ -444,6 +444,26 @@ It applies to a literal of numbers of at most 4096 bytes, never assigned again, 
 waits is made as before, and so is a list of objects or texts. An index outside the list still stops the program with
 the same report.
 
+### A list made only to be walked is never made
+
+A list of a few items made only to be handed to a function that walks it is never made: the call goes to a copy of
+the function that takes the items one by one. A function walks a list when its whole body is
+`items.each(walker)`, with `walker` a function of its own class; the compiler reads that from the function on every
+build. This is what makes a [markup](markup.md) child `{face}`, a one-item `List<Anything?>` handed to
+`append_children`, cost what `append_child(face)` costs:
+
+```spite
+func append_children(items: List<Anything?>) {
+    items.each(append_child)
+}
+```
+
+It applies to a list of at most 8 items, made and filled right where it is passed, read by nothing else, and passed
+to a call statement of a function of a class that is not a singleton. The items, the call's receiver and its other
+arguments are names, `this`, attributes of them or literals. A function that also counts, indexes, keeps or hands on
+the list gets the list as before, and so does every call in a build that can be inspected or reloaded. A crash
+report names the same functions; the copy shows as `append_children$walked1_0` in the executable's function map.
+
 ### Objects of one class sit together
 
 A `List` of a class of the program whose objects are only ever put into it fresh and read back from it holds the
