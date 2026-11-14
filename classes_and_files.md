@@ -342,6 +342,23 @@ A path that leaves it without one is an error that names the attribute and the p
 the attribute 'target' has no default, so the constructor gives it its value, but the 'if' at line 5 gives it one on one side only: give it a value on every path of the constructor, or write a default
 ```
 
+Nothing reads it before then. A line of the constructor that reads it before giving it its value, a call to a
+function of the class that uses it, or `this` handed out before it has one is an error naming the line:
+
+```diagnostic
+the attribute 'target' has no default, so the constructor gives it its value, but line 5 calls 'described', which uses it, before it has one: give it its value before anything reads it, or write a default
+```
+
+The defaults run before the constructor, so a default that reads it, directly or through a function, is an error
+too: `the default of 'label' reads 'target', which has no default: the defaults run before the constructor gives
+'target' its value, so give 'label' a default that does not read 'target' and set it in the constructor`.
+
+When a later file reopens the class and replaces its constructor, that constructor is the one that builds every
+object, so it gives a value to every attribute without a default, whichever file declares it; one it leaves
+without a value is the same error, saying `the class is built by the constructor in another of its files`.
+`JsonReader` and `BinaryReader` make the object with its constructor without parameters before they fill it, and
+refuse a class whose constructor takes arguments, so they never leave such an attribute without a value either.
+
 An attribute without a default written above one with a default is moved below it (a `fixed:` line), since a
 file is ordered: the singleton line, generic lines, enums, unions, types, variables with a default, variables
 without one, the constructor, conversions, presets, then functions. In a generic class this is how an attribute of

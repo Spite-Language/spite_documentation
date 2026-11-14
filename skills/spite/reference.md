@@ -390,7 +390,10 @@ rewritten.
   in a template `var made = argument.class()`, and a local a walk fills is `var row = $row_type()` then
   `fill_attributes(row, ...)`. An attribute the constructor gives a value on every path has no default:
   `var target: Pet` (and `var held: $held_type` in a generic class), below the attributes with a default; a path that
-  leaves it without a value is an error naming the path. A default the constructor always replaces that makes
+  leaves it without a value is an error naming the path, and so is anything that reads it first: a line of the
+  constructor before it is given, a function of the class the constructor calls before then, `this` handed out
+  before then, or another attribute's default. A reopening that replaces the constructor must fill the attributes
+  without a default of every file of the class. A default the constructor always replaces that makes
   nothing else (a literal, `null` for a `T?`, an empty `List`/`Dictionary`) is removed by a `fixed:` line; one like `Pet()` stays and runs, and `= null` on a type without `?` stays an error.
 - `null` assigned, passed, appended or answered where a type without `?` is wanted is a compile error too, never a
   default (`0`, `false`, `""`, an enum's first value, an object of a class or a `type`): `'null' is given where a
@@ -1118,6 +1121,8 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `flags.bits_and(mask)` with a wider `mask` | `'flags.bits_and(mask)' works in a Byte, since a bitwise function takes its receiver's type` | widen the receiver first: `var wide: Long = flags` |
 | `var held: $held_type = null` | `the attribute 'held' is declared '$held_type', not '$held_type?', so it never holds null: ...` | `var held: $held_type` with no default when the constructor gives it its value; `$held_type?` for none yet |
 | `var target: Pet` the constructor fills on one side of an `if` only | `the attribute 'target' has no default, so the constructor gives it its value, but the 'if' at line 5 gives it one on one side only: ...` | give it a value on every path, or write a default |
+| `var target: Pet` read in the constructor before it is given | `the attribute 'target' has no default, so the constructor gives it its value, but line 5 reads it before it has one: ...` | give it its value first, or write a default |
+| an `if` with no `else` ending a constructor | `this 'if' is the last thing the constructor does and has no 'else', ... a constructor is setup, not logic: take already resolved values, or write 'crash maybe' when its absence is a bug` | pass the resolved value in, or `crash` |
 | `for item in list` | `Spite only has 'while' loops; there is no 'for'` | `each_<member>()`, `map_`/`filter_<member>()`, or `list.each(function)` with a function of yours; `while index < list.count()` when the body needs more |
 | `break`, `continue` | `Spite has no 'break': a loop stops in its own condition` | the loop's own condition: `while index < count and not found` |
 | `list.add(x)`, `list.pop()` | `List has no method 'add', which does not say where` | `append`/`prepend`, `remove_last()`/`remove_first()` |

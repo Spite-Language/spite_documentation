@@ -158,7 +158,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   children) are plain references: the compiler finds the back reference and frees the cycle.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
 - An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
-  with one; every other attribute has a real default, never `var pet: Pet = null` (`null` only goes where a `T?` is
+  with one; nothing may read it before the constructor gives it (no earlier line, called function, `this` or
+  default); every other attribute has a real default, never `var pet: Pet = null` (`null` only goes where a `T?` is
   wanted).
 - Files the program carries in its executable are preloaded, never read beside it at run time: `preload "assets"`
   (written like `load`, a folder or one file) and `var assets = Volume("assets")` beside the attributes, named by the
