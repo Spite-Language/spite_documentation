@@ -94,7 +94,8 @@ number, and one with `func Weight(from: Float): Weight?` from a decimal one. A c
 through the first one it declares, so a JSON text where that one expects a number is `null` even when a later
 conversion takes text. A class with
 neither is a compile error at the line that makes the reader, naming both forms. `BinaryReader` makes a class only
-the first way: bytes hold its attributes, never what a conversion takes.
+the first way: bytes hold its attributes, never what a conversion takes. A `Buffer` is the one class it reads without
+making it empty first: its bytes are written by value (below).
 
 ```gdscript title=json_converted/version.spite
 var major = 0
@@ -286,6 +287,7 @@ point fails, since bytes are left over.
 | `List<T>` | an array | its count as a count, then each element |
 | `Dictionary<Key, Value>` | an object, one key per entry; a number key as the number in quotes, an enum key as its name | its count as a count, then each key as its type is written (a `String`, or the whole number) and its value |
 | `T?` | `null`, or what `T` becomes | 1 byte, `0` for empty or `1` followed by what `T` becomes |
+| `Buffer` | | its byte count as a count, then its bytes |
 
 A **count** is an unsigned LEB128 varint: seven bits per byte, low bits first, the top bit set on every byte but
 the last, so a count below 128 is one byte.

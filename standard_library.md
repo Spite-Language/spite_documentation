@@ -85,8 +85,8 @@ Holding text inline changes only the allocation counts and the time, never what 
 with `+` ([values_and_types.md](values_and_types.md#string)). `==`, `!=`, `<` and `>` compare by content. `copy()` and
 `deep_copy()` both answer a new text with the same bytes.
 
-A `String` answers where it can: `text[index]` is the whole character that starts at byte `index`, a `String?`
-that is `null` past the end, before the start or inside a character of several bytes, and `index_of` answers an
+A `String` answers where it can: `text[index]` is the whole character that starts at byte `index`, a
+[`Rune?`](#rune) that is `null` past the end, before the start or inside a character of several bytes, and `index_of` answers an
 `Integer?`, `null` when the text is absent, and `slice(start, end)` answers a `String?`, `null` for a range outside
 the text or backwards, never a shorter text that would read like the one asked for. The one member that halts is
 `byte_at`, on a byte below 0 or past the end, since it answers a number and a `0` there reads like a real byte; it
@@ -136,7 +136,7 @@ ADA 3 null da d
 |---|---|---|
 | `length()`, `is_empty()` | `Integer`, `Boolean` | the length counts bytes of UTF-8 |
 | `slice(start, end)` | `String?` | the bytes from `start` up to `end`; `start == end` is `""`; `null` for a `start` below 0 or after `end`, or an `end` past the length |
-| `text[index]` | `String?` | the whole character that starts at byte `index`; `null` below 0, past the end, or inside a character of several bytes |
+| `text[index]` | `Rune?` | the whole character that starts at byte `index` ([below](#rune)); `null` below 0, past the end, or inside a character of several bytes |
 | `byte_at(index)` | `Integer` | the byte itself; below 0 or past the end halts, naming the index and the length |
 | `contains(text)`, `starts_with(text)`, `ends_with(text)` | `Boolean` | |
 | `index_of(text)` | `Integer?` | the byte where `text` first starts; `null` when it is absent |
@@ -151,6 +151,45 @@ ADA 3 null da d
 
 There is no `to_integer()` or `to_float()`: text becomes a number by its conversion, `var count: Integer? = text`
 ([values_and_types.md](values_and_types.md#numbers-are-classes)).
+
+### Rune
+
+One character is a `Rune`: `text[index]` answers the one that starts at byte `index`, and `rune.unicode` is its
+Unicode number, which is what a font or a parser looks a character up by. `Rune(233)` makes one, and a number outside
+Unicode (below 0, past `1114111`) or a surrogate (`55296` to `57343`, which UTF-8 never holds) halts, since it is no
+character. `rune.to_string()` is its character as text, so printing a rune or placing it in text, `"{rune}"`, writes the
+character; `==` compares the numbers. A rune is compared with a rune, so a test of one character names it once,
+`var slash = Rune(47)`, or reads its text, `letter.to_string() == "/"`.
+
+```gdscript title=rune_members/rune_members.spite entry
+var console = Console()
+var _e_acute = 233
+
+func RuneMembers() {
+    load "../spite_standard_library/windows"
+    var word = "café"
+    var index = 0
+    while index < word.length() {
+        var rune = word[index]
+        crash rune
+        var character = rune.to_string()
+        var width = character.length()
+        console.print(index, character, rune.unicode)
+        index = index + width
+    }
+    var accent = Rune(_e_acute)
+    var last = word[3]
+    crash last
+    console.print(accent, "is the last letter:", last == accent, "inside it:", word[4])
+}
+```
+```output
+0 c 99
+1 a 97
+2 f 102
+3 é 233
+é is the last letter: true inside it: null
+```
 
 ### Plural and singular
 
@@ -478,6 +517,8 @@ Everything else, `Process.run()` included, blocks the thread that calls it.
 | `folder_name` | `String` | the last piece of the path: `Directory("levels/forest").folder_name` is `forest` |
 | `entries()` | `List<Directory.Entry>?` | every folder and file inside it, as `Directory` and `File` values, each kind sorted by name with a merge sort (`n log n`), so a folder of thousands of files lists quickly; an empty folder gives an empty list, and `null` means it could not be listed |
 | `exists()` / `create()` | `Boolean` | |
+| `remove()` | `Boolean` | removes the folder when it is empty; `false` when it holds something, is missing, or the system refuses |
+| `remove_all()` | `Boolean` | removes everything inside it, then the folder; a link to a folder elsewhere is removed as a link, never followed; `false` when anything could not be removed or the folder is missing |
 | `move_to(path)` | `Boolean` | renames or moves it with everything inside ([below](#rename-or-move-a-file-or-folder)) |
 
 ```gdscript title=directory_tasks/directory_tasks.spite entry
@@ -1303,6 +1344,9 @@ program walking a message keeps its own, `var at = 0`, moved past what it read. 
 | `write_<number>_at(position, value)` | | replaces the bytes at `position`; a position whose bytes are not all in the buffer halts |
 | `read_buffer_at(position, count)` | `Buffer?` | a new buffer of the `count` bytes at `position`; `null` unless every byte is there; a negative `count` halts |
 | `append_buffer(other, start, count)` | | copies `count` bytes of `other`, from `start`, to the end (`other` may be the buffer itself); a negative `start` or `count`, or a run not inside `other`, halts |
+| `write_buffer_at(position, other, start, count)` | | replaces the `count` bytes at `position` with `count` bytes of `other` from `start` (`other` may be the buffer itself, the runs overlapping); a run not inside either buffer halts |
+| `append_string(text)` | | adds the text's UTF-8 bytes at the end |
+| `a == b` | `Boolean` | the same bytes, in the same order; `!=` is the opposite |
 | `read_string_at(position, count)` | `String?` | the text the `count` bytes at `position` spell, `null` when they are not valid UTF-8 |
 | `read_as_string()` | `String?` | the text all the bytes spell, `null` when they are not valid UTF-8 ([below](#bytes-base64-compression-hashes-and-passwords)) |
 
@@ -1359,8 +1403,8 @@ a read past the end is null: true
 
 A whole value (a class, a `type`, a list of them) is not read number by number: `BinaryReader<T>` reads it from a
 buffer and `BinaryWriter<T>` writes it into one, the way `JsonReader<T>` and `JsonWriter<T>` do with text
-([json.md](json.md#write-and-read-bytes)). Their format is Spite's own; a format someone else defined is read with
-the buffer's numbers, as above.
+([json.md](json.md#write-and-read-bytes)), and a `Buffer` attribute travels by value, as its byte count, then its
+bytes. Their format is Spite's own; a format someone else defined is read with the buffer's numbers, as above.
 
 ## Bytes: base64, compression, hashes and passwords
 

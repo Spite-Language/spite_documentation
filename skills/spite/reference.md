@@ -250,7 +250,11 @@ rewritten.
 - Numbers: `Integer` (32 bit, the default), `Long`, `Tiny`, `Short`, `Byte`, `UnsignedShort`, `UnsignedInteger`,
   `UnsignedLong`, `Float` (the default for decimals), `Double`. `Boolean`. `String` (double quotes only; escapes
   `\n`, `\t`, `\r`, `\\`, `\"` and `\{` for a literal brace, in any order: `"\\\{"` is a backslash and a brace; a
-  text inside a hole keeps its own escapes and holes).
+  text inside a hole keeps its own escapes and holes). One character is a `Rune`: `text[index]` is the `Rune?` starting
+  at byte `index` (`null` out of range or inside a character), `rune.unicode` its Unicode number (`"é"` is 233),
+  `Rune(233)` makes one (halting outside Unicode or on a surrogate), `rune.to_string()` its text, which is how it
+  prints and sits in `"{rune}"`; `==` compares runes, so a one-character test is `letter == slash` with
+  `var slash = Rune(47)`, or `letter.to_string() == "/"`, never `letter == "/"`.
 - No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer = "12"` reads
   it while compiling. A value meeting another class is cast through that class's conversion, `func Color(from: String): Color?`
   declared in `Color`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = text` calls
@@ -848,7 +852,8 @@ rewritten.
 a class prints once it declares `func to_string(): String`, and `debug` shows any value's state, a class as
 `Name { attribute: value }`, through the `to_debug()` every value has), `File(path)` (a path is a `Path`, and text casts into it wherever one is wanted: a literal needs nothing, `File("data.txt")`, and `File("")` is a compile error; computed text is a `Path?` narrowed first, `var level: Path? = "{folder}/forest.txt"`, `crash level`, `File(level)`, since empty text and text holding a zero byte are not paths; `Directory`, `File` and `Process.working_directory` take one, and `path.name`, `extension`, `parent`, `is_rooted` and `joined(other)` ask it; `GitPath` is a pinned place in a repository, kept apart so it cannot reach `File`: `var engine: GitPath = "github.com/example/engine@a3f2c91/core"`, with `repository`, `commit`, `folder` (empty for none), `is_local`, `is_remote`, `is_a_url`, and `null` for a commit that is not 7 to 40 lowercase hexadecimal digits, no repository, or a folder outside it; `file_name`, `read_as_string(): String?`, `write_string(text)`,
 `append_string(text)`, `byte_count()`, `last_written()`, `exists`, `remove`, `move_to(path)`: renames or moves, `false` when something is already there; bytes are a `Buffer`: `read_as_buffer(): Buffer?` (the whole file; read or mapped is the compiler's choice), `read_buffer_at(position, count): Buffer?` for a file too big for one buffer, `write_buffer(buffer)`, `append_buffer(buffer): Long?` where they start), `Directory(path)` (`path`, `folder_name`, `entries(): List<Directory.Entry>?` (`null` when the folder cannot be opened; each entry a `Directory` or a `File`, switched on;
-one kind is `entries.filter_files()` or `filter_directories()`, never a helper of its own), `exists`, `create`, `move_to(path)`),
+one kind is `entries.filter_files()` or `filter_directories()`, never a helper of its own), `exists`, `create`, `remove()` (an empty folder), `remove_all()` (everything inside, then the folder; a link inside is
+removed, never followed; both `false` when something stays), `move_to(path)`),
 `Process(command, arguments)` (`run(): Integer?`, `null` when the command could not start; `read_output_as_string(): String?` or `read_output_as_buffer(): Buffer?`, `null` before a run: standard output only, `with_errors = true` adds the error stream, `keeps_errors_apart = true` reads it apart through `read_errors_as_string()`; `time_limit = Duration(...)` stops the child past it, `run()` answering `null` and `was_stopped` true; each argument reaches the child whole, `-key=value with spaces` as `-key="value with spaces"` on Windows; `working_directory` and `environment_variables["NAME"] = "value"` set for the child alone), `Program()` (`exit(code)`, `sleep(duration)`,
 `environment(name): String?`, `executable_path(): String?`, `working_directory(): String?`). The library halts only on the program's own mistakes (an index outside a text, a negative count); what the outside world does is an answer (`T?` or `Boolean`): a file, a folder, a lock, a process, a line of input that is not UTF-8, the system refusing a call, random bytes not given (`SecureRandom().random_buffer(count): Buffer?`), the machine's zone (`zones.system(): TimeZone?`), and the program decides with `fallback` or `crash`. `Console` is a singleton: `Console()` is the same instance everywhere, bound once
 as `var console = Console()`.
@@ -887,7 +892,10 @@ no reading position: every read is `read_<number>_at(position): <number>?` and a
 (`tiny`, `short`, `unsigned_short`, `integer`, `unsigned_integer`, `long`,
 `unsigned_long`, `float`, `double`, each with its order; one byte is `buffer[position]`), `append_<number>(value)`,
 `write_<number>_at(position, value)` (halts outside), `read_buffer_at(position, count): Buffer?`,
-`append_buffer(other, start, count)`, `read_string_at(position, count): String?` and `read_as_string(): String?`. Prove `_at` reads
+`append_buffer(other, start, count)`, `write_buffer_at(position, other, start, count)` (halts outside; overlapping runs
+of one buffer are safe), `append_string(text)` (its UTF-8 bytes), `read_string_at(position, count): String?` and
+`read_as_string(): String?`; `a == b` compares bytes, and a `Buffer` attribute goes through `BinaryWriter` and
+`BinaryReader` by value (its count, then its bytes). Prove `_at` reads
 instead of narrowing each: `crash body + 13 <= bytes.count()` proves every read inside those 13 bytes, a loop `while position + 15 <
 bytes.count()` stepping `position = position + 16` reads each record with no test, and `crash height * stride <=
 pixels.count()` proves `pixels[row * stride + column]` inside `while row < height` and `while column < stride`.
@@ -1007,7 +1015,7 @@ offset`, `matrix.scale = factor`, `matrix.rotation = rotation`),
 `set_perspective(field_of_view, aspect, near, far)` (Vulkan: y down, depth 0 to 1), `set_look_at`,
 `rotation.set_axis_angle(axis, angle)`, `set_euler(angles, 'xyz')`; `a * b` applies `b` first;
 `matrix.transform_point(point)`, `rotation.rotate(vector)`, `inverse()` a `Matrix4?`. Matrices are column-major,
-parts `column_0_row_0` to `column_3_row_3`. Each answer is a new object, so one step per line:
+parts `column_0_row_0` to `column_3_row_3`, and `matrix.set_at(column, row, value)` sets one (outside 0 to 3 halts). Each answer is a new object, so one step per line:
 `var moved = velocity.scaled(delta)` then `position = position + moved`. Culling and picking: `AxisAlignedBox(lowest,
 highest)`, `Plane()` with `set_point_normal`, `Frustum()` set with `frustum.from_view_projection = matrix` then
 `intersects_box`/`intersects_sphere`, and `Ray(origin, direction)` whose `hit_plane`, `hit_box` and `hit_triangle`
@@ -1117,7 +1125,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `Parallel(...)`, `task.wait()`, `await task` | `'Parallel' is not part of Spite: the compiler decides what runs at once, so call the function itself` | call the function itself |
 | `new Date()`, `DateTime.Now`, `datetime.now()` | | `clock.now()`, an `Instant`; shown through a zone from `TimeZones()`, never stored as a local reading |
 | `timestamp + 86400000` for tomorrow | *silent*: wrong across a daylight-saving change | `instant.to_date_time_in(zone) + Period(1, 'days')`, then `tomorrow.to_instant_in(zone, 'compatible')` |
-| `text[0].upper_case()` | `'text[0]' may be missing, since every '[ ]' answers a 'T?'` | `crash text[0]` first: `text[index]` is the whole character at that byte, `null` out of range or inside one |
+| `text[0].to_string()` | `'text[0]' may be missing, since every '[ ]' answers a 'T?'` | `crash text[0]` first: `text[index]` is the `Rune` of the character at that byte, `null` out of range or inside one |
 | `// comment`, `/* comment */` | `Spite has no '//' or '/* */' comments` | nothing, or `# docs/page.md#section` on its own line outside a function |
 | `;` at the end of a line | `';' is not something Spite reads` | nothing |
 | `var memory = Memory()`, an allocator | `unknown type 'Memory'` | nothing: the compiler places memory; a container of your own is written over a `List` or a `Buffer` ([memory.md](https://github.com/Spite-Language/spite_documentation/blob/master/memory.md)) |

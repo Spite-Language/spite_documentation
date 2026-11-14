@@ -489,6 +489,11 @@ than joined to it with `+`: `"hello {name}"`, where `{ }` holds one value of any
 `Boolean`, and enum format themselves) and `\{` is a brace meant literally. Two values still join with `+`, and
 joining written text with `+` is an error naming the form above. `==`/`!=`/`<`/`>` compare by content.
 
+One character of it is a `Rune`, not a shorter text: `text[index]` answers the `Rune?` that starts at byte `index`,
+`rune.unicode` is its Unicode number (`"é"` is 233), `Rune(233)` makes one, and `rune.to_string()` is the character as
+text, which is also how a rune prints and how it is placed in text
+([standard_library.md](standard_library.md#rune)).
+
 ### Text escapes
 
 A backslash writes a character a text cannot hold as itself: `\n` (line break), `\t` (tab), `\r` (carriage
