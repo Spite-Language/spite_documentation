@@ -36,7 +36,8 @@ func render(): Anything? {
     view_3.append_child(health_bar_5)
     view_3.append_children(buttons)
     var badge_7 = render_badge()
-    view_3.append_child(badge_7)
+    var children_7: List<Anything?> = [badge_7]
+    view_3.append_children(children_7)
     window_2.append_child(view_3)
     return window_2
 }
@@ -69,19 +70,24 @@ comes from declares `append_child` and `append_children`; Spite adds neither.
 
 ## An expression as a child
 
-`{expression}` between tags is added to its parent:
+`{expression}` between tags is always added as children, with `parent.append_children(...)`, even when it is one
+value (D2302):
 
-- a `List` is added whole: `parent.append_children(expression)`;
-- anything else with `parent.append_child(expression)`. A name is passed as it is; any other expression is held in
-  a local first (named for the function it calls, `badge_7` for `render_badge()`), since a call is never an argument.
-  A child that answers `Anything?` and is `null` is passed as it is and the library skips it, which is how a child
-  is shown only sometimes: a `render_badge()` that answers `null` when there is no badge.
+- a `List` is passed as it is: `parent.append_children(buttons)`;
+- anything else is passed as a one-item list, held in a local first since a construction is never an argument:
+  `var children_7: List<Anything?> = [badge_7]`, then `parent.append_children(children_7)`. A name is passed as it
+  is; any other expression is held in a local before that (named for the function it calls, `badge_7` for
+  `render_badge()`), since a call is never an argument. A child that answers `Anything?` and is `null` goes in its
+  one-item list and the library skips it, which is how a child is shown only sometimes: a `render_badge()` that
+  answers `null` when there is no badge. So the library's `append_children` takes a `List<Anything?>`.
 - A `Boolean` is an error: there is no `condition && <Tag/>`.
 
-The compiler reads the child's type from what the file declares, since it builds the statements before any name is
-resolved: a literal, a comparison, a parameter, a local or attribute with a declared type or a value it can read, and
-a call of a function of the same class. A list it cannot see is added with `append_child`, and the library's own
-check of what reaches a child refuses it; give it a local with its type (`var shown: List<Anything> = ...`).
+The compiler tells a list from one value by what the file declares, since it builds the statements before any name
+is resolved: a literal, a comparison, a parameter, a local or attribute with a declared type or a value it can read,
+and a call of a function of the same class. A list it cannot see is wrapped like one value, which is never silent:
+a list literal takes its values one by one, so the ordinary error refuses it at the child's line (`this call passes a
+whole List<Anything?>, but the last parameter is written with '...', so it takes the values one by one`); give the
+list a local with its type (`var shown: List<Anything?> = ...`).
 
 ## Text between tags
 

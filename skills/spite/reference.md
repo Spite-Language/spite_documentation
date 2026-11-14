@@ -771,10 +771,13 @@ rewritten.
 - `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
   `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error at the
   tag's line.
-- `{expression}` as a child: a `List` is `append_children(list)`, anything else `append_child(value)`, a `null` child
-  is passed and skipped by the library (a conditional child is a `render_part()` answering `null`), a `Boolean` is an
-  error. The type is read from what the file declares (literals, comparisons, typed or readable locals, parameters,
-  attributes, calls of this class's functions); a list it cannot see goes to `append_child`, so give it a typed local.
+- `{expression}` as a child is always children: a `List` is `append_children(list)` as it is, anything else goes in
+  a one-item list first (`var children_7: List<Anything?> = [badge_7]`, `append_children(children_7)`), so the
+  library's `append_children` takes `List<Anything?>`. A `null` child is passed in its list and skipped by the
+  library (a conditional child is a `render_part()` answering `null`); a `Boolean` is an error. A list is told from
+  one value by what the file declares (literals, comparisons, typed or readable locals, parameters, attributes, calls
+  of this class's functions); a list it cannot see is wrapped and refused by the ordinary type error, so give it a
+  typed local.
 - Text between tags is the `content` attribute, spaces collapsed: `<Label>{count} items</Label>` is
   `label.content = "{count} items"`. No `{` or `<` in text.
 - A lowercase tag `<health_bar filled={health} missing={missing}/>` calls `render_health_bar(health, missing)` of the
