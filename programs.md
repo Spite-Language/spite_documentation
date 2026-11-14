@@ -366,7 +366,6 @@ var console = Console()
 var assets = Volume("assets")
 
 func Game() {
-    load "../spite_standard_library/windows"
     preload "assets"
     var level = assets.file("levels/first.txt")
     var text = level.read_as_string()
