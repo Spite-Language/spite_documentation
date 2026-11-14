@@ -114,7 +114,9 @@ What the compiler fixes for you, and what it leaves as an error:
   is hoisted to a `fallback` above its `if` when one choice fits. A copy made only to narrow goes and its uses name
   what it copied. Statements after a `return` go.
 - **Unused things with no effect.** An unread local or attribute, or a `load` nothing names, whose value and writes do
-  nothing is removed with every write; one a call makes or writes stays an error.
+  nothing is removed with every write; one a call makes or writes stays an error. A namespace of the loaded folder
+  named anywhere (`Test(Pkg.Tests)`) counts as naming it, and so does a name that starts inside it and does not resolve
+  ([packages.md](packages.md#a-loaded-package-is-checked-whole)).
 - **Loads.** A `load` of the standard library the program is compiled with is removed, since every program has it
   ([programs.md](programs.md#the-standard-library-needs-no-load)).
 - **Names.** A local or parameter with one right spelling is renamed, and a keyword one letter off is corrected. A

@@ -366,6 +366,16 @@ A package that wants something only the program knows, the folder its assets liv
 program declares in its own `build.spite` (`build.base_folder()`). That is an error when the program does not
 declare it, unless the package gives a default behind `Build.functions["base_folder"]`.
 
+### A loaded package is checked whole
+
+Every file of a package the program loads is read and checked by every build and `--check`, whether the program
+reaches it or not, so a mistake in a function nothing calls, or in a file of the package's `tests/` that nothing
+names, is an error. The standard library is the exception: it is read as far as the program uses it.
+
+A `load` nothing in the program names is removed with a `fixed:` line ([style.md](style.md#the-compiler-fixes-what-has-one-fix)).
+Naming a class of the package, an enum through its class, or one of its namespaces (`Test(Pkg.Tests)`) is a use,
+and so is a name that starts inside the package and does not resolve (`Pkg.Missing`): the load stays and the
+error names that name.
 
 ## Why a dependency is a line in `load`
 
