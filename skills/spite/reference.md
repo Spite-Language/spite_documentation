@@ -222,7 +222,8 @@ func is_alive(): Boolean {
 ## The compiler fixes: what has one fix
 
 A mistake with exactly one fix is not an error: the compiler writes the fix into your file, prints
-`path:line: fixed: ...` and compiles the fixed file, so read the file back before editing it again. It fixes:
+`path:line: fixed: ...` and compiles the fixed file, so read the file back before editing it again. Each `fixed:`
+line is a change it made: two fixes in one statement are both made. It fixes:
 
 - declarations out of the file's order, and a union or `type` that two classes of a namespace declare alike (moved to
   the namespace's entry class, see Values);
