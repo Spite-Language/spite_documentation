@@ -835,10 +835,12 @@ have it moved to the entry class of the namespace holding both, the class named 
 `Shelter.Pet` passes where a `Groomer.Pet` is wanted when every member of it is a member of `Groomer.Pet`, at no cost.
 A caller that only hands a value on passes the member itself (`groomer.groom(cat)`) and declares nothing. Copies
 with the same members are one type inside generics too: a `List<Shelter.Pet>` goes where a `List<Groomer.Pet>` is
-wanted, and a function taking one copy where a function taking the other is. Inside a generic the union given may not have fewer
-members than the one wanted: a `List<Shelter.Pet>` with fewer members than `Groomer.Pet` is refused where a
-`List<Groomer.Pet>` is wanted, since the receiver could put into it a member the smaller union lacks (`... has fewer
-members than Groomer.Pet, and the receiver could put in it a member Shelter.Pet lacks`). The class that declares a
+wanted, and a function taking one copy where a function taking the other is. A `List<Shelter.Pet>` with fewer
+members than `Groomer.Pet` is cast where a `List<Groomer.Pet>` is wanted, to a new list of the same elements
+([collections.md](collections.md#a-list-is-cast-to-a-wider-list)). Inside any other generic the union given may not
+have fewer members than the one wanted: a `Dictionary<String, Shelter.Pet>` is refused where a
+`Dictionary<String, Groomer.Pet>` is wanted, since the receiver could put into it a member the smaller union lacks
+(`... has fewer members than Groomer.Pet, and the receiver could put in it a member Shelter.Pet lacks`). The class that declares a
 union may give it conversions, named by the union alone (`func Job(from: String): Job?` beside `union Job`), and a
 value of that type meeting the union goes through it.
 

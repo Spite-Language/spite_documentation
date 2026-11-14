@@ -61,6 +61,23 @@ compiler's to decide.
 that way, and the error says to ask with `any(f)` or `find_by_<member>` instead (and `find_index_by_<member>` for
 its place, [below](#member-templates-loops-you-do-not-write)).
 
+### A list is cast to a wider list
+
+A `List<Health>` goes where a `List<Anything>` is wanted, and so does any list whose element fits the element
+wanted: a class where a `type` or a union it is a member of is wanted, a union where a union holding all its members
+is, a whole number where a wider one is (`List<Integer>` into `List<Long>`), a `T` where a `T?` is, and a list of
+such lists. It is the same automatic cast every value gets where another type is wanted: the place receives a new
+list holding each element cast, in order. What the receiver does to that list stays in it, so an element it adds or
+removes never reaches the list it was cast from, and the cast list holds only what the given one held when it was
+cast. A list that only needs reading is still cast, one pass over its elements. A list of a narrower element, a
+decimal where a whole number is wanted or a `T?` where a `T` is, is refused as before.
+
+```gdscript
+func show(items: List<Anything>): Integer {
+    return items.count()
+}
+```
+
 A list has the same members whatever it holds. Bytes from a file or a socket, and the numbers and text laid out in
 them, are a `Buffer`, which still reads like a list of bytes and adds what bytes need, and `List<Byte>` is an error,
 written or made ([standard_library.md](standard_library.md#bytes-are-a-buffer)).
