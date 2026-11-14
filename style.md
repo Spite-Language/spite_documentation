@@ -297,8 +297,10 @@ never reads is the error above even when another class's `label` is read everywh
 Unused means unread anywhere in the source, not unreachable. A function nobody calls is not an error, private or
 public: its callers may be code this compile cannot see, and the production build drops it anyway
 ([compiler.md](compiler.md#development-builds-and-tree-shaking)). It still reads what it names, so what it
-reads counts as used; since such a body is not compiled, its `x.name` counts for every class with a `name`, and
-so does one in a function a codegen or `Build` test cuts a branch from. A few attributes are never checked, because the compiler reads them itself: a number
+reads counts as used. Every build compiles and checks it, so its `other.name` reads the class of `other`, as a
+called one does. Only a body the compiler does not build (in a generic class or the standard library, or one that
+takes a function, a shape or a member a walk hands it) counts its `x.name` for every class with a `name`, and so does one in a function a codegen
+or `Build` test cuts a branch from. A few attributes are never checked, because the compiler reads them itself: a number
 class's or `String`'s storage, and `Build` and `Environment` settings.
 
 **A parameter that needs no `_`** is one whose signature is dictated from outside: the parameter of an operator function

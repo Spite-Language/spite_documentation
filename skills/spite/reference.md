@@ -189,7 +189,7 @@ func is_alive(): Boolean {
   a parameter only that branch reads is not unused in the other instantiations.
 - An attribute nothing reads is an error too (`the attribute 'world' is never read: remove it`). A private `_name` attribute is checked too.
   Assigning it is not reading it, and a read counts only for its own class: `tag.label` reads `Tag.label`, not
-  the entry's `label`. A public attribute of a folder the program `load`s is not checked, since
+  the entry's `label`, in a function nobody calls too. A public attribute of a folder the program `load`s is not checked, since
   code the program does not load may read it, except a singleton binding (`var world = World()`), which is an
   error unread anywhere: a class that needs the singleton binds it itself. A template over a `Spite.Attribute` counts only when it reads the value
   (`x.attributes[attribute]`). An attribute kept as a marker that a walk inspects through `attribute.name` or
