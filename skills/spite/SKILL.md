@@ -175,8 +175,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
   to `Byte` that keeps a list of it).
 - One character of a text is a `Rune`, not a `String`: `text[index]` answers a `Rune?` (byte index; `null` inside a
-  character), `rune.unicode` is its number, `Rune(233)` makes one, and `rune.to_string()` is its text. Compare it with a
-  rune (`letter == slash`, `var slash = Rune(47)`) or through its text, never `letter == "/"`.
+  character), `rune.unicode` is its number, `Rune(233)` makes one, and `rune.to_string()` is its text. `letter == "/"`
+  compares as text: `==` becomes `equals`, and the rune becomes its text to meet the text.
 - Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
   entry class is never generic; put what needs `generic` lines in a class it makes.
 - A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class

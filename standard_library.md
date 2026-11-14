@@ -158,8 +158,9 @@ One character is a `Rune`: `text[index]` answers the one that starts at byte `in
 Unicode number, which is what a font or a parser looks a character up by. `Rune(233)` makes one, and a number outside
 Unicode (below 0, past `1114111`) or a surrogate (`55296` to `57343`, which UTF-8 never holds) halts, since it is no
 character. `rune.to_string()` is its character as text, so printing a rune or placing it in text, `"{rune}"`, writes the
-character; `==` compares the numbers. A rune is compared with a rune, so a test of one character names it once,
-`var slash = Rune(47)`, or reads its text, `letter.to_string() == "/"`.
+character; `==` compares the numbers. A rune compared with a text becomes its text, the cast every value with a
+`to_string()` gets where text is wanted, so a test of one character is written `letter == "/"` (it compares
+`letter.to_string()` with `"/"`), and a `Rune?` such as `text[index]` compares the same way, `false` when it is `null`.
 
 ```gdscript title=rune_members/rune_members.spite entry
 var console = Console()

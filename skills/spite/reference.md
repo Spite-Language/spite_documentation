@@ -253,8 +253,8 @@ rewritten.
   text inside a hole keeps its own escapes and holes). One character is a `Rune`: `text[index]` is the `Rune?` starting
   at byte `index` (`null` out of range or inside a character), `rune.unicode` its Unicode number (`"é"` is 233),
   `Rune(233)` makes one (halting outside Unicode or on a surrogate), `rune.to_string()` its text, which is how it
-  prints and sits in `"{rune}"`; `==` compares runes, so a one-character test is `letter == slash` with
-  `var slash = Rune(47)`, or `letter.to_string() == "/"`, never `letter == "/"`.
+  prints and sits in `"{rune}"`; `==` compares runes, and a rune compared with a text becomes its text, so a
+  one-character test is `letter == "/"` (as `letter.to_string() == "/"`, also when `letter` is a `Rune?`).
 - No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer = "12"` reads
   it while compiling. A value meeting another class is cast through that class's conversion, `func Color(from: String): Color?`
   declared in `Color`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = text` calls
