@@ -820,7 +820,9 @@ rewritten.
   `var text_1 = Text()`, `text_1.content = "Face"`, `view_1.append_child(text_1)`, `return view_1`: leaves first,
   attributes in the order written, then children. A tag never takes constructor arguments, and is never an argument.
 - `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
-  `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error at the
+  `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error. An
+  error about one attribute (through a setter or a `render_` parameter) names the attribute's line, as an error about
+  one argument of a call written over several lines names that argument's line; one about the whole tag names the
   tag's line.
 - `{expression}` as a child is always children: a `List` is `append_children(list)` as it is, anything else goes in
   a one-item list first (`var children_7: List<Anything?> = [badge_7]`, `append_children(children_7)`), so the
