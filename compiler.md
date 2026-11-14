@@ -322,7 +322,9 @@ A production build compiles them after the functions the program reaches and the
 the executable is exactly the one the reached functions make: a class only they make, a copy function, a shape they
 fill or the order objects are numbered in never reaches it. The rules a function is built against refuse in every
 function; the proofs that need the whole program (that a value is present, that an attribute is read) prove the
-reached functions. An inspectable build keeps the unreached functions in the executable instead.
+reached functions. An inspectable build keeps the unreached functions in the executable instead. A function that takes
+a reflection object a walk or a constant argument hands it (a `Spite.Class`, a `Spite.Namespace`, a declaration) is
+checked in the copies made for what it is handed, never on its own.
 
 ## Counting memory: `--debug-memory`
 

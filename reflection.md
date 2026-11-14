@@ -216,7 +216,11 @@ run time is a real object, and `call()` halts, naming what it found, when the in
 declares the function, or when an argument is missing, of another type than the parameter's (a number, a `String`,
 an enum, an object, a nullable one, a `type` or a union), `null` for a parameter that is not nullable, or one the
 function does not have (the first extra key
-in the order they were filled, and the names it does take, or "it takes no arguments"). `call.arguments` is a
+in the order they were filled, and the names it does take, or "it takes no arguments"). `call.call()` answers what
+the function answers: typed from the declaration when the function is named in the code (`var worth = call.call()` is
+an `Integer` for `func worth(): Integer`), and an `Anything?` when the call is known only at run time, the value itself
+(a number keeps its class) or `null` for a function that answers nothing. An answer of a kind not told apart while
+the program runs (a function value or a shape) halts `call()`, naming the function. `call.arguments` is a
 `Dictionary<String, Anything?>`, so `call.arguments["count"] = null` fills the argument with `null`: a nullable
 parameter (`count: Integer?`, `badge: Badge?`, `word: String?`) takes it, and `count: Integer` halts that it is not
 an Integer. A parameter that takes a function value is given the function bound to its object,
@@ -646,7 +650,7 @@ calls it when it takes nothing and answers nothing, and halts otherwise. A `null
 |---|---|---|
 | `Spite.Call(declaration, instance)` | a call of a `Spite.FunctionDeclaration` on an instance of its class, nothing run yet | `Spite.Call(MoveSystem.functions["run_each"], system)` |
 | `.arguments` | its arguments by name, a `Dictionary<String, Anything?>`, each written once before the call runs; `null` fills a nullable parameter | `call.arguments["position"] = position` |
-| `call()` | runs it, answering what the function answers | `call.call()` |
+| `call()` | runs it, answering what the function answers: its own type when the function is named in the code, `Anything?` when known only at run time (`null` when it answers nothing) | `var shown = call.call()` |
 
 ### `Spite.Argument`
 
@@ -838,14 +842,17 @@ reflection on it is ordinary code that costs nothing at run time:
   `member()`. A filter or a member template over a constant list is a constant list.
 - **A function handed a constant is compiled once for it.** Inside that copy the parameter is the constant
   itself, so `attribute.class` is a type, `attribute.name` is text known while compiling, and
-  `monster.attributes[attribute]` is a plain read of the field.
+  `monster.attributes[attribute]` is a plain read of the field. That holds for a call with a class or a namespace
+  written as the argument, on this object or another (`window.register_namespace(Theme)`, `made_by(Parts.Wheel)`), and
+  for a walked declaration handed on to another function (`describe(attribute, "declared")` inside a walk over
+  attributes): the callee gets its own copy for that value, so a walk inside it folds as well.
 - **A test in a copy folds.** `attribute.class == List<Integer>` asks for the whole class, its generic arguments
   included, so it is `false` for a `List<String>`, while `attribute.class == List` is any list; `attribute.name ==
   "health"` folds as well. An `if` on either keeps only the branch taken, and the code of the other is never
   compiled, so a branch may do what only its fields' class can (`field.value.join(",")` for a list). `$T ==
   List<Integer>` in a generic class compares the same way.
 - **A constant class is a type and makes its own instances**: `part()` makes one, `Column<part>()` a column of
-  them. A class known only at run time is not: a parameter, local or attribute holding a `Spite.Class` written
+  them, and `value.class == part` narrows `value` to that class, so `value.render()` is a call of its function. A class known only at run time is not: a parameter, local or attribute holding a `Spite.Class` written
   where a type is (`List<kind>`, or `func made(kind: Spite.Class): kind`) is `'kind' is not a class known while
   compiling, so it cannot be a type here`.
 - **Asking a constant list is a constant too**: `Part.classes.is_empty()` and `Part.namespaces.is_empty()` fold, as
@@ -913,7 +920,9 @@ Wheel Wheel { size: 3 }
 ```
 
 Every folder named `part` anywhere is found by this filter over every namespace, with nothing registered. The filter
-runs when the program does, so `make` is compiled once and `part()` makes whichever class it is handed. Walked from a
+runs when the program does, so `make` is compiled once and `part()` makes whichever class it is handed. Walked with
+no filter, `Spite.Namespace.instances.each(make_every_class)` is a copy of `make_every_class` per namespace, and the
+walk inside each folds per class. Walked from a
 namespace the code names, `Part.classes.each(make)`, `make` is compiled once for each class instead
 (an error inside a copy names it, as `make_over_Part_Axle`), and `part()` is `Part.Axle()` in one copy and
 `Part.Wheel()` in the other. A copy is not one of the class's `.functions`; the function itself is compiled only
@@ -1015,7 +1024,21 @@ Boolean
 
 `Spite.Class.instances` is every class of the program, its own folder and every package it loads but not the
 standard library and not a generic class, in the order of their dotted names, because a class is an instance of
-`Spite.Class`. Walking a namespace's
+`Spite.Class`. No code can add a class while the program runs, so the list is a constant: a walk over it,
+`Spite.Class.instances.each(bind)`, is one copy of `bind` per class, in which the class is a type, and a library finds
+the components of an application with no registration line:
+
+```gdscript
+func bind(part: Spite.Class) {
+    if part.has_function("render") {
+        var binding = Binding<part>()
+        binding.mount()
+    }
+}
+```
+
+The `if` folds in each copy, so a class without `render` leaves an empty copy and `Binding<part>` is made only for the
+classes that have it. Walking a namespace's
 `.classes` the same way is how the library's `Test` class finds the tests of a namespace without being told about them ([testing.md](testing.md)). Memory and threads are not
 reflected: a program cannot ask where a value lives, how many objects exist or which are alive, so nothing it
 could watch ever stands in the way of how the compiler places them.

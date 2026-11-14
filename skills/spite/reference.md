@@ -676,13 +676,21 @@ rewritten.
   may leave the word out of its name (`describe_taken`). `Spite.Attribute` and `Spite.Function` (bound to an object, with
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
+  So are `Spite.Class.instances.each(bind)` (one copy per class of the program, so a library finds an application's
+  components with `if part.has_function("render") { Binding<part>() }` and no registration line) and
+  `Spite.Namespace.instances.each(walk)` (a copy per namespace; `namespace.classes.each(bind)` inside folds per class).
+  A class or namespace written as an argument makes the callee's copy for it, on any object:
+  `window.register_namespace(Theme)` folds the walk inside. In a copy, `part` is a type, `part()` makes one, and
+  `value.class == part` narrows `value` (`value.render()`). A walked declaration handed to another function,
+  `describe(attribute, "x")`, makes that function's copy for it. A filter over such a list runs at run time.
   A `Spite.Class` known only at run time, called with no arguments (`part()`, an attribute `kind()`, `thing.class()`,
   `argument.class()`), makes an object of it typed `Anything`.
 - A call built before it runs: `var call = Spite.Call(MoveSystem.functions["run_each"], system)` (a declaration and
   an instance of its class, the only way to build one), `call.arguments["position"] = value`, `call.call()`; known
   while compiling it is the direct call. Known only at run time, `call()` halts on an argument missing, of another
   type, or not taken; `call.arguments["count"] = null` is a filled argument, taken by `count: Integer?` and halting
-  for `count: Integer`.
+  for `count: Integer`. `call.call()` answers the function's answer: its declared type when known while compiling,
+  an `Anything?` when known only at run time (`null` for a function that answers nothing).
   There is no `call_with`.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,

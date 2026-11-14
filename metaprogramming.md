@@ -575,11 +575,17 @@ is wanted. `Phase.values.each(run)` calls `run` once for each value. A walker ta
 goes in attributes. It may be a function of another object, `Shop.Tools.classes.each(registry.add)`: the copies are
 then made in that object's class and called on it. A parameter typed `Spite.Namespace` is an instance of one, so `class.namespace.classes` and
 `Spite.Namespace.instances` are the lists to walk ([reflection.md](reflection.md#known-while-compiling)).
+`Spite.Class.instances.each(bind)` walks every class of the program the same way, one copy per class, and
+`Spite.Namespace.instances.each(walk)` one copy of `walk` per namespace, inside which `namespace.classes.each(bind)` is
+again a copy per class. A namespace or a class written as an argument is a constant too: `window.register_namespace(Theme)`
+with `func register_namespace(namespace: Spite.Namespace) { namespace.classes.each(register) }` makes a copy of
+`register_namespace` for `Theme`, and its walk is a copy of `register` per class of `Theme`. Inside a copy
+`value.class == part` narrows `value` to the walked class.
 
 In a copy, `part.has_function("name")` and `part.function_waits("name")` are decided for that class, so the branch
 that does not apply is never compiled and may call what the class lacks. A namespace the program has no folder for is
-an unknown name, like any other. Inside a copy, a call of a function of the class with a constant argument is compiled
-once for that argument, up to eight calls deep, so a check split into helper functions decides as one written in a single
+an unknown name, like any other. Inside a copy, a call of a function with a constant argument (a walked attribute or function declaration
+included) is compiled once for that argument, up to eight calls deep, so a check split into helper functions decides as one written in a single
 function does; a ninth call deeper is left to the run, and a `crash` there halts when the program does. A walk over an
 empty list calls nothing.
 
