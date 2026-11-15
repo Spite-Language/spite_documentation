@@ -136,7 +136,9 @@ same items, so a change made to an item shows through both.
 An attribute typed as a union or a `type` is deep copied as the class it holds when the program runs, so a `Cargo`
 holding a `Crate` gets a new `Crate`, and a union or `type` value answers `deep_copy()` itself. A `String`, a number,
 an enum value and a singleton are shared by the copy, since nothing can change them through it. A class that
-declares its own `func deep_copy()` is copied through that function wherever a deep copy reaches it.
+declares its own `func deep_copy()` is copied through that function wherever a deep copy reaches it. An object that
+holds a `ForeignCallback` is never copied: a copy or deep copy that would reach one is a compile error
+([foreign libraries](foreign_libraries.md#for-as-long-as-the-program-keeps-it-foreigncallback)).
 
 ## Components in lists, handed to a system
 

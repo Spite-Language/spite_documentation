@@ -262,12 +262,26 @@ func drop() {
 This holds when the callback is made from a function of the object itself (`report` or `this.report`) and kept
 only in its attributes, directly or through the local it was made in, and nothing reads it but `.address` and
 `.context`. A `ForeignCallback` the program also hands anywhere else (a list, another object, a return) keeps its
-owner alive as before, and `--debug-memory` shows the two as leaked until one lets go. A `copy()` of the object
-shares the callback; if C calls it after the original is freed, the program stops naming the function and the
-line that made the `ForeignCallback`. An attribute holding a `ForeignCallback` counts as read, since
+owner alive as before, and `--debug-memory` shows the two as leaked until one lets go. An attribute holding a
+`ForeignCallback` counts as read, since
 keeping it is what it is for. After one is dropped, a late call from C stops the program with a message naming the
 function and the line that made the `ForeignCallback`, so the owner's `drop()` must still tell C to stop first: the
 check only makes forgetting loud.
+
+**An owner is never copied.** C holds one registration, made by one object, so a `copy()` or `deep_copy()` of an
+object that holds a `ForeignCallback` is a compile error at the call: a copy would share the registration, and a
+deep copy would make a second callback C was never given. `copy()` is refused when the class's own attributes
+hold one (`ForeignCallback`, `ForeignCallback?`, or as a type argument, `List<ForeignCallback>`); `deep_copy()`
+also when any class it would reach through attributes, lists, unions or a `type` holds one, stopping at a class
+that declares its own `deep_copy()`. The words name the class and the attribute; make another object, which
+registers its own callback, instead:
+
+```text
+error: a copy of Listener would share the C registration in '_ticking': C calls back the one object that registered it, so make another Listener instead of copying this one
+error: a deep copy of Desktop would copy the C registration in 'Listener._ticking', which it reaches through 'listeners': C was given only the one it holds, so make another Desktop instead of copying this one
+```
+
+A `copy()` of an object that holds such an owner in another attribute is allowed: both copies share the one owner.
 
 **C types.** A trampoline's C signature is the Spite function's, one parameter at a time, each at its width
 ([what crosses](#what-crosses)): numbers as their C types, an address as a `Long`, and a
