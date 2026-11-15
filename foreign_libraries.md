@@ -424,6 +424,10 @@ program still says so: it prints a `spite.fault` line naming the library the fau
 stack. Each foreign call names itself before it goes in, which costs one store; how to read the whole report is in
 [failure.md](failure.md#what-a-native-fault-reports).
 
+A library that catches its own faults keeps doing so: a C `__try`/`__except` around its own code, or a handler it
+registers itself, as graphics drivers do, gets the fault first, and the call returns as the library decided. Only a
+fault the library leaves alone is reported ([failure.md](failure.md#a-fault-a-foreign-library-catches-itself)).
+
 ## What the compiler supplies
 
 The members whose bodies the compiler supplies, such as opening a library and finding a symbol, are declared in

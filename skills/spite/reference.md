@@ -675,6 +675,9 @@ rewritten.
   Spite line that called it (start there). `stack-overflow` with `repeated=` on a frame is a recursion that never
   stops. The line in `path:line` is where the function starts, not the faulting line
   ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#what-a-native-fault-reports)).
+  A fault a foreign library catches itself (`__try`/`__except`, or its own handler, as graphics drivers do) is left
+  to it and the call returns normally; only a fault no library takes is reported
+  ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#a-fault-a-foreign-library-catches-itself)).
 - A test is a function named `test` or `test_...` that takes nothing and crashes when wrong, in a class of a
   namespace of its own (the entry class's functions are not found). A test program loads the project and runs
   `var tester = Test(Checks)` then `tester.run()`: each class is built with its constructor (the setup) and each test

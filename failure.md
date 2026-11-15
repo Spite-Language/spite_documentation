@@ -1244,6 +1244,17 @@ Read it left to right:
 
 What the program printed is flushed after the report, and the program ends with a failure status.
 
+### A fault a foreign library catches itself
+
+Some C libraries fault on purpose and catch it: a graphics driver probes memory inside a `__try`/`__except`, or
+registers a handler of its own that fixes the fault and goes on. On Windows such a fault, raised inside a foreign
+call and outside the program's own code, goes to the library's handlers first; the program reports it only when
+none of them takes it, with the same `spite.fault` line. A fault in the program's own code, a fault while no
+foreign call is running, and a corrupted heap are reported at once, as before, whatever a library has registered.
+An exception that would unwind the stack through Spite functions (a C++ `throw` or a `longjmp` crossing a callback)
+is reported too, since unwinding would skip what those functions still owe. A
+`--hot-reload` build reports every fault at once.
+
 ## What it costs at run time
 
 - **Narrowing costs nothing.** Every proof (`fallback`, `crash`, `if`, `while`, a proven `[]` read, following a
