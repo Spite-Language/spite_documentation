@@ -114,7 +114,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it. Find classes by walking,
   never by registering them: `Spite.Class.instances.each(bind)`, `Theme.classes.each(bind)` and
   `window.register_namespace(Theme)` each make a copy of the walker per class, where the class is a type
-  (`Binding<part>()`, `value.class == part` narrows).
+  (`Binding<part>()`, `value.class == part` narrows). On an object known only at run time (`held: Anything`),
+  `held.attributes` hands bound `Spite.Attribute`s whose `.value` is read and written: `destination.value =
+  attribute.value` copies a field, cast as an assignment casts, and a value the field cannot take stops the program.
 - No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `fallback`, `crash`, `switch`).
   `null` only goes where a `T?` is wanted: given to any type without `?` (assigned, passed, appended, answered or
   declared) it is a compile error, never a silent `0`, `""`, first enum value or default object.

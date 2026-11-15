@@ -761,7 +761,7 @@ declaration's, so `.name` is never empty. A `null` there stays `null`.
 | `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
 | `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
 | `.source_file` | on a declaration: the `File` it is written in | `Monster.attributes["health"].source_file` |
-| `.value` | on an instance's attribute only: that instance's value, read and written | `troll.attributes["health"].value` |
+| `.value` | on an instance's attribute only: that instance's value, read and written (`set_value(value)`, also known only at run time) | `troll.attributes["health"].value` |
 
 `.name` is the name as it is written. Another spelling of it is the `String`'s own:
 `attribute.name.camel_case()` is `buyPrice` and `attribute.name.pascal_case()` is `BuyPrice`
@@ -1068,6 +1068,55 @@ Health 10
 Integer
 ```
 
+Such an attribute is written as well as read: `attribute.value = given` is `attribute.set_value(given)`, which writes
+the owner's field, so a program can copy every attribute of one object onto another it only holds as an `Anything`.
+The value is cast to the attribute's class the way an assignment casts it (an `Integer` into a `Float` or a `String`
+attribute, a `Float` into an `Integer` one), a function value goes back into a function attribute of the same type,
+and `null` into a nullable one. Counts and back references are kept as an assignment keeps them, and a private
+attribute is neither listed nor written, as it is not read. A value the attribute cannot take stops the program,
+naming the attribute: `spite: set_value() gives 'Meter.whole' a value that is not an Integer and that no conversion
+of Integer takes, so it cannot be cast the way an assignment would cast it`, and so does `null` into an attribute
+that is not nullable.
+
+```gdscript title=attribute_copies/button.spite
+var label = "none"
+var clicks = 0
+var ratio = 1.5
+```
+```gdscript title=attribute_copies/attribute_copies.spite entry
+var console = Console()
+
+func AttributeCopies() {
+    var source = Button()
+    source.label = "go"
+    source.clicks = 3
+    var target = Button()
+    copy_every_attribute(source, target)
+    console.print(target.label, target.clicks, target.ratio)
+    var ratio = target.attributes["ratio"]
+    crash ratio
+    ratio.value = 2
+    console.print(target.ratio)
+}
+
+func copy_every_attribute(source: Anything, target: Anything) {
+    var from = source.attributes.values()
+    var into = target.attributes
+    var index = 0
+    while index < from.count() {
+        var attribute = from[index]
+        var destination = into[attribute.name]
+        crash destination
+        destination.value = attribute.value
+        index = index + 1
+    }
+}
+```
+```output
+go 3 1.5
+2
+```
+
 `Anything` is the library's empty `type`: every class fits it, so a function that takes any object says
 `component: Anything`. What needs a constant says so while compiling: a function whose result is typed by its
 reflection parameter cannot be handed an object known only at run time.
@@ -1198,7 +1247,8 @@ Every member describing the program is a getter with no setter: `library/spite/c
 private fields (`_name`, `_namespace`, `_attributes`, ...) and answers `get_name()`, `get_namespace()` and the rest,
 so `.name` reads through the ordinary getter and writing it is an error. A name starting with `_` is used only
 inside its own class, so the private fields cannot be written from outside either. The one thing reflection
-writes is an instance's own value, through a bound attribute's `.value`.
+writes is an instance's own value, through a bound attribute's `.value`, whether the attribute is known while
+compiling or only at run time ([above](#known-only-at-run-time)).
 
 ```gdscript title=reflection_read_only/reflection_read_only.spite entry error
 var console = Console()
