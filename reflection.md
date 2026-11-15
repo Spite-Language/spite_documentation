@@ -161,7 +161,9 @@ The walked attribute is an object of the class its parameter declares, `Spite.At
 (or `troll.attributes["health"]`, a walked private attribute included): a hole or a `String` parameter shows its
 `to_string()`, its name, a local copy keeps its class, `.attributes` and `.functions` list the reflection object's
 own, it can be kept in a list, `==` with text is `false`, and `[0]`, `+` or `<` on it, or a `String` function, is the
-error that class's object gives. The text is `attribute.name`:
+error that class's object gives. A template's attribute parameter is the same object, for the class the template
+walks (`describe_attribute` in `Tag` called as `tag.describe_cost()` sees `Tag.attributes["cost"]`), and so is a walked
+attribute handed on to another function. The text is `attribute.name`:
 
 ```gdscript title=walked_member_text/monster.spite
 var health = 10
@@ -877,7 +879,8 @@ reflection on it is ordinary code that costs nothing at run time:
   `monster.attributes[attribute]` is a plain read of the field. That holds for a call with a class or a namespace
   written as the argument, on this object or another (`window.register_namespace(Theme)`, `made_by(Parts.Wheel)`), and
   for a walked declaration handed on to another function (`describe(attribute, "declared")` inside a walk over
-  attributes): the callee gets its own copy for that value, so a walk inside it folds as well.
+  attributes): the callee gets its own copy for that class's attribute, so `Price.cost` and `Offer.cost` each get
+  one, and a walk inside it folds as well.
 - **A test in a copy folds.** `attribute.class == List<Integer>` asks for the whole class, its generic arguments
   included, so it is `false` for a `List<String>`, while `attribute.class == List` is any list; `attribute.name ==
   "health"` folds as well. An `if` on either keeps only the branch taken, and the code of the other is never
