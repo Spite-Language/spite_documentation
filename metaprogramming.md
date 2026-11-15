@@ -515,6 +515,10 @@ copy, `phase.name` is the function's name (`update_each`), `phase.hole` the text
 (`update`), and `phase.index` its place; `phase.argument_count()` stays. A class can also name the pattern as text on a
 class value: `$system_type.argument_count("<phase>_each")`. When the body says the pattern twice, with a call and with
 text, the one written first in the body is the pattern; the other is only an ordinary call or question.
+`phase` stands only for the range its template walks, in the template and in the functions it is passed to: in a copy
+made for `<phase>_all`, a call `system.phase_each(...)` is the error `a System.Move has no function 'phase_each':
+'phase' came from the '<phase>_all' range, standing for 'update_all' here, so 'phase_each' cannot be filled from it:
+walk the '<phase>_each' functions from a template of their own`.
 
 ### Templates over arguments
 
@@ -564,7 +568,11 @@ call's arguments; each answer is typed by its own argument (`argument.class`), s
 `system.update_each(start, "", 0.0)`. The function is the one the plural is spread into or, inside a template over
 `Spite.FunctionDeclaration`, the function that template stands for. Written anywhere else the plural is an error that
 says to spread it into a call. A walker over arguments, called by `each`, may take a name without the word
-(`describe_taken(argument: Spite.Argument)`) or with it (`show_argument`).
+(`describe_taken(argument: Spite.Argument)`) or with it (`show_argument`). Without the word it is no template, so
+its plural is refused with the name to write: calling `streamed_rows(found, entity)` when only
+`streamed_row(argument: Spite.Argument, rows: List<Integer>, entity: Integer)` exists is `this class has no function
+'streamed_rows': 'streamed_row' exists but is not a template, because its parameter 'argument' is not a word of its
+name: name it 'streamed_argument' and call 'streamed_arguments'`.
 
 ### Walking a folder or an enum
 

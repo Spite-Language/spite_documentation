@@ -717,7 +717,9 @@ rewritten.
   A name that fits nothing is an error listing the functions that fit. A template over **arguments**: `func
   made_argument(argument: Spite.Argument, start: Integer): argument.class`, called as its plural spread into a call,
   `system.update_each(made_arguments(start))`, once for each argument of `update_each`. A plain walker over arguments
-  may leave the word out of its name (`describe_taken`). `Spite.Attribute` and `Spite.Function` (bound to an object, with
+  may leave the word out of its name (`describe_taken`), but then it is no template: the plural of
+  `streamed_row(argument: Spite.Argument, ...)` is refused, naming `streamed_argument` to write. A hole word stands only
+  for its own template's range: in a copy for `<phase>_all`, `system.phase_each(...)` is refused. `Spite.Attribute` and `Spite.Function` (bound to an object, with
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
   So are `Spite.Class.instances.each(bind)` (one copy per class of the program, so a library finds an application's
