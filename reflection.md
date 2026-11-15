@@ -155,6 +155,29 @@ func peek(attribute: Spite.AttributeDeclaration) {
 'attribute.value' reads an attribute of an instance, and 'attribute' describes a declaration
 ```
 
+The walked attribute has its class's members and no others. It is compiled as its attribute's name, but it is not
+text: `attribute.upper_case()` is an error naming `Spite.AttributeDeclaration` (or `Spite.Attribute` in a walk over an
+instance), and the text is `attribute.name`:
+
+```gdscript title=walked_member_text/monster.spite
+var health = 10
+```
+```gdscript title=walked_member_text/walked_member_text.spite entry error
+var console = Console()
+
+func WalkedMemberText() {
+    Monster.attributes.each(shout)
+}
+
+func shout(attribute: Spite.AttributeDeclaration) {
+    var shouted = attribute.upper_case()
+    console.print(shouted)
+}
+```
+```diagnostic
+a Spite.AttributeDeclaration has no attribute or function 'upper_case'
+```
+
 A declaration still reaches one instance's field: `troll.attributes[attribute]` indexes the instance with it, which
 is how a function handed a class's attribute reads or writes it on a value it was given. Indexed by a declaration
 the compiler knows, it is the field itself, the short form of `troll.attributes[attribute.name].value`.

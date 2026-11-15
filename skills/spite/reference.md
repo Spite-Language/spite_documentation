@@ -703,7 +703,9 @@ rewritten.
   declared or hold a value). Asked of a class known
   only at run time (`value.class` through `Anything`) it is a compile error. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
   A reflection object a walk hands a function has no run-time value: never `append` it to a list or keep it in an
-  attribute (an error); keep what you read from it, such as `attribute.name`. A template that would make a function
+  attribute (an error); keep what you read from it, such as `attribute.name`. It has only its class's members:
+  `attribute.upper_case()` is `a Spite.AttributeDeclaration has no attribute or function 'upper_case'`, so write
+  `attribute.name.upper_case()`. A template that would make a function
   the class already has is an error.
 - A **template** is a function with a parameter that is a word of its name, typed by what it ranges over:
   `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument` (the class is never written on the type:
