@@ -802,7 +802,11 @@ rewritten.
   an attribute named `age` (`get_id()` and `set_id(value)` over a private `_id` make a checked `.id`).
 - Operators are functions a class may define: `sum`, `subtract`, `multiply`, `divide`, `remainder`, `equals`,
   `less_than`, `greater_than`, `negate`, `get_at(index)`, `set_at(index, value)`. Without `equals`, `==` compares
-  identity. `a[x]` calls `get_at(x)`, which must answer a `T?` (`func get_at(index: Integer): Integer?`, `null` when
+  identity. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
+  `equals`) like any argument, so `price == "10"` needs `func Price(from: String): Price?` and without it is the error
+  `a String cannot be used where a Price is needed: ... Price declares no 'Price(from: String)'`, never a silent
+  `false`; a value with `to_string()` compared with a text compares as text instead when no such conversion exists
+  (`Price.attributes["cost"] == "cost"` compares the name). `a[x]` calls `get_at(x)`, which must answer a `T?` (`func get_at(index: Integer): Integer?`, `null` when
   nothing is there); a plain `T` is an error. A read through your own class is narrowed by what you write (`crash
   shelf[0]`): a loop over `shelf.count()` proves nothing about it. The operator is the only way to call its function:
   `a.sum(b)` is an error saying `write 'a + b'`, and `person.get_age()` / `person.set_age(3)` say to write
@@ -1200,6 +1204,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `if value do name { }` | `Spite has no 'do'` | `if value { }`: the name itself is narrowed inside |
 | `items.map(item => item * 2)` | `expected a value and found '='` | no lambdas and no `map(function)`: give the element's class a read-only attribute, `get_double()`, and write `items.map_doubles()` (the member in the plural) |
 | `value == null`, `value != null` | `'null' is not a value to compare against or pass around` | `if value { } else { }`, `fallback value`, `crash value`, or `switch` |
+| `price == "cost"` (a `Price` with no cast from text) | `a String cannot be used where a Price is needed: a value is cast to the class a place wants through that class's conversion, and Price declares no 'Price(from: String)'` | compare what you mean (`price.label == "cost"`), or declare `func Price(from: String): Price?` |
 | `Parallel(...)`, `task.wait()`, `await task` | `'Parallel' is not part of Spite: the compiler decides what runs at once, so call the function itself` | call the function itself |
 | `new Date()`, `DateTime.Now`, `datetime.now()` | | `clock.now()`, an `Instant`; shown through a zone from `TimeZones()`, never stored as a local reading |
 | `timestamp + 86400000` for tomorrow | *silent*: wrong across a daylight-saving change | `instant.to_date_time_in(zone) + Period(1, 'days')`, then `tomorrow.to_instant_in(zone, 'compatible')` |

@@ -194,6 +194,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - One character of a text is a `Rune`, not a `String`: `text[index]` answers a `Rune?` (byte index; `null` inside a
   character), `rune.unicode` is its number, `Rune(233)` makes one, and `rune.to_string()` is its text. `letter == "/"`
   compares as text: `==` becomes `equals`, and the rune becomes its text to meet the text.
+- `a == b` and `a != b` are `a.equals(b)`: `b` casts to what `equals` takes (the class itself without an `equals`),
+  so comparing a `Price` with `"cost"` is a compile error naming `Price(from: String)` unless that cast exists or
+  `Price` has a `to_string()` (then it compares as text). Never expect a comparison across types to be `false`.
 - Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
   entry class is never generic; put what needs `generic` lines in a class it makes.
 - A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class

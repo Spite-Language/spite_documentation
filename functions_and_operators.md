@@ -388,6 +388,12 @@ built in (on numbers, the machine's own arithmetic; on whole numbers a zero divi
 The library declares the operators its classes answer as ordinary functions, so `Integer.functions["sum"]` and
 `String.functions["get_at"]` are there to read. A class without `equals` compares by identity under `==`; the
 `equals` it declares must take its own class (`func equals(other: Money): Boolean`), or the compiler says so.
+Either way the right side meets that class through the ordinary casts, like any argument: `price == "10"` calls
+`Price(from: String)` when `Price` declares it, and without one it is refused, never simply `false`: `a String cannot
+be used where a Price is needed: a value is cast to the class a place wants through that class's conversion, and
+Price declares no 'Price(from: String)'`. A value with a `to_string()` compared with a text compares as text first,
+when its class takes no conversion from text ([Rune](standard_library.md#rune)), so `tag == "cost"` compares
+`tag.to_string()` and `Price.attributes["cost"] == "cost"` the attribute's name.
 Number arithmetic is done in the left side's type, so a wider right side is an error that says to write the wider
 operand first ([Wider arithmetic goes wider operand first](values_and_types.md#wider-arithmetic-goes-wider-operand-first));
 a comparison is refused the same way, naming the comparison turned around (`'count < total' ... write the Long
