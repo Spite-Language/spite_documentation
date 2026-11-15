@@ -32,6 +32,12 @@ statement in the high representation, and each `function` line, ends the same wa
 in braces, `{name=x ...}`, a list of values `[{...}, {...}]`, a block `{statements=3 statements line=12 ...}`, a type
 its name, a function its key, and a missing one `null`.
 
+An arithmetic operation in the high representation shows what the compiled code does with it. One the compiler
+worked out while compiling is its number with the source after it, `(6 folded from cut subtract 1)`: the program
+holds `6`, not a subtraction. One proven never to overflow says so, `(index add 1, proven to fit)`, and a division
+whose divisor is proven never zero (nor `-1` under the smallest number) says `(total divide count, divisor
+proven)`: neither has a check that crashes. Any other whole-number arithmetic is checked as it runs.
+
 Every flag is a `Build` field, listed under [Build options](#build-options). Flags mix
 freely, and the outputs combine: one compile can build the executable and write its final classes. `--optimized`
 marks a release build: `Build.optimized` is true, which the program's own code can read. A production build is

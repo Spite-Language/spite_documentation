@@ -26,6 +26,7 @@ spite --repl-port=4000                  serve the REPL; spite --connect=4000 --c
 spite --check                           format and compile: the errors, if any (builds nothing, keeps an old executable)
 spite --build                           build .spite/build/program.exe without running it
 spite --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies, overflow checks, text literals still made, loops kept out of bands), each with its line and why, linked relative to the report (absolute when on another drive)
+spite --high-ir                         also write .spite/build/program.high_ir.txt: each function as the compiler holds it; a folded operation reads (6 folded from cut subtract 1), a check it dropped (index add 1, proven to fit)
 spite --player-count=2                  a field the program's build.spite declares (kebab-case)
 ```
 
