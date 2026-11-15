@@ -1024,8 +1024,8 @@ Boolean
 
 ## Every class in the program
 
-`Spite.Class.instances` is every class of the program, its own folder and every package it loads but not the
-standard library and not a generic class, in the order of their dotted names, because a class is an instance of
+`Spite.Class.instances` is every class of the program, its own folder and every package it loads, wherever the
+package's folder is (`load "../shared"` too), but not the standard library and not a generic class, in the order of their dotted names, because a class is an instance of
 `Spite.Class`. No code can add a class while the program runs, so the list is a constant: a walk over it,
 `Spite.Class.instances.each(bind)`, is one copy of `bind` per class, in which the class is a type, and a library finds
 the components of an application with no registration line:
