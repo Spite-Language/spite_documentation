@@ -127,7 +127,8 @@ independent label b
 once, so a child's `parent` in the copy is the copied parent, and a back reference in the copy holds the copy of its
 object when the same `deep_copy()` copied it. A copy that starts at the child alone leaves the `parent` on the original
 object, since nobody copied the parent. A class that holds such a graph, in a list or in attributes, gets the same
-shape: a `Group` listing the child before its parent copies them as one graph, in either order. An object reached
+shape: a `Group` listing the child before its parent copies them as one graph, in either order, and a list or a
+dictionary that two objects of the graph hold is one list or dictionary in the copy too. An object reached
 twice through classes that can never lead back to themselves (two attributes holding the same leaf) is copied
 twice, once for each attribute. `copy()` is shallow for a list or a dictionary too: the copy holds the very
 same items, so a change made to an item shows through both.
