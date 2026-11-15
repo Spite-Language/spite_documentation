@@ -521,6 +521,10 @@ in the template or in a function it is passed to, is filled with the hole: in th
 `system.phase_each(...)` calls `update_each`. A class without that function is the error `a System.Move has no
 function 'phase_each': 'phase' came from the '<phase>_all' range, standing for 'update_all' here, so 'phase_each'
 cannot be filled from it: walk the '<phase>_each' functions from a template of their own`.
+A class that also has a function written `phase_each` of its own would make that call name two functions, so in
+every copy where the filled name differs it is the error `'phase_each' names two functions of 'Move' here: the template
+fills 'phase' and calls 'update_each', and 'phase_each' is a function of its own: rename that function or the
+template's parameter 'phase'`.
 
 ### Templates over arguments
 

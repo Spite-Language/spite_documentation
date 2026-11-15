@@ -746,7 +746,7 @@ rewritten.
   `system.update_each(made_arguments(start))`, once for each argument of `update_each`. A plain walker over arguments
   may leave the word out of its name (`describe_taken`), but then it is no template: the plural of
   `streamed_row(argument: Spite.Argument, ...)` is refused, naming `streamed_argument` to write. Another name with the hole
-  word is filled: in the copy for `update_all`, `system.phase_each(...)` calls `update_each`, refused when the class has none. `Spite.Attribute` and `Spite.Function` (bound to an object, with
+  word is filled: in the copy for `update_all`, `system.phase_each(...)` calls `update_each`, refused when the class has none, and refused as naming two functions when the class also has a `phase_each` of its own (rename it or the parameter). `Spite.Attribute` and `Spite.Function` (bound to an object, with
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
   So are `Spite.Class.instances.each(bind)` (one copy per class of the program, so a library finds an application's
