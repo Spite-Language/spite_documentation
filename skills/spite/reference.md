@@ -514,6 +514,20 @@ rewritten.
   `Anything` never holds `null`: `null` assigned, passed, appended, answered or declared into a plain `Anything` is a
   compile error (`'null' is given where an Anything is needed, and an Anything never holds null: ...`). `Anything?`
   is a smell: write it only where none is a real answer, and prefer a real type.
+- A function of your program whose parameter is a `union`, a `type` (`Anything` included) or a generic holding one is
+  compiled once per argument type each call hands it (a `Cat` for `named: Named`, a `List<Health>` for
+  `items: List<Anything>`), with no test of the class while running; copies whose machine code comes out the same are
+  one. Each copy is checked as written for its types, and a mistake there names the copy and the call:
+  `a Chain cannot be used where a Link? is needed: ..., in its copy for (Link, Chain) that the call at line 10 in
+  Zoo.Zoo makes`. So `link(node, other)` writing
+  `node.next = other` through `type Node { next: Node? }` compiles for two `Link`s and is refused for a `Link` and a
+  `Chain`; a class naming itself (`var parent: Person?`) needs nothing. The body is also checked as written for the
+  declared type, so it uses only what the `type` or union offers. A value known only while running (an item of a
+  `List<Named>`) reaches the function as written, and writing a member through it needs every class that fits to
+  hold the member's own type: `'CatKeeper' does not fit type 'Keeper': this program assigns 'pet' through the type,
+  which can store a Zoo.Named there, but attribute 'pet' is a Cat`. Library functions, a generic class's functions,
+  constructors and variadic parameters are compiled once, and a parameter the body assigns or copies into an untyped
+  local (`var current = node`) keeps its declared type in every copy.
 - No value or constraint is typed `Number`. Write number code as a generic class that declares the `type` its codegen
   value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum: Spite.Function<Measure, Measure> }`);
   every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,

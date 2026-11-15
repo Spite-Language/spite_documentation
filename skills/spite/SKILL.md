@@ -170,8 +170,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   with `func size(given: Integer): Thing`); otherwise write it, `var base: Thing = ...`.
 - A `[` on a new line starts a list literal, never an index into the line above: `[Root].each(registry.register)`
   is a statement of its own.
-- A `List<Health>` is refused where a `List<Anything>` (or a list of any other element) is wanted: a list is never
-  cast. Make the list with the element the receiver wants.
+- A function taking a `union` or a `type`, or a generic of one (`List<Anything>`, `List<Named>`), is compiled once per
+  argument type a call hands it, and each copy is checked as if written for that type: `shown(healths)` with a
+  `List<Health>` compiles while the body only does what a `List<Health>` can, and `items.append(sword)` in it is
+  `a Sword cannot be used where a Health is needed: ..., in its copy for (List<Health>) that the call at line 3 in
+  Armory.Armory makes`. A list is never cast: a value whose class is known only while running reaches the function as written.
 - `list.sum()` adds the members with their own `+` (numbers, text, any class with `sum(other)`) and answers a `T?`,
   `null` when empty; `list.sum_by(measure)` adds what a function answers for each, an `Integer`.
 - Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal

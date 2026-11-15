@@ -154,6 +154,14 @@ When the compiler replaces a call (a [fused chain](#a-chain-of-filter_-steps-run
 reached is not compiled if nothing else reaches it, and neither is what only it called. The executable carries only
 code the program can run. A constructor, `drop`, `to_string` and `to_debug` are always kept.
 
+### Functions whose machine code is the same are one
+
+Two functions whose machine code comes out the same are one function in the executable, and every call reaches
+it; the compiler compares the code itself, so nothing is trusted. This is what keeps the copies a function taking a
+union or a `type` gets per argument type small
+([functions_and_operators.md](functions_and_operators.md#a-function-taking-a-union-or-a-type-is-copied-per-argument-type)):
+copies that only hand the value on come out the same and are kept once.
+
 ### A fault report is the only machinery in every program
 
 A native fault (a null read inside a foreign library, a stack overflow) happens whatever a program uses, and a silent

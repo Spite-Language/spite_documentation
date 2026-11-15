@@ -286,6 +286,51 @@ held.append(null)
 "none" is a real answer, such as the value of an attribute declared `T?` (`Spite.Attribute.value`) or an
 argument a run-time call leaves out, and prefer a real type, a union or a `T?` of a real class everywhere else.
 
+## A function taking a union or a type is copied per argument type
+
+A function whose parameter is a `union` or a `type`, or a generic holding one (`List<Anything>`, `List<Named>`),
+is compiled once for each type a call hands it: `shown(cat)` with `func shown(named: Named)` calls a copy whose
+`named` is a `Cat`, so reading `named.name` reads the cat's own attribute with no test of its class while running.
+Each copy is checked as if it were written for that type, so a body that does not fit a copy is a compile error at
+the line in the body, naming the copy and the call that made it. Copies whose machine code comes out the same are
+one function in the executable ([optimizations.md](optimizations.md#functions-whose-machine-code-is-the-same-are-one)).
+
+```spite
+func Armory() {
+    var healths = List<Health>()
+    stocked(healths)
+}
+
+func stocked(items: List<Anything>) {
+    var sword = Sword()
+    items.append(sword)
+}
+```
+```diagnostic
+a Sword cannot be used where a Health is needed: a value is cast to the class a place wants through that class's conversion, and Health declares no 'Health(from: Sword)', in its copy for (List<Health>) that the call at line 3 in Armory.Armory makes
+```
+
+So a `List<Health>` goes where a `List<Anything>` is wanted whenever the body only does what a `List<Health>` can:
+`items.count()` and reading its items fit, appending a `Sword` does not. Writing through a `type` is checked the
+same way: with `type Node { next: Node }`, `link(first, second)` writing `first.next = second` compiles for two
+`A` objects and is refused for an `A` and a `B`, since `A.next` holds an `A`. A class naming itself
+(`class Person { var parent: Person }`) is a plain class and needs no copy.
+
+Inside a copy the class is known, so `if pet.class == Dog` is decided and a `switch pet` runs only the case naming
+the copy's class; the function as written is still checked for its declared types, so its body uses only what the
+union or `type` offers, and every case of a `switch` is still checked there.
+
+A value whose class is known only while running (an item of a `List<Named>`, an attribute typed `Named`) is handed
+as the `type` itself and reaches the function as written. Writing a member through such a value needs every class
+that fits the `type` to hold the member's own type in that attribute: "'CatKeeper' does not fit type 'Keeper': this
+program assigns 'pet' through the type, which can store a Zoo.Named there, but attribute 'pet' is a Cat".
+
+The compiler copies the functions of the program's own classes; a function of the standard library, a generic
+class's function, a constructor and a parameter given a variadic list are compiled once, as written. A parameter the
+body assigns, or copies into a local with no written type (`var current = node`), keeps its declared type in every
+copy, since the local may later hold any value of that type. A copy that would make copies more than eight calls
+deep calls the function as written.
+
 ## Every operator is a function
 
 Every operator is a shortcut for a function a class can define to support it, with the parameters the table shows. Any other count is an error where the operator is used: `this operator on a 'Thing' needs it to define 'sum(other)', and its 'sum' takes 0 arguments`. `equals`, `less_than` and `greater_than` are checked where they are declared instead ([Functions the compiler calls by name](#functions-the-compiler-calls-by-name)).

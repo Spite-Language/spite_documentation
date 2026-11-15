@@ -906,6 +906,10 @@ such as `List<Integer>` are refused as members: make a class of your own that ke
 A union costs nothing to hold: the value is the object itself, and a `switch` or a call on it compares the class
 its header already names against the members.
 
+A function taking a union is compiled once per class a call hands it, so inside the copy for a `Monster` the value is
+a `Monster` and nothing is compared while running; a value whose class is known only while running reaches the
+function as written ([functions_and_operators.md](functions_and_operators.md#a-function-taking-a-union-or-a-type-is-copied-per-argument-type)).
+
 ## Inline types and duck typing
 
 A `type` is a class matched by shape: any value with the same attribute names and types is accepted,
@@ -975,6 +979,11 @@ Number classes fit by the same rule as any class: `Integer` has `to_string`, so 
 fits a `type` that asks for nothing else. A union fits when each of its classes does. A `T?` fits only a `type`
 `null` answers too, `to_string()` and `to_debug()`, unless what is wanted is itself a `?`. When only some classes
 should fit, the `type` was meant to be a union ([unions](#unions)); to keep a class out, ask for more in the `type`.
+
+A function taking a `type` is compiled once per class a call hands it and checked as if written for that class, so a
+write through the `type` that the class cannot hold is a compile error in that copy; writing a member through a
+value known only while running needs every class that fits to hold the member's own type
+([functions_and_operators.md](functions_and_operators.md#a-function-taking-a-union-or-a-type-is-copied-per-argument-type)).
 
 A `type` of attributes only has a default like a class does: the object literal with each attribute at its own
 default, whose `.class` answers `Object`, made when it is asked for with `$target_type()`. So `var target =
