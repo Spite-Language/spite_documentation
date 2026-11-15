@@ -216,7 +216,10 @@ run time is a real object, and `call()` halts, naming what it found, when the in
 declares the function, or when an argument is missing, of another type than the parameter's (a number, a `String`,
 an enum, an object, a nullable one, a `type` or a union), `null` for a parameter that is not nullable, or one the
 function does not have (the first extra key
-in the order they were filled, and the names it does take, or "it takes no arguments"). `call.call()` answers what
+in the order they were filled, and the names it does take, or "it takes no arguments"). A function that uses a
+parameter as a type (`Binding<part>()`) exists only as the copies a walk makes, so a call of it known only at run time
+halts naming that argument, and nothing else about it is built for run time: such a walk folds wherever it is
+reached, below a test function too. `call.call()` answers what
 the function answers: typed from the declaration when the function is named in the code (`var worth = call.call()` is
 an `Integer` for `func worth(): Integer`), and an `Anything?` when the call is known only at run time, the value itself
 (a number keeps its class) or `null` for a function that answers nothing; that one answer may be left unused, so

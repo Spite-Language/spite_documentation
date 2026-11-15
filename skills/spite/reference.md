@@ -701,7 +701,7 @@ rewritten.
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
   So are `Spite.Class.instances.each(bind)` (one copy per class of the program, so a library finds an application's
-  components with `if part.has_function("render") { Binding<part>() }` and no registration line) and
+  components with `if part.has_function("render") { Binding<part>() }` and no registration line, wherever it is reached, a test's helper included; a run-time `Spite.Call` of such a walker halts) and
   `Spite.Namespace.instances.each(walk)` (a copy per namespace; `namespace.classes.each(bind)` inside folds per class).
   A class or namespace written as an argument makes the callee's copy for it, on any object:
   `window.register_namespace(Theme)` folds the walk inside. In a copy, `part` is a type, `part()` makes one, and
