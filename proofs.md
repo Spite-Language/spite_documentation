@@ -123,7 +123,8 @@ See [Nothing fails silently](failure.md#nothing-fails-silently).
 - **Rule**: a narrowed attribute read is refused when a call between the check and the read may assign that
   attribute, followed through everything the call reaches. A constructor's writes to its own object do not count; a
   wait writes nothing in a program in which the compiler starts no waiting work, and anything in one where it does; a call
-  through a function value reaches every function taken as a value with its signature; a `drop()` that may run is
+  through a function value reaches every function taken as a value with its signature; a call into C reaches the
+  functions handed to a `ForeignCallback`, which C may call back, and nothing else; a `drop()` that may run is
   followed too. Inside a loop, a call anywhere in the body undoes a narrowing made before the loop for the next pass.
   A call in a condition counts: a side of an `and` is proven before a call on a later side, and after one on an
   earlier side. A call in a `fallback` or a `crash` counts for what was proven before it.
