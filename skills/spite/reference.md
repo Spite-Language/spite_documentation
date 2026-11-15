@@ -298,8 +298,9 @@ rewritten.
 - Bits are functions on the whole numbers, never symbols: `value.shifted_left(count)`, `shifted_right(count)`
   (arithmetic on a signed type, logical on an unsigned one), `bits_and(mask)`, `bits_or(mask)`,
   `bits_exclusive_or(mask)`, `bits_inverted()`, `set_bit_count()`, `leading_zero_count()`, `trailing_zero_count()`.
-  The mask is cast to the receiver's type; a count of the width or more shifts everything out, a negative one
-  halts. Do not fake them with `/` and `%` by powers of two.
+  They work in the receiver's type, and a mask wider than the receiver is a compile error (in the standard library
+  too; a literal that fits is fine): widen the receiver first. A count of the width or more shifts everything out,
+  a negative one halts. Do not fake them with `/` and `%` by powers of two.
 - A decimal literal beside a `Float` is a `Float` (`tenth == 0.1` is `true` after `var tenth: Float = 0.1`). The
   last bits of a decimal result are never a promise: loops may fuse multiply-adds and reorder sums, except a loop
   that compares decimals with `==` or `!=`.

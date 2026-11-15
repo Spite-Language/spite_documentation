@@ -298,8 +298,9 @@ or `Boolean`) answers them as functions, each compiled to the one C operation an
 | `bits_inverted()` | every bit flipped |
 | `set_bit_count()`, `leading_zero_count()`, `trailing_zero_count()` | how many bits are set, and how many zeros stand above the highest set bit and below the lowest, as an `Integer` (the width, for 0) |
 
-Each answers the receiver's type, with `other` cast to it like any argument: a `Byte` and a `Long` mask give a
-`Byte`. No shift is undefined: a count of the width or more moves every bit out, and a negative count halts the
+Each answers the receiver's type, and `other` may not be wider than it, as in arithmetic: `flags.bits_and(mask)`
+with a `Byte` `flags` and a `Long` `mask` is a compile error naming the fix (store `flags` in a `Long` first), in a
+program and in the standard library alike, while a literal that fits the receiver is not wider. No shift is undefined: a count of the width or more moves every bit out, and a negative count halts the
 program. Calling one on a `Float` or a `Double` is an error, since they are not whole numbers; cast to a
 whole number first. `bits_as_unsigned()` on a signed whole number and `bits_as_signed()` on an unsigned one keep
 the bits and read them with the other sign, so a signed `-1` is `4294967295` as an `UnsignedInteger`, where storing
