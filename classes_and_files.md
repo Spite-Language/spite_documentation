@@ -356,6 +356,11 @@ too: `the default of 'label' reads 'target', which has no default: the defaults 
 When a later file reopens the class and replaces its constructor, that constructor is the one that builds every
 object, so it gives a value to every attribute without a default, whichever file declares it; one it leaves
 without a value is the same error, saying `the class is built by the constructor in another of its files`.
+When the program's file reopens a class of the standard library, such as its own `class Volume`, and its
+constructor leaves one of the library's attributes without a value, the error is placed at that constructor in the
+program's file and names the library's declaration as its second place: `the attribute 'name' has no default, so
+the constructor gives it its value, but the attribute is declared at spite_standard_library://common/volume.spite:3
+and the class is built by this constructor, where the constructor never gives it one`.
 `JsonReader` and `BinaryReader` make the object with its constructor without parameters before they fill it, and
 refuse a class whose constructor takes arguments, so they never leave such an attribute without a value either.
 
