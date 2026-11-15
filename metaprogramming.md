@@ -451,7 +451,8 @@ used.
 
 The same idea ranges over the functions of a class. A parameter typed `Spite.FunctionDeclaration` and named by a
 word of its function's name makes the function a template over the functions of a class whose names have that word as
-a hole, and the class and the pattern come from the call the body makes with the word in its name:
+a hole. The pattern is the template's own name from that word on, so `run_phase_each` walks the `<phase>_each`
+functions, and the class is the one the body calls a function on with the word in its name:
 
 ```gdscript title=function_templates/mover.spite
 var steps = 0
@@ -507,19 +508,19 @@ running render_each for render at place 1
 20
 ```
 
-`system.phase_each(amount)` is the call that says the pattern: the functions of the system's class named
-`<something>_each`, with `phase` standing for the part that varies. `run_phases_each` runs the template for every
+`run_phase_each` says the pattern and `system.phase_each(amount)` the class: the functions of the system's class
+named `<something>_each`, with `phase` standing for the part that varies. `run_phases_each` runs the template for every
 function that fits, in the order they were made, and `run_render_each` for the one named. The hole is any part of the
 name between the pattern's fixed words, with no enum behind it, so `phase_each` would also walk a `sum_each` the class
 happened to have; a name that fits nothing (`run_rendr_each`) is an error that lists the functions that fit. Inside the
 copy, `phase.name` is the function's name (`update_each`), `phase.hole` the text that took the place of `phase`
-(`update`), and `phase.index` its place; `phase.argument_count()` stays. A class can also name the pattern as text on a
-class value: `$system_type.argument_count("<phase>_each")`. When the body says the pattern twice, with a call and with
-text, the one written first in the body is the pattern; the other is only an ordinary call or question.
-`phase` stands only for the range its template walks, in the template and in the functions it is passed to: in a copy
-made for `<phase>_all`, a call `system.phase_each(...)` is the error `a System.Move has no function 'phase_each':
-'phase' came from the '<phase>_all' range, standing for 'update_all' here, so 'phase_each' cannot be filled from it:
-walk the '<phase>_each' functions from a template of their own`.
+(`update`), and `phase.index` its place; `phase.argument_count()` stays. The class can also come from a pattern
+written as text on a class value: `$system_type.argument_count("<phase>_each")`. No call decides the pattern, whichever
+comes first in the body, so a template always walks the functions its name describes. Another name with `phase` in it,
+in the template or in a function it is passed to, is filled with the hole: in the copy made for `update_all`,
+`system.phase_each(...)` calls `update_each`. A class without that function is the error `a System.Move has no
+function 'phase_each': 'phase' came from the '<phase>_all' range, standing for 'update_all' here, so 'phase_each'
+cannot be filled from it: walk the '<phase>_each' functions from a template of their own`.
 
 ### Templates over arguments
 

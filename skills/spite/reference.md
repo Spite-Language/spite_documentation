@@ -738,15 +738,15 @@ rewritten.
   whose only parameter is its word's (`show_function(function: Spite.FunctionDeclaration)`), handed to `each` over a
   class's `.functions` or a function's `.arguments`, known while compiling or only at run time, is that walk's walker.
 - A template over **functions**: `func run_phase_each(phase: Spite.FunctionDeclaration, amount: Integer) {
-  system.phase_each(amount) }` ranges over the functions of `system`'s class that fit `<phase>_each` (the call in the
-  body says the class and the pattern); `run_phases_each(2)` runs it for every one in the order they were made,
+  system.phase_each(amount) }` ranges over the functions of `system`'s class that fit `<phase>_each` (the template's
+  name from the word on is the pattern, never a call; the call in the body says the class); `run_phases_each(2)` runs it for every one in the order they were made,
   `run_render_each(2)` for one. Inside, `phase.name`, `phase.hole` (the text, a `String`, in place of `phase`) and `phase.index`.
   A name that fits nothing is an error listing the functions that fit. A template over **arguments**: `func
   made_argument(argument: Spite.Argument, start: Integer): argument.class`, called as its plural spread into a call,
   `system.update_each(made_arguments(start))`, once for each argument of `update_each`. A plain walker over arguments
   may leave the word out of its name (`describe_taken`), but then it is no template: the plural of
-  `streamed_row(argument: Spite.Argument, ...)` is refused, naming `streamed_argument` to write. A hole word stands only
-  for its own template's range: in a copy for `<phase>_all`, `system.phase_each(...)` is refused. `Spite.Attribute` and `Spite.Function` (bound to an object, with
+  `streamed_row(argument: Spite.Argument, ...)` is refused, naming `streamed_argument` to write. Another name with the hole
+  word is filled: in the copy for `update_all`, `system.phase_each(...)` calls `update_each`, refused when the class has none. `Spite.Attribute` and `Spite.Function` (bound to an object, with
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
   compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
   So are `Spite.Class.instances.each(bind)` (one copy per class of the program, so a library finds an application's

@@ -109,7 +109,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Metaprogramming is ordinary code on reflection objects, run while compiling: `Monster.attributes.each(describe)` with
   `describe(attribute: Spite.AttributeDeclaration)`. A function with a parameter named by a word of its own name is a
   template over that kind of member: `Spite.AttributeDeclaration` (read as `monster.attributes[attribute].value`),
-  `Spite.FunctionDeclaration` (called as `system.phase_each(...)`) or `Spite.Argument` (spread as
+  `Spite.FunctionDeclaration` (`run_phase_each(phase: ...)` walks the `<phase>_each` functions its name says, called as
+  `system.phase_each(...)`) or `Spite.Argument` (spread as
   `system.update_each(made_arguments(row))`); the body says which class. A class's `.name` is always its short name
   and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it. Find classes by walking,
   never by registering them: `Spite.Class.instances.each(bind)`, `Theme.classes.each(bind)` and
