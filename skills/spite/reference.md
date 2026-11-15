@@ -708,7 +708,9 @@ rewritten.
   is `false` (compare `attribute.name`), and `attribute[0]`, `+`, `<` or `attribute.upper_case()` is that class's
   error (`a Spite.AttributeDeclaration has no attribute or function 'upper_case'`), so write
   `attribute.name.upper_case()`. A template's attribute parameter and an attribute handed on to another function
-  are the same object, and a function handed a walked attribute gets one copy per class and attribute. A template that would make a function
+  are the same object, and a function handed a walked attribute gets one copy per class (or type or union) and attribute;
+  a function declaration or argument a template hands on gets a copy for that template's member, and an argument
+  template one copy per function it fills, so two classes sharing a member name never share a copy. A template that would make a function
   the class already has is an error.
 - A **template** is a function with a parameter that is a word of its name, typed by what it ranges over:
   `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument` (the class is never written on the type:

@@ -673,7 +673,10 @@ A template is not a loop in disguise. "Every attribute" is a walk, `Label.attrib
 attribute" is a template, `show_copies(label)`; there is no third form. The two meet in the same function: a
 function taking a `Spite.AttributeDeclaration` is a template when its parameter is a word of its name and is called by
 the member's name, and an ordinary function when a walk calls it. Either way it is compiled once per member it is used
-for, a member of each class apart, and inside, the parameter is that member's declaration object.
+for, a member of each class, type or union apart, and inside, the parameter is that member's declaration object. The
+same holds for a function declaration or an argument a template hands on (`report(phase)` inside `run_phase_each`):
+the callee gets a copy for that one member, so `Mover.update_each` and `Jumper.update_each` each get their own, and
+an argument template gets one copy per function it fills.
 
 ## Generics and codegen values (`$`)
 
