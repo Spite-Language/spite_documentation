@@ -906,8 +906,9 @@ such as `List<Integer>` are refused as members: make a class of your own that ke
 Every mistake in a member, a name that is no class included, is reported at the member's own line, and every union
 is checked where it is written, inside a generic class that nothing makes too.
 
-A union lists classes, never a `type` (D2504). A `type` is a shape many classes fit, and a function taking one is
-already copied for each class it is given, so a `type` member is refused at its own line, `Anything` included:
+A union lists classes directly, never a `type` (D2504) and never another union (D2544). A `type` is a shape many
+classes fit, and a function taking one is already copied for each class it is given, so a `type` member is refused at
+its own line:
 
 ```diagnostic
 'Named' cannot be a member of union 'Placed': a union lists classes, and 'Named' is a type, a shape a class fits; list
@@ -916,7 +917,20 @@ copied for each class
 ```
 
 List the classes that fit instead, or take the `type` itself where any class that fits will do. A union may still
-hold a class whose attributes are typed by a `type`, and another union as a member.
+hold a class whose attributes are typed by a `type`.
+
+A union named as a member, written bare or through its class (`Shelf.Stored`), is refused at its line too, and so is
+`Anything`, the union the compiler fills with every class:
+
+```diagnostic
+'Inner' cannot be a member of union 'Outer': a union lists classes directly, and 'Inner' is a union; list the classes
+of 'Inner' in 'Outer' themselves
+'Anything' cannot be a member of union 'Held': a union lists classes directly, and Anything is a union the compiler
+fills with every class; list the classes themselves, or type the parameter 'Anything' where any class will do
+```
+
+Write the classes of the inner union into the outer one. A value of the inner union still fits the outer one when
+every member of it is a member there.
 
 A union costs nothing to hold: the value is the object itself, and a `switch` or a call on it compares the class
 its header already names against the members.

@@ -503,10 +503,13 @@ rewritten.
 - `union Enemy { Player Monster }`, written one member per line: `switch enemy { Player: ... Monster: { ... } }`
   must cover every member and narrows `enemy` inside each case; a function or attribute every member has can be
   used on the union directly. Every member is a class of objects: `String`, a number, `Boolean` or `List<Integer>` is
-  refused as a member, so wrap it in a class of your own that keeps it in an attribute. A `type` (`Anything` included)
-  is never a member either, refused at its line (`'Named' cannot be a member of union 'Placed': a union lists classes,
-  and 'Named' is a type, a shape a class fits; ...`): list the classes that fit, or take the `type` itself where any
-  class that fits will do, since a function taking one is copied for each class (D2504). Every member mistake (an
+  refused as a member, so wrap it in a class of your own that keeps it in an attribute. A `type` is never a member
+  either, refused at its line (`'Named' cannot be a member of union 'Placed': a union lists classes, and 'Named' is a
+  type, a shape a class fits; ...`): list the classes that fit, or take the `type` itself where any class that fits
+  will do, since a function taking one is copied for each class (D2504). A union lists classes directly: another union
+  as a member, bare or `Shelf.Stored`, is refused at its line (`'Inner' cannot be a member of union 'Outer': a union
+  lists classes directly, and 'Inner' is a union; list the classes of 'Inner' in 'Outer' themselves`), and so is
+  `Anything` (`... and Anything is a union the compiler fills with every class; ...`) (D2544). Every member mistake (an
   unknown name too) is reported at the member's line, and every union is checked, even in a generic class nothing makes.
 - A `type` declares a shape (`label: String` and `render: Spite.Function<Integer, String>`, one per line, with `Spite.Function<Nothing>` for no answer and never a call form `render(Integer): String`, which the compiler rewrites; a function of the class or an attribute holding such a function meets it, and `item.render(12)` calls either; a required function
   naming the *types* it takes and never the names) and accepts any class, or

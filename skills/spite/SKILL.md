@@ -210,8 +210,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class
   named like the folder); the other classes of that namespace write `Bunda.Pet`, a class outside it
   `Bunda.Bunda.Pet`, and only the entry class writes `Pet`.
-- A union lists classes only: a `type` member (`Anything` too) is an error at its line. List the classes that fit, or
-  take the `type` itself where any class that fits will do (a function taking one is copied per class). Every member
+- A union lists classes directly: a `type`, another union or `Anything` as a member is an error at its line. Write the
+  inner union's classes into the outer one; for a `type`, list the classes that fit, or take the `type` itself where
+  any class that fits will do (a function taking one is copied per class). Every member
   error points at the member's own line, and a union in a generic class nothing makes is checked all the same.
 - Name another class's union or `type` through its class, never bare and never by declaring a copy: `Sibling.Type` in
   the same namespace, `Namespace.Class.Type` from elsewhere (`func shown(component: Framework.Component)`). It compiles
