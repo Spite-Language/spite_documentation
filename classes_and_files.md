@@ -898,7 +898,15 @@ give the new attribute a name of its own`). A function replaced this way keeps w
 reason: the class's other functions call it expecting the first answer (`func level(): Integer`, then
 `func level(): String`, is `'level' answers an Integer where the class first declares it, and this reopening makes
 it answer a String: a reopening replaces a function's body, never what it answers, so give the new function a name
-of its own`). Both checks run on every reopening, whether or not anything uses the class: the reopening itself is
+of its own`), and what it takes: the same parameters, in the same order, with the same names and types
+(`func hit(damage: Integer): Integer`, then `func hit(damage: String): Integer`, is `'hit' takes (damage: Integer)
+where the class first declares it, and this reopening makes it take (damage: String): a reopening replaces a
+function's body, never what it takes, so give the new function a name of its own`). A replaced constructor keeps its
+parameters too (`'Hero' takes (starting_level: Integer) where the class first declares it, and this reopening makes
+it take (starting_level: Integer, bonus: Integer): a reopening replaces a constructor's body, never what it takes, so
+build the class from another value with a conversion of its own, named 'Hero' with one parameter named 'from'`); a
+conversion the class did not have, such as `func Hero(from: String): Hero?`, is new, and a reopening may add it.
+These checks run on every reopening, whether or not anything uses the class: the reopening itself is
 the mistake, so the error is at the reopening's line. Like the other rules that refuse code that would otherwise
 build, they are told once the program is built, after any mistake of a type or a name, except on the program's
 reopenings of a library class: those are told before anything is built, since the library's own code built on the
