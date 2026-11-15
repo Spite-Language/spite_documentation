@@ -894,9 +894,17 @@ names like one (`var absolute = this * 2` in a reopening of `Integer`) is the sa
 An attribute replaced this way keeps its type: a reopening changes its default, never its type, however each file
 gives it (`var level: Integer = 1`, then `var level = "one"`, is `'level' is an Integer where the class first
 declares it, and this reopening makes it a String: a reopening replaces an attribute's default, never its type, so
-give the new attribute a name of its own`). The check runs on the program's own reopenings of a library class as
-well, and, like the other rules that refuse code that would otherwise build, it is told once the program is built,
-after any mistake of a type or a name. A reopening may also add the `singleton` line.
+give the new attribute a name of its own`). A function replaced this way keeps what it answers, for the same
+reason: the class's other functions call it expecting the first answer (`func level(): Integer`, then
+`func level(): String`, is `'level' answers an Integer where the class first declares it, and this reopening makes
+it answer a String: a reopening replaces a function's body, never what it answers, so give the new function a name
+of its own`). Both checks run on every reopening, whether or not anything uses the class: the reopening itself is
+the mistake, so the error is at the reopening's line. Like the other rules that refuse code that would otherwise
+build, they are told once the program is built, after any mistake of a type or a name, except on the program's
+reopenings of a library class: those are told before anything is built, since the library's own code built on the
+changed declaration would fail in the library's file, and the words name the library's declaration as the second
+place (`'name' is a String where the class first declares it, at spite_standard_library://common/volume.spite:3, and
+this reopening makes it an Integer: ...`). A reopening may also add the `singleton` line.
 
 Reopening a class of the standard library adds what it lacks; it does not copy what it has. A function that
 rewrites the object from two values of its own class, beside the library's `*`, is an error that tells you to write
