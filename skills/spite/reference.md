@@ -643,7 +643,8 @@ rewritten.
     the program's folder (`shop/orders/cart.spite`), a loaded package's folder or `spite_standard_library://`, never
     where it was built, followed by the
     fallbacks that failed before it (each with `returned=nothing`, `null` or `empty`, what its function gave back)
-    and the call chain as `spite.frame` lines, innermost first. Every name and call the condition read is there with its value, whatever its
+    and the call chain as `spite.frame` lines, innermost first (walked with the unwind data, so a stop in or under a
+    resumable function also lists the line whose wait stepped it). Every name and call the condition read is there with its value, whatever its
     shape: `crash record or cooked.count() > 2` reports `record is null, cooked.count()=1`; a part an `and` or `or`
     skipped is left out. Then come the other texts, numbers and enums in scope (parameters, locals, the object's
     attributes). The condition is not on the line: open the line it names; the position identifies each value, and

@@ -1143,8 +1143,18 @@ equal lines are one line ending in `repeated=<count>`, at most 16 lines are writ
 goes deeper. An inlined function keeps its own frame. Work the compiler ran apart from its caller
 ([concurrency.md](concurrency.md)) lists its own frames down to its first function, then one line ending in
 `started`, the place the program wrote the call, since nothing in the program says it ran apart:
-`spite.frame	game/game.spite:40	Game	update	started`. The caller's further frames are not listed. The chain is read from the saved frame pointers and a table of
-the program's calls that sits in the executable beside its code, so nothing runs for it until a crash.
+`spite.frame	game/game.spite:40	Game	update	started`. The caller's further frames are not listed. The chain is walked with the unwind data every executable carries, as a
+[native fault's](#what-a-native-fault-reports) is, and read against a table of the program's calls that sits in the
+executable beside its code, so nothing runs for it until a crash. A stop inside or under a resumable function (one that
+waits) lists the functions on the stack below it too: after its own frames comes the line whose wait stepped it, as in
+`tests/crash_under_a_resumable_function`, where `program.sleep(pause)` on line 14 ran `worker.work()`:
+
+```
+spite: the program stopped at tests/crash_under_a_resumable_function/worker.spite:13 in Worker.checked, site c07d4333 (seen=0, done=false, count=0)
+spite.frame	tests/crash_under_a_resumable_function/worker.spite:13	Worker	checked
+spite.frame	tests/crash_under_a_resumable_function/worker.spite:8	Worker	work
+spite.frame	tests/crash_under_a_resumable_function/crash_under_a_resumable_function.spite:14	CrashUnderAResumableFunction	CrashUnderAResumableFunction
+```
 
 The id of a `spite.fallback` line is derived from the site's content, so it stays the same when unrelated lines move.
 Each build also writes a `.crashes` file beside the executable it builds: one line per `crash` site of every function
