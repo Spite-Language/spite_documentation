@@ -503,7 +503,8 @@ rewritten.
   refused as a member, so wrap it in a class of your own that keeps it in an attribute. A `type` (`Anything` included)
   is never a member either, refused at its line (`'Named' cannot be a member of union 'Placed': a union lists classes,
   and 'Named' is a type, a shape a class fits; ...`): list the classes that fit, or take the `type` itself where any
-  class that fits will do, since a function taking one is copied for each class (D2504).
+  class that fits will do, since a function taking one is copied for each class (D2504). Every member mistake (an
+  unknown name too) is reported at the member's line, and every union is checked, even in a generic class nothing makes.
 - A `type` declares a shape (`label: String` and `render: Spite.Function<Integer, String>`, one per line, with `Spite.Function<Nothing>` for no answer and never a call form `render(Integer): String`, which the compiler rewrites; a function of the class or an attribute holding such a function meets it, and `item.render(12)` calls either; a required function
   naming the *types* it takes and never the names) and accepts any class, or
   object literal `{ label: "x" }`, with those attributes and functions, typed as the `type` says. One rule decides

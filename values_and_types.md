@@ -902,6 +902,8 @@ a one-line case. `enemy.class == Monster` asks which member a value is
 
 A union holds objects whose class a `switch` can test, so `String`, a number class, `Boolean` and a generic class
 such as `List<Integer>` are refused as members: make a class of your own that keeps the value in an attribute.
+Every mistake in a member, a name that is no class included, is reported at the member's own line, and every union
+is checked where it is written, inside a generic class that nothing makes too.
 
 A union lists classes, never a `type` (D2504). A `type` is a shape many classes fit, and a function taking one is
 already copied for each class it is given, so a `type` member is refused at its own line, `Anything` included:
