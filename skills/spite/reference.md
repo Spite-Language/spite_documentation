@@ -524,6 +524,12 @@ rewritten.
   `Anything` never holds `null`: `null` assigned, passed, appended, answered or declared into a plain `Anything` is a
   compile error (`'null' is given where an Anything is needed, and an Anything never holds null: ...`). `Anything?`
   is a smell: write it only where none is a real answer, and prefer a real type.
+  `Anything` is a union the compiler fills: each attribute, parameter, answer or local written `Anything` holds only
+  the classes that reach it (a value moved from one into another brings them along), and a use asks only of those.
+  So `console.print(attribute.value)` prints when only numbers and text reach `.value`, while printing
+  `attribute.owner` of a class without `to_string()` is refused, and `value.to_string()` on an `Anything` needs each
+  class reaching it to have its own (`'Crate' reaches this Anything and has no function 'to_string': match the value
+  first against a class or a type that has one`). A `List<Anything>` is one union for the whole program.
 - A function of your program whose parameter is a `union`, a `type` (`Anything` included) or a generic holding one is
   compiled once per argument type each call hands it (a `Cat` for `named: Named`, a `List<Health>` for
   `items: List<Anything>`), with no test of the class while running; copies whose machine code comes out the same are
@@ -763,6 +769,10 @@ rewritten.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,
   `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
+  `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field. Another class's
+  declaration is a compile error naming both classes, and one the compiler cannot tie to a class is refused: write
+  `troll.attributes[declaration.name]` (a `Spite.Attribute?`). Only inside a walk or a member template is
+  `x.attributes[attribute]` the field itself.
 - Questions are get-only attributes, folded on a constant: `Loader.functions["load_each"]` (narrow it), then
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`

@@ -184,9 +184,46 @@ func shout(attribute: Spite.AttributeDeclaration) {
 a Spite.AttributeDeclaration has no attribute or function 'upper_case'
 ```
 
-A declaration still reaches one instance's field: `troll.attributes[attribute]` indexes the instance with it, which
-is how a function handed a class's attribute reads or writes it on a value it was given. Indexed by a declaration
-the compiler knows, it is the field itself, the short form of `troll.attributes[attribute.name].value`.
+### An instance indexed by a declaration
+
+A declaration still reaches one instance's attribute: `troll.attributes[health]`, with `health` a declaration of
+`Monster`, always answers troll's `Spite.Attribute` for it, never the field, so read `.value` for the field. The
+declaration must be one of the instance's own class. The compiler checks that when the declaration is kept in a
+`var` that is never assigned again (`var health = Monster.attributes["health"]`), and another class's declaration
+is an error naming both classes. A declaration it cannot tie to a class, such as a
+parameter or a `var` assigned again, is refused: index by its name instead, `troll.attributes[attribute.name]`,
+which answers a `Spite.Attribute?`. Inside a walk over a class's attributes or a member template the walked
+`attribute` is known in each copy, and there `troll.attributes[attribute]` is the field itself
+([Known while compiling](#known-while-compiling)).
+
+```gdscript title=indexed_by_a_declaration/monster.spite
+var name = "troll"
+var health = 10
+```
+```gdscript title=indexed_by_a_declaration/rat.spite
+var health = 3
+```
+```gdscript title=indexed_by_a_declaration/indexed_by_a_declaration.spite entry
+var console = Console()
+
+func IndexedByADeclaration() {
+    var troll = Monster()
+    var health = Monster.attributes["health"]
+    var bound = troll.attributes[health]
+    console.print(bound.name, bound.value, bound.owner.class)
+}
+```
+```output
+health 10 Monster
+```
+
+```spite
+var rat = Rat()
+var bound = rat.attributes[health]
+```
+```diagnostic
+'health' is a declaration of Monster, and 'rat' is a Rat: an instance is indexed only by a declaration of its own class
+```
 
 ### An attribute named as a value
 

@@ -232,6 +232,29 @@ which is all a shape can ask of it, and `.class` read through the shape names th
 the enum). `Spite.Attribute.value`, the value an attribute holds, is typed `Anything?`. An empty `type` costs
 nothing until a value is passed to it.
 
+`Anything` is a union whose members the compiler fills, and it behaves like any union. Each place written
+`Anything` or `Anything?` (an attribute, a parameter, an answer, a local) holds only the classes that reach it, and a
+value moved from one into another brings them along; what a use asks is asked only of those classes. A
+`Spite.Attribute` keeps its object in `.owner` and the field in `.value`, so `console.print(found.value)` prints
+when only numbers and text reach `.value`, though the class `.owner` holds has no `to_string()`, and
+`console.print(found.owner)` is refused for that class: "'Gauge' does not fit type 'Printable': it has no function
+'to_string'". Calling `to_string()` on an `Anything` needs every class that reaches it to have its own, so match
+the value against a class or a type that has one first:
+
+```spite
+var _held: Anything
+
+func label(): String {
+    return _held.to_string()
+}
+```
+```diagnostic
+'Crate' reaches this Anything and has no function 'to_string': match the value first against a class or a type that has one
+```
+
+A generic argument such as `List<Anything>`, and an `Anything` inside a function type, are one union for the whole
+program.
+
 A `T?` fits a `type` unnarrowed only when null can answer everything the `type` asks, which is `to_string()` and
 `to_debug()`: both answer `null` for it. Any other `type` needs the value narrowed first, or proven present
 ([proofs.md](proofs.md#a-value-proven-present-is-a-t)): `var singer: Singer = maybe_rock` with a `Rock?` is "this value may be null (it is a
