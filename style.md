@@ -302,7 +302,8 @@ public: its callers may be code this compile cannot see, and the production buil
 reads counts as used. Every build compiles and checks it, so its `other.name` reads the class of `other`, as a
 called one does. Only a body the compiler does not build (in a generic class, or one that
 takes a function, a shape or a member a walk hands it) counts its `x.name` for every class with a `name`, and so does one in a function a codegen
-or `Build` test cuts a branch from. A standard library function nobody calls reads nothing of yours, so `other.red` in
+or `Build` test cuts a branch from. A call there, `x.name()`, is a call and not a read: it counts only for an
+attribute holding a function, so an uncalled `names.count()` never hides an unread `count`. A standard library function nobody calls reads nothing of yours, so `other.red` in
 `Color.equals` never hides an unread `red` of your class. A few attributes are never checked, because the compiler reads them itself: a number
 class's or `String`'s storage, and `Build` and `Environment` settings.
 

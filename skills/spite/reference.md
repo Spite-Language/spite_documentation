@@ -196,6 +196,7 @@ func is_alive(): Boolean {
   (`x.attributes[attribute]`). An attribute kept as a marker that a walk inspects through `attribute.name` or
   `attribute.class` is unused, so say what the marker means some other way. A function nobody calls still
   reads what it names, except one of the standard library's: `other.red` in an uncalled `Color.equals` reads no `red` of yours.
+  A call `names.count()` is never a read of an attribute `count`, only of an attribute holding a function (`chore.job()`).
 - A write to an object only this function holds, never read after it, is an error (`'made.count' is written here
   and 'made' is never read after it: 'made' is a 'Tally' only this function holds, so the write is lost when it is
   let go. ...`). The object is one a constructor, `copy()` or a function that always answers a new one made: an own
