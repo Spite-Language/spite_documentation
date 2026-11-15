@@ -607,6 +607,17 @@ field no code of the program reads takes no slot, has no write and is not passed
 built. Reading `Monster.name` pays for the name, not for `Monster.functions`. A program that reads no reflection makes
 none of these objects.
 
+### A read of what a class object holds is its answer
+
+`Monster.is_singleton`, `Monster.namespace.name`, or `described.name` on a `var described: Spite.Class = Monster`
+never assigned again, is the constant the class object would hold: the compiler proves, at each build, that nothing
+changes that field once the object is made, and reads it from what it would be made with. No object is made or
+tested for it, and once nothing else reads the class object it is never made. It covers the fields that hold a text,
+a number, a flag, `null` or another class object; `attributes`, `functions` and the other dictionaries, and a class
+object read from a list, an attribute or a parameter, are read at run time. Builds that keep everything
+(`--development`, `--repl`, `--hot-reload`) read them at run time too. What you can observe: the time, and a `drop()`
+at exit that reads such a field reads its constant rather than halting because the class object was already let go.
+
 ### Defaults the constructor replaces are never made
 
 A constructor that assigns an attribute before anything can read it makes its objects with a copy of the class's
