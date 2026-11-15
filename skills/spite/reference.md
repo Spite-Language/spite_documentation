@@ -545,7 +545,9 @@ rewritten.
   (never ten comparisons) to tell a library number apart in a walk, and `kind.satisfies_type(Number)` for any class
   answering a number's operators (`sum`, `subtract`, `multiply`, `divide`, `remainder` taking and answering the
   class, `equals`, `less_than`, `greater_than` answering a `Boolean`).
-  Inside a `type`, its own name in a signature is the class that fits.
+  Inside a `type`, its own name in a member means the `type` (any value fitting it), not the class being checked:
+  `type Component { render: Spite.Function<Component?> }` is met by `render(): Component?` answering any other
+  component, and by a `render(): Card?` answering a class that fits.
 
 ## Nothing, null, and failure
 

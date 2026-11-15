@@ -402,8 +402,8 @@ No value or constraint is typed `Number`. A class written over numbers is generi
 the functions its codegen value must have, listing only the operators and functions it uses
 ([shapes](#inline-types-and-duck-typing)). The operators `+`, `-`, `*`, `/` and `%` are the functions `sum`,
 `subtract`, `multiply`, `divide` and `remainder`, and `<` and `>` (with `<=` and `>=`) are `less_than` and
-`greater_than`; the type's own name in them stands for the class that fits, so an `Integer` adds an `Integer` and
-answers one. Every number class, `Tiny` to `Double`, has these functions, so it fits such a type the way any class
+`greater_than`; the type's own name in them means any class that fits it, so an `Integer` adding an `Integer` and
+answering one fits. Every number class, `Tiny` to `Double`, has these functions, so it fits such a type the way any class
 fits a type, by having its members ([what fits a type](#what-fits-a-type)), and so does a program's own number
 class that has them, and `Boolean` fits none of them. The class is compiled once per number class it
 is given, so the values stay plain machine numbers and nothing is boxed. `$value_type.is_number` asks, while
@@ -986,7 +986,10 @@ wanted, a class's attribute or function checked against a member's type, a gener
 fits when it has each member the `type` writes, in its form and typed as the `type` says. An attribute member needs
 an attribute; a function member needs a function with as many parameters, each of the type asked, answering the
 type asked, or an attribute holding such a function that cannot be `null`, or a function one of the class's member
-templates makes. The `type`'s own name in a member stands for the class that fits.
+templates makes. The `type`'s own name in a member means the `type`, any value that fits it, never only the class
+being checked: in `type Component { render: Spite.Function<Component?> }`, a `Card` whose `render(): Component?`
+answers a `Leaf` fits, and so does a `render(): Card?` or a `render(): Leaf?`, since `Card` and `Leaf` fit
+`Component`. A `type` naming itself is settled: a class already being checked against it counts as fitting.
 
 Number classes fit by the same rule as any class: `Integer` has `to_string`, so it fits a `type` asking only for
 `to_string: Spite.Function<String>`, and `var shown: Textual = 5`, a class whose `amount: Integer` meets a member

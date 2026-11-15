@@ -640,8 +640,8 @@ none has a fallback beyond the error it gives.
   around a `load` is decided from `Build` fields and literals
   ([Programs](programs.md#compile-time-settings-build)).
 - **A value fits a `type`**, and a `$T` its constraint: a class passed as a `type` must have each attribute with the
-  type's type, and each function with the same parameters and answer, the type's own name standing for the class
-  that fits. The refusal says which: `'...' does not fit type '...': it has no function '...'`, or that an
+  type's type, and each function with the same parameters and answer, the type's own name meaning the type, so
+  any class that fits it meets it. The refusal says which: `'...' does not fit type '...': it has no function '...'`, or that an
   attribute or argument has another type, or that a function takes a different number of arguments
   ([Inline types](values_and_types.md#inline-types-and-duck-typing)).
 - **A member template fits**: the member a template names exists and has the right kind (a `Boolean` for
