@@ -155,7 +155,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
   blank lines: name the part and call it.
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
-  children) are plain references: the compiler finds the back reference and frees the cycle.
+  children) are plain references: the compiler finds the back reference and frees the cycle. Keep the back
+  attribute a `T?` of one class (`var parent: Parent? = null`), set where the child is made or stored.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
 - An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
   with one; nothing may read it before the constructor gives it (no earlier line, called function, `this` or
