@@ -702,9 +702,11 @@ rewritten.
   every number class `Byte` to `Double` and a program's own number class with them satisfy; `Number` cannot be
   declared or hold a value). Asked of a class known
   only at run time (`value.class` through `Anything`) it is a compile error. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
-  A reflection object a walk hands a function has no run-time value: never `append` it to a list or keep it in an
-  attribute (an error); keep what you read from it, such as `attribute.name`. It has only its class's members:
-  `attribute.upper_case()` is `a Spite.AttributeDeclaration has no attribute or function 'upper_case'`, so write
+  The walked attribute is an object of its declared class, not text: its members fold, and used whole it is that
+  class's object (`Monster.attributes["health"]`, or the instance's `Spite.Attribute`), so a hole or a `String`
+  parameter shows its name, a copy or a list keeps it, `.attributes`/`.functions` list its own, `attribute == "health"`
+  is `false` (compare `attribute.name`), and `attribute[0]`, `+`, `<` or `attribute.upper_case()` is that class's
+  error (`a Spite.AttributeDeclaration has no attribute or function 'upper_case'`), so write
   `attribute.name.upper_case()`. A template that would make a function
   the class already has is an error.
 - A **template** is a function with a parameter that is a word of its name, typed by what it ranges over:

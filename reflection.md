@@ -155,9 +155,13 @@ func peek(attribute: Spite.AttributeDeclaration) {
 'attribute.value' reads an attribute of an instance, and 'attribute' describes a declaration
 ```
 
-The walked attribute has its class's members and no others. It is compiled as its attribute's name, but it is not
-text: `attribute.upper_case()` is an error naming `Spite.AttributeDeclaration` (or `Spite.Attribute` in a walk over an
-instance), and the text is `attribute.name`:
+The walked attribute is an object of the class its parameter declares, `Spite.AttributeDeclaration` (or
+`Spite.Attribute` in a walk over an instance), and not text. Its members are read while compiling, so
+`attribute.name` costs nothing; used whole it is that class's object, the same as `Monster.attributes["health"]`
+(or `troll.attributes["health"]`, a walked private attribute included): a hole or a `String` parameter shows its
+`to_string()`, its name, a local copy keeps its class, `.attributes` and `.functions` list the reflection object's
+own, it can be kept in a list, `==` with text is `false`, and `[0]`, `+` or `<` on it, or a `String` function, is the
+error that class's object gives. The text is `attribute.name`:
 
 ```gdscript title=walked_member_text/monster.spite
 var health = 10

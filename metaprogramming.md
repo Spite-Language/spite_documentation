@@ -441,10 +441,10 @@ and its `owner`) or `Spite.Function`, makes no template. It is an ordinary param
 ordinary function that a walk over an instance's members calls, or a caller hands a value to. A template is written
 over the declaration, with the object as a parameter of its own.
 
-A reflection object the compiler knows has no value at run time. Inside a copy compiled for one member, the
-parameter is that member itself, so it cannot be kept or passed on as a value: `kept.append(attribute)` in a walker
-is the error `'attribute' is a reflection object known while compiling, so this function is compiled once for it,
-and it has no run-time value to pass on here`. Keep what you read from it instead, such as `attribute.name`.
+Inside a copy compiled for one attribute of a walk, the parameter is that attribute's reflection object: what is
+read from it, such as `attribute.name`, is known while compiling, and used whole, `kept.append(attribute)` in a
+walker, it is the object `Monster.attributes["health"]` (or the instance's `Spite.Attribute`), made where it is
+used.
 
 ### Templates over functions
 
