@@ -235,7 +235,36 @@ blocking call. A function value passed for one call is not checked, since it run
 **Lifetime.** A `ForeignCallback` keeps its function and the function's owner alive, and C may call it for exactly
 as long as the program keeps it. Keep it in the object that owns what C was given (the window class, the voice,
 the debug messenger) and tell C to stop in that object's `drop()`: attributes are released after `drop()` runs,
-so C has let go before the `ForeignCallback` goes. An attribute holding a `ForeignCallback` counts as read, since
+so C has let go before the `ForeignCallback` goes. When that object is also the one whose function is handed over,
+the object holding the callback and the callback holding the object would keep each other alive; the compiler
+reads the callback as the back reference it is, as it does for a [cycle](memory.md#cycles-are-freed), so the
+object is freed when its last other holder goes:
+
+```gdscript
+var vulkan = DynamicLibrary("vulkan-1.dll", 'identity', "")
+var _messenger: ForeignCallback? = null
+
+func Device() {
+    var reporting = ForeignCallback(report, 'context_last')
+    _messenger = reporting
+    vulkan.listen(reporting.address, reporting.context)
+}
+
+func report(severity: Integer, data: Long): Boolean {
+    return false
+}
+
+func drop() {
+    vulkan.stop_listening()
+}
+```
+
+This holds when the callback is made from a function of the object itself (`report` or `this.report`) and kept
+only in its attributes, directly or through the local it was made in, and nothing reads it but `.address` and
+`.context`. A `ForeignCallback` the program also hands anywhere else (a list, another object, a return) keeps its
+owner alive as before, and `--debug-memory` shows the two as leaked until one lets go. A `copy()` of the object
+shares the callback; if C calls it after the original is freed, the program stops naming the function and the
+line that made the `ForeignCallback`. An attribute holding a `ForeignCallback` counts as read, since
 keeping it is what it is for. After one is dropped, a late call from C stops the program with a message naming the
 function and the line that made the `ForeignCallback`, so the owner's `drop()` must still tell C to stop first: the
 check only makes forgetting loud.

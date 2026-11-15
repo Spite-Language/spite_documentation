@@ -1075,7 +1075,7 @@ of a singleton when C gives none (a window procedure; the singleton tells object
 callback takes and returns only numbers, `Boolean` (a 32-bit `BOOL`) and addresses as a `Long`; a callback cannot take text
 yet, so text C passes arrives as its address, a `Long`, kept or handed back to C (a `String` parameter is a compile error). Keep the `ForeignCallback` in an attribute of the object that owns the C
 registration and unregister in its `drop()`: C may call only while it is kept, and a call after the drop halts
-naming the function. A handed-over function of an ordinary object
+naming the function. A callback made from the object's own function (`ForeignCallback(report, 'context_last')`) and kept only in its own attributes, read only for `.address` and `.context`, does not keep that object alive, so the object, its `drop()` included, is freed like any other; handed anywhere else it keeps its owner alive, and a `copy()` of the owner shares it (a call from C after the original is freed halts). A handed-over function of an ordinary object
 may reach only its own value attributes, its locals and singletons. A COM-style table of functions is filled on the C side: hand the library each `'no_context'` `ForeignCallback`'s
 `address` (`mixer.set_voice_started(started.address)`); a program cannot write memory at an address. A C constant
 is read as its name in snake_case (`user32.mouseeventf_leftdown`) and needs a header as the third argument. A
