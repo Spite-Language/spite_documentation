@@ -402,7 +402,10 @@ it would take months; write it in Spite when it is small, or when the work is wh
 Some things have no shape in the C ABI, so no binding can carry them as they are:
 
 - **Exceptions.** A C++ exception or a Rust panic that unwinds out of an exported function is undefined behaviour
-  in C, and Spite has no exceptions to receive it. The library must catch it on its side and answer a status.
+  in C, and Spite has no exceptions to receive it. The library must catch it on its side and answer a status. One
+  that unwinds through a [callback](#calling-back-into-spite) toward a `catch` further out ends the program with
+  a report naming the exception's code and the foreign call it came out of
+  ([failure.md](failure.md#a-c-exception-through-a-spite-frame)).
 - **Generics and templates.** Only a concrete function has an address: export one instantiation per type.
 - **A struct returned by value**, a C union past its first member, variadic functions (`printf`) and macros that
   look like functions. Wrap them in a small exported function on the library's side.

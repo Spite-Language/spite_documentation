@@ -1238,7 +1238,11 @@ Read it left to right:
   any callback has no `foreign=` and names its Spite place, and after a callback's own foreign call returns, the
   call that called back is named again.
 - `spite.function` names the function that faulted, and each `spite.caller` is a function further up the stack,
-  innermost first, at most 64 of them; `repeated=` counts the same caller called from itself. These lines come from
+  innermost first, at most 64 of them; `repeated=` counts the same caller called from itself. A fault outside Spite
+  code (in a library the program calls, or in the program's own allocation) has a bare `spite.function`, and its
+  first `spite.caller` is the Spite function that called into it. The stack is walked with the unwind data every
+  executable carries, so a resumable function (one that waits) and the functions that called it are named like
+  any other. These lines come from
   `<program>.functions`, a file every build writes beside the executable. A fault inside a foreign call keeps its
   `foreign=` and `from=` fields and adds no function lines, and without the file only the `spite.fault` line is
   printed. A function a `--hot-reload` build swapped in is named like any other.
@@ -1255,6 +1259,20 @@ thread that is in no foreign call, and a corrupted heap are reported at once, as
 An exception that would unwind the stack through Spite functions (a C++ `throw` or a `longjmp` crossing a callback)
 is reported too, since unwinding would skip what those functions still owe. A
 `--hot-reload` build reports every fault at once.
+
+### A C++ exception through a Spite frame
+
+Spite has no exceptions, so an exception a foreign library throws must be caught on the library's side before it
+returns. When it is not, and it would unwind through a callback into a C++ `catch` further out, the program
+reports the exception that was thrown, not the system's unwinding, and ends:
+
+```
+spite.fault	fault	-	-	-	code=0xe06d7363	at=KERNELBASE.dll+0x...	foreign=throw_now	library=fixture.dll	from=program.spite:10
+```
+
+`code=0xe06d7363` is the code every C++ `throw` built with Microsoft's runtime raises, `at=` where it was raised,
+and `foreign=` the foreign call it came out of. A `longjmp` across a callback reports `code=0x80000026`, the
+system's code for it.
 
 ## What it costs at run time
 
