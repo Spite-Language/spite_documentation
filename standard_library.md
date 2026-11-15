@@ -817,7 +817,8 @@ next: A12 for 3 boarding true 2.5 Ticket
 class shows its name and every attribute, nesting into the attributes that are classes, a `List` shows `[a, b]`, a
 `Dictionary` `{"key": value}`, text is quoted, an enum value is written `'like_this'`, and an absent
 `T?` is `null`, an item of a `List<Anything?>` or a value of a `Dictionary<String, Integer?>` included (`[null, "kept"]`). An object already being shown further up (the same object, not one `==` calls equal) is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
-as the class it is, and an attribute that holds a singleton is shown too (`Holder { ledger: Ledger { entries: 4 }, label: "kept" }`). A class that
+as the class it is, and answers `to_debug()` whether or not the `type` names it, so a `List<Driver>` holding a
+`Holder` and a `Wheel` shows `[Holder { mounted: 0 }, Wheel { turns: 1 }]`, and an attribute that holds a singleton is shown too (`Holder { ledger: Ledger { entries: 4 }, label: "kept" }`). A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:
 the compiler writes the automatic one only for the classes a program debugs. The automatic one leaves out private
 attributes (a name starting with `_`), which are the class's own business; declare `to_debug()` to show them.
