@@ -671,7 +671,7 @@ rewritten.
 - A native fault (a null read or an illegal instruction inside a foreign library, a stack overflow) is never
   silent either: the program prints `spite.fault<TAB>kind<TAB>path:line<TAB>Class<TAB>function<TAB>...`, then
   `spite.frame` lines, innermost Spite function first, and ends. `-	-	-` in the place means the fault is outside
-  Spite: `at=` names the library and offset, `foreign=` the last C function this thread called, and `from=` the
+  Spite: `at=` names the library and offset, `foreign=` the C function the faulting thread is in (each thread its own), and `from=` the
   Spite line that called it (start there). `stack-overflow` with `repeated=` on a frame is a recursion that never
   stops. The line in `path:line` is where the function starts, not the faulting line
   ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#what-a-native-fault-reports)).

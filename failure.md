@@ -1232,10 +1232,10 @@ Read it left to right:
   (Linux, macOS) the signal number.
 - `at=`: the file the faulting instruction is in (the program itself or a foreign library) and its offset from
   the start of that file, which `llvm-objdump -d` or a debugger turns into the instruction.
-- `foreign=`: the last foreign function this thread called, the `library=` it is in, and `from=` the line of Spite
-  that called it. It stays set after the call returns, so when `at=` names a library it is the call that went in,
-  and when it does not it is the last C that touched the program's data, the fact most worth having when a Vulkan
-  or Win32 call goes wrong.
+- `foreign=`: the foreign function the faulting thread is in, the `library=` it is in, and `from=` the line of Spite
+  that called it. Each thread keeps its own, so a thread waiting in a foreign call never names its call in another
+  thread's report. It is cleared when the call returns, so a fault in Spite code has no `foreign=` and names its
+  Spite place instead.
 - `spite.function` names the function that faulted, and each `spite.caller` is a function further up the stack,
   innermost first, at most 64 of them; `repeated=` counts the same caller called from itself. These lines come from
   `<program>.functions`, a file every build writes beside the executable. A fault inside a foreign call keeps its
@@ -1249,8 +1249,8 @@ What the program printed is flushed after the report, and the program ends with 
 Some C libraries fault on purpose and catch it: a graphics driver probes memory inside a `__try`/`__except`, or
 registers a handler of its own that fixes the fault and goes on. On Windows such a fault, raised inside a foreign
 call and outside the program's own code, goes to the library's handlers first; the program reports it only when
-none of them takes it, with the same `spite.fault` line. A fault in the program's own code, a fault while no
-foreign call is running, and a corrupted heap are reported at once, as before, whatever a library has registered.
+none of them takes it, with the same `spite.fault` line. A fault in the program's own code, a fault on a
+thread that is in no foreign call, and a corrupted heap are reported at once, as before, whatever a library has registered.
 An exception that would unwind the stack through Spite functions (a C++ `throw` or a `longjmp` crossing a callback)
 is reported too, since unwinding would skip what those functions still owe. A
 `--hot-reload` build reports every fault at once.
@@ -1275,8 +1275,10 @@ is reported too, since unwinding would skip what those functions still owe. A
   installed.
 - **The fault handler is in every program and costs nothing until a fault.** It is about 3.7 KB of machine code, and
   a table of every function the program kept (its start address and name, 32 bytes and the name each; 73
-  functions, about 4 KB, in `examples/hello`). Installing it is two system calls when the program starts, and one
-  more when a thread starts. Each foreign call stores one pointer before it goes in, which measured as nothing
+  functions, about 4 KB, in `examples/hello`). Installing it is five system calls when the program starts (two of
+  them take the thread slots for the foreign-call site), and one more when a thread starts. Each foreign call sets
+  its site and library in those slots before it goes in and clears the site after, three calls that never enter the
+  system
   ([optimizations.md](optimizations.md#a-fault-report-is-the-only-machinery-in-every-program)).
 
 ---
