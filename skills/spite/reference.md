@@ -587,7 +587,7 @@ rewritten.
   singleton locks) is listed in [proofs.md](https://github.com/Spite-Language/spite_documentation/blob/master/proofs.md), with when it does **not** apply. Read its "Which proofs
   apply to my code" first: where a proof does not hold, you write the check yourself.
 - A `switch` is over a union, a `T?`, an enum or a `Boolean`, and names every member or value: there is no `_:`,
-  so a member added later is an error at every switch until it has a case. Cases may share a one-line body
+  so a member added later is an error at every switch until it has a case. A member is its whole class, not its last name: a union holding `First.Item` and `Second.Item` needs both cases (`this switch over 'Held' has no case for Second.Item: ...`). Cases may share a one-line body
   (`Cat: walk()` and `Dog: walk()`); when all but one share it, write `if value.class == Fish { swim() } else { walk() }`, unless the shared body reads the switched value, which stays a `switch`.
   Value cases are `'red': return 30` or `true:`/`false:`, and a `Boolean` needs both (`this switch over 'count > 2' has no case for false: ...`); for one of them write an `if`. A `switch` over a number or a text is an error: choose with
   `if`s. A case is one statement (a call, an assignment, a `return` or a `crash`), on its line or alone in `{ }`; two

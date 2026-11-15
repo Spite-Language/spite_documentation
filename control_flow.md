@@ -264,7 +264,10 @@ the class (or every member of the union), so a null cannot be forgotten: leaving
 'target' has no case for Null`. A switch whose every case leaves the function (a `return` or a `crash` in each)
 leaves too, a `T?` switch with its `Null:` first or last included: it may end a function that answers a value, and
 `if not found { switch ... }` with every case returning narrows `found` below it. A switch missing a case is refused
-for that case, and one with a case that does not leave still reaches the function's end. A case is one statement:
+for that case, and one with a case that does not leave still reaches the function's end. A member is its whole
+class, never its last name: a union holding `First.Item` and `Second.Item` needs a case for each, and a switch naming
+only `First.Item` is `this switch over 'Held' has no case for Second.Item`, the member named by as much of its path
+as tells it from the others. A case is one statement:
 when a member needs more than that, the case calls a function named for what it does, so a switch reads as a list of what happens to each member.
 
 ```gdscript title=switch_cases/cat.spite
