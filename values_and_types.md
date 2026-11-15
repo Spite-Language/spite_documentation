@@ -903,6 +903,18 @@ a one-line case. `enemy.class == Monster` asks which member a value is
 A union holds objects whose class a `switch` can test, so `String`, a number class, `Boolean` and a generic class
 such as `List<Integer>` are refused as members: make a class of your own that keeps the value in an attribute.
 
+A union lists classes, never a `type` (D2504). A `type` is a shape many classes fit, and a function taking one is
+already copied for each class it is given, so a `type` member is refused at its own line, `Anything` included:
+
+```diagnostic
+'Named' cannot be a member of union 'Placed': a union lists classes, and 'Named' is a type, a shape a class fits; list
+the classes themselves, or type the parameter 'Named' where any class that fits will do, and a function taking one is
+copied for each class
+```
+
+List the classes that fit instead, or take the `type` itself where any class that fits will do. A union may still
+hold a class whose attributes are typed by a `type`, and another union as a member.
+
 A union costs nothing to hold: the value is the object itself, and a `switch` or a call on it compares the class
 its header already names against the members.
 
