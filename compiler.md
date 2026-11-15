@@ -394,6 +394,9 @@ The compiler optimises on its own and says nothing about what worked ([optimizat
 could **not** do is what costs you, so `--optimization-report=file` writes exactly that: one Markdown file listing
 every place an optimisation fell back, each line a link to the source line and the reason, so every line is
 something you can act on. Nothing is written without the flag, and the program built is the same either way.
+A link opens from the report's folder: it is relative to that folder when the report and the source sit on the
+same drive (a relative report path is read from the folder `spite` runs in), and the source's absolute path when
+they do not.
 
 ```bash
 spite --optimization-report=.spite/optimization.md --check
