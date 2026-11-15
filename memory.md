@@ -689,8 +689,11 @@ one of the receiver's class, when that class is known: `this`, a parameter, an o
 attribute of one of these. A singleton or a generic class is never part of that link. Some cycles keep their counts
 and leak, since nothing proves which side outlives the other: two objects made side by side and then linked to each
 other directly (`question.answer = answer` beside `answer.question = question`), one attribute pointing both ways
-(`partner`), and a back attribute that holds a union or a `type` or cannot be null. Keep the back attribute a
-`T?` of one class. There is no `Weak<T>` to write, and naming one is an unknown-type error.
+(`partner`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
+(`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
+each class of the union, or for a `type` each class of the program that declares all of its members, so one class
+that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`).
+There is no `Weak<T>` to write, and naming one is an unknown-type error.
 
 ## `--debug-memory`
 
