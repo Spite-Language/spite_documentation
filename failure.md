@@ -1185,6 +1185,16 @@ the program exits. Only the first thread to crash
 reports; one that crashes while that report is being written waits for the program to end, so two reports never
 interleave.
 
+### A crash names the same file on every machine
+
+The `<path>` of a crash line, of a `spite.fallback` and `spite.frame` line, of a native fault and of the `.crashes` map
+never says where the program sat on the disk when it was built. A file of the program is named from the program's
+folder, `crash_report/crash_report.spite`, a file of a package it `load`s from that package's folder,
+`json_tools/reader.spite`, and a file of the standard library by its place in the library,
+`spite_standard_library://common/list.spite` ([compiler.md](compiler.md#a-library-file-is-named-the-same-on-every-machine)).
+So the same source builds to the same executable in any folder, and its reports name the same files on every machine.
+Errors while compiling still name the file where it is, so an editor can open it.
+
 ### Why a crash carries no message
 
 A crash has no message because a message is prose someone wrote about the problem, and it goes out of date the day the

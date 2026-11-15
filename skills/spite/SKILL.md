@@ -66,7 +66,7 @@ the program`, so fix them all before compiling again. A file that does not read 
 its spelling mistakes (a mark, text or number Spite does not read) first, and once it spells right every syntax
 mistake, one for each broken statement. A later stage does not run on a broken input: type errors come
 once every file reads clean, and the errors that need the whole build (unread names, proven checks, a value that may
-be null) once it builds, so a clean list can be followed by a new one. A failure at run time is a `spite: the program stopped at ...` or `spite.fault` line naming the file, the line
+be null) once it builds, so a clean list can be followed by a new one. A failure at run time is a `spite: the program stopped at ...` or `spite.fault` line naming the file (from the program's folder, as `shop/orders/cart.spite`), the line
 and the values there: open that line, and do not add logging. The commands are in
 [docs/repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 

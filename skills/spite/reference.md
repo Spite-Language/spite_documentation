@@ -637,7 +637,9 @@ rewritten.
     `if` with no `else` that ends in `return` proves the opposite of its condition after it: `if not found { return -1
     }` narrows `found`, `if index >= names.count() { return "" }` proves `names[index]`;
   - absence is a bug: `crash condition` halts with
-    `spite: the program stopped at path:line in Class.function, site <id> (name=value, ...)`, followed by the
+    `spite: the program stopped at path:line in Class.function, site <id> (name=value, ...)`, the path named from
+    the program's folder (`shop/orders/cart.spite`), a loaded package's folder or `spite_standard_library://`, never
+    where it was built, followed by the
     fallbacks that failed before it (each with `returned=nothing`, `null` or `empty`, what its function gave back)
     and the call chain as `spite.frame` lines, innermost first. Every name and call the condition read is there with its value, whatever its
     shape: `crash record or cooked.count() > 2` reports `record is null, cooked.count()=1`; a part an `and` or `or`
