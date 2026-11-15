@@ -149,8 +149,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   function; the compiler decides what runs at once.
 - A call or a constructor is never an argument of another call: compute it into a named `var` first.
 - A user interface tree may be written as tags (JSX), only after `return` or `var name =`: each tag is a construction
-  with no arguments, each attribute an assignment, a nested tag an `append_child`, an `{expression}` child
-  `append_children` (a one-item list when it is one value); a lowercase tag calls
+  with no arguments, each attribute an assignment, every child an
+  `append_children` (a nested tag, or an `{expression}` that is one value, in a one-item list); a lowercase tag calls
   `render_<tag>` with its attributes as the parameters, by name (`<weapon grade={1}/>` is `render_weapon(1)`). See the markup section of [reference.md](reference.md).
 - A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
   blank lines: name the part and call it.

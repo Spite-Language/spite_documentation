@@ -458,11 +458,11 @@ A list of a few items made only to be handed to a function that walks it is neve
 the function that takes the items one by one. A function walks a list when its whole body is
 `items.each(walker)`, with `walker` a function of its own class; the compiler reads that from the function on every
 build. This is what makes a [markup](markup.md) child `{face}`, a one-item `List<Anything?>` handed to
-`append_children`, cost what `append_child(face)` costs:
+`append_children`, cost what the call `add(face)` costs:
 
 ```spite
 func append_children(items: List<Anything?>) {
-    items.each(append_child)
+    items.each(add)
 }
 ```
 

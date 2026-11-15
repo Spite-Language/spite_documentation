@@ -31,14 +31,17 @@ func render(): Anything? {
     view_3.wrap = true
     var text_4 = Text()
     text_4.content = "Face"
-    view_3.append_child(text_4)
+    var children_4: List<Anything?> = [text_4]
+    view_3.append_children(children_4)
     var health_bar_5 = render_health_bar(health, missing)
-    view_3.append_child(health_bar_5)
+    var children_5: List<Anything?> = [health_bar_5]
+    view_3.append_children(children_5)
     view_3.append_children(buttons)
     var badge_7 = render_badge()
     var children_7: List<Anything?> = [badge_7]
     view_3.append_children(children_7)
-    window_2.append_child(view_3)
+    var children_3: List<Anything?> = [view_3]
+    window_2.append_children(children_3)
     return window_2
 }
 ```
@@ -65,8 +68,10 @@ A tag anywhere else, such as a call's argument (`show(<View/>)`), is an error: n
 
 ## Children
 
-A nested tag is built first, leaves first, then added with `parent.append_child(child)`. The library a tag's class
-comes from declares `append_child` and `append_children`; Spite adds neither.
+A nested tag is built first, leaves first, then added as a one-item list, like any child that is one value:
+`var children_4: List<Anything?> = [text_4]`, then `parent.append_children(children_4)` (D2506). So tags only ever
+call `append_children`, which the library a tag's class comes from declares; Spite adds none. When it only walks its
+list, the list is never made (see below).
 
 ## An expression as a child
 
@@ -80,7 +85,7 @@ value (D2302):
   `render_badge()`), since a call is never an argument. A child that answers `Anything?` and is `null` goes in its
   one-item list and the library skips it, which is how a child is shown only sometimes: a `render_badge()` that
   answers `null` when there is no badge. So the library's `append_children` takes a `List<Anything?>`. When
-  `append_children` only walks its list (`items.each(append_child)`), the one-item list is never made
+  `append_children` only walks its list (`items.each(add)`), the one-item list is never made
   ([optimizations.md](optimizations.md#a-list-made-only-to-be-walked-is-never-made)).
 - A `Boolean` is an error: there is no `condition && <Tag/>`.
 

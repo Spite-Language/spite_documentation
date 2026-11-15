@@ -111,7 +111,7 @@ to, as `Mouse` sits on `DynamicLibrary`.
 
 Markup is written two ways, and both compile to ordinary calls. Tags (JSX) are sugar the compiler turns into
 statements before it resolves a name: each tag makes an object with no arguments, each attribute is an assignment
-through its setter, and each child is added with `append_child` ([markup.md](markup.md), D2300, which replaced D18's
+through its setter, and each child is added with `append_children` ([markup.md](markup.md), D2300, which replaced D18's
 "no JSX"). Markup by calls still works: `missing_function` plus literals, with as many children as the call has
 arguments. That costs no new feature, because a template function is generated per call site:
 
