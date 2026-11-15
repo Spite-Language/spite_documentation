@@ -1234,8 +1234,9 @@ Read it left to right:
   the start of that file, which `llvm-objdump -d` or a debugger turns into the instruction.
 - `foreign=`: the foreign function the faulting thread is in, the `library=` it is in, and `from=` the line of Spite
   that called it. Each thread keeps its own, so a thread waiting in a foreign call never names its call in another
-  thread's report. It is cleared when the call returns, so a fault in Spite code has no `foreign=` and names its
-  Spite place instead.
+  thread's report. When the call returns it puts back what the thread held before, so a fault in Spite code outside
+  any callback has no `foreign=` and names its Spite place, and after a callback's own foreign call returns, the
+  call that called back is named again.
 - `spite.function` names the function that faulted, and each `spite.caller` is a function further up the stack,
   innermost first, at most 64 of them; `repeated=` counts the same caller called from itself. These lines come from
   `<program>.functions`, a file every build writes beside the executable. A fault inside a foreign call keeps its
@@ -1277,8 +1278,8 @@ is reported too, since unwinding would skip what those functions still owe. A
   a table of every function the program kept (its start address and name, 32 bytes and the name each; 73
   functions, about 4 KB, in `examples/hello`). Installing it is five system calls when the program starts (two of
   them take the thread slots for the foreign-call site), and one more when a thread starts. Each foreign call sets
-  its site and library in those slots before it goes in and clears the site after, three calls that never enter the
-  system
+  its site and library in those slots before it goes in and puts back the ones it found after, eight calls that
+  never enter the system (two of them keep the thread's last error)
   ([optimizations.md](optimizations.md#a-fault-report-is-the-only-machinery-in-every-program)).
 
 ---

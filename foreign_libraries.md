@@ -422,7 +422,8 @@ program still says so: it prints a `spite.fault` line naming the library the fau
 (`at=fixture.dll+0x1029`), the foreign function the faulting thread is in and the line of Spite that called it
 (`foreign=read_integer_at	library=...	from=native_fault_foreign.spite:13`), and then the Spite functions on the
 stack. Each foreign call names itself in a slot of its own thread before it goes in, so a call another thread is
-waiting in is never named, and clears it when it returns; how to read the whole report is in
+waiting in is never named, and puts back the one it found when it returns, so a foreign call made from a callback
+leaves the call that called back named; how to read the whole report is in
 [failure.md](failure.md#what-a-native-fault-reports).
 
 A library that catches its own faults keeps doing so: a C `__try`/`__except` around its own code, or a handler it
