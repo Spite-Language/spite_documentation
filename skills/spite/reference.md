@@ -520,7 +520,9 @@ rewritten.
   an enum fits a `type` asking only `to_string`, a union fits when each class does. To admit only some classes write
   a `union`, not a `type`. A `T?` fits a `type` that asks only for
   `to_string()` and `to_debug()` (null answers both with `null`); any other `type` needs it narrowed or proven present
-  first (`this value may be null (it is a Rock?), but a Singer is needed: ...`). Every value answers `to_debug()`,
+  first (`this value may be null (it is a Rock?), but a Singer is needed: ...`). A `type` with `?` takes any `T?`
+  whose `T` fits, kept as it is (`var held: Component? = maybe_label()`, a `List<Component?>` item, a `render():
+  Component?` answering a `Label?`). Every value answers `to_debug()`,
   so `driver.to_debug()` and `console.debug(drivers)` work on a value or a `List` of any `type`, naming `to_debug`
   or not, each element shown as the class it is: `[Holder { mounted: 0 }, Wheel { turns: 1 }]`.
 - `Anything` is the built-in empty `type`, the counterpart of `Nothing`: `component: Anything` and

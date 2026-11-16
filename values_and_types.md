@@ -1009,7 +1009,8 @@ Number classes fit by the same rule as any class: `Integer` has `to_string`, so 
 `to_string: Spite.Function<String>`, and `var shown: Textual = 5`, a class whose `amount: Integer` meets a member
 `amount: Textual`, and `Integer.satisfies_type(Textual)` all agree. An enum value answers only `to_string`, so it
 fits a `type` that asks for nothing else. A union fits when each of its classes does. A `T?` fits only a `type`
-`null` answers too, `to_string()` and `to_debug()`, unless what is wanted is itself a `?`. When only some classes
+`null` answers too, `to_string()` and `to_debug()`, unless what is wanted is itself a `?`: a `Component?` takes
+a `Label?` or a `Piece?` whose classes fit `Component`, wherever the value goes, and keeps its `null`. When only some classes
 should fit, the `type` was meant to be a union ([unions](#unions)); to keep a class out, ask for more in the `type`.
 
 A function taking a `type` is compiled once per class a call hands it and checked as if written for that class, so a
