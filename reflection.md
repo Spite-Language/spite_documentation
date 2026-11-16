@@ -1133,13 +1133,23 @@ Integer
 
 Such an attribute is written as well as read: `attribute.value = given` is `attribute.set_value(given)`, which writes
 the owner's field, so a program can copy every attribute of one object onto another it only holds as an `Anything`.
-The value is cast to the attribute's class the way an assignment casts it (an `Integer` into a `Float` or a `String`
-attribute, a `Float` into an `Integer` one), a function value goes back into a function attribute of the same type,
-and `null` into a nullable one. Counts and back references are kept as an assignment keeps them, and a private
-attribute is neither listed nor written, as it is not read. A value the attribute cannot take stops the program,
-naming the attribute: `spite: set_value() gives 'Meter.whole' a value that is not an Integer and that no conversion
-of Integer takes, so it cannot be cast the way an assignment would cast it`, and so does `null` into an attribute
-that is not nullable.
+The value is cast to the attribute's class the way an assignment casts it (an `Integer` into a `Float` attribute, a
+`Float` into an `Integer` one, and into a `String` attribute any class with its own `to_string()`), a function value
+goes back into a function attribute of the same type, and `null` into a nullable one. Counts and back references are
+kept as an assignment keeps them, and a private attribute is neither listed nor written, as it is not read.
+
+The compiler decides the cast while compiling. It knows the classes that reach `given` (an `Anything` holds only the
+classes that reach it) and the attributes the write can reach: the one `.attributes["whole"]` names, written in the
+write or in the local it reads, or else every attribute the program lists at run time. A class none of them takes
+is an error at the write's line, naming the class and the attribute: `set_value() gives 'Meter.whole' a Gadget,
+which is not an Integer and which no conversion of Integer takes, so it cannot be cast the way an assignment would
+cast it`. With several attributes it lists what each holds, and `null` written where none is nullable is
+`set_value() gives 'Meter.whole' null, and it is not nullable`. The program stops at run time only where the
+compiler cannot pair a value with its attribute: a write that reaches several attributes, given a class one of them
+takes into an attribute that does not (`spite: set_value() gives 'Meter.whole' a value that is not an Integer and
+that no conversion of Integer takes, so it cannot be cast the way an assignment would cast it`), a nullable value
+that is `null` into an attribute that is not nullable, and any value written in a program built with a prompt or hot
+reload, whose typed code is compiled after its writers.
 
 ```gdscript title=attribute_copies/button.spite
 var label = "none"

@@ -875,8 +875,11 @@ rewritten.
   `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`; narrowed by `if found.value.class == Integer`, it is that number, and its `to_string()` answers the number's own; `attribute.value = given`,
   which is `set_value(given)`, writes the owner's field even when the object is only an `Anything`, cast as an assignment
-  casts and stopping the program, naming the attribute, on a value it cannot take; private attributes are neither
-  listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
+  casts (a class with its own `to_string()` into a `String` field too); a class reaching `given` that no attribute the
+  write can reach takes (the one `.attributes["name"]` names, else every attribute listed at run time) is a compile
+  error at that line, as is a `null` literal where none is nullable, and the program stops at run time only on a
+  pairing the compiler cannot see (a write reaching several attributes, a nullable value that is `null`, a program
+  built with a prompt or hot reload); private attributes are neither listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`; a nullable one held in an attribute is narrowed through its path like any value: `fallback button.on_press` then `button.on_press()`), and
   `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's). `class`, bare inside a class's function, is the class
