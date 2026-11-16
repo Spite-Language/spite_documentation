@@ -780,7 +780,7 @@ rewritten.
   `troll.attributes[declaration.name]` (a `Spite.Attribute?`). A walk or a template means the same:
   `x.attributes[attribute]` is x's `Spite.Attribute`, and `x.attributes[attribute].value` reads and writes the
   field (`copy.attributes[attribute].value = price.attributes[attribute].value`), compiled as a plain read or write of
-  it; `copy.attributes[attribute] = ...` is a compile error, since an instance's attributes are never replaced. A walk
+  it; only the walked declaration does that, and any other key in the copy is indexed as anywhere else; `copy.attributes[attribute] = ...` is a compile error, since an instance's attributes are never replaced. A walk
   hands its function what the parameter is typed: `troll.attributes.each(f)` gives a `Spite.Attribute` parameter the
   bound attribute and a `Spite.AttributeDeclaration` one the declaration, as `Monster.attributes.each(f)` does.
 - Questions are get-only attributes, folded on a constant: `Loader.functions["load_each"]` (narrow it), then
