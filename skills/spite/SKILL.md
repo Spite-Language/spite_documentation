@@ -25,27 +25,25 @@ cd game
 spite --hot-reload --repl-port=4000
 ```
 
-It keeps running, even after its entry constructor returns, until a client sends `exit`. Then, for each change:
+It keeps running, even after its entry constructor returns, until a line ends it (`Program().exit(0)`). Then, for
+each change:
 
 1. **Edit and save the file.** The watcher compiles the program again and swaps in every function whose code
    changed, keeping every object's state.
-2. **`spite --connect=4000 --command="wait_reload"`** answers once the save is compiled and swapped in, with what was
-   rebuilt (`rebuilt Monster`) or the compiler's errors. Never poll, never sleep: this is the wait. (`reload` swaps
-   in what changed right away, without waiting for the watcher.)
-3. **Ask the program instead of printing.** Every answer is one line of JSON, `{"ok":true,"value":...}`:
-   - a path or a call: `player.health`, `monsters[0].roar()`, `World().entity_count()` (a singleton by name,
-     `Channel(1)` one made with arguments), `scores.keys()`;
-   - an assignment to try a value: `monsters[0].health = 5`, or an object made there: `follower = Circle(3)`;
-   - `describe Monster` (attributes and functions), `classes`, `enums`, `attributes`, `functions`, `memory` (live
-     allocations and bytes);
-   - `eval stock.count() + 40` and `run stock.append(9)` compile code typed at the prompt into the running program.
-4. **Debug where it goes wrong.** `break monster.spite:42` stops the program before that line; `where` says where it
-   stopped, `locals` lists `self` and every local in scope (`name: Type = value`, one per line), and `continue` goes
-   on. `breaks`
-   lists them, `clear` removes them.
-5. **When a reload is refused**, read why. A change that adds, removes, renames or retypes an attribute, or
+2. **Ask the program instead of printing**, with lines of Spite: `spite --connect=4000 --command="monsters[0].roar()"`.
+   A line first swaps in every save the watcher has seen, so it runs against the new code: never poll, never sleep.
+   Every answer is one line of JSON, `{"ok":true,"value":"Goblin roars!","type":"String"}`, or `{"ok":false,"error":...}`
+   with the compiler's error when the line, or the saved code, does not compile.
+   - A line is ordinary code run in the program: an expression answers its value, a statement runs. `program` is
+     the entry instance and its attributes and functions are named bare (`player.health`, `World().entity_count()`).
+   - `var strongest = monsters[1]` and `func healthy(): Integer { ... }` stay for later lines.
+   - Reflection answers questions about the program: `Monster.attributes`, `Monster.functions`,
+     `Program().live_allocations()`.
+3. **When a reload is refused**, read why. A change that adds, removes, renames or retypes an attribute, or
    changes an enum's values other than by adding new ones last, is refused: the program keeps all of its old code,
-   and the answer says to start the program again. Send `exit` and start it again.
+   and the answer says to start the program again. Send `Program().exit(0)` and start it again.
+
+There are no commands and no breakpoints: to see a value, send a line; to stop somewhere, add a print and save.
 
 Leave the loop only when you need to:
 
@@ -67,7 +65,7 @@ its spelling mistakes (a mark, text or number Spite does not read) first, and on
 mistake, one for each broken statement. A later stage does not run on a broken input: type errors come
 once every file reads clean, and the errors that need the whole build (unread names, proven checks, a value that may
 be null) once it builds, so a clean list can be followed by a new one. A failure at run time is a `spite: the program stopped at ...` or `spite.fault` line naming the file (from the program's folder, as `shop/orders/cart.spite`), the line
-and the values there: open that line, and do not add logging. The commands are in
+and the values there: open that line, and do not add logging. The REPL is in
 [docs/repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
 Write the plain, readable version first. Do not hand-optimise: the compiler fuses chains, specialises generics,

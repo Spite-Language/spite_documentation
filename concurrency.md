@@ -270,12 +270,11 @@ seen the text on its first test. Here it returns at its sleep, and the loop draw
 
 ## The REPL answers at the waits
 
-A `--repl-port` build (see [repl.md](repl.md)) serves its commands **on the program's own thread, at the same
-waits**. The socket thread only reads a command and hands it over; the scheduler answers it the next time the
-program waits, and hands the answer back. Every command therefore sees the program between two steps, never in
-the middle of one: a frame loop that ends in `program.sleep` is answered between frames, a tool waiting on
-`Console.read_line` is answered while it waits, and once the entry constructor returns, the program waits for
-nothing but commands until a client sends `exit`. None of this is written by the program.
+A REPL build (`--repl` or `--repl-port`, see [repl.md](repl.md)) runs each line **on the program's own thread,
+at the same waits**. The line is read without stopping the program, and run the next time the program waits.
+Every line therefore sees the program between two steps, never in the middle of one: a frame loop that ends in
+`program.sleep` is answered between frames, and once the entry constructor returns, the program waits for nothing
+but lines. None of this is written by the program.
 
 ```gdscript title=frame_loop/frame_loop.spite entry
 var console = Console()
@@ -299,22 +298,19 @@ stopped
 
 This session runs against the program above while its loop runs:
 
-```wire frame_loop
-$ spite --connect=4000 --command="program.running"
+```text
+$ spite --connect=4000 --command="running"
 {"ok":true,"value":"true","type":"Boolean"}
 
-# Answered between two frames: the loop sees the change at its next test.
-$ spite --connect=4000 --command="program.running = false"
-{"ok":true,"value":"false","type":"Boolean"}
-
-$ spite --connect=4000 --command="exit"
+# Run between two frames: the loop sees the change at its next test.
+$ spite --connect=4000 --command="running = false"
 {"ok":true,"value":"","type":""}
 ```
 
-A program that never waits is answered too. In a `--repl-port` or `--hot-reload` build, and only there, the
+A program that never waits is answered too. In a REPL or `--hot-reload` build, and only there, the
 compiler ends every pass of every `while` in the program's own code with a **check point**: one load of a flag
-that the REPL's thread (or the file watcher) raises when a command (or a changed file) is waiting; only then does it
-answer it there, on the program's thread, between two passes of the loop. A busy loop is served between two passes the way a frame loop is served between
+that a helper thread raises every 25 ms; only then does the program look for a waiting line (or a changed file) and
+run it there, on the program's thread, between two passes of the loop. A busy loop is served between two passes the way a frame loop is served between
 two frames:
 
 ```gdscript title=busy_loop/busy_loop.spite entry
@@ -334,12 +330,9 @@ func BusyLoop() {
 stopped after at least one pass: true
 ```
 
-```wire busy_loop
-# The loop never waits: the command is answered at the end of a pass.
-$ spite --connect=4000 --command="program.running = false"
-{"ok":true,"value":"false","type":"Boolean"}
-
-$ spite --connect=4000 --command="exit"
+```text
+# The loop never waits: the line is run at the end of a pass.
+$ spite --connect=4000 --command="running = false"
 {"ok":true,"value":"","type":""}
 ```
 

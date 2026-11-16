@@ -159,7 +159,7 @@ in the environment runs that test in place, with no report line and no count, so
 report and the status is the test's own. That is the loop for fixing a failure: open the line the report names,
 fix the code or the test, run that test alone until it passes, then run them all, since a fix can break another
 test. To look around inside a test while it runs, build the test program with `--hot-reload --repl-port=4000` and
-set a breakpoint on the test's line ([repl.md](repl.md#breakpoints)).
+send it lines of Spite ([repl.md](repl.md#remote---repl-port)).
 
 **The compile in front of the run is part of the test**: a test that cannot compile reports `path:line: error: ...`
 and nothing runs.

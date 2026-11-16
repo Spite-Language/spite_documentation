@@ -230,15 +230,14 @@ keeps one branch.
 None of this is in the program that is built: choosing, building and writing outputs is the compiler's own
 work, and `Build` is a folded singleton that holds nothing at run time. Only four options add code to the program,
 and only to a build that asks for them: `--debug-memory` its allocation table, `--repl` and `--repl-port` the REPL
-and the reflection it walks, `--hot-reload` a slot per function and a file watcher, and `--trace-fallbacks` a write
+and a slot per function, `--hot-reload` a slot per function and a file watcher, and `--trace-fallbacks` a write
 in each `fallback` taken. Each one's cost is on its
 page.
 
 ### Measure only a production build
 
 REPL and live-reload builds are slower on purpose. They exist to tell you more while the program runs: every
-function sits in a slot so it can be swapped, the program can stop at a breakpoint, and the REPL can inspect any
-object. None of that is free, and none of it is meant to be fast.
+function sits in a slot so it can be swapped, and a REPL line can be compiled into the running program. None of that is free, and none of it is meant to be fast.
 
 So any benchmark or performance comparison of Spite uses a build with no `--repl`, no `--repl-port`, no
 `--hot-reload` and no `--debug-memory` (which counts every allocation). A number measured on any other build

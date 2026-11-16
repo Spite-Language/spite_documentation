@@ -107,17 +107,15 @@ given as `children={parts}`.
 ## Generated names
 
 A generated local is named for its tag in snake case and the line it starts on: `window_2`, `view_3`, `health_bar_5`.
-A second one with the same name in the function adds a count, `view_3_2`. So a crash report and `locals` at a
-breakpoint read like the code.
+A second one with the same name in the function adds a count, `view_3_2`. So a crash report reads like the code.
 
 ## Positions
 
-Every generated statement carries the line of the tag, attribute or child it came from, so an error, a crash report,
-`spite.frame` and a breakpoint (`break file.spite:4`) point at that line: an attribute on a line of its own is
+Every generated statement carries the line of the tag, attribute or child it came from, so an error, a crash report and
+`spite.frame` point at that line: an attribute on a line of its own is
 reported at its own line, whether it is set through a setter or passed to a `render_` function, and only what is
 about the tag as a whole (an unknown tag, a parameter left out) is reported at the tag's line. A call written by hand
-over several lines does the same: an error about one argument names that argument's line. A breakpoint on a line
-inside the tags stops before the first statement built from that line.
+over several lines does the same: an error about one argument names that argument's line.
 
 ## How it is written
 

@@ -62,7 +62,7 @@ or `the folder 'BadFolder' is not named in snake_case: ...`, when the compiler c
   `Bad_Folder` from `bad_folder`;
 - it is not the program's own: a folder outside the program's folder, the standard library, a pinned copy or
   anything under `.spite/`, or the compiler's own tree;
-- a file it holds is never fixed (a generated class, a file holding breakpoints);
+- a file it holds is never fixed (a generated class);
 - a `load` that cannot be rewritten names it: one in a file the compiler never fixes, or one whose path only runs
   through the folder (`load "BadFolder/inner"`, `load "BadFolder/.."`), since a `load` names one folder by its last
   segment.

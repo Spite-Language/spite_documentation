@@ -22,7 +22,8 @@ is given by position.
 ```
 spite                                   build .spite/build/program.exe and run it
 spite --debug-memory                    print the allocation balance at the end
-spite --repl-port=4000                  serve the REPL; spite --connect=4000 --command="..." asks it
+spite --repl                            run with a console of Spite lines (a REPL)
+spite --repl-port=4000                  serve REPL lines; spite --connect=4000 --command="..." sends one
 spite --check                           format and compile: the errors, if any (builds nothing, keeps an old executable)
 spite --build                           build .spite/build/program.exe without running it
 spite --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies, overflow checks, text literals still made, loops kept out of bands), each with its line and why, linked relative to the report (absolute when on another drive)
@@ -32,21 +33,20 @@ spite --player-count=2                  a field the program's build.spite declar
 
 **Iterate on the running program, not by rebuilding**. Start it once with
 `spite --hot-reload --repl-port=4000` and keep it running (it stays up after its constructor returns, until
-a client sends `exit`). Save a file, then `spite --connect=4000 --command="wait_reload"`: it answers once the save is
-compiled and swapped in, with what was rebuilt or the compiler's errors, and objects keep their state. Ask instead
-of printing: a path or call (`World().player.health`, `Channel(1).number`, `monsters[0].roar()`,
-`scores.contains("ann")`), an assignment (`player.health = 5`, `follower = Circle(3)`),
-`describe Monster`, `classes`, `enums`, `memory`, and `eval <expression>` / `run <statement>` to compile code into
-the running program. `break monster.spite:42` stops before that line; `where` and `locals` (`self` and every local in scope, one
-`name: Type = value` per line) answer there, `continue` goes on, `breaks` lists and `clear` removes. A reload that
+a line calls `Program().exit(0)`). Save a file, then send a line of Spite: `spite --connect=4000 --command="..."`
+first swaps in every save the watcher has seen, then runs the line in the program and answers one JSON line, the
+value and its class or the compiler's error; objects keep their state. A line is ordinary code: an expression
+answers its value, a statement runs, `program` is the entry instance and its members are named bare, and a `var`
+or `func` stays for later lines. Ask instead of printing (`World().player.health`, `monsters[0].roar()`,
+`Monster.attributes`); there are no commands and no breakpoints. A reload that
 adds, removes, renames or retypes an attribute, or changes an enum's values other than by adding new ones last (a value's number included), is
-refused, the program keeping all of its old code: send `exit` and start it again. Use `--check` only for the errors
+refused, the program keeping all of its old code: end it and start it again. Use `--check` only for the errors
 or for a program that cannot stay running, and run the tests before calling the work done. Measure speed only on a
 production build (no `--repl`, `--repl-port`, `--hot-reload` or `--debug-memory`): `--optimized` only sets
 `Build.optimized` and does not make the program faster. A field of the program's `build.spite` that no flag sets is
 read from its variable (`PLAYER_COUNT=2`), then from a `.env` line in the folder. `--target-operating-system` only
 sets `Build.target_operating_system`: the executable is always Windows x64. Every answer is one JSON line. The
-commands are in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
+REPL is in [repl.md](https://github.com/Spite-Language/spite_documentation/blob/master/repl.md).
 
 A program lives in its own folder, and `spite` run in it runs it. Every program has the standard library with no
 `load` line: the compiler reads the folder of the system it compiles for (`windows`, or `--target-operating-system`'s),

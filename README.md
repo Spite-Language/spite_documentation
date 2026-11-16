@@ -144,8 +144,8 @@ with a link to the next.
 
 23. [compiler.md](compiler.md): every command and flag, the outputs and where they go, `--final-classes`,
     `--development`, and which build to measure.
-24. [repl.md](repl.md): the local and remote REPL, `spite --connect`, live reload, and a replayed debugging
-    session.
+24. [repl.md](repl.md): the REPL, a console of Spite lines run in the running program, the same lines over a
+    socket with `spite --connect`, and live reload.
 25. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
 26. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if
     anything) you could notice.

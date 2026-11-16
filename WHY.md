@@ -303,10 +303,10 @@ the errors without building, and `--hot-reload` swaps changed classes into a run
 
 ## A running program that answers questions
 
-Run a program with `--hot-reload --repl-port=4000` and it keeps running while you work. Save a file and only the
-changed classes are recompiled and swapped in; live objects move to a class's new attributes. Ask it anything by
-its path (`World().player.health`, `describe Monster`), set a breakpoint with `break monster.spite:42` and read the
-locals there. Every answer is one line of JSON, so a script or a model can drive it as easily as a person
+Run a program with `--hot-reload --repl-port=4000` and it keeps running while you work. Save a file and the
+functions whose code changed are swapped in, and every object keeps its state. Ask it anything in Spite
+(`World().player.health`, `Monster.attributes`), as a line compiled into the running program. Every answer is one
+line of JSON, so a script or a model can drive it as easily as a person
 ([docs/repl.md](repl.md)).
 
 ## Written by AI, decided by a person
@@ -412,7 +412,7 @@ the cores and lets a frame go on while a call waits, with no `async`, no handle 
 Windows.
 [docs/concurrency.md](concurrency.md)
 
-**What tooling is there?** The compiler is the formatter and linter; a REPL, live reload and breakpoints come
+**What tooling is there?** The compiler is the formatter and linter; a REPL of Spite lines and live reload come
 with it; `--debug-memory` counts every allocation. No language server or editor highlighting yet.
 [docs/repl.md](repl.md)
 
