@@ -492,6 +492,14 @@ fins 2
 a cat's fins 0
 ```
 
+An `or` of class tests of one value narrows it to those classes: inside `if creature.class == Cat or
+creature.class == Fish { }` the block is compiled once per class, each copy with `creature` narrowed to its class,
+the way a function taking a union is copied per argument type. A use is refused only where one of those classes
+does not fit it, with the words that class gets alone (`a Fish cannot be used where an Integer is needed: ...`), so
+`var shown: String = value` inside `if value.class == String or value.class == Integer` compiles, since both cast to
+text. An `Anything` narrows the same way. The `else` and anything mixed into the `or` (a test of another value, a
+comparison) narrow nothing.
+
 A generic class is named with its codegen values and no parentheses: `found.class == Storage<Health>`, or
 `found.class == Storage<$component_type>` inside a generic class. This is how a value read through a `type` is narrowed
 back to the generic class it really is. A class that fits the `type` may be tested for before any value of it
