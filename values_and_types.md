@@ -690,6 +690,41 @@ missing; `fallback flag` alone takes one, and asks that it is there and `true`. 
 yet) or `Monster()` (a default), as is `null` assigned, passed, appended or answered where a `Monster` is wanted, and a generic class makes the default of what it is bound to with `$name()`. For a
 plain value the default is its literal: `0`, `0.0`, `false` or `""`, which the error writes for you.
 
+### `null` is the one `Null`
+
+`null` is the literal for the one instance of `Null`, a library singleton (`spite_standard_library/common/null.spite`)
+whose `to_string()` and `to_debug()` answer `null`, what a printed null shows. A `T?` is a `T` or that `Null`, and
+nothing of it is in memory: a null is still a null pointer or a presence flag, and no object is made. `Null` is the
+case of a `switch` that a `T?` needs (`Null: return "none"`) and what `$value_type == Null` asks of a generic.
+
+`value == null` is a type error, the way `text == count` is, and `var nothing = null` is refused, since a name needs
+a type. `value.class == Null` compiles and answers whether the value is null, but the narrowing form says it better
+and narrows: as the condition of an `if` or a `while` it is rewritten, with a `fixed:` line, to `if not value` (and
+`value.class != Null` to `if value`).
+
+### `Anything` and `Nothing`
+
+Two unions are the language's own, declared empty in the library's `Spite` entry class
+(`spite_standard_library/common/spite/spite.spite`) and named plainly everywhere:
+
+- `Anything` is the union the compiler fills with the classes that reach it, each place on its own
+  ([functions_and_operators.md](functions_and_operators.md#anything-and-plain-values-where-a-type-is-wanted)). It
+  holds no `Null`: a value that may be missing is `Anything?`, a smell kept for where none is a real answer.
+- `Nothing` is the union that stays empty, so no value is ever of it. A function with no answer answers `Nothing`
+  (`Spite.Function<String, Nothing>`), and a value declared `Nothing` is refused:
+
+```diagnostic
+'held' is declared 'Nothing', the union no value is ever of, so it could never hold anything: remove it, or give it
+the type of what it holds
+```
+
+Any other union declared with no members is refused:
+
+```diagnostic
+'union Hollow' lists no members, so no value of it can exist: list the classes it holds; only the language's own
+'Anything' and 'Nothing' are declared empty
+```
+
 A `var` may be written again in the same scope, and the new one may hold another type:
 
 ```gdscript
