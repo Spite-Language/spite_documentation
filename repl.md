@@ -87,7 +87,8 @@ steps, never halfway through one. Once the constructor has returned, a line runs
   `Monster { name: "Goblin", health: 30 }`, `["a", "b"]`). A statement (an assignment, a call that answers
   nothing, an `if`, a `while`) prints only what it prints itself, and so does an expression whose text is empty.
 - **`program` is the running entry instance**, and its attributes and functions can also be named bare:
-  `program.player_name` and `player_name` are the same thing. A name starting with `_`, and a function taking a
+  `program.player_name` and `player_name` are the same thing, an attribute or parameter typed as a union
+  included (`spare = Circle(4)`). A name starting with `_`, and a function taking a
   variadic parameter, are reached through their own code, not from a line.
 - **A line is ordinary code.** It can call any function, `console.print("a", 1, true)` included, make objects,
   name any class, and reach a singleton by its name, `World().entity_count()`, exactly as the program's own code
