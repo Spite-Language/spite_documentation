@@ -163,7 +163,12 @@ The walked attribute is an object of the class its parameter declares, `Spite.At
 own, it can be kept in a list, `==` with text compares its name, and `[0]`, `+` or `<` on it, or a `String` function, is the
 error that class's object gives. A template's attribute parameter is the same object, for the class the template
 walks (`describe_attribute` in `Tag` called as `tag.describe_cost()` sees `Tag.attributes["cost"]`), and so is a walked
-attribute handed on to another function. The text is `attribute.name`:
+attribute handed on to another function. Every template parameter is its declaration object the same way: a member
+that is a function (`tag.describe_urgent()` over `func urgent()`) is `Tag.functions["urgent"]`, a
+`Spite.FunctionDeclaration`; a template over functions sees the function it stands for (`phase` in `run_phase_each`
+is `Mover.functions["update_each"]`); and a member of a `type` or a union, which no class lists, is a
+`Spite.AttributeDeclaration` made for it, with its name, its place among the type's members and its class. The text
+is `attribute.name`:
 
 ```gdscript title=walked_member_text/monster.spite
 var health = 10

@@ -109,7 +109,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   template over that kind of member: `Spite.AttributeDeclaration` (read as `monster.attributes[attribute].value`),
   `Spite.FunctionDeclaration` (`run_phase_each(phase: ...)` walks the `<phase>_each` functions its name says, called as
   `system.phase_each(...)`, which the copy for `update_each` fills to `update_each`, refused if the class also has a
-  `phase_each` of its own) or `Spite.Argument` (spread as
+  `phase_each` of its own; used whole, `phase` is that function's `Spite.FunctionDeclaration` and a member
+  parameter its member's declaration, with `.name` the text) or `Spite.Argument` (spread as
   `system.update_each(made_arguments(row))`); the body says which class. A class's `.name` is always its short name
   and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it. Find classes by walking,
   never by registering them: `Spite.Class.instances.each(bind)`, `Theme.classes.each(bind)` and

@@ -445,7 +445,9 @@ over the declaration, with the object as a parameter of its own.
 Inside a copy compiled for one attribute of a walk, the parameter is that attribute's reflection object: what is
 read from it, such as `attribute.name`, is known while compiling, and used whole, `kept.append(attribute)` in a
 walker, it is the object `Monster.attributes["health"]` (or the instance's `Spite.Attribute`), made where it is
-used.
+used. A template's parameter is its member's declaration the same way: `Monster.attributes["health"]`, or
+`Monster.functions["alive"]` for a member that is a function, or, for a member of a `type` or a union, a
+`Spite.AttributeDeclaration` made for it.
 
 ### Templates over functions
 
@@ -514,7 +516,9 @@ function that fits, in the order they were made, and `run_render_each` for the o
 name between the pattern's fixed words, with no enum behind it, so `phase_each` would also walk a `sum_each` the class
 happened to have; a name that fits nothing (`run_rendr_each`) is an error that lists the functions that fit. Inside the
 copy, `phase.name` is the function's name (`update_each`), `phase.hole` the text that took the place of `phase`
-(`update`), and `phase.index` its place; `phase.argument_count()` stays. The class can also come from a pattern
+(`update`), and `phase.index` its place; `phase.argument_count()` stays. Used whole, `phase` is the function's
+declaration, `Mover.functions["update_each"]`: a copy or a list keeps it, a hole shows its name, and
+`phase.upper_case()` is the error `a Spite.FunctionDeclaration has no attribute or function 'upper_case'`. The class can also come from a pattern
 written as text on a class value: `$system_type.argument_count("<phase>_each")`. No call decides the pattern, whichever
 comes first in the body, so a template always walks the functions its name describes. Another name with `phase` in it,
 in the template or in a function it is passed to, is filled with the hole: in the copy made for `update_all`,

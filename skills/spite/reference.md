@@ -737,10 +737,14 @@ rewritten.
   The walked attribute is an object of its declared class, not text: its members fold, and used whole it is that
   class's object (`Monster.attributes["health"]`, or the instance's `Spite.Attribute`), so a hole or a `String`
   parameter shows its name, a copy or a list keeps it, `.attributes`/`.functions` list its own, `attribute == "health"`
-  is `false` (compare `attribute.name`), and `attribute[0]`, `+`, `<` or `attribute.upper_case()` is that class's
+  compares its name, and `attribute[0]`, `+`, `<` or `attribute.upper_case()` is that class's
   error (`a Spite.AttributeDeclaration has no attribute or function 'upper_case'`), so write
   `attribute.name.upper_case()`. A template's attribute parameter and an attribute handed on to another function
-  are the same object, and a function handed a walked attribute gets one copy per class (or type or union) and attribute;
+  are the same object. Every template parameter is its declaration object when used whole: a function template's
+  `phase` is `Mover.functions["update_each"]`, an attribute template's member that is a function
+  (`describe_urgent()` over `func urgent()`) is that `Spite.FunctionDeclaration`, and a member of a `type` or a
+  union is a `Spite.AttributeDeclaration` made for it (`.name`, `.index` among the type's members, `.class`);
+  `.name` is the text, and a function handed a walked attribute gets one copy per class (or type or union) and attribute;
   a function declaration or argument a template hands on gets a copy for that template's member, and an argument
   template one copy per function it fills, so two classes sharing a member name never share a copy. A template that would make a function
   the class already has is an error.
