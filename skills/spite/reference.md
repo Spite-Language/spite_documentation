@@ -37,8 +37,11 @@ a line calls `Program().exit(0)`). Save a file, then send a line of Spite: `spit
 first swaps in every save the watcher has seen, then runs the line in the program and answers one JSON line, the
 value and its class or the compiler's error; objects keep their state. A line is ordinary code: an expression
 answers its value, a statement runs, `program` is the entry instance and its members are named bare, and a `var`
-or `func` stays for later lines. Ask instead of printing (`World().player.health`, `monsters[0].roar()`,
-`Monster.attributes`); there are no commands and no breakpoints. A reload that
+or `func` stays for later lines. Ask instead of printing (`World().player.health`, `goblin.roar()`,
+`Monster.attributes`); there are no commands and no breakpoints. A line meets every rule the program's own code
+meets (privacy, no call inside an argument, a `T?` narrowed before use, names), and its error names the line as
+typed instead of a file and line: `values._swap(): error: '_swap' is private to 'Values': ...`. A line has no
+file, so it reaches a singleton by its name. A reload that
 adds, removes, renames or retypes an attribute, or changes an enum's values other than by adding new ones last (a value's number included), is
 refused, the program keeping all of its old code: end it and start it again. Use `--check` only for the errors
 or for a program that cannot stay running, and run the tests before calling the work done. Measure speed only on a

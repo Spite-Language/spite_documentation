@@ -104,7 +104,6 @@ spite> func healthy(): Integer {
 ...>     var index = 0
 ...>     while index < monsters.count() {
 ...>         var monster = monsters[index]
-...>         crash monster
 ...>         total = total + monster.health
 ...>         index = index + 1
 ...>     }
@@ -114,8 +113,18 @@ spite> healthy()
 80
 ```
 
-- **A line is checked like the program's code**: `monsters[0].roar()` is refused, since `monsters[0]` may be missing,
-  and the error names it as it would in a file.
+- **A line meets every rule the program's own code meets**: privacy, no call inside an argument, names, nothing
+  unused, and the rest. `monsters[0].roar()` is refused, since `monsters[0]` may be missing, and the error's place is
+  the line as you typed it, where a file's error names the file and line number (a block or a `func` names its own
+  line). A typed line is never rewritten, so a check the compiler would remove from a file (a `crash` on a value that
+  cannot be null) is refused, naming the fix. Rules about where things sit in a file do not apply to a line, which
+  has no file: a line reaches a singleton by its name, `Program().exit(0)`. The forwarders and storage the compiler
+  writes around your line are its own code and are not checked:
+
+```text
+spite> console.print(monsters.count())
+console.print(monsters.count()): error: 'monsters.count()' is called inside an argument of 'console.print': compute it first into a named 'var' and pass the name
+```
 
 - **A line that does not compile** prints the compiler's error, and nothing changes: the session and the program
   are as they were before the line.
@@ -219,7 +228,7 @@ $ spite --connect=4000 --command="player_name = \"Aria\""
 {"ok":true,"value":"","type":""}
 
 $ spite --connect=4000 --command="monstrs"
-{"ok":false,"error":"repl_program/.spite/build/spite/session.spite:40: error: 'monstrs' is not a local, an attribute or a function of 'Spite.Session' (in Spite.Session.run_line)"}
+{"ok":false,"error":"monstrs: error: 'monstrs' is not a local, an attribute or a function of 'Spite.Session'"}
 ```
 
 A line that does not compile answers the compiler's error, and the program and the session stay as they were. For

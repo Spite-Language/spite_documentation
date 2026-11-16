@@ -30,7 +30,7 @@ each change:
 
 1. **Edit and save the file.** The watcher compiles the program again and swaps in every function whose code
    changed, keeping every object's state.
-2. **Ask the program instead of printing**, with lines of Spite: `spite --connect=4000 --command="monsters[0].roar()"`.
+2. **Ask the program instead of printing**, with lines of Spite: `spite --connect=4000 --command="goblin.roar()"`.
    A line first swaps in every save the watcher has seen, so it runs against the new code: never poll, never sleep.
    Every answer is one line of JSON, `{"ok":true,"value":"Goblin roars!","type":"String"}`, or `{"ok":false,"error":...}`
    with the compiler's error when the line, or the saved code, does not compile.
