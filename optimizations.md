@@ -332,9 +332,11 @@ counted for an inlined call) is removed together.
 
 An attribute of a singleton that is only ever given an item of a list the same singleton holds
 (`open = pages[at]`, proven by its `crash`) holds that item without counting it: the list holds it already. Its
-default is then never made either, when every read of it comes after a write. This needs a class that frees quietly
-and every write of the list to be an `append` or the matching write-back, and it does not apply to a program that
-makes work on other threads.
+default is then never made either, when every read of it comes after a write and making it changes nothing the
+program holds: a default whose constructor calls a function on an object it is handed (`Page(flag)` running
+`given.raise()`) is made, so the flag is raised as written. This needs a class that frees quietly and every write of
+the list to be an `append` or the matching write-back, and it does not apply to a program that makes work on other
+threads.
 
 ```spite
 singleton
