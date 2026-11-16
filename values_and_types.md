@@ -656,7 +656,31 @@ A `type` or a `union` says what a value must have and makes no object: `Tag("fav
 
 ## `T?`: values that may be null
 
-A number that may be null never counts as 0: narrow it before `+ - * / %`, `< > <= >=`, a unary `-`, a store or a call, whatever its width. A `Short?` added to an `Integer` is `this value may be null (it is a Short?), but an Integer is needed: narrow it first with ...`. A `Short?` widens into an `Integer?` and keeps its null.
+A number that may be null never counts as 0 by accident: narrow it before `+ - * / %`, `< > <= >=`, a unary `-`, an argument or a `return`, whatever its width. A `Short?` added to an `Integer` is `this value may be null (it is a Short?), but an Integer is needed: narrow it first with ..., or write 'var zeroed: Integer = value' on the line above, which is 0 when it is null`. A `Short?` widens into an `Integer?` and keeps its null.
+
+### A number that may be null is zeroed on its own line
+
+Each number class has a cast from `Null` that answers 0 (D1915), and like every cast that loses something it is
+written on its own line: a declaration or an assignment of a plain number. `var zeroed: Integer = pair`, with
+`pair` a `Short?`, is `pair` when it is there and 0 when it is null, with no narrowing; `var kept: Integer? = pair`
+keeps the null. Anywhere else (`total + pair`, `-pair`, a comparison, `take(pair)`, `return pair`) the value is
+still refused until narrowed, and the words point to that line.
+
+```gdscript title=zeroed_on_its_own_line/zeroed_on_its_own_line.spite entry
+var console = Console()
+
+func ZeroedOnItsOwnLine() {
+    var bytes = Buffer(2)
+    var pair = bytes.read_short_little_endian_at(100)
+    var zeroed: Integer = pair
+    var total = 5
+    total = total + zeroed
+    console.print(total)
+}
+```
+```output
+5
+```
 
 `Monster?` is a `Monster` or `null`, and `null` exists for nothing else. A `T?` is narrowed before it is used
 (`if value { } else { }`, `fallback value`, `crash value`, `while value`, or a `switch` with a `Null:` case), and

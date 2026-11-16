@@ -146,7 +146,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   value.class == Integer { }` compiles the block once per class, each copy narrowed to its class, and a use is refused
   only where one of them does not fit (`a Holder cannot be used where an Integer is needed: ...`). `if amount > 100 or
   amount < 0 { return 1 }` proves both sides below it.
-- A number that may be null is narrowed before arithmetic, a comparison or a store, whatever its width; only `==` and `!=` take it as it is.
+- A number that may be null is narrowed before arithmetic, a comparison, an argument or a `return`, whatever its width; only `==` and `!=` take it as it is, and `var zeroed: Integer = pair` on its own line is 0 when `pair` is null.
+- A number put into a narrower one is `null` when it does not fit: `var small: Tiny? = count`, then narrow `small`; `var small: Tiny = count` compiles only where the compiler proves it fits. A decimal into a whole number or a `Double` into a `Float` is written only on its own line, `var whole: Integer? = reading`.
 - A whole number of three or more digits (not a power of ten or two) is named by a private attribute
   (`var _days_in_400_years = 146097`), except the answer a test compares in its `crash`: `crash boxes.count() == 1001`
   inside a `test_...` function stands as written.
