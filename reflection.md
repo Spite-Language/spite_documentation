@@ -968,7 +968,9 @@ when something calls it with an object known at run time or takes it as a value.
 A value typed `Anything` or a union, a reflection object kept in an attribute and read later, and everything typed
 at the REPL prompt are only known at run time. Reflection still answers them, from tables the program builds only
 for the classes such a read can reach, and there `attribute.value` is an `Anything?`: the value itself (a number
-keeps its class, held with its class's tag, and text is boxed), `null` only when the attribute holds `null`. Its text is `.value.to_string()`.
+keeps its class, held with its class's tag, and text is boxed), `null` only when the attribute holds `null`. Its text is `.value.to_string()`,
+and narrowed by its class (`if found.value.class == Boolean`), `.value` is that number itself: `found.value.to_string()`
+answers what the `Boolean`'s own `to_string()` answers.
 
 ```gdscript title=attribute_objects/health.spite
 var amount = 10

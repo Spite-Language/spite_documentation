@@ -836,7 +836,7 @@ rewritten.
   the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
   `.namespaces`), `.functions` (empty for the entry class, which is never made twice), and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
   `value.attributes`
-  (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
+  (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`; narrowed by `if found.value.class == Integer`, it is that number, and its `to_string()` answers the number's own), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`), and
   `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's). `class`, bare inside a class's function, is the class
