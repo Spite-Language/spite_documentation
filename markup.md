@@ -11,7 +11,6 @@ func render(): Anything? {
         <View justify_content='center' padding={24} wrap>
             <Text content="Face"/>
             <health_bar filled={health} missing={missing}/>
-            {buttons}
             {render_badge()}
         </View>
     </Theme.Window>
@@ -31,17 +30,10 @@ func render(): Anything? {
     view_3.wrap = true
     var text_4 = Text()
     text_4.content = "Face"
-    var children_4: List<Anything?> = [text_4]
-    view_3.append_children(children_4)
     var health_bar_5 = render_health_bar(health, missing)
-    var children_5: List<Anything?> = [health_bar_5]
-    view_3.append_children(children_5)
-    view_3.append_children(buttons)
-    var badge_7 = render_badge()
-    var children_7: List<Anything?> = [badge_7]
-    view_3.append_children(children_7)
-    var children_3: List<Anything?> = [view_3]
-    window_2.append_children(children_3)
+    var badge_6 = render_badge()
+    view_3.children = [text_4, health_bar_5, badge_6]
+    window_2.children = [view_3]
     return window_2
 }
 ```
@@ -58,7 +50,7 @@ Markup by ordinary calls still works: a library may keep constructors with argum
   `view.padding = 24` does. `name="text"` assigns the text (with every conversion a text literal has, such as a
   `Color` from `"#ff8000"`), `name='value'` an enum value, `name={expression}` any expression, and a bare `name`
   assigns `true`. An attribute the class has no attribute or setter for is the ordinary assignment error.
-- Attributes are assigned in the order written, then the children are added in order.
+- Attributes are assigned in the order written, then the children are built in order and set, all at once.
 
 ## Where a tag stands
 
@@ -68,33 +60,29 @@ A tag anywhere else, such as a call's argument (`show(<View/>)`), is an error: n
 
 ## Children
 
-A nested tag is built first, leaves first, then added as a one-item list, like any child that is one value:
-`var children_4: List<Anything?> = [text_4]`, then `parent.append_children(children_4)` (D2506). So tags only ever
-call `append_children`, which the library a tag's class comes from declares; Spite adds none. When it only walks its
-list, the list is never made (see below).
+A tag's children are set, not added: they are built first, leaves first, and assigned to `children` as one list
+literal in the order written, `view_3.children = [text_4, health_bar_5, badge_6]`, always a list, even for one child
+(D2546). It is an ordinary assignment, so it goes through `set_children` when the class declares one, and the list
+takes its element type from the attribute it is assigned to: with `var children = List<Component>()`, `Component` a
+`type`, every child is checked against `Component` when the program is built, and a child that does not fit is the
+ordinary error. A class that takes no children declares no `children`, so a tag of it holding children is the
+ordinary error at the tag's line: `a Label has no attribute or function 'children'`. Spite declares `children` on no
+class; the library a tag's class comes from does.
 
 ## An expression as a child
 
-`{expression}` between tags is always added as children, with `parent.append_children(...)`, even when it is one
-value (D2302):
+`{expression}` between tags is one child, one entry of the list, in its place among the nested tags (D2547). A name
+goes in as it is; any other expression is held in a local first, named for the function it calls without `render_`
+(`badge_6` for `render_badge()`), since a call is never an argument. A child shown only sometimes is built into a
+list with an `if` and handed as the attribute, below.
 
-- a `List` is passed as it is: `parent.append_children(buttons)`;
-- anything else is passed as a one-item list, held in a local first since a construction is never an argument:
-  `var children_7: List<Anything?> = [badge_7]`, then `parent.append_children(children_7)`. A name is passed as it
-  is; any other expression is held in a local before that (named for the function it calls, `badge_7` for
-  `render_badge()`), since a call is never an argument. A child that answers `Anything?` and is `null` goes in its
-  one-item list and the library skips it, which is how a child is shown only sometimes: a `render_badge()` that
-  answers `null` when there is no badge. So the library's `append_children` takes a `List<Anything?>`. When
-  `append_children` only walks its list (`items.each(add)`), the one-item list is never made
-  ([optimizations.md](optimizations.md#a-list-made-only-to-be-walked-is-never-made)).
-- A `Boolean` is an error: there is no `condition && <Tag/>`.
-
-The compiler tells a list from one value by what the file declares, since it builds the statements before any name
-is resolved: a literal, a comparison, a parameter, a local or attribute with a declared type or a value it can read,
-and a call of a function of the same class. A list it cannot see is wrapped like one value, which is never silent:
-a list literal takes its values one by one, so the ordinary error refuses it at the child's line (`this call passes a
-whole List<Anything?>, but the last parameter is written with '...', so it takes the values one by one`); give the
-list a local with its type (`var shown: List<Anything?> = ...`).
+A whole list is not a child: hand it as the `children` attribute, `<View children={buttons}/>`, which is the same
+assignment. A tag that sets `children` and holds children too is refused, and so is a child the compiler can see is a
+`List` or a `Boolean` (there is no `condition && <Tag/>`). It reads that from what the file declares, since it builds
+the statements before any name is resolved: a literal, a comparison, a parameter, a local or attribute with a
+declared type or a value it can read, and a call of a function of the same class. A list it cannot see is never
+silent when the element type is a class or a `type`, since a list does not fit it: `'List<Anything?>' does not fit
+type 'Component': it has no function 'describe'`.
 
 ## Text between tags
 
@@ -110,10 +98,11 @@ file. The attributes are matched to its parameters by name and passed in the ord
 `render_health_bar(health, missing)`. So a function's parameters are its tag's props: `func render_weapon(grade: Integer)`
 is used as `<weapon grade={1}/>`, and each value goes into its parameter with every conversion a value has there, as it
 would in the hand-written call (`grade="3"` gives an `Integer`, `tint="#ff8000"` a `Color`, `rarity='rare'` an enum value,
-a bare `shiny` a `true`). Nested tags go to a parameter named `children: List<Anything?>`, built first in a
-local (`var children_5 = List<Anything?>()`, then `children_5.append(...)` for each); a function with that parameter and
-no nested tags is given an empty list, and a list already built is handed as `children={parts}` instead of nested tags.
-Its answer is held in a local and added like any child.
+a bare `shiny` a `true`). Its answer is held in a local and is one child like any other.
+
+A lowercase tag takes no children: nested tags or `{expression}` children inside it are refused, so a component
+written as a function stays simple and builds what it holds itself. A parameter named `children` is an ordinary one,
+given as `children={parts}`.
 
 ## Generated names
 
@@ -145,10 +134,9 @@ those found after building, which it tells as errors instead.
 '<health_bar>' calls 'render_health_bar', and this class declares no 'render_health_bar': declare it, or name a class to make an object
 '<health_bar>' sets 'colour', and 'render_health_bar' has no parameter 'colour': it takes filled, missing
 '<health_bar>' leaves out 'missing', a parameter of 'render_health_bar': set it on the tag, as in 'missing={value}'
-'<health_bar>' holds children, and 'render_health_bar' has no parameter 'children: List<Anything?>' to take them
-'<framed>' sets 'children' and holds children: hand them to 'render_framed' one way, as nested tags or as 'children={list}'
-'<framed>' hands its children to 'render_framed' as a List<Anything?>, and its parameter 'children' is a List<Label>: declare it 'children: List<Anything?>'
-'{parts}' is a list, and '<framed>' takes its children one by one into 'children': hand the list as 'children={parts}' with no nested children instead
-'{is_open}' is a Boolean, and a child is an object, a list of them or null: there is no 'condition && <Tag/>', so answer null from a 'render_' function when there is nothing to show
+'<health_bar>' holds children, and a lowercase tag calls 'render_health_bar', which takes none: build them inside 'render_health_bar', or name a class whose 'children' takes them
+'<View>' sets 'children' and holds children: give them one way, as nested tags or as 'children={list}'
+'{buttons}' is a list, and a child is one entry of the children list: hand the whole list as 'children={buttons}' on '<View>', with no nested children
+'{is_open}' is a Boolean, and a child is one entry of the children list: there is no 'condition && <Tag/>', so build the list with an 'if' and hand it as 'children={list}'
 a tag stands only after 'return' or 'var name =', which it is built before: build it into a local there and pass the local
 ```

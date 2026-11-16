@@ -456,11 +456,10 @@ the same report.
 A list of a few items made only to be handed to a function that walks it is never made: the call goes to a copy of
 the function that takes the items one by one. A function walks a list when its whole body is
 `items.each(walker)`, with `walker` a function of its own class; the compiler reads that from the function on every
-build. This is what makes a [markup](markup.md) child `{face}`, a one-item `List<Anything?>` handed to
-`append_children`, cost what the call `add(face)` costs:
+build. So `shelf.add_all([face])`, with this `add_all`, costs what the call `add(face)` costs:
 
 ```spite
-func append_children(items: List<Anything?>) {
+func add_all(items: List<Anything?>) {
     items.each(add)
 }
 ```
@@ -469,7 +468,7 @@ It applies to a list of at most 8 items, made and filled right where it is passe
 to a call statement of a function of a class that is not a singleton. The items, the call's receiver and its other
 arguments are names, `this`, attributes of them or literals. A function that also counts, indexes, keeps or hands on
 the list gets the list as before, and so does every call in a build that can be inspected or reloaded. A crash
-report names the same functions; the copy shows as `append_children$walked1_0` in the executable's function map.
+report names the same functions; the copy shows as `add_all$walked1_0` in the executable's function map.
 
 ### Objects of one class sit together
 

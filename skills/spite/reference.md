@@ -902,37 +902,37 @@ rewritten.
   [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md)
 - A tag stands only after `return` or `var name =`. `return <View padding={24} wrap><Text content="Face"/></View>`
   is `var view_1 = View()`, `view_1.padding = 24` (through `set_padding` when there is one), `view_1.wrap = true`,
-  `var text_1 = Text()`, `text_1.content = "Face"`, `var children_1: List<Anything?> = [text_1]`,
-  `view_1.append_children(children_1)`, `return view_1`: leaves first,
-  attributes in the order written, then children. A tag never takes constructor arguments, and is never an argument.
+  `var text_1 = Text()`, `text_1.content = "Face"`, `view_1.children = [text_1]`, `return view_1`: leaves first,
+  attributes in the order written, then the children set at once as one list, always a list, even for one child. A tag never takes constructor arguments, and is never an argument.
 - `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
   `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error. An
   error about one attribute (through a setter or a `render_` parameter) names the attribute's line, as an error about
   one argument of a call written over several lines names that argument's line; one about the whole tag names the
   tag's line.
-- `{expression}` as a child is always children: a `List` is `append_children(list)` as it is, anything else goes in
-  a one-item list first (`var children_7: List<Anything?> = [badge_7]`, `append_children(children_7)`), so the
-  library's `append_children` takes `List<Anything?>`. A `null` child is passed in its list and skipped by the
-  library (a conditional child is a `render_part()` answering `null`); a `Boolean` is an error. An `append_children`
-  whose body is only `items.each(add)` costs no list: the compiler passes the items straight to a copy of it,
-  so write it that way, not as a `while` over the list. A list is told from
-  one value by what the file declares (literals, comparisons, typed or readable locals, parameters, attributes, calls
-  of this class's functions); a list it cannot see is wrapped and refused by the ordinary type error, so give it a
-  typed local.
+- Children are set, not appended (D2546): `parent.children = [...]` is an ordinary assignment, through
+  `set_children` when the class declares one, and the list literal takes its element type from the attribute
+  (`var children = List<Component>()`, `Component` a `type`), so every child is type-checked when the program is
+  built. A class that takes no children declares no `children`, and a tag of it holding children is the ordinary
+  "has no attribute or function 'children'" error at the tag's line. Spite declares `children` on no class.
+- `{expression}` as a child is one entry of that list, in its place among the nested tags (D2547); a call is held
+  in a local first (`badge_6` for `render_badge()`). A whole list is the attribute instead:
+  `<View children={buttons}/>`, which is also how a child shown only sometimes is written (build the list with an
+  `if`). A child the file shows is a `List` or a `Boolean` is an error, and so is a tag
+  setting `children=` and holding children; a list it cannot see does not fit a class or `type` element, the
+  ordinary type error.
 - Text between tags is the `content` attribute, spaces collapsed: `<Label>{count} items</Label>` is
   `label.content = "{count} items"`. No `{` or `<` in text.
 - A lowercase tag `<health_bar filled={health} missing={missing}/>` calls `render_health_bar(health, missing)` of the
   same file, attributes matched to parameters by name, so the parameters are the tag's props (`func render_weapon(grade:
   Integer)` is `<weapon grade={1}/>`) and each value converts to its parameter's type as in the call written by hand
-  (`grade="3"`, `tint="#ff8000"` for a `Color`, `rarity='rare'`). Nested tags go to a `children: List<Anything?>`
-  parameter, which `append_children` takes as it is; a built list goes as `children={parts}` instead. A missing
-  parameter, an attribute naming none, children for a function with no `children: List<Anything?>`, and both nested
-  tags and `children=` are errors at the tag naming the function and parameter.
+  (`grade="3"`, `tint="#ff8000"` for a `Color`, `rarity='rare'`). A lowercase tag takes no children: nested tags
+  or `{expression}` inside it are an error, so `render_` functions build what they hold themselves; a parameter named
+  `children` is an ordinary one (`children={parts}`). A missing parameter or an attribute naming none is an error at
+  the tag naming the function and parameter.
 - Generated locals are `<tag in snake case>_<line>` (`view_3`), so crash reports and `locals` read like the code.
   The formatter rewrites tags into one style; a file holding tags gets no fix found after building (told as an error).
-- A nested tag is a one-item list too, so tags only ever call `append_children` (D2506): a class with no
-  `append_child` takes nested tags. `append_children` comes from the library a tag's class belongs to (the render
-  library), never from Spite. Markup by ordinary calls still works.
+- `children` (and any `set_children`) comes from the library a tag's class belongs to (the render library), never
+  from Spite. Markup by ordinary calls still works.
 
 ## Built in classes
 
