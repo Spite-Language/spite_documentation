@@ -29,8 +29,9 @@ error that writes `2_500` for you).
 
 An integer literal is an `Integer` and a decimal literal a `Float`. A whole number too big for an `Integer` is a
 compile error that asks for a wider type: declare the name `Long` (`var _total: Long = 3000000000`). **A number
-never silently wraps.** Arithmetic whose answer does not fit its type halts, unsigned exactly as signed, and so does a
-wider value put into a narrower name ([below](#arithmetic-that-does-not-fit-halts)). Where wrapping is the point,
+never silently wraps.** Arithmetic whose answer does not fit its type halts, unsigned exactly as signed
+([below](#arithmetic-that-does-not-fit-halts)), and a wider value put into a narrower name is `null` when it does
+not fit, so it is narrowed ([below](#a-number-that-may-not-fit-is-narrowed)). Where wrapping is the point,
 as in a hash or a noise function, the code says so with a function named for it: `wrapping_sum`,
 `wrapping_subtract` and `wrapping_multiply` on every whole number keep the low bits of the answer:
 
@@ -70,18 +71,15 @@ spite: 'amount * factor' does not fit in an Integer (2000000000 * 2), at game/ga
 ```
 
 A whole-number `/` or `%` by zero halts too (`'total / parts' divided by zero, at ...`), and a divisor the compiler
-sees is zero (`total / 0`) is a compile error. A decimal that is not a number, or is infinite, put into a whole
-number halts like any value that does not fit. Float division stays IEEE: `x / 0.0` is infinity or not-a-number.
+sees is zero (`total / 0`) is a compile error. Float division stays IEEE: `x / 0.0` is infinity or not-a-number.
 `%` on a `Float` or a `Double` is the remainder of the division cut toward zero, so it keeps the sign of the left
 side as a whole number's does: `-7.5 % 2.0` is `-1.5`, `730.5 % 360.0` is `10.5`, and `x % 0.0` is not-a-number.
 A decimal prints with the fewest digits that read back as the same value, so a `Float` `0.1` prints `0.1`, never
 `0.100000001`; a value that would need an exponent prints with one (`1e+21`, `1.0000000000000001e-05`), and
 infinity and not-a-number print `inf` and `nan` on every system.
 The same holds for `-` in front of a value (`-lowest` with the smallest `Integer`, or any unsigned value but `0`),
-for the smallest signed value divided by `-1`, and for a value put into a narrower name, by assignment, as an
-argument or by `return`: `var small: Tiny = count` halts when `count` is 200 (`spite: 200, an Integer, does not fit
-in a Tiny, at ...`), and so does a decimal outside the whole number it is put into. A number written into a name
-it does not fit (`var small: Byte = 300`) is a compile error. The compiler leaves a check out wherever it can
+and for the smallest signed value divided by `-1`. A number written into a name it does not fit (`var small: Byte =
+300`) is a compile error. The compiler leaves a check out wherever it can
 prove the answer fits ([proofs.md](proofs.md#arithmetic-that-does-not-fit-halts)): from the ranges your locals can
 hold, a counter under its loop's bound, a remainder, a clamp, and a total that adds one term a pass over a list
 ([proofs.md](proofs.md#a-range-proves-arithmetic-fits)), so what remains costs little.
@@ -124,6 +122,46 @@ func WrappingByName() {
 ```output
 16868922117198771000
 ```
+
+### A number that may not fit is narrowed
+
+A number put into a narrower one goes through that class's cast, which is `null` when the value does not fit
+(D1895). Into a `T?` that `null` is the answer: `var small: Tiny? = count` is `null` when `count` is 300, and so is
+`var positive: Byte? = -1`. Into a plain number the compiler must see that it fits, from the ranges it proves
+([proofs.md](proofs.md#a-range-proves-arithmetic-fits)): a written number, an attribute nothing writes, a local
+bounded by a condition (`if count <= largest { var small: Tiny = count }`). Otherwise it is a compile error, in an
+assignment, an argument or a `return` alike, so nothing halts at run time and nothing narrows silently:
+
+```
+this value is an Integer, which may not fit in a Tiny: write 'var converted: Tiny? = value' on its own line, which is null when it does not fit, and narrow that, ...
+```
+
+A whole number into a decimal just works everywhere, even if a very large value rounds (D1899): `real * count`, an
+`Integer` passed for a `Float`, `return count` from a function answering a `Float`. What loses information is written
+on its own line, a declaration or an assignment (D1896, D1897): a decimal into a whole number, which drops the
+fraction toward zero (`3.75` is `3`), and a `Double` into a `Float`, which rounds. Each is `null` when the value does
+not fit (`nan`, infinity, a `Double` beyond the largest `Float`), so it is declared `T?` and narrowed:
+
+```gdscript title=narrowing_a_cast/narrowing_a_cast.spite entry
+var console = Console()
+var _reading = 3.75
+var _count = 300
+
+func NarrowingACast() {
+    var reading = _reading
+    var whole: Integer? = reading
+    var count = _count
+    var small: Tiny? = count
+    console.print(whole, small)
+}
+```
+```output
+3 null
+```
+
+`take(real)` with an `Integer` parameter and `return real` from a function answering an `Integer` are refused,
+telling you to write `var converted: Integer? = value` on the line above; in arithmetic the wider operand goes first
+([below](#wider-arithmetic-goes-wider-operand-first)).
 
 ### Wider arithmetic goes wider operand first
 

@@ -20,7 +20,8 @@ What that already means in practice:
 - A `fallback` stops a function and returns what its answer type builds with no arguments: nothing, `null`, an
   empty collection, `0`, `false`, `""` or a fresh object ([below](#a-fallback-returns-what-its-answer-type-builds-with-no-arguments)).
 - A developer's mistake halts naming the line: a whole number divided by zero, arithmetic that does not fit,
-  signed or unsigned, and a value too big for the narrower name it is put into, in every build
+  signed or unsigned, in every build (a value that may not fit a narrower name is a compile error instead,
+  [values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed))
   ([values_and_types.md](values_and_types.md#arithmetic-that-does-not-fit-halts)),
   a `crash` that fails, a native fault ([below](#what-a-native-fault-reports)).
 - A failed `crash` names what is missing instead of printing a default that reads like a real zero

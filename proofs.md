@@ -313,8 +313,9 @@ func Proven(): Integer {
 ### Arithmetic that does not fit halts
 
 - **Proves**: no wrapped number is ever read.
-- **Rule**: every whole-number `+`, `-`, `*`, unary `-`, the smallest value divided by -1 and a narrowing halts if
-  the answer does not fit its type. The step of a counter under its bound carries no check, nor does constant
+- **Rule**: every whole-number `+`, `-`, `*`, unary `-` and the smallest value divided by -1 halt if
+  the answer does not fit its type; a narrowing that may not fit is a compile error instead
+  ([values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed)). The step of a counter under its bound carries no check, nor does constant
   arithmetic; constant arithmetic that does not fit is a compile error. Every build checks.
 - **Falls back**: the check stays and halts: `spite: '...' does not fit in an Integer (...), at ...`. Where
   wrapping is the point, call `wrapping_sum`, `wrapping_subtract` or `wrapping_multiply`. `--optimization-report`
@@ -660,8 +661,7 @@ none has a fallback beyond the error it gives.
 
 Not proven anywhere, so write the check or accept the run-time report: how deep recursion goes (a stack overflow is
 a [native fault report](failure.md#what-a-native-fault-reports)); unreachable code after a `return`; a reference
-cycle, which leaks ([memory.md: Cycles leak](memory.md#cycles-leak)); a wider value assigned, passed or returned
-into a narrower name, which wraps; and two threads writing one number attribute of an instance they share.
+cycle, which leaks ([memory.md: Cycles leak](memory.md#cycles-leak)); and two threads writing one number attribute of an instance they share.
 
 ---
 
