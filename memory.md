@@ -245,8 +245,8 @@ func run(mover: Mover) {
 }
 
 func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, index: Integer) {
-    crash columns.attributes[attribute][index]
-    row.attributes[attribute] = columns.attributes[attribute][index]
+    crash columns.attributes[attribute].value[index]
+    row.attributes[attribute].value = columns.attributes[attribute].value[index]
 }
 ```
 ```gdscript title=walked_row_doc/walked_row_doc.spite entry
@@ -365,7 +365,7 @@ func run(mover: Mover, entity_count: Integer) {
 
 func find_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, entity: Integer) {
     if attribute.class == Entity {
-        row.attributes[attribute] = Entity(entity)
+        row.attributes[attribute].value = Entity(entity)
         found.append(entity)
     } else {
         var column = Column<attribute.class>()
@@ -376,12 +376,12 @@ func find_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, entit
 
 func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, rows: List<Integer>, entity: Integer) {
     if attribute.class == Entity {
-        row.attributes[attribute] = Entity(entity)
+        row.attributes[attribute].value = Entity(entity)
     } else {
         crash rows[attribute.index]
         var stored_row = rows[attribute.index]
         crash Column<attribute.class>().values[stored_row]
-        row.attributes[attribute] = Column<attribute.class>().values[stored_row]
+        row.attributes[attribute].value = Column<attribute.class>().values[stored_row]
     }
 }
 ```
@@ -427,7 +427,7 @@ func SparseRowDoc() {
 ```
 
 `find_attribute` asks about each attribute's class, and fills the row's `Entity` while it is there: that read of
-`row.attributes[attribute]` is how its body says the template walks the attributes of `$row_type`. A template whose
+`row.attributes[attribute].value` is how its body says the template walks the attributes of `$row_type`. A template whose
 body reads its parameter on no value is an error, even when one of its parameters is of the class it would walk.
 
 For `Runner<Moving>` the walk is written out as `{entity: Entity(entity), position:

@@ -193,7 +193,7 @@ func is_alive(): Boolean {
   the entry's `label`, in a function nobody calls too. A public attribute of a folder the program `load`s is not checked, since
   code the program does not load may read it, except a singleton binding (`var world = World()`), which is an
   error unread anywhere: a class that needs the singleton binds it itself. A template over a `Spite.Attribute` counts only when it reads the value
-  (`x.attributes[attribute]`). An attribute kept as a marker that a walk inspects through `attribute.name` or
+  (`x.attributes[attribute].value`). An attribute kept as a marker that a walk inspects through `attribute.name` or
   `attribute.class` is unused, so say what the marker means some other way. A function nobody calls still
   reads what it names, except one of the standard library's: `other.red` in an uncalled `Color.equals` reads no `red` of yours.
   A call `names.count()` is never a read of an attribute `count`, only of an attribute holding a function (`chore.job()`).
@@ -368,15 +368,15 @@ rewritten.
   velocities[index]}` (`Moving` a `type`), then `mover.update_each(row)`. Its attributes are the items themselves, so
   `moving.position.left = 3.0` writes the list's item.
 - A generic runner builds the same row with a walk: `var row = $row_type()`, then on the next line
-  `fill_attributes(row, index)` whose template is `crash columns.attributes[attribute][index]` and then the line
-  `row.attributes[attribute] = columns.attributes[attribute][index]`: a `[]` read answers a `T?` and a row holds
+  `fill_attributes(row, index)` whose template is `crash columns.attributes[attribute].value[index]` and then the line
+  `row.attributes[attribute].value = columns.attributes[attribute].value[index]`: a `[]` read answers a `T?` and a row holds
   items, so the template states each read with a `crash` line before the fill. The compiler writes those checks
   and the literal in its place.
 - Over sparse sets (each entity at a different place in each column), the runner first walks the attributes to
   fill `found: List<Integer>` with each one's place, then the fill template reads each attribute from its own
   generic singleton, after a `crash` line for each read (the places arrive as the parameter `rows`): `crash
   rows[attribute.index]`, `var stored_row = rows[attribute.index]`, `crash
-  Column<attribute.class>().values[stored_row]`, then `row.attributes[attribute] =
+  Column<attribute.class>().values[stored_row]`, then `row.attributes[attribute].value =
   Column<attribute.class>().values[stored_row]`. An index never holds another `[]` read. Choose
   per attribute with an `if` on `attribute.class == Entity` or `attribute.class.is_fixed_size` (both decided while
   compiling), each branch one such line: `Entity(entity)`, or a reference column's value
@@ -529,7 +529,7 @@ rewritten.
   So `console.print(attribute.value)` prints when only numbers and text reach `.value`, while printing
   `attribute.owner` of a class without `to_string()` is refused, and `value.to_string()` on an `Anything` needs each
   class reaching it to have its own (`'Crate' reaches this Anything and has no function 'to_string': match the value
-  first against a class or a type that has one`). A `List<Anything>` is one union for the whole program.
+  first against a class or a type that has one`), and so does a hole `"{value}"`, as on any union. A `List<Anything>` is one union for the whole program.
 - A function of your program whose parameter is a `union`, a `type` (`Anything` included) or a generic holding one is
   compiled once per argument type each call hands it (a `Cat` for `named: Named`, a `List<Health>` for
   `items: List<Anything>`), with no test of the class while running; copies whose machine code comes out the same are
@@ -731,9 +731,9 @@ rewritten.
   `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument` (the class is never written on the type:
   the body says it). `func show_attribute(attribute: Spite.AttributeDeclaration, label:
   Label)` answers `show_text(label)` and `show_copies(label)`, reading the member as `label[attribute]`, short for
-  `label.attributes[attribute]` (a member that is a function taking nothing is called); the class walked is the class of
+  `label.attributes[attribute].value` (a member that is a function taking nothing is called); the class walked is the class of
   the value the body reads it on. `func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
-  attributes[attribute] = value }` makes `person.age = 2` and `person.name = "x"` work. An exact function
+  attributes[attribute].value = value }` makes `person.age = 2` and `person.name = "x"` work. An exact function
   always wins. A parameter that is not a word of its name makes an ordinary function a walk calls, and a template
   whose only parameter is its word's (`show_function(function: Spite.FunctionDeclaration)`), handed to `each` over a
   class's `.functions` or a function's `.arguments`, known while compiling or only at run time, is that walk's walker.
@@ -771,8 +771,12 @@ rewritten.
   `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
   `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field. Another class's
   declaration is a compile error naming both classes, and one the compiler cannot tie to a class is refused: write
-  `troll.attributes[declaration.name]` (a `Spite.Attribute?`). Only inside a walk or a member template is
-  `x.attributes[attribute]` the field itself.
+  `troll.attributes[declaration.name]` (a `Spite.Attribute?`). A walk or a template means the same:
+  `x.attributes[attribute]` is x's `Spite.Attribute`, and `x.attributes[attribute].value` reads and writes the
+  field (`copy.attributes[attribute].value = price.attributes[attribute].value`), compiled as a plain read or write of
+  it; `copy.attributes[attribute] = ...` is a compile error, since an instance's attributes are never replaced. A walk
+  hands its function what the parameter is typed: `troll.attributes.each(f)` gives a `Spite.Attribute` parameter the
+  bound attribute and a `Spite.AttributeDeclaration` one the declaration, as `Monster.attributes.each(f)` does.
 - Questions are get-only attributes, folded on a constant: `Loader.functions["load_each"]` (narrow it), then
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`

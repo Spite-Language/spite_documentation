@@ -334,8 +334,9 @@ There is no `Symbol<...>` to write: the name of the parameter is the signal, and
 `show_attribute(attribute: Spite.AttributeDeclaration, monster: Monster)` answers `show_name` and `show_health`, one
 copy for each name a program calls. Inside, `attribute` is the constant declaration of that member (the instance
 comes as its own argument), so `attribute.class` is its type, and `monster[attribute]` is that member of the
-`Monster` passed in, read or written; `monster[attribute]` is short for `monster.attributes[attribute]`, and both
-work. The member may also be a function that takes no arguments: the read is then a call to it.
+`Monster` passed in, read or written; `monster[attribute]` is short for `monster.attributes[attribute].value`, and both
+work, while `monster.attributes[attribute]` alone is the `Spite.Attribute`, as anywhere else
+([reflection.md](reflection.md#an-instance-indexed-by-a-declaration)). The member may also be a function that takes no arguments: the read is then a call to it.
 
 The **class a template walks is not written on the parameter: the body says it**. It is the class of the value the
 body reads the declaration on, so `monster[attribute]` makes this a template over `Monster`, and a body that reads it
@@ -353,7 +354,7 @@ The rest of the rules for which class a body means are few:
 - A body that only hands the declaration to another function takes the class that function reads it on, and with no
   such function it is an error, even if the template has a parameter of a class: nothing is guessed from it.
 - A nullable parameter (`Monster?`) is walked as nothing: the template answers no name.
-- A class reads its own members as `attributes[attribute]`; `this.attributes[attribute]` is refused, as `this.name` is
+- A class reads its own members as `attributes[attribute].value`; `this.attributes[attribute]` is refused, as `this.name` is
   anywhere in a class.
 - Writing the class on the parameter, `attribute: Spite.AttributeDeclaration<Monster>` or `Spite.Attribute<Monster>`,
   is an error saying to read the declaration on a value of `Monster` instead.
@@ -399,7 +400,7 @@ copies is 4
 ```
 
 A template over a class's own members is how a class answers `set_age`, `get_age` and the rest without writing
-each one. Inside the class, `attributes[attribute]` is the template's own class. An exact function always wins over a
+each one. Inside the class, `attributes[attribute].value` is a member of the template's own class. An exact function always wins over a
 template, for that one name and direction:
 
 ```gdscript title=own_accessors/person.spite
@@ -407,11 +408,11 @@ var age = 0
 var name = ""
 
 func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
-    attributes[attribute] = value
+    attributes[attribute].value = value
 }
 
 func get_attribute(attribute: Spite.AttributeDeclaration): attribute.class {
-    return attributes[attribute]
+    return attributes[attribute].value
 }
 
 func set_name(new_name: String) {
@@ -433,7 +434,7 @@ ANN 30
 ```
 
 Writing `person.name` goes through `set_name`, while reading it goes through the `get_attribute` template, since no
-exact `get_name` exists. Inside the class, `attributes[attribute]` is that member of the object the function runs
+exact `get_name` exists. Inside the class, `attributes[attribute].value` is that member of the object the function runs
 on, read or written directly, so the template never calls itself.
 
 A parameter of the bound types, `Spite.Attribute` (an attribute bound to one object: its `declaration`, its `value`

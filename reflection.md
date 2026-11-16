@@ -192,9 +192,26 @@ declaration must be one of the instance's own class. The compiler checks that wh
 `var` that is never assigned again (`var health = Monster.attributes["health"]`), and another class's declaration
 is an error naming both classes. A declaration it cannot tie to a class, such as a
 parameter or a `var` assigned again, is refused: index by its name instead, `troll.attributes[attribute.name]`,
-which answers a `Spite.Attribute?`. Inside a walk over a class's attributes or a member template the walked
-`attribute` is known in each copy, and there `troll.attributes[attribute]` is the field itself
-([Known while compiling](#known-while-compiling)).
+which answers a `Spite.Attribute?`.
+
+It means the same inside a walk over a class's attributes or a member template: `troll.attributes[attribute]` with
+the walked `attribute` is troll's `Spite.Attribute`, and `troll.attributes[attribute].value` reads and writes the
+field. There the walked `attribute` is known in each copy ([Known while compiling](#known-while-compiling)), so
+`.value` compiles to a plain read or write of `troll.health` and no `Spite.Attribute` is made. A template's short form
+`troll[attribute]` stays the field itself. An instance's attributes are never replaced, so a walk copies a field
+through `.value`:
+
+```gdscript
+func copied(attribute: Spite.AttributeDeclaration) {
+    copy.attributes[attribute].value = price.attributes[attribute].value
+}
+```
+
+Writing `copy.attributes[attribute] = price.attributes[attribute]` is "'copy.attributes[attribute]' is a
+Spite.Attribute, and an instance's attributes are never replaced: write its field through it,
+'copy.attributes[attribute].value = ...'". A template member that is a function taking nothing has no
+`Spite.Attribute`: `given.attributes[attribute].value` calls it, and `given.attributes[attribute]` alone is an error
+saying so.
 
 ```gdscript title=indexed_by_a_declaration/monster.spite
 var name = "troll"
@@ -752,12 +769,12 @@ the call is worked out while compiling.
 
 A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index` and `.source_file`, never
 a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
-declaration, plus `.value` and `.owner`. Which one a function takes depends on what it is for: a template, or a walk of the
-class, takes the declaration, and a walk of an instance's data takes the bound attribute. Mixing them up is an error
-that names both ways out: `Monster.attributes.each(describe)` with `describe(attribute: Spite.Attribute)` is `'describe'
+declaration, plus `.value` and `.owner`. What a walk hands its function is decided by the parameter's type: over
+an instance, `troll.attributes.each(describe)` hands a `Spite.Attribute` parameter troll's bound attribute and a
+`Spite.AttributeDeclaration` parameter the declaration, as `Monster.attributes.each(describe)` would. A class has no
+values to bind, so `Monster.attributes.each(describe)` with `describe(attribute: Spite.Attribute)` is `'describe'
 takes a 'Spite.Attribute', an attribute bound to an instance, and 'health' here is a declaration of 'Monster', which
-has no value: declare the parameter 'Spite.AttributeDeclaration', or walk an instance's attributes`, and the other
-way round names `Spite.Attribute`.
+has no value: declare the parameter 'Spite.AttributeDeclaration', or walk an instance's attributes`.
 
 ### What a function reads and writes
 
@@ -913,7 +930,7 @@ reflection on it is ordinary code that costs nothing at run time:
   `member()`. A filter or a member template over a constant list is a constant list.
 - **A function handed a constant is compiled once for it.** Inside that copy the parameter is the constant
   itself, so `attribute.class` is a type, `attribute.name` is text known while compiling, and
-  `monster.attributes[attribute]` is a plain read of the field. That holds for a call with a class or a namespace
+  `monster.attributes[attribute].value` is a plain read of the field. That holds for a call with a class or a namespace
   written as the argument, on this object or another (`window.register_namespace(Theme)`, `made_by(Parts.Wheel)`), and
   for a walked declaration handed on to another function (`describe(attribute, "declared")` inside a walk over
   attributes): the callee gets its own copy for that class's attribute, so `Price.cost` and `Offer.cost` each get

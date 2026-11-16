@@ -898,7 +898,7 @@ func filter_member(member: Spite.AttributeDeclaration): List<$element_type> {
     var index = 0
     while index < item_count {
         var item = values.read_value(items, index)
-        if item.attributes[member] {
+        if item.attributes[member].value {
             filtered.append(item)
         }
         index = index + 1
@@ -908,7 +908,7 @@ func filter_member(member: Spite.AttributeDeclaration): List<$element_type> {
 ```
 
 The same template answers a passed function. For `names.each(say_hello)` the compiler compiles `each_member`
-once more with the function's owner passed in beside the list, and `item.attributes[member]` reads as
+once more with the function's owner passed in beside the list, and `item.attributes[member].value` reads as
 `say_hello(item)` on that owner (or as a call through the value, for a function held in a variable), so
 `filter_member` also answers `filter(is_short)` without being written twice. A chain that passes functions is still
 one loop.
@@ -974,7 +974,7 @@ func ListAverage() {
 ```
 
 What makes `average_member` a template over the element is its body: it reads `member` on an item, `item[member]`, and the item
-is a `$element_type`. A parameter read on the list's own attributes (`attributes[member]`) would range over `List`'s own
+is a `$element_type`. A parameter read on the list's own attributes (`attributes[member].value`) would range over `List`'s own
 members, which are its buffer, and answer nothing. A body that reads the parameter on nothing says so:
 
 ```gdscript title=unused_member_template/list.spite

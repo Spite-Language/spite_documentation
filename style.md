@@ -256,7 +256,7 @@ func WrittenNotRead() {
 An attribute nothing reads is an error the same way, and goes from the file the same way when its value and everything written to it in its class do nothing. A `load` in the entry class of a folder no class outside it names is removed too. A private `_name` attribute is no
 exception, since only its own class can read it. Writing an attribute is not reading it, so one that is only
 assigned is still unused. A read is anything that takes the attribute's value: its name in the class's own
-functions, `thing.world` from another class, `x.attributes[attribute]` in a template or a walk (which is how the JSON
+functions, `thing.world` from another class, `x.attributes[attribute].value` in a template or a walk (which is how the JSON
 and binary writers and `to_debug()` read), and a union's members or a `type` a class is admitted to. A walk that only looks
 at `attribute.name` or `attribute.class` reads the attribute's description, not the attribute, so an attribute
 kept only as a marker for such a walk is an error, and so is one kept only for what its constructor starts

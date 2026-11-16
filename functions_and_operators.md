@@ -238,7 +238,8 @@ value moved from one into another brings them along; what a use asks is asked on
 `Spite.Attribute` keeps its object in `.owner` and the field in `.value`, so `console.print(found.value)` prints
 when only numbers and text reach `.value`, though the class `.owner` holds has no `to_string()`, and
 `console.print(found.owner)` is refused for that class: "'Gauge' does not fit type 'Printable': it has no function
-'to_string'". Calling `to_string()` on an `Anything` needs every class that reaches it to have its own, so match
+'to_string'". Calling `to_string()` on an `Anything`, or showing it in a hole (`"holds {_held}"`), needs every
+class that reaches it to have its own, as a hole on any union does; nothing stands in for a missing one. So match
 the value against a class or a type that has one first:
 
 ```spite
@@ -475,11 +476,11 @@ func Account(starting_balance: Integer, starting_owner: String) {
 }
 
 func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
-    attributes[attribute] = value
+    attributes[attribute].value = value
 }
 
 func get_attribute(attribute: Spite.AttributeDeclaration): attribute.class {
-    return attributes[attribute]
+    return attributes[attribute].value
 }
 
 func set_owner(new_owner: String) {

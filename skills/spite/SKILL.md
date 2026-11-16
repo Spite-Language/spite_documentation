@@ -174,8 +174,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   is a statement of its own.
 - `Anything` is a union the compiler fills: each attribute, parameter, answer or local written `Anything` holds only
   the classes that reach it, so printing a `Spite.Attribute`'s `.value` asks `to_string()` only of what the
-  attributes held. Outside a walk or a template, `troll.attributes[declaration]` is troll's `Spite.Attribute`
-  (read `.value`), and the declaration must be of troll's own class.
+  attributes held, and a hole `"{value}"` on an `Anything`, like `value.to_string()`, is refused unless every class
+  reaching it has its own `to_string()`, as on any union. `troll.attributes[declaration]` is troll's `Spite.Attribute`
+  everywhere, in a walk or a template too: read and write the field through `.value`
+  (`copy.attributes[attribute].value = price.attributes[attribute].value`); outside a walk the declaration must be of
+  troll's own class. `troll[attribute]` in a template stays short for the field.
 - A function taking a `union` or a `type`, or a generic of one (`List<Anything>`, `List<Named>`), is compiled once per
   argument type a call hands it, and each copy is checked as if written for that type: `shown(healths)` with a
   `List<Health>` compiles while the body only does what a `List<Health>` can, and `items.append(sword)` in it is
