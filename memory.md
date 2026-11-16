@@ -123,15 +123,48 @@ original label a
 independent label b
 ```
 
-`deep_copy()` copies the shape of what it reaches: an object reached twice in one copy, through a cycle, is copied
-once, so a child's `parent` in the copy is the copied parent, and a back reference in the copy holds the copy of its
-object when the same `deep_copy()` copied it. A copy that starts at the child alone leaves the `parent` on the original
-object, since nobody copied the parent. A class that holds such a graph, in a list or in attributes, gets the same
-shape: a `Group` listing the child before its parent copies them as one graph, in either order, and a list or a
-dictionary that two objects of the graph hold is one list or dictionary in the copy too. An object reached
-twice through classes that can never lead back to themselves (two attributes holding the same leaf) is copied
-twice, once for each attribute. `copy()` is shallow for a list or a dictionary too: the copy holds the very
-same items, so a change made to an item shows through both.
+`deep_copy()` makes all new objects and keeps the shape of what it reaches: one object of the original is one new
+object in the copy, however many ways the copy reaches it. Two attributes holding the same leaf, a list and an
+attribute holding it, a union holding it, or a list holding it twice all hold one new leaf in the copy, shared there
+as in the original and never shared with the original. Through a cycle the same holds, so a child's `parent` in the
+copy is the copied parent, and a back reference in the copy holds the copy of its object when the same `deep_copy()`
+copied it. A copy that starts at the child alone leaves the `parent` on the original object, since nobody copied the
+parent. A `Group` listing the child before its parent copies them as one graph, in either order, and a list or a
+dictionary that two objects of the graph hold is one list or dictionary in the copy too. `copy()` is shallow for a
+list or a dictionary too: the copy holds the very same items, so a change made to an item shows through both.
+
+```gdscript title=shared_leaf/leaf.spite
+var name: String
+
+func Leaf(new_name: String) {
+    name = new_name
+}
+```
+```gdscript title=shared_leaf/box.spite
+var left: Leaf
+var right: Leaf
+
+func Box(new_left: Leaf, new_right: Leaf) {
+    left = new_left
+    right = new_right
+}
+```
+```gdscript title=shared_leaf/shared_leaf.spite entry
+var console = Console()
+
+func SharedLeaf() {
+    var leaf = Leaf("shared")
+    var box = Box(leaf, leaf)
+    var copied = box.deep_copy()
+    var one_leaf = copied.left == copied.right
+    var is_the_original = copied.left == leaf
+    copied.left.name = "changed"
+    console.print(one_leaf, is_the_original, copied.right.name, leaf.name)
+}
+```
+```output
+true false changed shared
+```
 
 An attribute typed as a union or a `type` is deep copied as the class it holds when the program runs, so a `Cargo`
 holding a `Crate` gets a new `Crate`, and a union or `type` value answers `deep_copy()` itself. A `String`, a number,

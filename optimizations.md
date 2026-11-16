@@ -641,10 +641,11 @@ no `drop()`. What you can observe: fewer allocations.
 ### A deep copy is written per class
 
 The compiler writes each class's `copy()` and `deep_copy()` when the class declares none: a new object made with no
-defaults, with every attribute assigned from the original. Only a class whose attributes reach a class that can reach itself
-copies through a table that remembers every object copied, so a graph is copied with its shape; every other
-class's copy is a plain sequence of copies and stores. A class that declares its own `deep_copy()` is copied through
-it.
+defaults, with every attribute assigned from the original. A copy keeps the original's shape, so a class copies
+through a table that remembers every object copied unless the compiler proves nothing its copy reaches can be
+reached twice: it cannot reach itself, and no two of its attributes can reach a common class. Such a class's copy is
+a plain sequence of copies and stores. A list or dictionary of objects always copies its items through one table. A
+class that declares its own `deep_copy()` is copied through it, once per object.
 
 ### A list of lists cleared and filled with new lists keeps their room
 
