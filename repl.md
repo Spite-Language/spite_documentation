@@ -404,10 +404,13 @@ worked out while compiling, so the check folds away with the branch it guards.
   once the code is swapped in, so the manifest always describes the code the program runs.
 - **What else a reload refuses.** Besides a file that does not compile, a class's attributes and an enum's values
   (above), a reload is refused, and the program keeps all of its code, when the routines every function shares
-  (allocating, freeing, stopping) are compiled differently, when the new code calls a system function the running
-  program never imports, when it reaches state the compiler did not name, when the room kept for new code is full,
-  and when a function writes more or fewer object literals of one set of attributes than the running one. Each
-  answer ends with what to do, most often `start the program again`.
+  (allocating, freeing, stopping) are compiled differently, when it reaches state the compiler did not name, when
+  the room kept for new code is full, and when a function writes more or fewer object literals of one set of
+  attributes than the running one. Each answer ends with what to do, most often `start the program again`.
+- **New code may call a system function the program never called.** A line or a save that needs a lock, say, which
+  the running program never imported, gets it when it swaps in: the program looks the function up in its system
+  library then (`LoadLibraryA` and `GetProcAddress` on Windows), and a program that never reloads pays nothing for
+  it.
 - **The swap happens where the program waits**, or at the end of a pass of one of its loops. A call that waits, such
   as `console.read_line()`, a `File` read or write, or a socket's receive, is a place to swap just before and just
   after it, and `Program.sleep` swaps while it sleeps, so a program with no loop picks up a save before its next
