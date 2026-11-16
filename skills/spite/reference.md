@@ -348,7 +348,7 @@ rewritten.
   `values`, `dictionary["key"]` (a `Value?`, through `get_at` like every `[]`, like `list[index]`: `inventory["shield"] == 0` is false for an absent
   key). Any number, `Boolean`, `String`, enum or object can be a key: numbers by value (key by the number
   itself, `created_layouts[entity]` in a `Dictionary<Integer, Layout>`, never by text made from it), an object
-  by identity (one object, one key; the dictionary holds it). A class that declares `equals` cannot be a key
+  by identity (one object, one key; the dictionary holds it), even though `==` compares attributes. A class that declares `equals` cannot be a key
   (key by what `equals` compares); nor can a nullable, a union, a `type`, a function value or a value class. A dictionary literal writes its
   entries, `{"cactus": "cacti", "foot": "feet"}` or `{1: 1, 2: 4}` (keyed `String` or `Integer` unless declared);
   a key written twice is an error, and an empty one is `{}` where its type is declared
@@ -801,8 +801,13 @@ rewritten.
 - `person.age = 1` calls `set_age(1)` and `person.age` calls `get_age()` when the class has them, with or without
   an attribute named `age` (`get_id()` and `set_id(value)` over a private `_id` make a checked `.id`).
 - Operators are functions a class may define: `sum`, `subtract`, `multiply`, `divide`, `remainder`, `equals`,
-  `less_than`, `greater_than`, `negate`, `get_at(index)`, `set_at(index, value)`. Without `equals`, `==` compares
-  identity. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
+  `less_than`, `greater_than`, `negate`, `get_at(index)`, `set_at(index, value)`. Without `equals`, a class is
+  given one comparing every attribute in declaration order with its own `==` (private ones included; a back
+  reference by identity; a cycle answers `true` for a pair already being compared, so it never loops; an object
+  always equals itself; a `List` compares its items in order, a `Dictionary` its values key by key; singletons,
+  enums and unions compare as before). `a.is_same_instance(b)` asks for the very
+  same object (one argument of the same class, `false` for a missing one); use it as little as possible, since it
+  stops the compiler sharing a copy with its original. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
   `equals`) like any argument, so `price == "10"` needs `func Price(from: String): Price?` and without it is the error
   `a String cannot be used where a Price is needed: ... Price declares no 'Price(from: String)'`, never a silent
   `false`; a value with `to_string()` compared with a text compares as text instead when no such conversion exists

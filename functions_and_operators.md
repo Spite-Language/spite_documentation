@@ -386,9 +386,9 @@ comparison is simply `false` when there is no `made`. Write the comparison you m
 call never runs. On numbers, `Boolean`, enums, `String`, `List<T>` and `Dictionary<Key, Value>` the operators are
 built in (on numbers, the machine's own arithmetic; on whole numbers a zero divisor halts for `/` and for `%`).
 The library declares the operators its classes answer as ordinary functions, so `Integer.functions["sum"]` and
-`String.functions["get_at"]` are there to read. A class without `equals` compares by identity under `==`; the
-`equals` it declares must take its own class (`func equals(other: Money): Boolean`), or the compiler says so.
-Either way the right side meets that class through the ordinary casts, like any argument: `price == "10"` calls
+`String.functions["get_at"]` are there to read. A class without `equals` is given one that compares its
+attributes ([Every class has equals](#every-class-has-equals)); the `equals` it declares must take its own class
+(`func equals(other: Money): Boolean`), or the compiler says so. Either way the right side meets that class through the ordinary casts, like any argument: `price == "10"` calls
 `Price(from: String)` when `Price` declares it, and without one it is refused, never simply `false`: `a String cannot
 be used where a Price is needed: a value is cast to the class a place wants through that class's conversion, and
 Price declares no 'Price(from: String)'`. A value with a `to_string()` compared with a text compares as text first,
@@ -463,6 +463,43 @@ func OperatorMissingError() {
 ```diagnostic
 needs it to define 'sum(other)'
 ```
+
+### Every class has equals
+
+A class that declares no `equals` is given one: `a == b` answers whether every attribute of `a` equals the same
+attribute of `b`, each compared with its own `==`, in the order the class declares them, private attributes
+included. Two `Point(1, 2)` are equal, and so are two lists of equal points. An object always equals itself. The
+given `equals` is called like a written one: the right side casts like any argument (`price == "10"` needs
+`Price(from: String)`), and `a.equals(b)` is refused the same way, saying to write `a == b`.
+
+- A back reference (an attribute pointing at an object that holds this one, such as a child's `parent`) is compared
+  with [`is_same_instance`](#the-same-instance): two children are equal when their values are and they hang from
+  the very same parent.
+- A cycle (a ring of nodes, a graph that leads back to itself) never loops: a comparison already under way between
+  the same two objects on the same thread answers `true`, so two rings are equal when every node of one equals the
+  node at the same place in the other.
+- A singleton, an enum and a union compare as they always did: a singleton is one object per value of its
+  arguments, an enum by its value, a union of classes by identity.
+- A `List` equals another holding equal items in the same order, and a `Dictionary` another holding equal values
+  under the same keys, so a class holding them compares what they hold.
+- A function value held in an attribute is equal only to the same function value.
+- A `Dictionary` keyed by an object still finds each key by identity (one object, one key), whatever `equals`
+  answers; a class that declares its own `equals` still cannot be a key.
+
+The compiler answers `true` without calling anything when both sides are the same name, or when the class holds no
+attributes.
+
+### The same instance
+
+`a.is_same_instance(b)` answers whether `a` and `b` are the very same object, not two equal ones. It takes one value
+of the same class (a missing one is never the same instance), and works on every object of a class; a number, a
+`String` or an enum is a value and is compared with `==`.
+
+Use it as little as possible: only where the program really means one object, such as checking that a
+`deep_copy()` made a new object or that a back reference points at a given node. Asking which object a value is pins
+it: the compiler can no longer choose to share a copy with its original or to copy where it would share
+([A deep copy nothing changes is the original](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md#a-deep-copy-nothing-changes-is-the-original)),
+so a class asked about anywhere is copied as written. `==` asks only the value, which a shared copy answers alike.
 
 ## Setter/getter interception
 

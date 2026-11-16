@@ -197,6 +197,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - `a == b` and `a != b` are `a.equals(b)`: `b` casts to what `equals` takes (the class itself without an `equals`),
   so comparing a `Price` with `"cost"` is a compile error naming `Price(from: String)` unless that cast exists or
   `Price` has a `to_string()` (then it compares as text). Never expect a comparison across types to be `false`.
+- Every class has `equals`: one without its own compares every attribute with that attribute's `==` (private ones
+  too; a back reference such as `parent` by which object it is; cycles never loop), so two `Point(1, 2)` are equal.
+  To ask whether two names hold the very same object write `a.is_same_instance(b)`, and only where that is truly
+  meant (a copy is a new object, a back reference points at this node): it pins the object, so the compiler can no
+  longer share a copy with its original. A `Dictionary` keyed by an object still keys by identity.
 - Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
   entry class is never generic; put what needs `generic` lines in a class it makes.
 - A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class
