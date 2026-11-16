@@ -194,6 +194,13 @@ is an error naming both classes. A declaration it cannot tie to a class, such as
 parameter or a `var` assigned again, is refused: index by its name instead, `troll.attributes[attribute.name]`,
 which answers a `Spite.Attribute?`.
 
+Since such a declaration is tied to one attribute, `.value` read straight off the index has that attribute's own
+type and compiles to a plain read of the field: `troll.attributes[health].value` is troll's `health`, an `Integer`, so
+it prints and adds as one, whatever other classes' attributes hold. A `Spite.Attribute` kept in a `var` first
+(`var bound = troll.attributes[health]`) is any attribute, and its `.value` is an
+[`Anything`](functions_and_operators.md#anything-and-plain-values-where-a-type-is-wanted) holding what every
+attribute that reaches a `Spite.Attribute` holds.
+
 A class indexes its own instance the same way, bare, as it reads its own attributes: inside `Monster`,
 `attributes[health]` is this monster's `Spite.Attribute`, under the same checks (`attributes[health]` with a `Rat`
 declaration inside `Monster` is "'health' is a declaration of Rat, and 'attributes[health]' indexes this Monster: an

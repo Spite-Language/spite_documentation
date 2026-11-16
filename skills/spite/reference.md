@@ -778,7 +778,7 @@ rewritten.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,
   `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
-  `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field. Another class's
+  `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field, which straight off the index has the field's own type (`troll.attributes[health].value` is an `Integer`, a plain read of `troll.health`), while a `Spite.Attribute` kept in a `var` holds `.value` as an `Anything`. Another class's
   declaration is a compile error naming both classes, and one the compiler cannot tie to a class is refused: write
   `troll.attributes[declaration.name]` (a `Spite.Attribute?`). Inside its own class an instance is indexed bare,
   `attributes[health]` (never `this.attributes[...]`), under the same checks. A walk or a template means the same:
