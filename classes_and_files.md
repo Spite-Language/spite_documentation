@@ -904,7 +904,13 @@ where the class first declares it, and this reopening makes it take (damage: Str
 function's body, never what it takes, so give the new function a name of its own`). A replaced constructor keeps its
 parameters too (`'Hero' takes (starting_level: Integer) where the class first declares it, and this reopening makes
 it take (starting_level: Integer, bonus: Integer): a reopening replaces a constructor's body, never what it takes, so
-build the class from another value with a conversion of its own, named 'Hero' with one parameter named 'from'`); a
+build the class from another value with a conversion of its own, named 'Hero' with one parameter named 'from'`). Every
+class has a constructor: one its first file writes, or `Hero()`, which the compiler makes from the defaults when it
+writes none. So a reopening that adds `func Hero(starting_level: Integer)` to a class written without one changes that
+constructor (`'Hero' takes nothing where the class first declares it, since its first file writes no constructor and
+the compiler makes 'Hero()', and this reopening makes it take (starting_level: Integer): ...`, naming the first file
+when it is the library's, `since its first file, spite_standard_library://common/plane.spite, writes no
+constructor`), and a reopening that writes `func Hero()` replaces it. A
 conversion the class did not have, such as `func Hero(from: String): Hero?`, is new, and a reopening may add it.
 These checks run on every reopening, whether or not anything uses the class: the reopening itself is
 the mistake, so the error is at the reopening's line. Like the other rules that refuse code that would otherwise
