@@ -196,10 +196,10 @@ which answers a `Spite.Attribute?`.
 
 Since such a declaration is tied to one attribute, `.value` read straight off the index has that attribute's own
 type and compiles to a plain read of the field: `troll.attributes[health].value` is troll's `health`, an `Integer`, so
-it prints and adds as one, whatever other classes' attributes hold. A `Spite.Attribute` kept in a `var` first
-(`var bound = troll.attributes[health]`) is any attribute, and its `.value` is an
-[`Anything`](functions_and_operators.md#anything-and-plain-values-where-a-type-is-wanted) holding what every
-attribute that reaches a `Spite.Attribute` holds.
+it prints and adds as one, whatever other classes' attributes hold. A literal name of an attribute troll's class
+declares means the same once the index is proven present: after `crash troll.attributes["health"]`,
+`troll.attributes["health"].value` is that `Integer` too (see [An attribute kept in a var](#an-attribute-kept-in-a-var)
+for one kept first).
 
 A class indexes its own instance the same way, bare, as it reads its own attributes: inside `Monster`,
 `attributes[health]` is this monster's `Spite.Attribute`, under the same checks (`attributes[health]` with a `Rat`
@@ -257,6 +257,50 @@ var bound = rat.attributes[health]
 ```
 ```diagnostic
 'health' is a declaration of Monster, and 'rat' is a Rat: an instance is indexed only by a declaration of its own class
+```
+
+### An attribute kept in a var
+
+A `Spite.Attribute` kept in a `var` given once from such an index, `var bound = troll.attributes[health]` or
+`var bound = troll.attributes["health"]` with a name troll's class declares, keeps which attribute it is: `bound.value`
+has that attribute's own type, the field as it was when `bound` was made, as a `Spite.Attribute` holds it. A literal
+name answers a `Spite.Attribute?`, so prove `bound` present first (`crash bound`). A `var` assigned again, one given
+any other value, or a `Spite.Attribute` handed in as a parameter is any attribute, and its `.value` is an
+[`Anything?`](functions_and_operators.md#anything-and-plain-values-where-a-type-is-wanted) holding what every
+attribute that reaches a `Spite.Attribute` holds.
+
+```gdscript title=kept_attribute/shelf.spite
+var box: Box? = null
+```
+```gdscript title=kept_attribute/box.spite
+var size = 1
+```
+```gdscript title=kept_attribute/monster.spite
+var health = 10
+```
+```gdscript title=kept_attribute/kept_attribute.spite entry
+var console = Console()
+
+func KeptAttribute() {
+    var troll = Monster()
+    var shelf = Shelf()
+    var health = Monster.attributes["health"]
+    var bound = troll.attributes[health]
+    troll.health = 4
+    var more = bound.value + troll.health
+    console.print(bound.value, more)
+    var box = shelf.attributes["box"]
+    crash box
+    if box.value {
+        console.print("a box")
+    } else {
+        console.print("no box")
+    }
+}
+```
+```output
+10 14
+no box
 ```
 
 ### An attribute named as a value
