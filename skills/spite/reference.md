@@ -730,8 +730,8 @@ rewritten.
 - A **template** is a function with a parameter that is a word of its name, typed by what it ranges over:
   `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument` (the class is never written on the type:
   the body says it). `func show_attribute(attribute: Spite.AttributeDeclaration, label:
-  Label)` answers `show_text(label)` and `show_copies(label)`, reading the member as `label[attribute]`, short for
-  `label.attributes[attribute].value` (a member that is a function taking nothing is called); the class walked is the class of
+  Label)` answers `show_text(label)` and `show_copies(label)`, reading the member as
+  `label.attributes[attribute].value` (`label[attribute]` is `label.get_at(attribute)`, as every `[ ]` is; a member that is a function taking nothing is called); the class walked is the class of
   the value the body reads it on. `func set_attribute(attribute: Spite.AttributeDeclaration, value: attribute.class) {
   attributes[attribute].value = value }` makes `person.age = 2` and `person.name = "x"` work. An exact function
   always wins. A parameter that is not a word of its name makes an ordinary function a walk calls, and a template

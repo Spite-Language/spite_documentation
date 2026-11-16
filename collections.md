@@ -889,7 +889,7 @@ A chain that passes a function of a list or of a library class (`names.filter(is
 The templates are ordinary Spite in `library/list.spite`, over the list's own buffer on the heap. Each one is a
 template ([metaprogramming.md](metaprogramming.md#member-templates)) whose parameter is
 `member: Spite.AttributeDeclaration`: it names a member of the *element*, because the body reads it on an item, and
-`item[member]` reads it: the field itself, or a call to the zero-argument function. `filter_member` answers `filter_in_stock`,
+`item.attributes[member].value` reads it: the field itself, or a call to the zero-argument function. `filter_member` answers `filter_in_stock`,
 `filter_is_popular` and every other `filter_<member>` call:
 
 ```gdscript
@@ -931,7 +931,7 @@ would remove nothing.
 ## Write your own member template
 
 A program reopens `List` by putting a `list.spite` in its own folder, and a function there with a
-`Spite.AttributeDeclaration` parameter named after a word of its name, read on an item (`item[member]`), becomes one
+`Spite.AttributeDeclaration` parameter named after a word of its name, read on an item (`item.attributes[member].value`), becomes one
 more template, exactly like the library's:
 
 ```gdscript title=list_average/list.spite
@@ -942,7 +942,7 @@ func average_member(member: Spite.AttributeDeclaration): Float? {
     var index = 0
     while index < item_count {
         var item = _read_value(index)
-        total = total + item[member]
+        total = total + item.attributes[member].value
         index = index + 1
     }
     return total / item_count
@@ -973,7 +973,7 @@ func ListAverage() {
 3.5
 ```
 
-What makes `average_member` a template over the element is its body: it reads `member` on an item, `item[member]`, and the item
+What makes `average_member` a template over the element is its body: it reads `member` on an item, `item.attributes[member].value`, and the item
 is a `$element_type`. A parameter read on the list's own attributes (`attributes[member].value`) would range over `List`'s own
 members, which are its buffer, and answer nothing. A body that reads the parameter on nothing says so:
 

@@ -197,9 +197,10 @@ which answers a `Spite.Attribute?`.
 It means the same inside a walk over a class's attributes or a member template: `troll.attributes[attribute]` with
 the walked `attribute` is troll's `Spite.Attribute`, and `troll.attributes[attribute].value` reads and writes the
 field. There the walked `attribute` is known in each copy ([Known while compiling](#known-while-compiling)), so
-`.value` compiles to a plain read or write of `troll.health` and no `Spite.Attribute` is made. A template's short form
-`troll[attribute]` stays the field itself. An instance's attributes are never replaced, so a walk copies a field
-through `.value`:
+`.value` compiles to a plain read or write of `troll.health` and no `Spite.Attribute` is made. There is no shorter
+form: `troll[attribute]` is `troll.get_at(attribute)` here too, as every `[ ]` is, so a class that declares no
+`get_at` refuses it: "indexing a 'Monster' needs it to define 'get_at(index)'". An instance's attributes are
+never replaced, so a walk copies a field through `.value`:
 
 ```gdscript
 func copied(attribute: Spite.AttributeDeclaration) {

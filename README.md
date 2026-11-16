@@ -37,7 +37,7 @@ func Battle() {
 }
 
 func show_attribute(attribute: Spite.AttributeDeclaration, monster: Monster) {
-    console.print(attribute.name, "=", monster[attribute])
+    console.print(attribute.name, "=", monster.attributes[attribute].value)
 }
 ```
 ```output

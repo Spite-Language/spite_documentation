@@ -48,7 +48,7 @@ func describe(attribute: Spite.AttributeDeclaration) {
 }
 
 func show_attribute(attribute: Spite.AttributeDeclaration, monster: Monster) {
-    console.print(monster.name, attribute.name, monster[attribute])
+    console.print(monster.name, attribute.name, monster.attributes[attribute].value)
 }
 ```
 ```output
@@ -59,7 +59,7 @@ alive 1 with 10 health
 ```
 
 `describe` is compiled twice, once per attribute, and the `each` is two calls to those copies. `show_health` is the
-template `show_attribute` written for `health`: `monster[attribute]` is the attribute of that name read on the monster
+template `show_attribute` written for `health`: `monster.attributes[attribute].value` is the attribute of that name read on the monster
 it is given, so the body is what tells the compiler the template ranges over `Monster`. `filter_alive` and `sum_health`
 are the standard library's member templates written for `alive` and `health`. The objects and every member they answer
 are [reflection.md](reflection.md)'s; this page is what a program builds with them.
@@ -333,13 +333,13 @@ type says what it ranges over:
 There is no `Symbol<...>` to write: the name of the parameter is the signal, and the context says the rest.
 `show_attribute(attribute: Spite.AttributeDeclaration, monster: Monster)` answers `show_name` and `show_health`, one
 copy for each name a program calls. Inside, `attribute` is the constant declaration of that member (the instance
-comes as its own argument), so `attribute.class` is its type, and `monster[attribute]` is that member of the
-`Monster` passed in, read or written; `monster[attribute]` is short for `monster.attributes[attribute].value`, and both
-work, while `monster.attributes[attribute]` alone is the `Spite.Attribute`, as anywhere else
-([reflection.md](reflection.md#an-instance-indexed-by-a-declaration)). The member may also be a function that takes no arguments: the read is then a call to it.
+comes as its own argument), so `attribute.class` is its type, and `monster.attributes[attribute].value` is that member
+of the `Monster` passed in, read or written, while `monster.attributes[attribute]` alone is the `Spite.Attribute`, as
+anywhere else ([reflection.md](reflection.md#an-instance-indexed-by-a-declaration)). There is no shorter form:
+`monster[attribute]` is `monster.get_at(attribute)`, as every `[ ]` is, and a class without `get_at` refuses it. The member may also be a function that takes no arguments: the read is then a call to it.
 
 The **class a template walks is not written on the parameter: the body says it**. It is the class of the value the
-body reads the declaration on, so `monster[attribute]` makes this a template over `Monster`, and a body that reads it
+body reads the declaration on, so `monster.attributes[attribute].value` makes this a template over `Monster`, and a body that reads it
 on a `Label` and a `Monster` walks the attributes they both have. The value must be known from its declaration: a
 parameter, an attribute, or a local declared with its type or made by a constructor. A value whose class is not
 known that way, or a body that reads the declaration on nothing, is an error that says what to write.
@@ -360,7 +360,7 @@ The rest of the rules for which class a body means are few:
   is an error saying to read the declaration on a value of `Monster` instead.
 - A walk or a template sees private attributes (`_count`), and reads and writes them through the walked attribute;
   naming `_count` outside its class is still the private-name error.
-- Reading `label[attribute]` counts as using that attribute. `attribute.name` and `attribute.class` only describe
+- Reading `label.attributes[attribute].value` counts as using that attribute. `attribute.name` and `attribute.class` only describe
   it, so an attribute that nothing but those look at is still the unread-attribute error.
 - A template that would make a function its class already has is an error naming both (`the template
   'store_attribute' makes 'store_row' ..., which is already a function of 'Row'`): rename the function or the
@@ -386,11 +386,11 @@ func NameTemplates() {
 }
 
 func show_attribute(attribute: Spite.AttributeDeclaration, label: Label) {
-    console.print(attribute.name, "is", label[attribute])
+    console.print(attribute.name, "is", label.attributes[attribute].value)
 }
 
 func double_attribute(attribute: Spite.AttributeDeclaration, label: Label) {
-    label[attribute] = label[attribute] * 2
+    label.attributes[attribute].value = label.attributes[attribute].value * 2
 }
 ```
 ```output
@@ -602,7 +602,7 @@ empty list calls nothing.
 
 The standard library's list functions `filter_<member>()`, `sum_<member>()`, `count_<member>()` and the rest are
 templates over the element's members ([collections.md](collections.md)), written in Spite in `library/list.spite`
-with a parameter `member: Spite.AttributeDeclaration`, so `item[member]` reads a member of an element (the body
+with a parameter `member: Spite.AttributeDeclaration`, so `item.attributes[member].value` reads a member of an element (the body
 reads it on a `$element_type`, which is how it says the template ranges over that class's attributes). A generic class writes its own the same way:
 
 ```gdscript
