@@ -296,7 +296,10 @@ one is the error above wherever it is.
 A read is a read of one class's attribute: `tag.label` reads `Tag.label`, so a `label` the entry declares and
 never reads is the error above even when another class's `label` is read everywhere. The standard library's own
 code is no exception: a library function that reads its own `item_count` reads no program class's `item_count`,
-and one made for a program's class (a `List<Tag>`'s) reads only what that copy reads of `Tag`.
+and one made for a program's class (a `List<Tag>`'s) reads only what that copy reads of `Tag`. A generic class of the program reads, in a function nobody calls, only the classes it can reach: the classes
+its copies are made for, the classes its file names, and the classes those hold in an attribute or take and answer in
+a function. An uncalled `first.label` in `Shelf<$item_type>` reads `Box.label` when a `Shelf<Box>` is made, and no
+unrelated `Tag.label`.
 
 Unused means unread anywhere in the source, not unreachable. A function nobody calls is not an error, private or
 public: its callers may be code this compile cannot see, and the production build drops it anyway
