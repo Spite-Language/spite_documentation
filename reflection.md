@@ -1134,7 +1134,7 @@ Integer
 Such an attribute is written as well as read: `attribute.value = given` is `attribute.set_value(given)`, which writes
 the owner's field, so a program can copy every attribute of one object onto another it only holds as an `Anything`.
 The value is cast to the attribute's class the way an assignment casts it (an `Integer` into a `Float` attribute, a
-`Float` into an `Integer` one, and into a `String` attribute any class with its own `to_string()`), a function value
+`Float` into an `Integer` one, and into a `String` attribute any class with its own `to_string()` and an enum, by its name), a function value
 goes back into a function attribute of the same type, and `null` into a nullable one. Counts and back references are
 kept as an assignment keeps them, and a private attribute is neither listed nor written, as it is not read.
 
