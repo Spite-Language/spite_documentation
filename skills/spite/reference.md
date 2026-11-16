@@ -780,7 +780,8 @@ rewritten.
   `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
   `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field. Another class's
   declaration is a compile error naming both classes, and one the compiler cannot tie to a class is refused: write
-  `troll.attributes[declaration.name]` (a `Spite.Attribute?`). A walk or a template means the same:
+  `troll.attributes[declaration.name]` (a `Spite.Attribute?`). Inside its own class an instance is indexed bare,
+  `attributes[health]` (never `this.attributes[...]`), under the same checks. A walk or a template means the same:
   `x.attributes[attribute]` is x's `Spite.Attribute`, and `x.attributes[attribute].value` reads and writes the
   field (`copy.attributes[attribute].value = price.attributes[attribute].value`), compiled as a plain read or write of
   it; only the walked declaration does that, and any other key in the copy is indexed as anywhere else; `copy.attributes[attribute] = ...` is a compile error, since an instance's attributes are never replaced. A walk

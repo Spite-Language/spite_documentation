@@ -186,7 +186,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   reaching it has its own `to_string()`, as on any union. `troll.attributes[declaration]` is troll's `Spite.Attribute`
   everywhere, in a walk or a template too: read and write the field through `.value`
   (`copy.attributes[attribute].value = price.attributes[attribute].value`); any other declaration as the key, in a
-  walk too, must be of troll's own class and kept in a `var` given once. `troll[attribute]` is `troll.get_at(attribute)` there too, refused on a class without `get_at`.
+  walk too, must be of troll's own class and kept in a `var` given once. Inside its own class it is bare,
+  `attributes[declaration]`, as for its own attributes (`this.attributes` is refused). `troll[attribute]` is `troll.get_at(attribute)` there too, refused on a class without `get_at`.
 - A function taking a `union` or a `type`, or a generic of one (`List<Anything>`, `List<Named>`), is compiled once per
   argument type a call hands it, and each copy is checked as if written for that type: `shown(healths)` with a
   `List<Health>` compiles while the body only does what a `List<Health>` can, and `items.append(sword)` in it is

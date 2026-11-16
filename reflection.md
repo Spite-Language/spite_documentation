@@ -194,6 +194,12 @@ is an error naming both classes. A declaration it cannot tie to a class, such as
 parameter or a `var` assigned again, is refused: index by its name instead, `troll.attributes[attribute.name]`,
 which answers a `Spite.Attribute?`.
 
+A class indexes its own instance the same way, bare, as it reads its own attributes: inside `Monster`,
+`attributes[health]` is this monster's `Spite.Attribute`, under the same checks (`attributes[health]` with a `Rat`
+declaration inside `Monster` is "'health' is a declaration of Rat, and 'attributes[health]' indexes this Monster: an
+instance is indexed only by a declaration of its own class"), and `attributes.each(f)` walks them.
+`this.attributes` is refused like any `this.name`.
+
 It means the same inside a walk over a class's attributes or a member template: `troll.attributes[attribute]` with
 the walked `attribute` is troll's `Spite.Attribute`, and `troll.attributes[attribute].value` reads and writes the
 field. There the walked `attribute` is known in each copy ([Known while compiling](#known-while-compiling)), so
