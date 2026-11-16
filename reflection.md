@@ -160,7 +160,7 @@ The walked attribute is an object of the class its parameter declares, `Spite.At
 `attribute.name` costs nothing; used whole it is that class's object, the same as `Monster.attributes["health"]`
 (or `troll.attributes["health"]`, a walked private attribute included): a hole or a `String` parameter shows its
 `to_string()`, its name, a local copy keeps its class, `.attributes` and `.functions` list the reflection object's
-own, it can be kept in a list, `==` with text is `false`, and `[0]`, `+` or `<` on it, or a `String` function, is the
+own, it can be kept in a list, `==` with text compares its name, and `[0]`, `+` or `<` on it, or a `String` function, is the
 error that class's object gives. A template's attribute parameter is the same object, for the class the template
 walks (`describe_attribute` in `Tag` called as `tag.describe_cost()` sees `Tag.attributes["cost"]`), and so is a walked
 attribute handed on to another function. The text is `attribute.name`:

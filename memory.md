@@ -156,8 +156,8 @@ func SharedLeaf() {
     var leaf = Leaf("shared")
     var box = Box(leaf, leaf)
     var copied = box.deep_copy()
-    var one_leaf = copied.left == copied.right
-    var is_the_original = copied.left == leaf
+    var one_leaf = copied.left.is_same_instance(copied.right)
+    var is_the_original = copied.left.is_same_instance(leaf)
     copied.left.name = "changed"
     console.print(one_leaf, is_the_original, copied.right.name, leaf.name)
 }
