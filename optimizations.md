@@ -640,6 +640,27 @@ assigns in its own body outside any `if` or loop before any statement that reads
 default is quiet: a constant, a text, or an object whose making assigns only its own attributes and whose class has
 no `drop()`. What you can observe: fewer allocations.
 
+### A default replaced right after its making is never made
+
+```spite
+func built(): Panel {
+    var panel = Panel()
+    panel.title = "outer"
+    var note = Note()
+    note.content = "first"
+    panel.children = [note]
+    return panel
+}
+```
+
+`Panel` declares `var children = List<Anything>()`, but `built` assigns `children` before anything reads `panel`,
+so the panel is made without its default list. A tag is written this way, so `<Panel><Note/></Panel>` makes one
+list, not two. It applies to each attribute assigned on a local in the statements right after the local's making,
+in the same block, before any statement that reads the local, when its constructor does not read that attribute or
+pass `this` on and the default is quiet, as above. An `if`, a loop, a `return` or a `crash` in between, a call on the
+local (a setter such as `set_children` included) or passing it on keeps the default. What you can observe: fewer
+allocations.
+
 ### A deep copy is written per class
 
 The compiler writes each class's `copy()` and `deep_copy()` when the class declares none: a new object made with no

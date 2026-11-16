@@ -939,6 +939,9 @@ rewritten.
   (`var children = List<Component>()`, `Component` a `type`), so every child is type-checked when the program is
   built. A class that takes no children declares no `children`, and a tag of it holding children is the ordinary
   "has no attribute or function 'children'" error at the tag's line. Spite declares `children` on no class.
+- A default a tag assigns at once is never made: `var children = List<Component>()` costs nothing on a tag that sets
+  its children, unless the class sets them through `set_children`, a call that may read the default.
+  [optimizations.md](https://github.com/Spite-Language/spite_documentation/blob/master/optimizations.md#a-default-replaced-right-after-its-making-is-never-made)
 - `{expression}` as a child is one entry of that list, in its place among the nested tags (D2547); a call is held
   in a local first (`badge_6` for `render_badge()`). A whole list is the attribute instead:
   `<View children={buttons}/>`, which is also how a child shown only sometimes is written (build the list with an
