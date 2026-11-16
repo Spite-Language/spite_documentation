@@ -539,7 +539,9 @@ rewritten.
   So `console.print(attribute.value)` prints when only numbers and text reach `.value`, while printing
   `attribute.owner` of a class without `to_string()` is refused, and `value.to_string()` on an `Anything` needs each
   class reaching it to have its own (`'Crate' reaches this Anything and has no function 'to_string': match the value
-  first against a class or a type that has one`), and so does a hole `"{value}"`, as on any union. A `List<Anything>` is one union for the whole program.
+  first against a class or a type that has one`), and so does a hole `"{value}"`, as on any union. An `Anything` inside a generic or a function type is filled per place too: each `List<Anything?>`
+  written (attribute, parameter, answer, local, made in a line) holds only the classes that reach it, and a list
+  passed, returned or assigned into another place joins the two.
 - A function of your program whose parameter is a `union`, a `type` (`Anything` included) or a generic holding one is
   compiled once per argument type each call hands it (a `Cat` for `named: Named`, a `List<Health>` for
   `items: List<Anything>`), with no test of the class while running; copies whose machine code comes out the same are

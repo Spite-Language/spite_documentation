@@ -255,8 +255,12 @@ func label(): String {
 'Crate' reaches this Anything and has no function 'to_string': match the value first against a class or a type that has one
 ```
 
-A generic argument such as `List<Anything>`, and an `Anything` inside a function type, are one union for the whole
-program.
+An `Anything` inside a generic or a function type is filled per use the same way: each place that writes
+`List<Anything?>` (an attribute, a parameter, an answer, a local, a `List<Anything?>()` made in a line) holds only the
+classes that reach it, and a list passed, returned or assigned from one place into another joins the two, since both
+then hold the one list. So a list of crates and a list of gauges are apart: printing the gauges' items asks
+`to_string()` only of `Gauge`. A function value held as `Spite.Function<Anything?, String>` brings what is handed to it
+into its own parameter only.
 
 A `T?` fits a `type` unnarrowed only when null can answer everything the `type` asks, which is `to_string()` and
 `to_debug()`: both answer `null` for it. Any other `type` needs the value narrowed first, or proven present
