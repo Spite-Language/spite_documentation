@@ -604,7 +604,8 @@ it, and only a `--debug-memory` build counts blocks.
 The classes that describe your program (`Spite.Class`, `Spite.Function`, ...) take every field in their constructors. A
 field no code of the program reads takes no slot, has no write and is not passed, and what it would have held is not
 built. Reading `Monster.name` pays for the name, not for `Monster.functions`. A program that reads no reflection makes
-none of these objects.
+none of these objects. A write that goes still does what its value does: a call, or an object whose making prints or
+changes something, still runs where the write was, and what it answered is let go.
 
 ### A read of what a class object holds is its answer
 

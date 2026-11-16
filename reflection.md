@@ -444,8 +444,9 @@ Every reflection class takes all its fields in its constructor and the compiler 
 collections and facts included. A class's own `_fill_` builds its collections first, then runs the constructor on the
 object already in its slot, so a collection that names the class itself gets that object. A field the program never
 reads costs nothing, because the compiler leaves it out: no slot, no write, no constructor argument, and what it would
-have held (a function's wrappers, its facts, its file) is not worked out. A program that reads no reflection
-has none of it. [optimizations.md](optimizations.md#a-reflection-field-nothing-reads-has-no-slot)
+have held (a function's wrappers, its facts, its file) is not worked out. A write to such a field still
+runs what its value does (a call, or an object whose making does something), and lets go of what it answered. A
+program that reads no reflection has none of it. [optimizations.md](optimizations.md#a-reflection-field-nothing-reads-has-no-slot)
 
 Five fields stay nullable, each because the value can really be absent:
 
