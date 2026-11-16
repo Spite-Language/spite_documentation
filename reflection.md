@@ -1140,7 +1140,13 @@ kept as an assignment keeps them, and a private attribute is neither listed nor 
 
 The compiler decides the cast while compiling. It knows the classes that reach `given` (an `Anything` holds only the
 classes that reach it) and the attributes the write can reach: the one `.attributes["whole"]` names, written in the
-write or in the local it reads, or else every attribute the program lists at run time. A class none of them takes
+write or in the local it reads, through a listing kept in a local (`var attributes = held.attributes`, then
+`attributes["whole"]`) or by a declaration's name (`held.attributes[declaration.name]`), the ones a list written in
+place names (`var chosen = [held.attributes["whole"], held.attributes["label"]]`, then `chosen[index]`), or else every
+attribute the program lists at run time. A local listing or list is followed only while it is read by `[ ]` and never
+changed. A value written into an `Anything` attribute adds its class to that attribute's own `Anything`, as an
+assignment would, so printing the attribute later asks `to_string` of the classes written there and of no
+other. A class none of them takes
 is an error at the write's line, naming the class and the attribute: `set_value() gives 'Meter.whole' a Gadget,
 which is not an Integer and which no conversion of Integer takes, so it cannot be cast the way an assignment would
 cast it`. With several attributes it lists what each holds, and `null` written where none is nullable is
