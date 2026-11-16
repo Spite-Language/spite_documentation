@@ -118,7 +118,9 @@ anything, and little: one small object and one indirect call. A program that hol
 cannot name a function of the class itself: `Monster.is_alive` is an error, since `Monster` as a value is its
 reflection; pass `monster.is_alive`, or use a member template such as `filter_is_alive()`.
 
-An attribute may hold a function value (`var on_press: Spite.Function<Nothing>? = null`, set later). One whose
+An attribute may hold a function value (`var on_press: Spite.Function<Nothing>? = null`, set later). A nullable
+one is narrowed through its path like any other value before it is called: `fallback button.on_press`, then
+`button.on_press()`, and a local that only copied it is rewritten to that form. One whose
 default names its own class's function is bound to the object itself, which is a cycle that leaks like any other
 until one side is cleared (see [memory.md](memory.md)).
 

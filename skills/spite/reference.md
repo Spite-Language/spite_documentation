@@ -867,7 +867,7 @@ rewritten.
   casts and stopping the program, naming the attribute, on a value it cannot take; private attributes are neither
   listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
-  `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`), and
+  `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`; a nullable one held in an attribute is narrowed through its path like any value: `fallback button.on_press` then `button.on_press()`), and
   `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's). `class`, bare inside a class's function, is the class
   of the instance it answers on, and a class name reads its own class object: `Monster.name` is `"Monster"`.
   A bound `Spite.Function` answers only `.name`, `.owner`, `.declaration` and `call_function()`: ask `.arguments`,
