@@ -88,7 +88,7 @@ func relabel(replacement: Box) {
 
 The same holds for a name answered by a function that returns an item of a list, such as a lookup that answers
 `values[row]`: the error names the class holding the list and its function that writes it. The compiler follows
-such a function through up to four calls, and a `Dictionary` item is treated like a `List` item. It looks only at
+such a function through every call it makes, however many, and a `Dictionary` item is treated like a `List` item. It looks only at
 the last place the local is named, in its own block or in the branches of an `if` or a `switch` that is the last
 statement naming it: a local assigned twice, a local that is read afterwards, one made by a constructor or a
 `copy()`, and an answer from a function that may return something else are all left alone.
