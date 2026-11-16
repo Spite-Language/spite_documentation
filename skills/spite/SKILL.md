@@ -188,7 +188,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   (`copy.attributes[attribute].value = price.attributes[attribute].value`); any other declaration as the key, in a
   walk too, must be of troll's own class and kept in a `var` given once, and `troll.attributes[health].value` read
   straight off it is troll's `health` with its own type (an `Integer` adds and prints), as is `.value` off a proven
-  literal name (`crash troll.attributes["health"]` first) and off a `Spite.Attribute` kept in a `var` given once from
+  literal name (`crash troll.attributes["health"]` first; unproven, `+` or a call on that `.value` is refused as
+  "may be missing ... narrow it first") and off a `Spite.Attribute` kept in a `var` given once from
   either (`var bound = troll.attributes[health]`, the field as it was then); one assigned again or handed in is an
   `Anything?`. Inside its own class it is bare,
   `attributes[declaration]`, as for its own attributes (`this.attributes` is refused). `troll[attribute]` is `troll.get_at(attribute)` there too, refused on a class without `get_at`.

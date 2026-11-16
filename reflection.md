@@ -199,7 +199,9 @@ type and compiles to a plain read of the field: `troll.attributes[health].value`
 it prints and adds as one, whatever other classes' attributes hold. A literal name of an attribute troll's class
 declares means the same once the index is proven present: after `crash troll.attributes["health"]`,
 `troll.attributes["health"].value` is that `Integer` too (see [An attribute kept in a var](#an-attribute-kept-in-a-var)
-for one kept first).
+for one kept first). Before it is proven, an operator or a call on that `.value` (`troll.attributes["health"].value + 1`)
+is refused for the index, like a print of it: "'troll.attributes["health"]' may be missing, since every '[ ]'
+answers a 'T?' (this one is a Spite.Attribute?), so 'value' cannot be read from it yet: narrow it first with ...".
 
 A class indexes its own instance the same way, bare, as it reads its own attributes: inside `Monster`,
 `attributes[health]` is this monster's `Spite.Attribute`, under the same checks (`attributes[health]` with a `Rat`
