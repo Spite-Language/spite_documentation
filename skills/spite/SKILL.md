@@ -182,7 +182,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - `Anything` is a union the compiler fills: each attribute, parameter, answer or local written `Anything` holds only
   the classes that reach it, so printing a `Spite.Attribute`'s `.value` asks `to_string()` only of what the
   attributes held, and a hole `"{value}"` on an `Anything`, like `value.to_string()`, is refused unless every class
-  reaching it has its own `to_string()`, as on any union. Each `List<Anything?>` (or `Anything` in a function type)
+  reaching it has its own `to_string()`, as on any union. An `Anything?` holding none shows `null` when printed,
+  debugged or put in a hole, even when no class ever reaches it. Each `List<Anything?>` (or `Anything` in a function type)
   written is its own place too: a list of crates does not stop printing a list of gauges, unless one is passed into
   the other's place. `troll.attributes[declaration]` is troll's `Spite.Attribute`
   everywhere, in a walk or a template too: read and write the field through `.value`

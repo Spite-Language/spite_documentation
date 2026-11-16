@@ -523,7 +523,9 @@ rewritten.
   contract matches it fits, numbers included (`Integer` fits `type Textual { to_string: Spite.Function<String> }`),
   an enum fits a `type` asking only `to_string`, a union fits when each class does. To admit only some classes write
   a `union`, not a `type`. A `T?` fits a `type` that asks only for
-  `to_string()` and `to_debug()` (null answers both with `null`); any other `type` needs it narrowed or proven present
+  `to_string()` and `to_debug()` (null answers both with `null`), an `Anything?` and a `T?` of a `type` included:
+  `console.print(attribute.value)` and, on an `Anything?`, a hole `"{attribute.value}"` show `null` when it holds none, while
+  `attribute.value.to_string()` is narrowed first; any other `type` needs it narrowed or proven present
   first (`this value may be null (it is a Rock?), but a Singer is needed: ...`). A `type` with `?` takes any `T?`
   whose `T` fits, kept as it is (`var held: Component? = maybe_label()`, a `List<Component?>` item, a `render():
   Component?` answering a `Label?`). Every value answers `to_debug()`,
