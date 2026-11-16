@@ -411,6 +411,10 @@ worked out while compiling, so the check folds away with the branch it guards.
   the running program never imported, gets it when it swaps in: the program looks the function up in its system
   library then (`LoadLibraryA` and `GetProcAddress` on Windows), and a program that never reloads pays nothing for
   it.
+- **What new code brings in is ended at exit too.** A save or a line that first prints an object with `to_debug`
+  brings in the table that guards it against cycles, and the program frees it when it ends like one it had from the
+  start, so a `--debug-memory` run still balances. The end of a `--hot-reload` or REPL build calls one function
+  that ends every such piece, and a reload swaps that function like any other; other builds end them in place.
 - **The swap happens where the program waits**, or at the end of a pass of one of its loops. A call that waits, such
   as `console.read_line()`, a `File` read or write, or a socket's receive, is a place to swap just before and just
   after it, and `Program.sleep` swaps while it sleeps, so a program with no loop picks up a save before its next

@@ -43,7 +43,8 @@ meets (privacy, no call inside an argument, a `T?` narrowed before use, names), 
 typed instead of a file and line: `values._swap(): error: '_swap' is private to 'Values': ...`. A line has no
 file, so it reaches a singleton by its name. A reload that
 adds, removes, renames or retypes an attribute, or changes an enum's values other than by adding new ones last (a value's number included), is
-refused, the program keeping all of its old code: end it and start it again. Use `--check` only for the errors
+refused, the program keeping all of its old code: end it and start it again. A `--debug-memory` run still balances
+after reloads: what new code brings in is freed at exit. Use `--check` only for the errors
 or for a program that cannot stay running, and run the tests before calling the work done. Measure speed only on a
 production build (no `--repl`, `--repl-port`, `--hot-reload` or `--debug-memory`): `--optimized` only sets
 `Build.optimized` and does not make the program faster. A field of the program's `build.spite` that no flag sets is
