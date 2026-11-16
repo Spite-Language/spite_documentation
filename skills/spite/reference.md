@@ -530,8 +530,11 @@ rewritten.
   Component?` answering a `Label?`). Every value answers `to_debug()`,
   so `driver.to_debug()` and `console.debug(drivers)` work on a value or a `List` of any `type`, naming `to_debug`
   or not, each element shown as the class it is: `[Holder { mounted: 0 }, Wheel { turns: 1 }]`.
-- `Anything` is the built-in empty `type`, the counterpart of `Nothing`: `component: Anything` and
-  `List<Anything>()` accept any object (a number keeps its class, with no allocation). Never declare an empty `type` of your own.
+- `Anything` and `Nothing` are the language's own unions, declared empty in the library's `Spite` entry class and
+  named plainly: `component: Anything` and `List<Anything>()` accept any object (a number keeps its class, with no
+  allocation), and `Nothing` stays empty, the answer of a function with no answer. `var held: Nothing` is an error
+  (`'held' is declared 'Nothing', ...`), and so is any other union with no members (`'union Hollow' lists no members,
+  ...`). Never declare an empty `type` or `union` of your own.
   `Anything` never holds `null`: `null` assigned, passed, appended, answered or declared into a plain `Anything` is a
   compile error (`'null' is given where an Anything is needed, and an Anything never holds null: ...`). `Anything?`
   is a smell: write it only where none is a real answer, and prefer a real type.
@@ -584,7 +587,9 @@ rewritten.
   the values there. Never add a clause only to get text printed (`crash found or name == ""`).
 - `Monster?` is a value that may be `null`. It must be narrowed before use: `if target { }` (with `else`),
   `fallback target`, `crash target`, `while target { }`, or `switch target { Monster: ... Null: ... }`. One
-  `fallback a.b.c` narrows the whole path. `null` is never compared against: `value == null` is an error. Two `T?` values compare without narrowing, and two missing ones are equal.
+  `fallback a.b.c` narrows the whole path. `null` is the one instance of the library's `Null` singleton (a `T?` is a
+  `T` or `Null`, still a null pointer or flag in memory). `null` is never compared against: `value == null` is an error.
+  `value.class == Null` works but is rewritten (`fixed:`) to `if not value` in an `if` or `while`; write that form. Two `T?` values compare without narrowing, and two missing ones are equal.
   Narrow the name or the path itself (`fallback target`, `fallback target.weapon`), never a local copied from it,
   which is an error. Only a path with no call in it narrows: after `if thing.pop().held`, a second `thing.pop().held`
   calls again and is still a `T?`, so write `var held = thing.pop().held` and narrow `held` (a local holding a call's
