@@ -40,8 +40,8 @@ starting a statement of its own: `[Root].each(registry.register)` below another 
 | `remove_first()` / `remove_last()` | `T?` | removes and returns it; `null` when empty, like `first()` |
 | `first()` / `last()` | `T?` | `null` when empty, like `[]`: narrow it, `crash first` or `if first { }` |
 | `count()` / `is_empty()` | `Integer` / `Boolean` | `count()` is only ever the list's size |
-| `contains(value)` | `Boolean` | elements that are numbers, `Boolean`, `String` or an enum only |
-| `index_of(value)` | `Integer?` | the place of the first element equal to `value`, or `null` when none is; the same elements as `contains` |
+| `contains(value)` | `Boolean` | whether an element `==` `value`; on a list of a class, by the class's `equals` |
+| `index_of(value)` | `Integer?` | the place of the first element equal to `value`, or `null` when none is; compared like `contains` |
 | `clear()` / `reverse()` | | in place; `clear()` keeps the room the list had |
 | `join(separator)` | `String` | every element becomes text: a `String`, a number, a `Boolean`, an enum value |
 | `copy()` / `deep_copy()` | `List<T>` | one level, or all the way down ([memory.md](memory.md)) |
@@ -57,9 +57,10 @@ Names say where: `append` and `prepend`, never `add`; `remove_last`, never `pop`
 which to write. A list keeps its own room: there is no `reserve`, because how much room a list holds is the
 compiler's to decide.
 
-`contains` and `index_of` compare with `==`, so a list of a class has neither: an object of a class is not compared
-that way, and the error says to ask with `any(f)` or `find_by_<member>` instead (and `find_index_by_<member>` for
-its place, [below](#member-templates-loops-you-do-not-write)).
+`contains` and `index_of` compare with `==`, so on a list of a class they ask the class's `equals`, written or the
+one every class is given ([Every class has equals](functions_and_operators.md#every-class-has-equals)): a list
+holding a `Tool()` contains any other `Tool()` with the same attributes. To search by one member, ask with `any(f)`
+or `find_by_<member>` (and `find_index_by_<member>` for its place, [below](#member-templates-loops-you-do-not-write)).
 
 A list has the same members whatever it holds. Bytes from a file or a socket, and the numbers and text laid out in
 them, are a `Buffer`, which still reads like a list of bytes and adds what bytes need, and `List<Byte>` is an error,

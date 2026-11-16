@@ -329,11 +329,11 @@ rewritten.
   a state machine too. A proof of the target that the value's call may take back is refused there: name the object
   first (`var target = keeper.target`, then `target.body = made()`).
 - `List<T>`: `[1, 2, 3]`, `append`, `prepend`, `insert`, `remove_at`, `remove_last`, `remove_first`, `first`,
-  `last` (both a `T?`, `null` on an empty list, like `[]`: `var first = names.first()` then `crash first`), `count`, `contains` (elements that are numbers, `Boolean`, `String`
-  or an enum only: on a list of a class use `any(f)` or `find_by_<member>`; a list of texts or whole numbers only
+  `last` (both a `T?`, `null` on an empty list, like `[]`: `var first = names.first()` then `crash first`), `count`, `contains` (compares with `==`, so on a list of a class it asks the class's `equals`, the given one
+  comparing attributes; to search by one member use `any(f)` or `find_by_<member>`; a list of texts or whole numbers only
   appended to, searched and read gets a hash index from the compiler (a small one costs what a plain search costs), so `if not seen.contains(name) {
-  seen.append(name) }` is how to write a set, never a `Dictionary` kept beside it), `index_of` (an `Integer?`, the same
-  elements as `contains`), `is_empty`, `clear`, `reverse`,
+  seen.append(name) }` is how to write a set, never a `Dictionary` kept beside it), `index_of` (an `Integer?`, compared
+  like `contains`), `is_empty`, `clear`, `reverse`,
   `join` (text, numbers, `Boolean` and enum values all join), never `add` or `pop`. `list[index]` is a `T?` (out of range gives nothing), and `crash names[index]` narrows it like a path,
   and so does `crash glyphs[code - 32]`, or any index with no call in it, with no copy into a local first;
   `crash names.count() == 3` (or `>= 3`, or `> 2`) proves `names[0]` to `names[2]`, so does
@@ -802,8 +802,8 @@ rewritten.
   an attribute named `age` (`get_id()` and `set_id(value)` over a private `_id` make a checked `.id`).
 - Operators are functions a class may define: `sum`, `subtract`, `multiply`, `divide`, `remainder`, `equals`,
   `less_than`, `greater_than`, `negate`, `get_at(index)`, `set_at(index, value)`. Without `equals`, a class is
-  given one comparing every attribute in declaration order with its own `==` (private ones included; a back
-  reference by identity; a cycle answers `true` for a pair already being compared, so it never loops; an object
+  given one comparing every attribute in declaration order with its own `==` (private ones included, back
+  references too; a cycle answers `true` for a pair already being compared, so it never loops; an object
   always equals itself; a `List` compares its items in order, a `Dictionary` its values key by key; singletons,
   enums and unions compare as before). `a.is_same_instance(b)` asks for the very
   same object (one argument of the same class, `false` for a missing one); use it as little as possible, since it

@@ -473,11 +473,10 @@ given `equals` is called like a written one: the right side casts like any argum
 `Price(from: String)`), and `a.equals(b)` is refused the same way, saying to write `a == b`.
 
 - A back reference (an attribute pointing at an object that holds this one, such as a child's `parent`) is compared
-  with [`is_same_instance`](#the-same-instance): two children are equal when their values are and they hang from
-  the very same parent.
-- A cycle (a ring of nodes, a graph that leads back to itself) never loops: a comparison already under way between
-  the same two objects on the same thread answers `true`, so two rings are equal when every node of one equals the
-  node at the same place in the other.
+  by value like any attribute, so a `deep_copy()` of a tree equals the tree.
+- A cycle (a ring of nodes, a tree whose children point back at their parent) never loops: a comparison already
+  under way between the same two objects on the same thread answers `true`, so two rings are equal when every node
+  of one equals the node at the same place in the other.
 - A singleton, an enum and a union compare as they always did: a singleton is one object per value of its
   arguments, an enum by its value, a union of classes by identity.
 - A `List` equals another holding equal items in the same order, and a `Dictionary` another holding equal values
@@ -496,7 +495,7 @@ of the same class (a missing one is never the same instance), and works on every
 `String` or an enum is a value and is compared with `==`.
 
 Use it as little as possible: only where the program really means one object, such as checking that a
-`deep_copy()` made a new object or that a back reference points at a given node. Asking which object a value is pins
+`deep_copy()` made a new object or that a back reference points at this very node. Asking which object a value is pins
 it: the compiler can no longer choose to share a copy with its original or to copy where it would share
 ([A deep copy nothing changes is the original](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md#a-deep-copy-nothing-changes-is-the-original)),
 so a class asked about anywhere is copied as written. `==` asks only the value, which a shared copy answers alike.
