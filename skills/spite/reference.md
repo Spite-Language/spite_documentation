@@ -807,8 +807,8 @@ rewritten.
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`
   (the `File` a function or an attribute is written in); `Loader.is_stateful`,
-  `Vector3<Float>.is_fixed_size` (a generic class is named with its codegen values), `Monster.is_singleton`. A function that answers nothing `.returns` `Nothing`, never
-  `null`; only `.namespace`, `.parent` and a bound attribute's `.value` can be `null`. A reflection field the program never reads costs nothing: it has no slot and is not built, so reading more of a class is what pays; a write to it still runs a call or a making that does something. A class's `.generics` is a
+  `Vector3<Float>.is_fixed_size` (a generic class is named with its codegen values), `Monster.is_singleton`. `.returns` is exactly the declared answer: a `Spite.Class` (`Integer?` too), a `Spite.Union` (a union, `Anything`, and `Nothing`, the
+  empty union, for a function that answers nothing, never `null`) or a `Spite.Type`; read `.name` on any, compare with `== Integer` or `== Nothing`; only `.namespace`, `.parent` and a bound attribute's `.value` can be `null`. A reflection field the program never reads costs nothing: it has no slot and is not built, so reading more of a class is what pays; a write to it still runs a call or a making that does something. A class's `.generics` is a
   `Dictionary<String, Spite.Class>` of its `generic` lines by name without the `$`
   (`numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer`); there is no `.element_type` on a class. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
 - In a generic class, `if $value_type == List { }` (also `Dictionary`, `Null` for any `T?`, `Enum` for any enum,
@@ -897,7 +897,7 @@ rewritten.
   `Anything`, so printing it needs `to_string` only of the classes written there; private attributes are neither listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`; a nullable one held in an attribute is narrowed through its path like any value: `fallback button.on_press` then `button.on_press()`), and
-  `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's). `class`, bare inside a class's function, is the class
+  `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's), which `Anything.members` answers too, keyed by name (`Nothing.members` is empty). `class`, bare inside a class's function, is the class
   of the instance it answers on, and a class name reads its own class object: `Monster.name` is `"Monster"`.
   A bound `Spite.Function` answers only `.name`, `.owner`, `.declaration` and `call_function()`: ask `.arguments`,
   `.returns`, `.reads` and the rest of `function.declaration` (`a Spite.Function has no 'returns' of its own`). A function value is a `Spite.Function` and fits `Anything`: read only at

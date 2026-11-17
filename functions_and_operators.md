@@ -44,8 +44,8 @@ returns nothing (`Nothing` is how "returns nothing" is written, so `<String>` ca
 Calling it is `change(text)` or `change.call_function(text)`, which are the same call, with the arguments checked
 like any call; and the value is also its own reflection, with `.name`, `.arguments` (all but the last type),
 `.returns` (the last), `.declaration` and `.owner`, the instance it runs on. A typed value goes where a plain `Spite.Function`
-is expected, never the other way round. `Nothing` is also what `.returns` reports for a function declared without
-a return type. A function that is a text's or a number's (`greeting.contains`) is bound to a copy of the value.
+is expected, never the other way round. `.returns` is exactly the declared answer, a `Spite.Class`, a `Spite.Union` or
+a `Spite.Type`, and the `Nothing` union for a function declared without a return type. A function that is a text's or a number's (`greeting.contains`) is bound to a copy of the value.
 A function value whose answer may be null answers it as null wherever it is held.
 
 ```gdscript title=function_values_doc/shouter.spite

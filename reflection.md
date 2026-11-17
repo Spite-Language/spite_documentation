@@ -498,7 +498,7 @@ that would take an argument is a collection indexed or filtered instead, so ther
 
 A reflection object is made whole, so almost nothing in it is nullable: an attribute's `.declaration`, `.class` and
 `.owner`, a function's `.declaration` and `.owner`, a declaration's `.source_file` and the `.owner` of an enum, a union
-or a type are always there. A function that answers nothing `.returns` `Nothing`, and an argument or attribute
+or a type are always there. A function that answers nothing `.returns` `Nothing`, the empty union, and an argument or attribute
 whose type is not a class (a function type, a `type`) has `.class` `Nothing`. Only what can really be absent is
 nullable: `Spite.Class.namespace` and `Spite.Namespace.parent`, because the chain of namespaces ends and there is no
 root object, and a bound attribute's `.value`, which is `null` when the instance's field is. A declaration's
@@ -755,6 +755,11 @@ Mirrored 3 1
 
 A `Spite.Type` answers `.name`, `.name_with_namespaces` and `.owner`.
 
+The language's own unions are read by their names. `Anything.members` lists every class of the program, the same classes
+as `Spite.Class.instances`, keyed by their names with namespaces, and `Anything.members.each(visit)` walks them while
+compiling like any union's members; `Nothing.members` is empty. Their `.name_with_namespaces` is their plain name
+(`Anything`), and their `.owner` is the library's `Spite` class.
+
 ### `Spite.FunctionDeclaration`
 
 A class's `.functions` is a `Dictionary<String, Spite.FunctionDeclaration>`: what each function is, bound to no
@@ -764,7 +769,7 @@ object, so nothing in it can be called by itself.
 |---|---|---|
 | `.name` | the function's name | `alive.name` is `alive` |
 | `.arguments` | a `List<Spite.Argument>`, in order | `hurt.arguments[0].name` is `amount` |
-| `.returns` | a `Spite.Class`, `Nothing` when none is declared | `alive.returns` is `Boolean` |
+| `.returns` | exactly the answer it declares: a `Spite.Class` for a class (`Integer?` too), a `Spite.Union` for a union, for `Anything` and for `Nothing` (the empty union, also when none is declared), a `Spite.Type` for a `type`. `.name` and `.name_with_namespaces` are read on any of them, and `declared.returns == Integer` or `== Nothing` compares it | `alive.returns` is `Boolean` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
 | `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |

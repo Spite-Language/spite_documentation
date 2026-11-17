@@ -711,12 +711,16 @@ Two unions are the language's own, declared empty in the library's `Spite` entry
   ([functions_and_operators.md](functions_and_operators.md#anything-and-plain-values-where-a-type-is-wanted)). It
   holds no `Null`: a value that may be missing is `Anything?`, a smell kept for where none is a real answer.
 - `Nothing` is the union that stays empty, so no value is ever of it. A function with no answer answers `Nothing`
-  (`Spite.Function<String, Nothing>`), and a value declared `Nothing` is refused:
+  (`Spite.Function<String, Nothing>`, and its declaration's `.returns` is the `Nothing` union), and a value declared
+  `Nothing` is refused:
 
 ```diagnostic
 'held' is declared 'Nothing', the union no value is ever of, so it could never hold anything: remove it, or give it
 the type of what it holds
 ```
+
+Read as a union, `Anything.members` lists every class of the program, the same classes as `Spite.Class.instances`,
+and `Nothing.members` is empty ([reflection.md](reflection.md#spiteunion-and-spitetype)).
 
 Any other union declared with no members is refused:
 
