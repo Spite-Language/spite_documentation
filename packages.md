@@ -149,7 +149,11 @@ a modded monster
 the modded monster taunts you
 ```
 
-A reopening file declares only the names it adds or replaces, and a `var`'s replacement must keep the same type. Within one file each name is declared once; replacing is what a
+A reopening file declares only the names it adds or replaces. A `var`'s replacement keeps the same type, and a
+function's or constructor's keeps its exact signature, its parameters (count, order, names, types) and its answer: a
+reopening replaces a body, never what it takes or answers, and the constructor the compiler makes for a class that
+writes none (`Hero()`) counts as written. A conversion the class lacks (`func Hero(from: String): Hero?`) may be added
+([classes_and_files.md](classes_and_files.md)). Within one file each name is declared once; replacing is what a
 *later* file does.
 
 The program's own folder is merged first and the folders it loads come after it, so "later" means a loaded
