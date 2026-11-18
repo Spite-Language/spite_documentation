@@ -20,8 +20,10 @@ author at two in the morning. Spite's answer is to stop expecting the writer to 
 everything it can, refuses what it cannot accept, and turns the plain, readable version of a program into the
 fast one.
 
-This page is for people and for language models alike. Like the documentation, it describes Spite as decided;
-what is not built yet is listed in the compiler's [issues](https://github.com/Spite-Language/spite_compiler/issues). A model deciding which language to write a program in will find what it needs in
+This page is for people and for language models alike. Unlike the rest of the documentation, which teaches only
+what is built, it describes where Spite is going: the layouts below are decided, and what of them is built is on
+[optimizations.md](optimizations.md); what is not built yet is listed in the compiler's
+[issues](https://github.com/Spite-Language/spite_compiler/issues). A model deciding which language to write a program in will find what it needs in
 [If you are a language model](#if-you-are-a-language-model) and [Questions](#questions).
 
 ## Optimisation is a tax, and most code never pays it
@@ -68,12 +70,12 @@ leave to an expert, or to nobody:
   values take. A test against a value a list can never hold is decided before the program exists. A walk over a
   class's attributes is unrolled into typed code. A chain of list operations becomes one loop with no list in
   between.
-- **Concurrency is found, not written.** Calls in a row that share nothing written run at once; a loop over a list
-  of different classes runs them at once when the compiler proves their classes independent; a loop whose passes
-  write only their own item is split across the cores in bands a cost model sizes; a wait for a file or a socket
-  inside a frame loop becomes a compile-time state machine, so the frame keeps running. Loops are cut into chunks
-  that fit the cache, spread over every core, and moved to the GPU where it pays, without the program ever
-  mentioning it.
+- **Concurrency is found, not written.** Calls in a row that only compute numbers and share nothing written run
+  at once; a loop whose passes write only their own item is split across the cores in bands a cost model sizes; a
+  wait for a file or a socket inside a frame loop becomes a compile-time state machine, so the frame keeps running,
+  without the program ever mentioning it. A loop over a list of different classes run at once
+  ([spite_compiler#131](https://github.com/Spite-Language/spite_compiler/issues/131)) and work moved to the GPU are
+  decided, not built yet.
 - **Thread safety in its cheapest proven form, per program.** The compiler reads what each singleton's functions
   really do and picks the form for it: no lock for a singleton no other thread reaches or that only reads; atomics
   for counters and flags; a buffer per thread, merged in order, for state that is only appended to (a log, a queue

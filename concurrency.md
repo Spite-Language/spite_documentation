@@ -28,37 +28,11 @@ work independent, the work simply runs in order.
 
 ## What runs at once
 
-### Reads in a row overlap
+### Reads in a row wait in turn
 
-When two or more declarations in a row each read a `File` (`read_as_string()`) or a `Tcp.Connection`
-(`read_line()`), the compiler starts every read but the last, runs the last one, and waits for all of them before
-the next statement. The program waits for the slowest file rather than for each in turn, and nothing it does
-afterwards can tell: the values are the same, and a file written by the next statement is written after the reads.
-
-```gdscript title=reads_in_a_row/reads_in_a_row.spite entry
-var console = Console()
-
-func ReadsInARow() {
-    var settings_file = File(".spite/documentation_settings.txt")
-    var scores_file = File(".spite/documentation_scores.txt")
-    crash settings_file.write_string("volume=7")
-    crash scores_file.write_string("ada=12")
-    var settings = settings_file.read_as_string()
-    var scores = scores_file.read_as_string()
-    crash settings_file.write_string("volume=8")
-    crash settings
-    crash scores
-    console.print(settings, scores)
-}
-```
-```output
-volume=7 ada=12
-```
-
-The two reads above ran at once. The rule is deliberately narrow: only reads, only side by side, and only when
-the name read into is not assigned again later, so starting them early cannot change what the program sees. A
-read followed by other work waits where it is written, and so does a name that is assigned again later, so starting
-a read early never changes what the program sees.
+Two reads in a row (`read_as_string()` of two `File`s, `read_line()` of two `Tcp.Connection`s) run one after the
+other, as written. Starting every read but the last at once is decided, not built yet
+([spite_compiler#125](https://github.com/Spite-Language/spite_compiler/issues/125)).
 
 ### Calls in a row run at once
 
@@ -84,24 +58,20 @@ reads and writes through every function it reaches, so a program with nothing to
 
 Calls whose order can be seen stay in order: anything that prints, touches a file or a socket, or reads and writes
 the same state as another call. A call that does little (a few additions, no loop) is never handed to another
-thread, since starting it there would cost more than running it. Two objects of one class count as one, unless
-each belongs to its owner: two `Counter`s passed around and counted through any name share the attribute `total`
-as far as this rule sees, so they stay in order, while a `Physics` and an `Audio` that each keep their own
-`var meter = Meter()`, never assigned anything else, overlap, meters and all. A call only takes
+thread, since starting it there would cost more than running it. Two objects of one class count as one: two
+`Counter`s passed around and counted through any name share the attribute `total` as far as this rule sees, so
+they stay in order (telling apart objects each owner made for itself is decided, not built yet,
+[spite_compiler#109](https://github.com/Spite-Language/spite_compiler/issues/109)). A call only takes
 part when it takes and answers numbers, is quiet (it holds no object, text or list, makes no foreign call, is not
 recursive and prints nothing) and weighs at least a million simple steps.
 [optimizations.md](optimizations.md#calls-in-a-row-that-only-compute-a-number-run-at-once) shows one.
 
-### A loop over different classes runs them at once
+### A loop over different classes runs in order
 
-A list of a `type` holds objects of several classes, and `systems.each_update()` (or `systems.each(update_one)`,
-where `update_one`'s whole body is `system.update()`) calls the same function on each. When `update` takes nothing,
-answers nothing, and the compiler proves the `update`s of two classes touch nothing the other writes (the same
-reckoning as calls in a row, and neither writes the list), those elements run at once on threads, and all of them
-finish before the next statement. When the statement runs, it looks at the classes the list holds: only when no
-two elements are of one class does it run them at once, and otherwise it runs the loop in order, as written. Two
-objects of one class never run at once. A list whose classes could never run together is the plain loop, with
-nothing of this in the program.
+`systems.each_update()` over a list of a `type` holding several classes calls each element's `update` in the
+list's order. Running the elements of different classes at once, when the compiler proves their `update`s touch
+nothing the other writes, is decided, not built yet
+([spite_compiler#131](https://github.com/Spite-Language/spite_compiler/issues/131)).
 
 ### `each_` on a long list runs in bands
 
@@ -166,7 +136,7 @@ counts plainly, since no band runs while it does
 
 ## What the compiler does at a wait
 
-A wait the compiler lets other work run past (a frame's call, below, or a read in a row) is a **state machine** the
+A wait the compiler lets other work run past (a frame's call, below) is a **state machine** the
 compiler writes while compiling. Every function that can reach a wait is compiled a second time as a resumable
 version: its locals and parameters live in a small frame on the heap instead of on the stack, and every wait
 inside it is a numbered point the function can return from and later jump back to. Starting the work makes that
@@ -189,8 +159,7 @@ state at the same time. The helper thread runs the system call and nothing else.
 
 **When blocking is faster, the compiler blocks.** A program with no state machine has no event loop and no helper
 threads: every wait is the plain blocking call. Inside a program that has them, a wait is the plain call whenever
-nothing else could run, and a program whose only work runs in bands or `Parallel`s (no `Concurrent`, no frame's
-call, no read in a row) has no state machine to run meanwhile, so every wait in it is the plain call. It is the same rule as everywhere else in Spite: you write what you mean, and the compiler
+nothing else could run, and a program whose only work runs in bands or calls in a row (no frame's call) has no state machine to run meanwhile, so every wait in it is the plain call. It is the same rule as everywhere else in Spite: you write what you mean, and the compiler
 picks the fast way to do it.
 
 ### A wait in a frame does not hold the frame
@@ -349,8 +318,8 @@ nothing carries none of it; the compiler's side of each is on
 | The program | Carries at run time |
 |---|---|
 | has nothing the compiler overlaps | nothing: no scheduler, no state machine, no helper thread, no thread pool, plain reference counts; every wait is the plain blocking call |
-| has a wait the compiler lets other work run past (a frame's call, two reads in a row) | the scheduler and its event loop; a second, resumable copy of each function that work reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside it; the thread pool, whose threads run each blocking call made while something else could run (a new thread is started only when none is waiting, and stays in the pool); atomic reference counts for the classes another thread can count |
-| has calls in a row, a loop over classes or a loop in bands that the compiler runs at once | the thread pool, one start per call or band handed to it and a small, fixed number of allocations |
+| has a wait the compiler lets other work run past (a frame's call) | the scheduler and its event loop; a second, resumable copy of each function that work reaches that waits (the plain copy is dropped when nothing calls it); one heap frame per waiting call made inside it; the thread pool, whose threads run each blocking call made while something else could run (a new thread is started only when none is waiting, and stays in the pool); atomic reference counts for the classes another thread can count |
+| has calls in a row or a loop in bands that the compiler runs at once | the thread pool, one start per call or band handed to it and a small, fixed number of allocations |
 | is built with `--repl-port` or `--hot-reload` | the scheduler, and one check-point call at the end of every pass of every loop of its own code; nothing of either in any other build |
 
 What is never there: a stack per piece of work, a stack switch, a runtime that a WebAssembly build could not carry.

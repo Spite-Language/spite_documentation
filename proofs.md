@@ -614,7 +614,7 @@ The rules are on [Concurrency](concurrency.md) and in
 ### Which calls suspend started work
 
 - **Proves**: which functions need a resumable form.
-- **Rule**: a function of waiting work the compiler starts (a frame's call, a read in a row) that can wait, and
+- **Rule**: a function of waiting work the compiler starts (a frame's call) that can wait, and
   every waiting function it calls, is compiled as a resumable state machine.
 - **Falls back**: a wait the compiler does not see as such runs the event loop in place.
 

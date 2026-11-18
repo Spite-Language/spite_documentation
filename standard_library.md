@@ -498,14 +498,8 @@ file, which measured about 50 microseconds a call on Windows, so a loop reading 
 nothing on it (512 MB in 169 ms, against 572 ms in 64 KB pieces, warm cache). Read a megabyte or more per call;
 there is no separate reader to open and close.
 
-**Independent reads overlap.** Two or more untyped `var name = file.read_as_string()` in a row (or `socket.read_line()`),
-each on a name or an attribute and none naming an earlier one, are started together and all finished before the next
-statement: the compiler starts each but the last as a state machine of its own, so the program waits once for the
-slowest instead of once per file. Nothing is written for it, and nothing after the reads can see a difference:
-a file written by the next statement is written after every read has finished
-([concurrency.md](concurrency.md#reads-in-a-row-overlap)). What it costs is a frame on
-the heap for each read but the last and the event loop that finishes them, and only in a program that reads this
-way ([optimizations.md](optimizations.md#concurrency-machinery-only-where-it-is-used)). A read or write of a
+Two reads in a row run one after the other; overlapping them is decided, not built yet
+([concurrency.md](concurrency.md#reads-in-a-row-wait-in-turn)). A read or write of a
 `File`, `console.read_line()`, a `Tcp.Server`'s `accept()`, a connection's `read_line()`, `read_as_string()` and
 `read_as_buffer()`, and `program.sleep()` are the library's waits: inside a state machine the compiler writes, each lets other work run.
 Everything else, `Process.run()` included, blocks the thread that calls it.

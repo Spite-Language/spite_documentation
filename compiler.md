@@ -444,7 +444,7 @@ The report has one section per optimisation, with how many places it lists:
   the compiler cannot prove keeps each pass to its own item, and the function where they do it
   (`` a loop over the positions of a `List<Shape>` runs in order: it writes `Driver.tally` of something it does not
   own (in `Worker.tallied`) ``). Only a build fills this section; `--check` chooses no bands.
-- **Singletons other threads reach**: each singleton that bands, overlapped work or a `Parallel` reach, with the
+- **Singletons other threads reach**: each singleton that bands or overlapped work reach, with the
   form the compiler chose for it and why (`` `Journal` takes no lock: nothing another thread runs touches what
   changes in it; a band writes down its calls that only change it and makes them in order after the join ``): no
   lock when it never changes, atomic updates for a counter or flag, a lock (shared by a counted loop of reads), or
