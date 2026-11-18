@@ -640,6 +640,13 @@ func TreeBasics() {
 total 6
 ```
 
+When the last reference to a structure goes, its `drop()`s run in a fixed order: the object's own first, then what it
+holds (a list's items in order, then its attributes in the order the class declares them), each with everything it
+alone holds before the next. A chain of a million links, a list whose last item holds the next list, or a union value
+that wraps the next one is freed in a loop and needs no stack per link: the last link an object holds is let go after
+the object itself. A structure as deep as its *first* link (a tree whose depth is in its first child) still takes stack
+per level, so a very deep one is better built with its depth in the last attribute or the last item.
+
 ## Cycles are freed
 
 Two objects that hold each other, directly or through several hops, would keep each other's count above zero. You never
