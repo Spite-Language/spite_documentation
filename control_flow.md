@@ -254,7 +254,7 @@ parameters can be known to spin.
 
 None of this costs anything at run time beyond the branches and loops it compiles to: every rule on this page
 is checked while compiling. Only a build with `--repl-port` or `--hot-reload` adds a check point at the end of each
-pass of a `while` in your own code, where a waiting REPL command or a reload is answered. Other builds have none.
+pass of a `while` in your own code, where a waiting REPL line or a reload is answered. Other builds have none.
 
 ## `switch` over a union
 
@@ -687,19 +687,20 @@ assignment does. So a local declared only to be returned on the next line says n
 var console = Console()
 
 func ReturnedLocalError() {
-    console.print(rounded(2.6))
+    var total = doubled(21)
+    console.print(total)
 }
 
-func rounded(scaled: Float): Integer {
-    var whole: Integer = scaled.round()
-    return whole
+func doubled(amount: Integer): Long {
+    var twice: Long = amount * 2
+    return twice
 }
 ```
 ```diagnostic
-'whole' is declared only to be returned on the next line: write 'return scaled.round()', since 'return' already makes the value the function's Integer
+'twice' is declared only to be returned on the next line: write 'return amount * 2', since 'return' already makes the value the function's Long
 ```
 
-Write `return scaled.round()`. A local whose type differs from the function's (a narrower number, or a `T` in a
+Write `return amount * 2`. A local whose type differs from the function's (a narrower number, or a `T` in a
 function that answers `T?`) is a different conversion, and is left alone.
 
 ---
