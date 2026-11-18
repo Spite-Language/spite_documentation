@@ -293,8 +293,11 @@ of the standard library or of a repository pinned to a commit is never rewritten
   text of one hole and nothing else, `"{clicks}"`, is an error naming the direct form; elsewhere write
   `clicks.to_string()`. Arithmetic is done in the left side's type, so write the wider operand first: `total * count` with a `Long`
   `total`, never `count * total`, which is an error (so is an `Integer` plus a `Float`); a literal on the right that
-  fits is fine. A constant that overflows `Integer` (`65536 * 65536`) is an error: write the number. Comparisons follow
-  the same rule: `count < total` with a `Long` `total` is an error, write `total > count`. Nothing wraps silently: `+ - *`, unary
+  fits is fine. A constant that overflows `Integer` (`65536 * 65536`) is an error: write the number. Comparisons never
+  narrow: two numbers compare in the wider type on either side (`count < total` with a `Long` `total` compares `Long`s,
+  `encoded[0] == color_type` with an `Integer` `color_type` compares `Integer`s, a missing byte equals nothing), and a
+  signed and an unsigned whole number meet in the next wider signed type (`UnsignedInteger` and `Integer` compare as
+  `Long`, so `-1` is below every `UnsignedInteger`; an `UnsignedLong` beside a signed number has no such type and is refused: narrow one side first). Nothing wraps silently: `+ - *`, unary
   `-` and the smallest signed value `/ -1` that do not fit their type halt naming the line in every build, signed
   and unsigned alike (the check is left out where the ranges of local numbers prove the answer fits: a `Long` total
   of `Integer` terms over a list, a remainder, a clamped value, a value bounded by a named number nothing writes

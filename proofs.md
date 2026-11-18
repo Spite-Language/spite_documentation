@@ -356,8 +356,9 @@ func Ranged(): Long {
 ### A wider operand is written first
 
 - **Proves**: nothing is cut to fit.
-- **Rule**: in arithmetic, comparisons and bitwise functions, a right side with more bits (or a decimal beside a
-  whole number) is refused, unless it is a literal within the left type.
+- **Rule**: in arithmetic and bitwise functions, a right side with more bits (or a decimal beside a whole number) is
+  refused, unless it is a literal within the left type. A comparison widens its narrower side instead
+  ([values_and_types.md](values_and_types.md#a-comparison-is-done-in-the-wider-type)).
 - **Falls back**: refused, naming the turned-around form: `'...' is added in Integer, since arithmetic takes the
   left side's type, and the right side is a Long, which would be cut to fit: write the Long first ...`.
 

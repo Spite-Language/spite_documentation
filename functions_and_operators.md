@@ -406,8 +406,8 @@ when its class takes no conversion from text ([Rune](standard_library.md#rune)),
 `tag.to_string()` and `Price.attributes["cost"] == "cost"` the attribute's name.
 Number arithmetic is done in the left side's type, so a wider right side is an error that says to write the wider
 operand first ([Wider arithmetic goes wider operand first](values_and_types.md#wider-arithmetic-goes-wider-operand-first));
-a comparison is refused the same way, naming the comparison turned around (`'count < total' ... write the Long
-first ('total > count')`).
+a comparison of two numbers is done in the wider one on either side, so `count < total` with a `Long` `total` compares
+`Long`s ([A comparison is done in the wider type](values_and_types.md#a-comparison-is-done-in-the-wider-type)).
 For a class of your own, the operator is a direct call of the matching function (nothing more at run time),
 and the right side casts toward the parameter's type like any other argument:
 

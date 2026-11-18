@@ -210,28 +210,43 @@ func ConstantOverflow() {
 '(65536 - 120) * 65536' is 4287102976, which does not fit in an Integer, the type its arithmetic is done in, so it would wrap: write the number itself, 4287102976, which is a Long
 ```
 
-### Comparisons are checked the same way
+### A comparison is done in the wider type
 
-A comparison casts its right side toward the left too, so an `Integer` compared with a `Float` would compare
-`Integer`s: `progress > -0.5` would cut `-0.5` to `0` and answer `0 > 0`, false, where the mathematics says true.
-So a comparison whose right side is wider than its left is a compile error naming the fix, as arithmetic is:
-write the wider side first, with the comparison turned around:
+A comparison loses nothing by widening, so `==`, `!=`, `<`, `<=`, `>` and `>=` between numbers of two types compare
+in the wider one, whichever side it is written on: the narrower side is widened, and nothing is cut or narrowed.
+`progress > -0.5` with an `Integer` `progress` compares in `Float` and answers true, as `-0.5 < progress` does. A
+`Byte?` read from a `Buffer` compared with an `Integer` compares `Integer`s, and a missing byte equals no number. A
+whole number and a decimal meet in the decimal, a `Float` and a `Double` in the `Double`. A signed and an unsigned
+whole number meet in the smallest signed type that holds both, so an `UnsignedInteger` and an `Integer` compare as
+`Long`s: a negative `Integer` is less than every `UnsignedInteger` and equal to none, in either order. An
+`UnsignedLong` has no such type beside a signed number, so it compares in the left side's type and is refused
+there, in either order, until one side is narrowed (`var converted: Long? = value`).
 
-```gdscript title=casting_edge/casting_edge.spite entry error
+```gdscript title=wider_comparison/wider_comparison.spite entry
 var console = Console()
+var _past_a_byte = 262
+var _below_zero = -1
 
-func CastingEdge() {
+func WiderComparison() {
+    var encoded = Buffer(1)
+    encoded.append(6)
+    var written = encoded[0]
+    var color_type = _past_a_byte
+    console.print("same byte", written == color_type, color_type == written)
     var progress: Integer = 0
-    console.print("mathematically true", progress > -0.5)
+    console.print("mathematically true", progress > -0.5, -0.5 < progress)
+    var largest = UnsignedInteger.Largest()
+    var negative = _below_zero
+    console.print("unsigned", largest == negative, negative < largest)
 }
 ```
-```diagnostic
-'progress > -0.5' compares in Integer, since a comparison takes the left side's type, and the right side is a Float, which would be cut to fit: write the Float first ('-0.5 < progress')
+```output
+same byte false false
+mathematically true true true
+unsigned false true
 ```
 
-Written the other way round the comparison is done in `Float`, and answers what the mathematics does. An integer
-literal that fits the left side is not wider (`small < 10` with a `Byte` `small`), and a decimal literal under a
-whole number never fits:
+Arithmetic still works in the left side's type and asks for the wider operand first, since its answer has a type:
 
 ```gdscript title=casting_fixed/casting_fixed.spite entry
 var console = Console()

@@ -149,6 +149,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   only where one of them does not fit (`a Holder cannot be used where an Integer is needed: ...`). `if amount > 100 or
   amount < 0 { return 1 }` proves both sides below it.
 - A number that may be null is narrowed before arithmetic, a comparison, an argument or a `return`, whatever its width; only `==` and `!=` take it as it is, and `var zeroed: Integer = pair` on its own line is 0 when `pair` is null.
+- A comparison of two numbers is done in the wider type, written on either side: `buffer[0] == color_type` (a `Byte?` and an `Integer`) compares `Integer`s and `count < total` with a `Long` `total` compares `Long`s; never narrow or turn a comparison around for its width. A signed and an unsigned whole number meet in the next wider signed type (`-1` is below every `UnsignedInteger`; an `UnsignedLong` beside a signed number is refused until one side is narrowed). Arithmetic still wants the wider operand first.
 - A number put into a narrower one is `null` when it does not fit: `var small: Tiny? = count`, then narrow `small`; `var small: Tiny = count` compiles only where the compiler proves it fits. A decimal into a whole number or a `Double` into a `Float` is written only on its own line, `var whole: Integer? = reading`.
 - A whole number of three or more digits (not a power of ten or two) is named by a private attribute
   (`var _days_in_400_years = 146097`), except the answer a test compares in its `crash`: `crash boxes.count() == 1001`
