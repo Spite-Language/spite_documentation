@@ -642,10 +642,10 @@ total 6
 
 When the last reference to a structure goes, its `drop()`s run in a fixed order: the object's own first, then what it
 holds (a list's items in order, then its attributes in the order the class declares them), each with everything it
-alone holds before the next. A chain of a million links, a list whose last item holds the next list, or a union value
-that wraps the next one is freed in a loop and needs no stack per link: the last link an object holds is let go after
-the object itself. A structure as deep as its *first* link (a tree whose depth is in its first child) still takes stack
-per level, so a very deep one is better built with its depth in the last attribute or the last item.
+alone holds before the next. Freeing takes no stack per level, however deep the structure and wherever its depth is: a
+chain of a million links, a tree a million levels deep through its first child or its `left`, and a list whose items
+hold lists all free in a loop, in that same order. Build a structure the way that reads best; its depth never decides
+whether it can be freed. Only a structure deep through what function values hold still takes stack per level.
 
 ## Cycles are freed
 

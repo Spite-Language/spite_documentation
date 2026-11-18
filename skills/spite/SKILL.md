@@ -172,7 +172,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   attribute nullable (`var parent: Parent? = null`), set where the child is made or stored; it may hold a union or a
   `type` when every class it may hold keeps the child the same way. Two objects made side by side and linked to
   each other directly are freed when neither leaves that function; when one leaves it, or one `partner` attribute
-  points both ways, the pair leaks until one side is cleared.
+  points both ways, the pair leaks until one side is cleared. Freeing takes no stack per level: a structure a
+  million levels deep frees wherever its depth is (first child, `left`, last link), so build it the way that reads
+  best.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
 - An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
   with one; nothing may read it before the constructor gives it (no earlier line, called function, `this` or
