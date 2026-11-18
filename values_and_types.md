@@ -92,8 +92,12 @@ from 0 to the type's top; dividing by a constant divides the range, and dividing
 size than the dividend; `minimum` and `maximum` with a written number bound the answer; a cast to a wider type keeps
 the range. A condition narrows a number in its block with `<`, `<=`, `>`, `>=` and `==` (either way round), after a
 `fallback` or `crash` that states it, on the right of an `and`, and after an `if` that leaves. An `or`, a `!=` and an
-`else` narrow nothing, and neither does an `if` that leaves under an `or` (write two `if`s). A local assigned in the
-branches of an `if` or a `switch` holds everything it could have been; one assigned in a loop holds what it entered
+`else` narrow nothing, and neither does an `if` that leaves under an `or` (write two `if`s). A `Long` or an `UnsignedLong` is
+narrowed like the smaller numbers, one side at a time: after `if total > 1000 { return }` and `if total < 0 { return }`,
+`total` runs from 0 to 1000. A local assigned in the
+branches of an `if` or a `switch` holds everything it could have been, and past an `if` with no `else` that is what
+its block left or what the opposite of its condition leaves (after `if size > limit { size = limit }`, `size` is at
+most `limit`); one assigned in a loop holds what it entered
 with and every value the loop gives it. A `Long` total of `Integer` terms added over a list cannot overflow, and
 arithmetic on constants is worked out while compiling and never reported. Reading the report from a `--repl`,
 `--repl-port` or `--hot-reload` build shows the same checks. A divisor proved non-zero stops being proved when an

@@ -327,7 +327,9 @@ func Proven(): Integer {
 - **Rule**: every whole-number local and parameter has a range, from literals, assignments and the conditions in
   force (each side of an `and` that holds, each side of an `or` that does not, as after `if amount > 100 or
   amount < 0 { return 1 }`); `count()`, `length()`, `%`, `minimum`, `maximum` and `clamp` bound their answers; loops widen counters and
-  count their passes; a total assigned once per pass holds at most as many terms as there are passes. So a `Long`
+  count their passes; a `Long` is narrowed one side at a time like the smaller numbers; past an `if` with no `else`, a
+local holds what its block left or what the opposite of its condition leaves (`if size > limit { size = limit }`
+leaves `size` at most `limit`); a total assigned once per pass holds at most as many terms as there are passes. So a `Long`
   total of `Integer` terms over a list carries no check. An attribute nothing writes outside its default, when that
   default is a whole-number literal, has that number's range (`var _hundred = 100` bounds as `100` does), except in
   a `--repl`, `--repl-port`, `--hot-reload` or `--development` build; any other attribute, a list item or a call's
