@@ -326,7 +326,9 @@ func Proven(): Integer {
 - **Proves**: an operation cannot overflow.
 - **Rule**: every whole-number local and parameter has a range, from literals, assignments and the conditions in
   force (each side of an `and` that holds, each side of an `or` that does not, as after `if amount > 100 or
-  amount < 0 { return 1 }`); `count()`, `length()`, `%`, `minimum`, `maximum` and `clamp` bound their answers; loops widen counters and
+  amount < 0 { return 1 }`); `count()`, `length()`, `%`, `minimum`, `maximum` and `clamp` bound their answers, and so does `shifted_right` by a
+  known count of an unsigned number or of one that is never negative (`wide.shifted_right(32)` of an `UnsignedLong`
+  fits an `UnsignedInteger`); loops widen counters and
   count their passes; a `Long` is narrowed one side at a time like the smaller numbers; past an `if` with no `else`, a
 local holds what its block left or what the opposite of its condition leaves (`if size > limit { size = limit }`
 leaves `size` at most `limit`); a total assigned once per pass holds at most as many terms as there are passes. So a `Long`

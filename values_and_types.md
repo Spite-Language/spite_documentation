@@ -89,7 +89,9 @@ Which checks stay is not a guess: build with `--optimization-report=.spite/repor
 operation that `keeps its overflow check` with the range it saw for each side. What the compiler knows about a
 number: an attribute, a list item or a call's answer can be anything its type holds; `count()` and `length()` run
 from 0 to the type's top; dividing by a constant divides the range, and dividing by a name gives a result no larger in
-size than the dividend; `minimum` and `maximum` with a written number bound the answer; a cast to a wider type keeps
+size than the dividend; `minimum` and `maximum` with a written number bound the answer; `shifted_right` by a written count bounds an unsigned
+number, or one never negative, by the bits it keeps (`wide.shifted_right(32)` of an `UnsignedLong` fits an
+`UnsignedInteger`; a signed number that may be negative keeps its sign, so it is not bounded); a cast to a wider type keeps
 the range. A condition narrows a number in its block with `<`, `<=`, `>`, `>=` and `==` (either way round), after a
 `fallback` or `crash` that states it, on the right of an `and`, and after an `if` that leaves. An `or`, a `!=` and an
 `else` narrow nothing, and neither does an `if` that leaves under an `or` (write two `if`s). A `Long` or an `UnsignedLong` is

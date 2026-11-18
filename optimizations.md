@@ -1043,6 +1043,21 @@ caller that is already very large, or to a buffer's growth, which is the cold pa
 observe: nothing in the output. A crash in inlined arithmetic still names the function it was written in, and the
 executable holds the callee's body once per call site.
 
+### A check of a narrowing the ranges prove is not made
+
+A number narrowed into a `T?` is `null` when it does not fit, so code checks the local it lands in with `crash`,
+`fallback` or `if`. Where the ranges show the value always fits, and every `var` and assignment of that local in its
+function is such a narrowing, the check, its report and its cold path are left out of the executable:
+
+```spite
+var masked = value.bits_and(15)
+var maybe: Tiny? = masked
+crash maybe
+```
+
+is the narrowing alone. It is proven each time the program is compiled, for each copy of a generic class. What you
+can observe: a smaller executable; the output is the same.
+
 ### A crash's report is a cold call
 
 The code that reports a failed `crash` runs only once, as the program halts, so it is moved out of the function into a
