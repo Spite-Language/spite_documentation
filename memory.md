@@ -59,9 +59,12 @@ func SharingBasics() {
 original label b
 ```
 
-`==` on two class instances calls the class's `equals` when it has one
-([functions_and_operators.md](functions_and_operators.md#every-operator-is-a-function)); otherwise it asks
-whether they are the same object. A `String` always compares by content.
+`==` on two class instances calls the class's `equals`
+([functions_and_operators.md](functions_and_operators.md#every-operator-is-a-function)): one the class declares, or
+the one every class without it is given, which compares each attribute with its own `==`, so a copy equals its
+original. `a.is_same_instance(b)` asks whether two names hold the very same object; write it only where that is
+what you mean, since it keeps the compiler from sharing a copy with its original. A `String` always compares by
+content.
 
 ### A name read from a list names the item, until you assign it
 
@@ -764,8 +767,8 @@ and writes the numbers in them, and the compiler lays it out from what it proves
 ([standard_library.md](standard_library.md#bytes-are-a-buffer)). How much room a `Buffer`, a `List` or a `String`
 keeps, and when it grows, is the compiler's too: the library only raises a count or writes past the end, and the
 compiler makes the room before it, at least doubling it. Bytes from outside are a `Buffer` too: a file's or a
-socket's bytes, and memory a C library hands out is a `ForeignBytes`, which checks every read and write against the
-size it was given. A container of your own is written over a `List` or a `Buffer`, with nothing the compiler does for
+socket's bytes. Memory a C library hands out has no checked reader yet (`ForeignBytes` is decided, not built yet,
+[spite_compiler#467](https://github.com/Spite-Language/spite_compiler/issues/467)). A container of your own is written over a `List` or a `Buffer`, with nothing the compiler does for
 `List<T>` that it would not do for yours: the standard library's `List` is a complete one to read.
 
 ---
