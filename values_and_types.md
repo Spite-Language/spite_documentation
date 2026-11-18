@@ -522,7 +522,9 @@ as a `type` of your own that requires the operator's function, `left + right` on
 `type Addable { sum: Spite.Function<Addable, Addable> }`, calls the `sum` of the left side's class, and a right side of another
 class halts with `which is not one`. Through a `type` that does not require the operator's function, the operator
 is an error (`'+' on a value read as 'Labeled' needs the class that fits the type, which is not known while
-compiling`): take the value through a codegen value the type constrains, `generic $value_type: Addable`.
+compiling`): take the value through a codegen value the type constrains, `generic $value_type: Addable`. `==` and
+`!=` are the exception, since every class has `equals`: on values read as any `type` they compare through the class
+each holds, and two of different classes are not equal ([Every class has equals](functions_and_operators.md#every-class-has-equals)).
 
 ## `String`
 

@@ -833,10 +833,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `less_than`, `greater_than`, `negate`, `get_at(index)`, `set_at(index, value)`. Without `equals`, a class is
   given one comparing every attribute in declaration order with its own `==` (private ones included, back
   references too; a cycle answers `true` for a pair already being compared, so it never loops; an object
-  always equals itself; a `List` compares its items in order, a `Dictionary` its values key by key; singletons,
-  enums and unions compare as before; an attribute typed by a `type` is not compared through the class it holds
-yet, so `==` on such a class is refused, `has no attribute or function 'equals'`: decided, not built yet,
-spite_compiler#589). `a.is_same_instance(b)` asks for the very
+  always equals itself; a `List` compares its items in order, a `Dictionary` its values key by key; singletons
+  and enums compare as before; a value typed by a `type`, a union or `Anything`, in an attribute or written
+  `a == b`, compares through the class it holds: the same class calls that class's `equals`, different classes are
+  not equal, two `null`s are equal, `null` never equals a value). `a.is_same_instance(b)` asks for the very
   same object (one argument of the same class, `false` for a missing one); use it as little as possible, since it
   stops the compiler sharing a copy with its original. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
   `equals`) like any argument, so `price == "10"` needs `func Price(from: String): Price?` and without it is the error

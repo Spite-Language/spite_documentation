@@ -486,8 +486,12 @@ given `equals` is called like a written one: the right side casts like any argum
 - A cycle (a ring of nodes, a tree whose children point back at their parent) never loops: a comparison already
   under way between the same two objects on the same thread answers `true`, so two rings are equal when every node
   of one equals the node at the same place in the other.
-- A singleton, an enum and a union compare as they always did: a singleton is one object per value of its
-  arguments, an enum by its value, a union of classes by identity.
+- A singleton and an enum compare as they always did: a singleton is one object per value of its arguments, an enum
+  by its value.
+- A value typed by a `type`, a union or `Anything` compares through the class it holds: two values of the same class
+  call that class's `equals` (its own or the given one, a number or a text by its value), two of different classes
+  are not equal, two `null`s are equal and `null` is never equal to a value. This holds for an attribute the given
+  `equals` compares and for `a == b` written on such values alike.
 - A `List` equals another holding equal items in the same order, and a `Dictionary` another holding equal values
   under the same keys, so a class holding them compares what they hold.
 - A function value held in an attribute is equal only to the same function value.
