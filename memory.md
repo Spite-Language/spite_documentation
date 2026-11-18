@@ -717,7 +717,8 @@ attribute of one of these. A singleton or a generic class is never part of that 
 and then linked to each other directly (`question.answer = answer` beside `answer.question = question`) are freed
 when neither leaves the function that made them: the one made later points back. Some cycles keep their counts and
 leak, since nothing proves which side outlives the other: such a pair where one of them leaves its function (`return
-answer`), one attribute pointing both ways (`partner`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
+answer`), one attribute pointing both ways (`partner`), a link a called function makes through more than three
+attributes in a row (`box.inner.deeper.deepest.first.beta = second`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
 (`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
 each class of the union, or for a `type` each class of the program that declares all of its members, so one class
 that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`).
