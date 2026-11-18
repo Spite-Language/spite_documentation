@@ -52,7 +52,7 @@ func find_target(): Monster? {
 ```
 
 A `T?` must be **narrowed** before a member is read, a function is called on it, it is printed, or it is passed
-where a plain value is wanted, a `type` such as `Anything` included. There is no
+where a plain value is wanted, a `type` or `Anything` included. There is no
 `value == null`: comparing against `null` is an error naming the forms below:
 
 ```gdscript title=null_comparison_error/null_comparison_error.spite entry error

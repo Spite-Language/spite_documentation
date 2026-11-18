@@ -224,14 +224,14 @@ func shout(...words: String) {
 
 ## Anything, and plain values where a `type` is wanted
 
-`Anything` is a built-in `type` that requires nothing, so every object fits it: `component: Anything` takes any
-value and `List<Anything>()` holds any. Do not declare an empty `type` of your own. A function taking `Anything`
-(or any `type`) is compiled once for each class that reaches it, so a number, a `Boolean` or an enum value passed to
+`Anything` is the language's union of every class, filled per place (below): `component: Anything` takes any
+value and `List<Anything>()` holds any. Do not declare an empty `type` or union of your own. A function taking
+`Anything` (or any `type` or union) is compiled once for each class that reaches it, so a number, a `Boolean` or an enum value passed to
 it arrives as itself; stored in a `List<Anything>` it keeps its class beside it, and `if component.class == Health`
 narrows it back. A value of a union passed where a `type` is wanted brings the union's members into the shape, so
 a function the members share can be called on it. An enum value answers `to_string()` (its name) and `to_debug()`,
 which is all a shape can ask of it, and `.class` read through the shape names the value's real class (`Integer`,
-the enum). `Spite.Attribute.value`, the value an attribute holds, is typed `Anything?`. An empty `type` costs
+the enum). `Spite.Attribute.value`, the value an attribute holds, is typed `Anything?`. An `Anything` costs
 nothing until a value is passed to it.
 
 `Anything` is a union whose members the compiler fills, and it behaves like any union. Each place written
@@ -303,7 +303,7 @@ func Hunt(new_target: Pet) {
 the attribute 'target' is declared 'Pet', not 'Pet?', so it never holds null: write 'var target: Pet' with no default when the constructor gives it its value, 'var target: Pet = Pet()' for a default, or 'var target: Pet? = null' for none yet, narrowed before use
 ```
 
-`Anything` is every class except `Null` and `Nothing`, so a plain `Anything` always holds a value too, and its words
+`Anything` holds only classes, never `Null`, so a plain `Anything` always holds a value too, and its words
 add that a real type says more:
 
 ```spite
@@ -346,7 +346,7 @@ So a `List<Health>` goes where a `List<Anything>` is wanted whenever the body on
 `items.count()` and reading its items fit, appending a `Sword` does not. Writing through a `type` is checked the
 same way: with `type Node { next: Node }`, `link(first, second)` writing `first.next = second` compiles for two
 `A` objects and is refused for an `A` and a `B`, since `A.next` holds an `A`. A class naming itself
-(`class Person { var parent: Person }`) is a plain class and needs no copy.
+(`var parent: Person?` in `person.spite`) is a plain class and needs no copy.
 
 Inside a copy the class is known, so `if pet.class == Dog` is decided and a `switch pet` runs only the case naming
 the copy's class; the function as written is still checked for its declared types, so its body uses only what the

@@ -407,7 +407,7 @@ always means one thing.
 A class name given where a `Spite.Class` is wanted (an argument, a `var` declared `Spite.Class`, a `return`) is
 its class object, and `==` between a `Spite.Class` and a class name compares the two objects. Anywhere else a bare
 class name is the error that says to write `Health()`, since making one is nearly always what was meant, and
-`var kind = Health` with no type is that error too, as is an argument whose parameter is a `type` such as `Anything`
+`var kind = Health` with no type is that error too, as is an argument whose parameter is a `type` or `Anything`
 (a file is a class named after the file, so `class Health {` at the top of one is "there is no 'class' keyword"):
 
 ```gdscript title=passing_a_class/ui/pressed.spite
@@ -1206,8 +1206,8 @@ go 3 1.5
 2
 ```
 
-`Anything` is the library's empty `type`: every class fits it, so a function that takes any object says
-`component: Anything`. What needs a constant says so while compiling: a function whose result is typed by its
+`Anything` is the language's union the compiler fills with the classes that reach each place, so a function that
+takes any object says `component: Anything`. What needs a constant says so while compiling: a function whose result is typed by its
 reflection parameter cannot be handed an object known only at run time.
 
 ```gdscript title=run_time_type/gadget.spite

@@ -1081,9 +1081,9 @@ from the object's own tag rather than from the declared type. An object literal 
 answers `Object`.
 
 This is what makes fast, JSON-shaped code possible: accept a `type`, and both a real class instance and a
-plain `{ key: value }` literal work. The empty `type`, which every object fits, is built in as `Anything`
-(`component: Anything`, `List<Anything>()`; see [functions_and_operators.md](functions_and_operators.md)):
-never declare an empty `type` of your own. `Anything` never holds `null`: `null` given to one is a compile error,
+plain `{ key: value }` literal work. Any object at all is `Anything`, the language's union the compiler fills
+with the classes that reach each place (`component: Anything`, `List<Anything>()`; see
+[functions_and_operators.md](functions_and_operators.md)): never declare an empty `type` or union of your own. `Anything` never holds `null`: `null` given to one is a compile error,
 and `Anything?` is a smell kept for where none is a real answer ([functions_and_operators.md](functions_and_operators.md#null-only-goes-where-a-t-is-wanted)).
 A `type`, like an `enum` and a `union`, takes no `=` and no commas.
 
