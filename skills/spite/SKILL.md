@@ -214,7 +214,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   so comparing a `Price` with `"cost"` is a compile error naming `Price(from: String)` unless that cast exists or
   `Price` has a `to_string()` (then it compares as text). Never expect a comparison across types to be `false`.
 - Every class has `equals`: one without its own compares every attribute with that attribute's `==` (private ones
-  too, back references such as `parent` included; cycles never loop), so two `Point(1, 2)` are equal, a deep copy
+  too, back references such as `parent` included; cycles never loop; an attribute typed by a `type` is not compared
+  yet, so `==` there is refused: decided, not built, spite_compiler#589), so two `Point(1, 2)` are equal, a deep copy
   equals its original, and `list.contains(item)` finds an equal item.
   To ask whether two names hold the very same object write `a.is_same_instance(b)`, and only where that is truly
   meant (a copy is a new object, a back reference points at this very node): it pins the object, so the compiler can no

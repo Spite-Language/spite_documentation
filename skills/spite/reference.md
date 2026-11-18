@@ -257,8 +257,8 @@ line is a change it made: two fixes in one statement are both made. It fixes:
   when a call or a loop's next pass takes that narrowing back, the compile fails on it and leaves those lines as
   written.
 
-A mistake whose fix is a choice stays an error, and a file of the standard library or of a package is never
-rewritten.
+A mistake whose fix is a choice stays an error. A loaded package's files are fixed like the program's own; a file
+of the standard library or of a repository pinned to a commit is never rewritten.
 
 ## Values
 
@@ -831,7 +831,9 @@ rewritten.
   given one comparing every attribute in declaration order with its own `==` (private ones included, back
   references too; a cycle answers `true` for a pair already being compared, so it never loops; an object
   always equals itself; a `List` compares its items in order, a `Dictionary` its values key by key; singletons,
-  enums and unions compare as before). `a.is_same_instance(b)` asks for the very
+  enums and unions compare as before; an attribute typed by a `type` is not compared through the class it holds
+yet, so `==` on such a class is refused, `has no attribute or function 'equals'`: decided, not built yet,
+spite_compiler#589). `a.is_same_instance(b)` asks for the very
   same object (one argument of the same class, `false` for a missing one); use it as little as possible, since it
   stops the compiler sharing a copy with its original. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
   `equals`) like any argument, so `price == "10"` needs `func Price(from: String): Price?` and without it is the error
@@ -892,7 +894,8 @@ rewritten.
   `[declaration.name]`, or a list written in place, `[held.attributes["a"], held.attributes["b"]]`, read only by `[ ]`;
   else every attribute listed at run time) is a compile
   error at that line, as is a `null` literal where none is nullable, and the program stops at run time only on a
-  pairing the compiler cannot see (a write reaching several attributes, a nullable value that is `null`, a program
+  pairing the compiler cannot see (a write reaching several attributes, a nullable value that is `null`: refusing that
+one while compiling is decided, not built yet, spite_compiler#585, so narrow it first; a program
   built with a prompt or hot reload); a value written into an `Anything` attribute joins that attribute's own
   `Anything`, so printing it needs `to_string` only of the classes written there; private attributes are neither listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
@@ -1019,8 +1022,9 @@ of one buffer are safe), `append_string(text)` (its UTF-8 bytes), `read_string_a
 instead of narrowing each: `crash body + 13 <= bytes.count()` proves every read inside those 13 bytes, a loop `while position + 15 <
 bytes.count()` stepping `position = position + 16` reads each record with no test, and `crash height * stride <=
 pixels.count()` proves `pixels[row * stride + column]` inside `while row < height` and `while column < stride`.
-Memory a C library hands out (a mapped GPU buffer) is `ForeignBytes(address, count)`, with the same `_at` reads and
-writes, orders named, bounds checked. A program never reads or writes bytes at an address: a `File`,
+Memory a C library hands out (a mapped GPU buffer) has no Spite reader yet: a checked `ForeignBytes(address, count)`
+is decided, not built yet (spite_compiler#467), so copy it into a `Buffer` on the library's side. A program never
+reads or writes bytes at an address: a `File`,
 a `Tcp.Connection` and a `BinaryReader` take and answer a `Buffer`.
 **Bytes that may be text are one holder with two reads**: `read_as_string(): String?` (`null` when not UTF-8) and
 `read_as_buffer()`, on a `File`, a `Tcp.Connection`, a `WebSocket.Message`, a datagram, an HTTP body and a `Process`'s
@@ -1037,7 +1041,7 @@ all), so a protocol violation is never silent. `close()` sends the close and `re
 peer's close arrives.
 A program never says what runs at once: call the function itself. The compiler runs independent calls in a row at once (only `var name = attribute.function(numbers)` declarations
 whose functions only compute a number; blocking IO runs on the pool's helper threads),
-a loop over a list of different classes at once, an `each_<member>()` walk in bands when it proves each pass
+an `each_<member>()` walk in bands when it proves each pass
 touches only its own element and what it made, and a `while index < list.count()` loop that takes `list[index]`
 first and steps `index` last in bands when each pass writes only its item, what the item alone reaches, what it
 made and its own slot (checked held once when it runs); a pass may take `fallback`s and call a singleton's
