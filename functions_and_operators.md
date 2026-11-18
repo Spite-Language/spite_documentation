@@ -185,7 +185,7 @@ func say_hello(visitor: Named) {
 }
 ```
 ```gdscript title=variadic_doc/guest.spite
-var name = ""
+var name: String
 
 func Guest(new_name: String) {
     name = new_name
@@ -410,7 +410,7 @@ For a class of your own, the operator is a direct call of the matching function 
 and the right side casts toward the parameter's type like any other argument:
 
 ```gdscript title=operators_as_functions/money.spite
-var cents = 0
+var cents: Integer
 
 func Money(starting_cents: Integer) {
     cents = starting_cents
@@ -517,8 +517,8 @@ function always wins over a template. Compound assignment goes through both: `pe
 reads through `get_age()` and writes through `set_age(...)`.
 
 ```gdscript title=interception/account.spite
-var balance = 0
-var owner = ""
+var balance: Integer
+var owner: String
 
 func Account(starting_balance: Integer, starting_owner: String) {
     balance = starting_balance
@@ -581,7 +581,7 @@ reflection keeps `Spite.Class.name` from being overwritten
 ([reflection.md](reflection.md#reflection-is-read-only)):
 
 ```gdscript title=read_only_doc/temperature.spite
-var _celsius = 0.0
+var _celsius: Float
 
 func Temperature(starting_celsius: Float) {
     _celsius = starting_celsius

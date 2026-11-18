@@ -97,7 +97,7 @@ an `and` narrows on its own, for `fallback`, `crash` and `if` alike, since each 
 `crash names[position] and ages[position]` proves both elements, exactly as two `crash` lines would.
 
 ```gdscript title=nullable_narrowing/monster.spite
-var health = 10
+var health: Integer
 
 func Monster(starting_health: Integer) {
     health = starting_health
@@ -154,8 +154,8 @@ only reads; when it may write something, reading it again after the check is an 
 `var`. `while current` narrows its body the same way, and is how a linked chain is walked:
 
 ```gdscript title=path_narrowing_doc/node.spite
-var name = ""
 var next: Node? = null
+var name: String
 
 func Node(new_name: String) {
     name = new_name
@@ -296,8 +296,8 @@ var name = "goblin"
 ```
 ```gdscript title=call_keeps_proof/call_keeps_proof.spite entry
 var console = Console()
-var target: Monster? = null
 var shown = 0
+var target: Monster?
 
 func CallKeepsProof() {
     target = Monster()
@@ -358,7 +358,7 @@ written: a local every assignment of which cannot be null, an attribute of your 
 assignment cannot be null, and the answer of your function every `return` of which cannot be null.
 
 ```gdscript title=proven_present/monster.spite
-var name = ""
+var name: String
 
 func Monster(starting_name: String) {
     name = starting_name
@@ -665,8 +665,8 @@ var console = Console()
 func FallbackAnswers() {
     var empty = first_name("")
     var found = first_name("Ada Lovelace")
-    var none = word_count("")
-    console.print("[{empty}]", found, none)
+    var counted = word_count("")
+    console.print("[{empty}]", found, counted)
 }
 
 func first_name(name: String): String {
@@ -924,7 +924,8 @@ func TerminalIfFixed() {
 }
 
 func try_get_name(): String? {
-    return "Aria"
+    var names = ["Aria"]
+    return names.first()
 }
 
 func announce() {

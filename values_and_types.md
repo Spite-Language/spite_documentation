@@ -112,7 +112,8 @@ func WrappingByName() {
     var text = "spite"
     var index = 0
     while index < text.length() {
-        var code = text.byte_at(index)
+        var code: UnsignedLong? = text.byte_at(index)
+        crash code
         var mixed = hash.bits_exclusive_or(code)
         hash = mixed.wrapping_multiply(_hash_prime)
         index = index + 1
@@ -753,7 +754,7 @@ enum Job {
     'archer'
 }
 
-var job: Job = 'knight'
+var job: Job
 
 func Player(starting_job: Job) {
     job = starting_job
@@ -952,7 +953,7 @@ union may give it conversions, named by the union alone (`func Job(from: String)
 value of that type meeting the union goes through it.
 
 ```gdscript title=union_basics/player.spite
-var health = 10
+var health: Integer
 
 func Player(starting_health: Integer) {
     health = starting_health
@@ -963,7 +964,7 @@ func is_alive(): Boolean {
 }
 ```
 ```gdscript title=union_basics/monster.spite
-var health = 6
+var health: Integer
 
 func Monster(starting_health: Integer) {
     health = starting_health
@@ -1049,7 +1050,7 @@ including a plain object literal:
 
 ```gdscript title=duck_typing/player.spite
 var weapon = "sword"
-var power = 5
+var power: Integer
 
 func Player(starting_power: Integer) {
     power = starting_power
@@ -1136,7 +1137,7 @@ Any class with a function of that signature fits, which is how a list holds "any
 union naming every class in advance:
 
 ```gdscript title=shape_functions_doc/badge.spite
-var label = ""
+var label: String
 
 func Badge(new_label: String) {
     label = new_label
@@ -1197,8 +1198,8 @@ below is `Job`'s own `finish`. A `List` of a `type` answers the member templates
 argument-free functions the type names: `map_names()`, `filter_done()`, `count_done()`:
 
 ```gdscript title=shape_values_doc/job.spite
-var name = ""
 var done = false
+var name: String
 
 func Job(new_name: String) {
     name = new_name

@@ -31,8 +31,8 @@ performance with one; benchmarks use a production build
 ## The program this page uses
 
 ```gdscript title=repl_program/monster.spite
-var name = "Monster"
-var health = 10
+var name: String
+var health: Integer
 
 func Monster(new_name: String, new_health: Integer) {
     name = new_name
@@ -263,7 +263,7 @@ for live information, and speed is measured on production builds. A reload compi
 program was built with. Live reload runs on Windows.
 
 ```gdscript title=hot_counter/monster.spite
-var name = ""
+var name: String
 
 func Monster(starting_name: String) {
     name = starting_name
@@ -275,8 +275,8 @@ func roar(): String {
 ```
 ```gdscript title=hot_counter/hot_counter.spite entry
 var console = Console()
-var visits = 0
 var monster = Monster("Goblin")
+var visits: Integer
 
 func HotCounter() {
     visits = 1

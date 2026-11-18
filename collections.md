@@ -201,7 +201,7 @@ ids 3,7 first plus 100 103
 ```
 
 ```gdscript title=party_keys/player.spite
-var name = ""
+var name: String
 
 func Player(new_name: String) {
     name = new_name
@@ -255,8 +255,8 @@ Nothing a program can see changes with that choice: an item read from a list is 
 made through one name shows through every other.
 
 ```gdscript title=one_list/velocity.spite
-var across = 0.0
-var down = 0.0
+var across: Float
+var down: Float
 
 func Velocity(new_across: Float, new_down: Float) {
     across = new_across
@@ -295,8 +295,8 @@ the rest, and `swap(first, second)` exchanges two, which is what a pass of your 
 is not a function of the element, such as an engine removing a column's rows by a mask of despawned entities:
 
 ```gdscript title=bulk_removal_doc/velocity.spite
-var across = 0.0
-var stopped = false
+var across: Float
+var stopped: Boolean
 
 func Velocity(new_across: Float) {
     across = new_across
@@ -401,7 +401,7 @@ read-only attribute that computes it (a `get_<name>()` with no setter,
 other member:
 
 ```gdscript title=computed_member/monster.spite
-var health = 0
+var health: Integer
 
 func Monster(starting_health: Integer) {
     health = starting_health
@@ -431,8 +431,8 @@ On a long list the compiler may split an `each_` walk across the thread pool
 ([concurrency.md](concurrency.md#each_-on-a-long-list-runs-in-bands)).
 
 ```gdscript title=list_helpers/chore.spite
-var title = ""
-var done = false
+var title: String
+var done: Boolean
 
 func Chore(new_title: String, new_done: Boolean) {
     title = new_title
@@ -477,9 +477,9 @@ all done now true
 ```
 
 ```gdscript title=list_query/item.spite
-var name = ""
-var price = 0
-var in_stock = false
+var name: String
+var price: Integer
+var in_stock: Boolean
 
 func Item(new_name: String, new_price: Integer, new_in_stock: Boolean) {
     name = new_name
@@ -584,8 +584,8 @@ arguments are handed on to that function, so `players.filter_name_starts_with("a
 `name` starts with `a`. It works with every member template and every function the member's class has:
 
 ```gdscript title=chained_members/player.spite
-var name = ""
-var score = 0
+var name: String
+var score: Integer
 
 func Player(starting_name: String, starting_score: Integer) {
     name = starting_name
@@ -629,8 +629,8 @@ enum Stage {
     'archived'
 }
 
-var title = ""
-var stage: Stage = 'draft'
+var title: String
+var stage: Stage
 
 func Post(new_title: String, new_stage: Stage) {
     title = new_title
@@ -840,15 +840,15 @@ the first list**, with no list in between: `teams.filter_active().map_leads().su
 reads its lead, and adds the age, allocating nothing.
 
 ```gdscript title=fused_chain/person.spite
-var age = 0
+var age: Integer
 
 func Person(new_age: Integer) {
     age = new_age
 }
 ```
 ```gdscript title=fused_chain/team.spite
-var active = false
 var lead = Person(0)
+var active: Boolean
 
 func Team(new_active: Boolean, new_lead: Person) {
     active = new_active
@@ -949,7 +949,7 @@ func average_member(member: Spite.AttributeDeclaration): Float? {
 }
 ```
 ```gdscript title=list_average/score.spite
-var points = 0
+var points: Integer
 
 func Score(new_points: Integer) {
     points = new_points

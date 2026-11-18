@@ -241,9 +241,6 @@ saying so.
 var name = "troll"
 var health = 10
 ```
-```gdscript title=indexed_by_a_declaration/rat.spite
-var health = 3
-```
 ```gdscript title=indexed_by_a_declaration/indexed_by_a_declaration.spite entry
 var console = Console()
 
@@ -257,6 +254,8 @@ func IndexedByADeclaration() {
 ```output
 health 10 Monster
 ```
+
+With a class `Rat` that declares a `health` of its own:
 
 ```spite
 var rat = Rat()
@@ -492,7 +491,8 @@ too after `fallback described.namespace.parent` ([failure.md](failure.md#narrowi
 
 Each class below is ordinary Spite in `common/spite/`. Every member is a get-only attribute named for what it
 answers: a question is `is_...` and answers `Boolean`, a collection is a `List` named in the plural. A question
-that would take an argument is a collection indexed or filtered instead, so there is one way to ask it.
+that would take an argument is mostly a collection indexed or filtered instead; the few that take one
+(`has_function(name)`, `satisfies_type(type)`) are named where they are taught.
 
 ### What a reflection object always has
 
@@ -1274,7 +1274,7 @@ reflected: a program cannot ask where a value lives, how many objects exist or w
 could watch ever stands in the way of how the compiler places them.
 
 ```gdscript title=every_class_of_the_program/monster.spite
-var name = ""
+var name: String
 
 func Monster(starting_name: String) {
     name = starting_name

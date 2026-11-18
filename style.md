@@ -475,7 +475,7 @@ is called inside an argument of 'console.print': compute it first into a named '
 ```
 
 ```gdscript title=call_argument_fixed/token.spite
-var text = ""
+var text: String
 
 func Token(new_text: String) {
     text = new_text

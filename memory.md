@@ -39,7 +39,7 @@ Two names can hold the same object. A mutation through either one shows up throu
 only ever one object:
 
 ```gdscript title=sharing_basics/box.spite
-var label = "unnamed"
+var label: String
 
 func Box(starting_label: String) {
     label = starting_label
@@ -104,7 +104,7 @@ too. Inside a class, a bare `copy()` or `deep_copy()` copies the object itself, 
 by name:
 
 ```gdscript title=copy_basics/box.spite
-var label = "unnamed"
+var label: String
 
 func Box(starting_label: String) {
     label = starting_label
@@ -192,7 +192,7 @@ The row is an object literal of items, and the system takes it as a `type`:
 var left = 0.0
 ```
 ```gdscript title=row_doc/velocity.spite
-var across = 0.0
+var across: Float
 
 func Velocity(new_across: Float) {
     across = new_across
@@ -222,7 +222,7 @@ func RowDoc() {
     crash positions[0] and velocities[0]
     var tick = 0
     while tick < 4 {
-        var row: Moving = {position: positions[0], velocity: velocities[0]}
+        var row: Mover.Moving = {position: positions[0], velocity: velocities[0]}
         mover.update_each(row)
         tick = tick + 1
     }
@@ -241,7 +241,7 @@ next line is a row exactly like the literal:
 var left = 0.0
 ```
 ```gdscript title=walked_row_doc/velocity.spite
-var across = 0.0
+var across: Float
 
 func Velocity(new_across: Float) {
     across = new_across
@@ -290,7 +290,7 @@ func fill_attribute(attribute: Spite.AttributeDeclaration, row: $row_type, index
 ```gdscript title=walked_row_doc/walked_row_doc.spite entry
 var console = Console()
 var columns = Columns()
-var runner = Runner<Moving>()
+var runner = Runner<Mover.Moving>()
 var mover = Mover()
 
 func WalkedRowDoc() {
@@ -330,14 +330,14 @@ from the id, such as an `Entity`, chosen per attribute while compiling:
 var left = 0.0
 ```
 ```gdscript title=sparse_row_doc/velocity.spite
-var across = 0.0
+var across: Float
 
 func Velocity(new_across: Float) {
     across = new_across
 }
 ```
 ```gdscript title=sparse_row_doc/entity.spite
-var id = 0
+var id: Integer
 
 func Entity(new_id: Integer) {
     id = new_id
@@ -349,14 +349,7 @@ var last = 0.0
 var owner = -1
 ```
 ```gdscript title=sparse_row_doc/mover.spite
-type Moving {
-    entity: Entity
-    position: Position
-    velocity: Velocity
-    trail: Trail
-}
-
-func update_each(moving: Moving) {
+func update_each(moving: SparseRowDoc.Moving) {
     moving.position.left = moving.position.left + moving.velocity.across
     moving.trail.lefts.append(moving.position.left)
     moving.trail.last = moving.position.left
@@ -486,7 +479,7 @@ item. The plural stands for exactly one call the compiler writes:
 var left = 0.0
 ```
 ```gdscript title=filled_arguments_doc/velocity.spite
-var across = 0.0
+var across: Float
 
 func Velocity(new_across: Float) {
     across = new_across
@@ -565,7 +558,7 @@ back-reference). The compiler calls it automatically the moment the last referen
 
 ```gdscript title=drop_basics/resource.spite
 var console = Console()
-var name = "unnamed"
+var name: String
 
 func Resource(new_name: String) {
     name = new_name
@@ -594,7 +587,7 @@ A tree, a linked list, or any other recursive structure needs nothing beyond an 
 a class type already holds a reference:
 
 ```gdscript title=tree_basics/leaf.spite
-var held_value = 0
+var held_value: Integer
 
 func Leaf(starting_value: Integer) {
     held_value = starting_value
@@ -605,15 +598,10 @@ func total(): Integer {
 }
 ```
 ```gdscript title=tree_basics/branch.spite
-union TreeNode {
-    Leaf
-    Branch
-}
+var left: TreeBasics.TreeNode?
+var right: TreeBasics.TreeNode?
 
-var left: TreeNode? = null
-var right: TreeNode? = null
-
-func Branch(left_node: TreeNode, right_node: TreeNode) {
+func Branch(left_node: TreeBasics.TreeNode, right_node: TreeBasics.TreeNode) {
     left = left_node
     right = right_node
 }
@@ -662,8 +650,8 @@ constructor stores the parent in `parent`, and the parent stores the child in `c
 
 ```gdscript title=back_reference_family/parent.spite
 var console = Console()
-var name = ""
 var children = List<Child>()
+var name: String
 
 func Parent(new_name: String) {
     name = new_name
@@ -679,8 +667,8 @@ func drop() {
 }
 ```
 ```gdscript title=back_reference_family/child.spite
-var name = ""
-var parent: Parent? = null
+var name: String
+var parent: Parent?
 
 func Child(new_name: String, new_parent: Parent) {
     name = new_name

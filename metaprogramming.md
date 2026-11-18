@@ -14,8 +14,8 @@ ordinary functions and classes, so what they make is typed, visible in `--final-
 calls it ([Tree shaking](#tree-shaking)).
 
 ```gdscript title=walks_and_templates/monster.spite
-var name = "troll"
-var health = 10
+var name: String
+var health: Integer
 
 func Monster(new_name: String, new_health: Integer) {
     name = new_name
@@ -219,7 +219,7 @@ var written = update.writes.map_names()
 var read_count = update.reads.count()
 ```
 
-Whether a class can stand in for a type is the one question that takes an argument, the type's name:
+Whether a class can stand in for a type is a question that takes an argument, the type's name:
 `attribute.class.satisfies_type(Number)` in a walk is `true` in the copies for numbers and `false` in the others, so
 a walker branches on numbers with no test left at run time. It takes a `type`, a union, a class, `Anything` or
 `Number`, the compiler's own type of the operators a number answers, which every number class and a program's own
@@ -765,8 +765,8 @@ nothing and you write nothing special for it:
 ```gdscript title=codegen_values_doc/weapon.spite
 generic $damage_type
 
-var damage: $damage_type = 0
-var is_magic = false
+var damage: $damage_type
+var is_magic: Boolean
 
 func Weapon(new_damage: $damage_type, magic: Boolean) {
     damage = new_damage
@@ -847,7 +847,7 @@ func describe(): String {
 }
 ```
 ```gdscript title=generic_constraint/book.spite
-var title = ""
+var title: String
 
 func Book(new_title: String) {
     title = new_title

@@ -98,8 +98,8 @@ the first way: bytes hold its attributes, never what a conversion takes. A `Buff
 making it empty first: its bytes are written by value (below).
 
 ```gdscript title=json_converted/version.spite
-var major = 0
-var minor = 0
+var major: Integer
+var minor: Integer
 
 func Version(starting_major: Integer, starting_minor: Integer) {
     major = starting_major

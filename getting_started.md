@@ -99,8 +99,8 @@ enum Job {
     'mage'
 }
 
-var age = 0
-var job: Job = 'knight'
+var age: Integer
+var job: Job
 
 func Person(new_age: Integer, new_job: Job) {
     age = new_age

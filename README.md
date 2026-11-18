@@ -11,8 +11,8 @@ A file is a class named after it, and a program is a folder: `battle/battle.spit
 runs the program.
 
 ```gdscript title=battle/monster.spite
-var name = ""
-var health = 0
+var name: String
+var health: Integer
 
 func Monster(new_name: String, new_health: Integer) {
     name = new_name

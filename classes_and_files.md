@@ -130,7 +130,7 @@ func total(): Integer {
 }
 ```
 ```gdscript title=ordered_file/crate.spite
-var count = 0
+var count: Integer
 
 func Crate(new_count: Integer) {
     count = new_count
@@ -512,7 +512,7 @@ A class is built in three ways, and each has a fixed shape so it can't be mistak
 | **preset** | a PascalCase name of its own, no parameters, returns exactly the class | the program: `Meters.Marathon()` |
 
 ```gdscript title=distances/meters.spite
-var amount = 0
+var amount: Integer
 
 func Meters(starting_amount: Integer) {
     amount = starting_amount
@@ -634,8 +634,8 @@ the other; bindings with different values share nothing but the class.
 ```gdscript title=radio/channel.spite
 singleton
 
-var number = 0
 var messages = List<String>()
+var number: Integer
 
 func Channel(channel_number: Integer) {
     number = channel_number
@@ -653,11 +653,12 @@ func Radio() {
     news_again.messages.append("roads closed")
     var news_count = news.messages.count()
     var music_count = music.messages.count()
-    console.print(news == news_again, news == music, news_count, music_count)
+    var music_number = music.number
+    console.print(news == news_again, news == music, news_count, music_count, music_number)
 }
 ```
 ```output
-true false 2 1
+true false 2 1 2
 ```
 
 `news` and `news_again` are one channel, so both messages land in it; `music` is a second channel with its own
@@ -745,8 +746,8 @@ shares the exact same object, so a function can change it and the caller sees th
 special to write at the call site or in the parameter's type ([memory.md](memory.md)):
 
 ```gdscript title=level_up/member.spite
-var name = "unnamed"
 var level = 1
+var name: String
 
 func Member(new_name: String) {
     name = new_name
@@ -808,7 +809,7 @@ func record(drink: Drink) {
 }
 ```
 ```gdscript title=this_basics/drink.spite
-var name = ""
+var name: String
 
 func Drink(new_name: String) {
     name = new_name
@@ -846,8 +847,8 @@ not is a compile error naming `to_string`. `console.debug` needs nothing: every 
 its name and attributes ([standard_library.md](standard_library.md#console)).
 
 ```gdscript title=printing_a_class/lamp.spite
-var room = ""
 var lit = false
+var room: String
 
 func Lamp(starting_room: String) {
     room = starting_room
@@ -868,7 +869,7 @@ func PrintingAClass() {
 ```
 ```output
 the hall lamp
-Lamp { room: "hall", lit: false }
+Lamp { lit: false, room: "hall" }
 ```
 
 ## Private names

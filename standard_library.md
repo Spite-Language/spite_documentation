@@ -577,14 +577,16 @@ func walk(folder: Directory) {
     while index < entries.count() {
         var entry = entries[index]
         switch entry {
-            Directory: {
-                console.print("folder", entry.path)
-                walk(entry)
-            }
+            Directory: walk_inside(entry)
             File: console.print("file", entry.path)
         }
         index = index + 1
     }
+}
+
+func walk_inside(folder: Directory) {
+    console.print("folder", folder.path)
+    walk(folder)
 }
 ```
 ```output
@@ -782,8 +784,8 @@ enum Stage {
     'boarding'
 }
 
-var code = ""
-var seats = 0
+var code: String
+var seats: Integer
 
 func Ticket(starting_code: String, starting_seats: Integer) {
     code = starting_code
@@ -824,8 +826,8 @@ var sailors = List<String>()
 var ship: Ship? = null
 ```
 ```gdscript title=debug_doc/ship.spite
-var name = ""
 var crew: Crew? = null
+var name: String
 
 func Ship(starting_name: String) {
     name = starting_name
@@ -846,7 +848,7 @@ func DebugDoc() {
 }
 ```
 ```output
-Crew { captain: "Ana", sailors: ["Bo"], ship: Ship { name: "Gull", crew: Crew {...} } } 3 "done"
+Crew { captain: "Ana", sailors: ["Bo"], ship: Ship { crew: Crew {...}, name: "Gull" } } 3 "done"
 ```
 
 ```gdscript title=console_input_doc/console_input_doc.spite entry
