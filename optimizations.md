@@ -623,6 +623,18 @@ time, and so is every read of a class object code a `drop()` can reach reads, wh
 class object was already let go. Builds that keep everything (`--development`, `--repl`, `--hot-reload`) read them at
 run time too. What you can observe: the time and a smaller executable.
 
+### A class object is static data
+
+Each class object the program keeps (`Monster`, `Part.owner`, `value.class`) is an object written in the executable,
+at an address fixed when it is built. Reading one is that address: nothing is made, tested or locked, whichever
+thread reads it first. One that holds only texts, numbers, flags and other class objects is written whole; one that
+holds a collection (an enum's `values`, a class's `functions`) gets it once, before the entry runs, and lets go of it
+at exit as before. A class object a `drop()` run at exit can reach is still made on its first read, so a read after
+it was let go halts as before; so is every class object of a program whose `drop()` asks the class of a value, and
+every one in a build that keeps everything (`--development`, `--repl`, `--hot-reload`). What you can observe: under
+`--debug-memory`, no allocation for the class object itself, and its collections counted from the start even when
+the path that reads it never runs.
+
 ### Defaults the constructor replaces are never made
 
 A constructor that assigns an attribute before anything can read it makes its objects with a copy of the class's
