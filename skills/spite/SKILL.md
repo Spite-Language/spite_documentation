@@ -117,9 +117,10 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `window.register_namespace(Theme)` each make a copy of the walker per class, where the class is a type
   (`Binding<part>()`, `value.class == part` narrows). On an object known only at run time (`held: Anything`),
   `held.attributes` hands bound `Spite.Attribute`s whose `.value` is read and written: `destination.value =
-  attribute.value` copies a field by the assignment rules it desugars to (a decimal into a whole-number field is
-  judged as `thing.count = 2.5`; today's writer still truncates or halts there: decided, not built yet, spite_compiler#595), and a class reaching the value that no attribute the
-  write can reach takes is a compile error at that line.
+  attribute.value` copies a field by the assignment rules it desugars to, judged at that line with the assignment's
+  words (the held value has no range: a decimal or wider number into a plain whole-number field is refused, into a
+  `T?` field it is `null` when it does not fit; a value that may be null into a plain field is refused, or 0 for a
+  number), and a class reaching the value that no attribute the write can reach takes is a compile error at that line.
 - No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `fallback`, `crash`, `switch`).
   `null` only goes where a `T?` is wanted: given to any type without `?` (assigned, passed, appended, answered or
   declared) it is a compile error, never a silent `0`, `""`, first enum value or default object.

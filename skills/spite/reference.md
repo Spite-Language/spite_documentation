@@ -890,16 +890,17 @@ spite_compiler#589). `a.is_same_instance(b)` asks for the very
   `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`; narrowed by `if found.value.class == Integer`, it is that number, and its `to_string()` answers the number's own; `attribute.value = given`,
   which is `set_value(given)`, writes the owner's field even when the object is only an `Anything`, by the assignment
-  rules it desugars to (a class with its own `to_string()` and an enum into a `String` field too; a decimal into a
-  whole-number field is judged as `thing.count = 2.5`, though today's writer still truncates or halts there: decided,
-  not built yet, spite_compiler#595); a class reaching `given` that no attribute the
-  write can reach takes (the one `.attributes["name"]` names, also through a local `var attributes = held.attributes`,
-  `[declaration.name]`, or a list written in place, `[held.attributes["a"], held.attributes["b"]]`, read only by `[ ]`;
-  else every attribute listed at run time) is a compile
-  error at that line, as is a `null` literal where none is nullable, and the program stops at run time only on a
-  pairing the compiler cannot see (a write reaching several attributes, a nullable value that is `null`: refusing that
-one while compiling is decided, not built yet, spite_compiler#585, so narrow it first; a program
-  built with a prompt or hot reload); a value written into an `Anything` attribute joins that attribute's own
+  rules it desugars to, judged at that line with the assignment's words (a class with its own `to_string()` and an
+  enum into a `String` field too; the value an `Anything` holds has no range, so a decimal or a wider number into a
+  plain whole-number field is refused, even a written `2.5` or `3`, and into a `T?` field it is `null` when it does
+  not fit; a value that may be null into a field that is not nullable is refused unless the field is a number, where
+  null is 0; a conversion answering `T?` into a plain `T` field is refused); a class reaching `given` that no
+  conversion of the attribute's class takes (the one `.attributes["name"]` names, also through a local `var
+  attributes = held.attributes`, `[declaration.name]`, or a list written in place, `[held.attributes["a"],
+  held.attributes["b"]]`, read only by `[ ]`; else every attribute listed at run time, and then refused only when
+  none takes it) is a compile error at that line, and the program stops at run time only on a pairing the compiler
+  cannot see (a write reaching several attributes given what one takes and another does not, or a `null` into one
+  that is neither nullable nor a number; a program built with a prompt or hot reload); a value written into an `Anything` attribute joins that attribute's own
   `Anything`, so printing it needs `to_string` only of the classes written there; private attributes are neither listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`; a nullable one held in an attribute is narrowed through its path like any value: `fallback button.on_press` then `button.on_press()`), and

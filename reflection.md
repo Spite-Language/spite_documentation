@@ -1143,14 +1143,22 @@ Integer
 
 Such an attribute is written as well as read: `attribute.value = given` is `attribute.set_value(given)`, which writes
 the owner's field, so a program can copy every attribute of one object onto another it only holds as an `Anything`.
-It is the assignment it desugars to, with no rule of its own: the value meets the attribute's class exactly as
-in `owner.field = given` (an `Integer` into a `Float` attribute, into a `String` attribute any class with its own
-`to_string()` and an enum, by its name, a function value into a function attribute of the same type, `null` into a
-nullable one), and a decimal into a whole-number attribute is judged as `thing.count = 2.5` is
-([values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed)). Today's generated writer still
-truncates such a decimal or halts on it: decided, not built yet
-([spite_compiler#595](https://github.com/Spite-Language/spite_compiler/issues/595)). Counts and back references are
-kept as an assignment keeps them, and a private attribute is neither listed nor written, as it is not read.
+It is the assignment it desugars to, with no rule of its own, judged at the write's line with the assignment's words:
+the value meets the attribute's class exactly as in `owner.field = given` on its own line (an `Integer` into a `Float`
+attribute, into a `String` attribute any class with its own `to_string()` and an enum, by its name, a function value
+into a function attribute of the same type, `null` into a nullable one). The value an `Anything` holds keeps its class
+but not its range, so a number that may not fit is narrowed as an assignment narrows a number nothing bounds
+([values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed)): a `Float` or a `Long` written
+into an `Integer?` attribute is `null` when it does not fit, and into a plain `Integer` it is refused, a written `2.5`
+or `3` too, with `this value is a Float, which may not fit in an Integer: write 'var converted: Integer? = value' on
+its own line, ...`. A value that may be null (a `String?`, an `Anything?`) into an attribute that is not nullable is
+refused as `thing.label = maybe` is (`this value may be null (it is a String?), but a String is needed: narrow it first
+...`), and so is a conversion that answers `Feet?` into a plain `Feet` attribute, while a number that may be null is
+0 when it is null, as `thing.count = maybe` is
+([values_and_types.md](values_and_types.md#a-number-that-may-be-null-is-zeroed-on-its-own-line)). `null` written
+into an attribute that is not nullable is `'null' is given where an Integer is needed, ...`. Counts and back
+references are kept as an assignment keeps them, and a private attribute is neither listed nor written, as it is not
+read.
 
 The compiler decides the cast while compiling. It knows the classes that reach `given` (an `Anything` holds only the
 classes that reach it) and the attributes the write can reach: the one `.attributes["whole"]` names, written in the
@@ -1160,15 +1168,15 @@ place names (`var chosen = [held.attributes["whole"], held.attributes["label"]]`
 attribute the program lists at run time. A local listing or list is followed only while it is read by `[ ]` and never
 changed. A value written into an `Anything` attribute adds its class to that attribute's own `Anything`, as an
 assignment would, so printing the attribute later asks `to_string` of the classes written there and of no
-other. A class none of them takes
-is an error at the write's line, naming the class and the attribute: `set_value() gives 'Meter.whole' a Gadget,
-which is not an Integer and which no conversion of Integer takes, so it cannot be cast the way an assignment would
-cast it`. With several attributes it lists what each holds, and `null` written where none is nullable is
-`set_value() gives 'Meter.whole' null, and it is not nullable`. The program stops at run time only where the
-compiler cannot pair a value with its attribute: a write that reaches several attributes, given a class one of them
-takes into an attribute that does not (`spite: set_value() gives 'Meter.whole' a value that is not an Integer and
-that no conversion of Integer takes, so it cannot be cast the way an assignment would cast it`), a nullable value
-that is `null` into an attribute that is not nullable, and any value written in a program built with a prompt or hot
+other. A class no conversion of the attribute's class takes is an error at the write's line, naming the class and the
+attribute: `set_value() gives 'Meter.whole' a Gadget, which is not an Integer and which no conversion of Integer
+takes, so it cannot be cast the way an assignment would cast it`. A write that can reach several attributes writes one
+known only while running, so it is judged against all of them: it is refused when none takes a class reaching it as an
+assignment would (listing what each holds), or `null` where none is nullable, and the program stops at run time on
+the pairing the compiler cannot see: a class one of them takes written into one that does not (`spite: set_value()
+gives 'Meter.whole' a value that is not an Integer and that no conversion of Integer takes, so it cannot be cast the
+way an assignment would cast it`, a `Float` into a plain `Integer` too), and a value that is `null` into an attribute
+that is neither nullable nor a number. So does any value written in a program built with a prompt or hot
 reload, whose typed code is compiled after its writers.
 
 ```gdscript title=attribute_copies/button.spite
