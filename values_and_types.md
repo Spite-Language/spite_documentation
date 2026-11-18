@@ -210,40 +210,34 @@ func ConstantOverflow() {
 '(65536 - 120) * 65536' is 4287102976, which does not fit in an Integer, the type its arithmetic is done in, so it would wrap: write the number itself, 4287102976, which is a Long
 ```
 
-### A comparison is done in the wider type
+### A comparison takes its right side like an argument
 
-A comparison loses nothing by widening, so `==`, `!=`, `<`, `<=`, `>` and `>=` between numbers of two types compare
-in the wider one, whichever side it is written on: the narrower side is widened, and nothing is cut or narrowed.
-`progress > -0.5` with an `Integer` `progress` compares in `Float` and answers true, as `-0.5 < progress` does. A
-`Byte?` read from a `Buffer` compared with an `Integer` compares `Integer`s, and a missing byte equals no number. A
-whole number and a decimal meet in the decimal, a `Float` and a `Double` in the `Double`. A signed and an unsigned
-whole number meet in the smallest signed type that holds both, so an `UnsignedInteger` and an `Integer` compare as
-`Long`s: a negative `Integer` is less than every `UnsignedInteger` and equal to none, in either order. An
-`UnsignedLong` has no such type beside a signed number, so it compares in the left side's type and is refused
-there, in either order, until one side is narrowed (`var converted: Long? = value`).
+A comparison is a call on its left side ([A comparison is a call on its left side](functions_and_operators.md#a-comparison-is-a-call-on-its-left-side)),
+so its right side goes into the left side's type exactly as an argument or an assignment would, and nothing is
+widened for the comparison alone. Write the wider number on the left: `total > count` with a `Long` `total` and an
+`Integer` `count` compares `Long`s, and `color_type == written` with an `Integer` `color_type` and a `Byte?` read
+from a `Buffer` compares `Integer`s, a missing byte equal to no number. Written the other way round (`count < total`,
+`progress > -0.5` with an `Integer` `progress`), the compiler swaps the sides itself with a `fixed:` line, since the
+swapped form fits. Where neither order fits (an `UnsignedInteger` or an `UnsignedLong` beside a signed number), it is
+the assignment's error: narrow one side by hand on its own line (`var converted: UnsignedLong? = value`).
 
 ```gdscript title=wider_comparison/wider_comparison.spite entry
 var console = Console()
 var _past_a_byte = 262
-var _below_zero = -1
 
 func WiderComparison() {
     var encoded = Buffer(1)
     encoded.append(6)
     var written = encoded[0]
     var color_type = _past_a_byte
-    console.print("same byte", written == color_type, color_type == written)
+    console.print("same byte", color_type == written)
     var progress: Integer = 0
-    console.print("mathematically true", progress > -0.5, -0.5 < progress)
-    var largest = UnsignedInteger.Largest()
-    var negative = _below_zero
-    console.print("unsigned", largest == negative, negative < largest)
+    console.print("mathematically true", -0.5 < progress)
 }
 ```
 ```output
-same byte false false
-mathematically true true true
-unsigned false true
+same byte false
+mathematically true true
 ```
 
 Arithmetic still works in the left side's type and asks for the wider operand first, since its answer has a type:

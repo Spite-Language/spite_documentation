@@ -56,7 +56,7 @@ func TimeReadingIsNotInstant() {
 }
 ```
 ```diagnostic
-a DateTime cannot be used where an Instant is needed
+an Instant cannot be used where a DateTime is needed
 ```
 
 ## Instants and durations

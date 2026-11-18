@@ -293,11 +293,14 @@ of the standard library or of a repository pinned to a commit is never rewritten
   text of one hole and nothing else, `"{clicks}"`, is an error naming the direct form; elsewhere write
   `clicks.to_string()`. Arithmetic is done in the left side's type, so write the wider operand first: `total * count` with a `Long`
   `total`, never `count * total`, which is an error (so is an `Integer` plus a `Float`); a literal on the right that
-  fits is fine. A constant that overflows `Integer` (`65536 * 65536`) is an error: write the number. Comparisons never
-  narrow: two numbers compare in the wider type on either side (`count < total` with a `Long` `total` compares `Long`s,
-  `encoded[0] == color_type` with an `Integer` `color_type` compares `Integer`s, a missing byte equals nothing), and a
-  signed and an unsigned whole number meet in the next wider signed type (`UnsignedInteger` and `Integer` compare as
-  `Long`, so `-1` is below every `UnsignedInteger`; an `UnsignedLong` beside a signed number has no such type and is refused: narrow one side first). Nothing wraps silently: `+ - *`, unary
+  fits is fine. A constant that overflows `Integer` (`65536 * 65536`) is an error: write the number. A comparison is
+  a call on its left side (`==`/`!=` `equals`, `<`/`>` `less_than`/`greater_than`), so the right side goes into the
+  left's type like any argument and the wider number goes on the left: `total > count` with a `Long` `total`,
+  `color_type == encoded[0]` with an `Integer` `color_type` (a missing byte equals nothing). Written the other way
+  (`count < total`, `progress > -0.5`), the compiler swaps the sides with a `fixed:` line when the swapped form fits;
+  where it cannot rewrite (both sides call something, a library or generic line) the error names both fixes, narrow
+  by hand on its own line or swap the sides. Where neither order fits (an `UnsignedInteger` or `UnsignedLong` beside a
+  signed number) it is the assignment's error alone: narrow one side first (`var converted: UnsignedLong? = value`). Nothing wraps silently: `+ - *`, unary
   `-` and the smallest signed value `/ -1` that do not fit their type halt naming the line in every build, signed
   and unsigned alike (the check is left out where the ranges of local numbers prove the answer fits: a `Long` total
   of `Integer` terms over a list, a remainder, a clamped value, a value bounded by a named number nothing writes
@@ -845,7 +848,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   always equals itself; a `List` compares its items in order, a `Dictionary` its values key by key; singletons
   and enums compare as before; a value typed by a `type`, a union or `Anything`, in an attribute or written
   `a == b`, compares through the class it holds: the same class calls that class's `equals`, different classes are
-  not equal, two `null`s are equal, `null` never equals a value). `a.is_same_instance(b)` asks for the very
+  not equal, two `null`s are equal, `null` never equals a value; such a value goes on the left, `held == circle`,
+  and `circle == held` is swapped to it with a `fixed:` line). `a.is_same_instance(b)` asks for the very
   same object (one argument of the same class, `false` for a missing one); use it as little as possible, since it
   stops the compiler sharing a copy with its original. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
   `equals`) like any argument, so `price == "10"` needs `func Price(from: String): Price?` and without it is the error

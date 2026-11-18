@@ -406,8 +406,7 @@ when its class takes no conversion from text ([Rune](standard_library.md#rune)),
 `tag.to_string()` and `Price.attributes["cost"] == "cost"` the attribute's name.
 Number arithmetic is done in the left side's type, so a wider right side is an error that says to write the wider
 operand first ([Wider arithmetic goes wider operand first](values_and_types.md#wider-arithmetic-goes-wider-operand-first));
-a comparison of two numbers is done in the wider one on either side, so `count < total` with a `Long` `total` compares
-`Long`s ([A comparison is done in the wider type](values_and_types.md#a-comparison-is-done-in-the-wider-type)).
+a comparison is a call on its left side like any other operator ([below](#a-comparison-is-a-call-on-its-left-side)).
 For a class of your own, the operator is a direct call of the matching function (nothing more at run time),
 and the right side casts toward the parameter's type like any other argument:
 
@@ -474,6 +473,45 @@ func OperatorMissingError() {
 needs it to define 'sum(other)'
 ```
 
+### A comparison is a call on its left side
+
+`a == b`, `a != b`, `a < b`, `a <= b`, `a > b` and `a >= b` are calls on `a` (`equals`, `less_than`,
+`greater_than`), made before anything is typed, so `b` goes into `a`'s parameter through the same casts as any
+argument or assignment: numbers, `T?` values, unions, `type`s and `Anything` alike, and nothing is widened, cut or
+judged for the comparison alone. On numbers, enums and the other built-in classes the call is the machine's own
+comparison. When `b` may not fit (`count < total` with an `Integer` `count` and a `Long` `total`, `progress > -0.5`
+with an `Integer` `progress`, `circle == held` with a `Circle` and a union value):
+
+- when the swapped form fits (`total > count`, `-0.5 < progress`, `held == circle`), the compiler swaps the sides itself
+  with a `fixed:` line, `'count < total' called on an Integer, which a Long on the right may not fit; swapped the sides to 'total > count'`;
+- where it cannot rewrite the line (both sides call something, so swapping would change what runs first, or the line
+  is in a library or generic class), the error names both ways out, narrowing by hand on its own line or swapping:
+  `this value is a Long, which may not fit in an Integer: write 'var converted: Integer? = value' on its own line,
+  which is null when it does not fit, and narrow that, or swap the sides ('total > count')`;
+- when neither order fits (an `UnsignedLong` or an `UnsignedInteger` beside a signed number), it is the assignment's
+  error alone, since swapping would only meet it again: narrow one side by hand.
+
+A `T?` on either side needs no narrowing for `==` and `!=`: two missing values are equal, a missing one equals no
+value, and a present right side goes into the left side's type as above (`color_type == encoded[0]` with an
+`Integer` `color_type` compares `Integer`s).
+
+```gdscript title=comparison_call/comparison_call.spite entry error
+var console = Console()
+var _huge: UnsignedLong = 7
+var _below_zero = -1
+
+func ComparisonCall() {
+    compare(_huge, _below_zero)
+}
+
+func compare(big: UnsignedLong, small: Integer) {
+    console.print(big == small)
+}
+```
+```diagnostic
+this value is an Integer, which may not fit in an UnsignedLong: write 'var converted: UnsignedLong? = value' on its own line
+```
+
 ### Every class has equals
 
 A class that declares no `equals` is given one: `a == b` answers whether every attribute of `a` equals the same
@@ -492,7 +530,8 @@ given `equals` is called like a written one: the right side casts like any argum
 - A value typed by a `type`, a union or `Anything` compares through the class it holds: two values of the same class
   call that class's `equals` (its own or the given one, a number or a text by its value), two of different classes
   are not equal, two `null`s are equal and `null` is never equal to a value. This holds for an attribute the given
-  `equals` compares and for `a == b` written on such values alike.
+  `equals` compares and for `a == b` written on such values alike. Such a value goes on the left: a class on the
+  left takes only its own class, so `circle == held` is swapped to `held == circle` with a `fixed:` line.
 - A `List` equals another holding equal items in the same order, and a `Dictionary` another holding equal values
   under the same keys, so a class holding them compares what they hold.
 - A function value held in an attribute is equal only to the same function value.
