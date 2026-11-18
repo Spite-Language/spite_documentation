@@ -350,7 +350,7 @@ with the system's own updates, and a program carries no copy of the database:
   `DynamicLibrary`). Windows' own registry zones are not used: they have Windows names, and less history. ICU
   refusing a zone is an answer, `null` from `find` or `system()`; an offset for an instant outside the years ICU
   reckons, about 5.8 million either side of 1970, crashes, since only a program's own arithmetic makes one.
-- **Linux and macOS** read the compiled database in `/usr/share/zoneinfo`, one TZif file per zone (RFC 8536),
+- **Linux and macOS** (decided, not built yet: only Windows is built) read the compiled database in `/usr/share/zoneinfo`, one TZif file per zone (RFC 8536),
   through `File` and parsed in Spite (`TimeZone`'s TZif reading, in `common/time_zone.spite`); `system()` follows `TZ`, then the
   `/etc/localtime` link.
 

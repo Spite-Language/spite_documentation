@@ -9,7 +9,9 @@ not parse as a number answers `null`.
 
 `common` holds what every operating system shares; `windows`, `linux` and `mac`
 reopen the classes each system does differently, and a program loads the one it is compiled for
-([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)).
+([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)). Only Windows is built:
+the executable is always Windows x64, and `linux` and `mac` only load `common`, so where a section below names what
+Linux or macOS use (`inotify`, `clock_gettime`, `getrandom`), that is decided, not built yet.
 
 **Use the library's class instead of making your own.** A class of your own named like one of the library's, a
 `Geometry.Vector3` or a `Color` in a folder, is a compile error naming the library's class to use, and what it lacks

@@ -5,6 +5,10 @@ reopening, a class compiled into a server bundle and a browser bundle at once, t
 library, markup as calls or as tags the compiler desugars, and the binary format the two bundles talk in. Compiling for one machine
 is on [foreign_libraries.md](foreign_libraries.md) and [programs.md](programs.md).
 
+**None of this page is built yet.** It records what is decided, so nobody re-decides it; today the compiler writes
+only a Windows x64 executable, `Build` has no `target` field (`--target` is an unknown flag), and there is no
+`Spite.Target`, `Html` or wasm output. Do not write code from this page.
+
 Every piece of it is chosen while compiling, so a bundle carries only what its target uses: the losing platform's
 code is folded away before tree shaking, the client bundle holds no server body, the wire has nothing to parse, and
 a web build ships no scheduler of its own. Hidden waiting is compile-time state machines

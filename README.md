@@ -138,7 +138,7 @@ with a link to the next.
     `Quaternion`, boxes, frustums and rays, column-major, Vulkan clip space, and what each operation costs.
 21. [foreign_libraries.md](foreign_libraries.md): `DynamicLibrary`, libraries written in C, C++, Rust, Zig and Go,
     bindings that speak Spite, and how each operating system's folder reopens the classes it changes.
-22. [targets.md](targets.md): other targets, the web, isomorphic classes and the wire format.
+22. [targets.md](targets.md): other targets, the web, isomorphic classes and the wire format (decided, not built yet).
 
 **Tooling**
 
