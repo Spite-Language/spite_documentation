@@ -561,7 +561,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   which can store a Zoo.Named there, but attribute 'pet' is a Cat`. Library functions, a generic class's functions,
   constructors and variadic parameters are compiled once, and a parameter the body assigns or copies into an untyped
   local (`var current = node`) keeps its declared type in every copy. A copy calling a function already copied on
-  the way to it with other types (a recursion handing on a new class each time) calls it as written, so copies end.
+  the way to it with bigger types (a recursion that wraps its argument in a list) calls it as written, so copies end.
 - No value or constraint is typed `Number`. Write number code as a generic class that declares the `type` its codegen
   value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum: Spite.Function<Measure, Measure> }`);
   every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,

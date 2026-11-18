@@ -362,8 +362,8 @@ The compiler copies the functions of the program's own classes; a function of th
 class's function, a constructor and a parameter given a variadic list are compiled once, as written. A parameter the
 body assigns, or copies into a local with no written type (`var current = node`), keeps its declared type in every
 copy, since the local may later hold any value of that type. A copy that calls a function already copied on the
-way to it, with other types (a recursion that hands on a different class each time), calls that function as
-written, so the copies always end; one with the same types calls the copy it is in.
+way to it with bigger types (a recursion that wraps its argument, `wrapped([value])`) calls that function as
+written, so the copies always end; with types no bigger it gets its copy as any call does.
 
 ## Every operator is a function
 
