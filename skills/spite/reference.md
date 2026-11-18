@@ -524,7 +524,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   an enum fits a `type` asking only `to_string`, a union fits when each class does. To admit only some classes write
   a `union`, not a `type`. A `T?` fits a `type` that asks only for
   `to_string()` and `to_debug()` (null answers both with `null`), an `Anything?` and a `T?` of a `type` included:
-  `console.print(attribute.value)` and, on an `Anything?`, a hole `"{attribute.value}"` show `null` when it holds none, while
+  `console.print(attribute.value)` and, on an `Anything?` or a `T?` of a `type` asking `to_string()`, a hole `"{attribute.value}"` show `null` when it holds none, while
   `attribute.value.to_string()` is narrowed first; any other `type` needs it narrowed or proven present
   first (`this value may be null (it is a Rock?), but a Singer is needed: ...`). A `type` with `?` takes any `T?`
   whose `T` fits, kept as it is (`var held: Component? = maybe_label()`, a `List<Component?>` item, a `render():
@@ -788,7 +788,9 @@ of the standard library or of a repository pinned to a commit is never rewritten
   an instance of its class, the only way to build one), `call.arguments["position"] = value`, `call.call()`; known
   while compiling it is the direct call. Known only at run time, `call()` halts on an argument missing, of another
   type, or not taken; `call.arguments["count"] = null` is a filled argument, taken by `count: Integer?` and halting
-  for `count: Integer`. `call.call()` answers the function's answer: its declared type when known while compiling,
+  for `count: Integer`. A parameter typed `Anything` or a `type` holds what the program writes into `call.arguments`,
+  numbers and enums included (`said: Shown` takes `3` and `'blue'`), and no other class: a class never passed is
+  never asked to fit how the function uses it. `call.call()` answers the function's answer: its declared type when known while compiling,
   an `Anything?` when known only at run time (`null` for a function that answers nothing), which alone of all answers
   may be dropped (`call.call()` on its own line).
   There is no `call_with`.

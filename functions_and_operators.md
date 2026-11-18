@@ -265,7 +265,8 @@ into its own parameter only.
 A `T?` fits a `type` unnarrowed only when null can answer everything the `type` asks, which is `to_string()` and
 `to_debug()`: both answer `null` for it. That holds for an `Anything?` and a `T?` of a `type` too, whatever classes
 reach it: `console.print(found.value)` and `console.debug(found.value)` show `null` when the attribute holds none,
-and so does a hole `"{found.value}"` on an `Anything?`, while `found.value.to_string()` needs it narrowed first. Any other `type` needs the value narrowed first, or proven present
+and so does a hole `"{found.value}"` on an `Anything?` or on a `T?` of a `type` that asks for `to_string()`
+(`var held: Shown? = null`, `"[{thing.held}]"` shows `[null]`), while `found.value.to_string()` needs it narrowed first. Any other `type` needs the value narrowed first, or proven present
 ([proofs.md](proofs.md#a-value-proven-present-is-a-t)): `var singer: Singer = maybe_rock` with a `Rock?` is "this value may be null (it is a
 Rock?), but a Singer is needed: narrow it first with 'if value { }', 'fallback value' or 'crash value'".
 
