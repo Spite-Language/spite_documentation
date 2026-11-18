@@ -30,8 +30,9 @@ error that writes `2_500` for you).
 An integer literal is an `Integer` and a decimal literal a `Float`. A whole number too big for an `Integer` is a
 compile error that asks for a wider type: declare the name `Long` (`var _total: Long = 3000000000`). **A number
 never silently wraps.** Arithmetic whose answer does not fit its type halts, unsigned exactly as signed
-([below](#arithmetic-that-does-not-fit-halts)), and a wider value put into a narrower name is `null` when it does
-not fit, so it is narrowed ([below](#a-number-that-may-not-fit-is-narrowed)). Where wrapping is the point,
+([below](#arithmetic-that-does-not-fit-halts)), and a wider value put into a narrower `T?` is `null` when it does
+not fit, so it is narrowed, while into a plain narrower name it is a compile error unless the compiler proves it
+fits ([below](#a-number-that-may-not-fit-is-narrowed)). Where wrapping is the point,
 as in a hash or a noise function, the code says so with a function named for it: `wrapping_sum`,
 `wrapping_subtract` and `wrapping_multiply` on every whole number keep the low bits of the answer:
 
@@ -342,8 +343,9 @@ program and in the standard library alike, while a literal that fits the receive
 program. Calling one on a `Float` or a `Double` is an error, since they are not whole numbers; cast to a
 whole number first. `bits_as_unsigned()` on a signed whole number and `bits_as_signed()` on an unsigned one keep
 the bits and read them with the other sign, so a signed `-1` is `4294967295` as an `UnsignedInteger`, where storing
-`-1` in an `UnsignedInteger` halts (a change of sign is checked like any narrowing; only an unsigned value stored in
-a wider signed type is never checked, since it always fits). A decimal's bits are read the same way:
+an `Integer` in an `UnsignedInteger` is a compile error unless the compiler proves it fits (a change of sign is a
+narrowing like any other: `var converted: UnsignedInteger? = value` is `null` for `-1`; only an unsigned value stored
+in a wider signed type needs nothing, since it always fits). A decimal's bits are read the same way:
 `Float.bits()` answers an `UnsignedInteger` and `Double.bits()` a `Long`, and `UnsignedInteger.bits_as_float()`,
 `Long.bits_as_double()` and `UnsignedLong.bits_as_double()` turn them back, with nothing converted. These are what
 hashes and binary formats use; each is written in place, touches no memory and allocates nothing.

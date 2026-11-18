@@ -304,7 +304,7 @@ What each one answers at its edges, on a `Float` or a `Double`:
 
 The sine, cosine and tangent take an angle in radians. On a whole number, `clamp(low, high)` also lets `high` win
 when `low` is above it, and `minimum(other)` and `maximum(other)` cast `other` to the receiver's type first, like any
-argument, so a `Byte`'s `minimum(300)` is a compile error and a value that does not fit halts. A call whose operands
+argument, so a `Byte`'s `minimum(300)` is a compile error, and so is an `Integer` the compiler cannot prove fits a `Byte`. A call whose operands
 are all constants, `(0.5).sine()` or `Float.Pi().cosine()`, is worked out while compiling, with the same answer the
 program would have computed.
 
