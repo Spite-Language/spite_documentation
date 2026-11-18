@@ -701,7 +701,29 @@ func doubled(amount: Integer): Long {
 ```
 
 Write `return amount * 2`. A local whose type differs from the function's (a narrower number, or a `T` in a
-function that answers `T?`) is a different conversion, and is left alone.
+function that answers `T?`) is a different conversion, and is left alone. So is a local that narrows a decimal
+into a whole number or a `Double` into a `Float`: that narrowing is written only on its own line and declared
+`T?` ([values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed)), so `return` could not
+carry it, and a plain `Integer` local there gets that rule's error instead:
+
+```gdscript title=returned_local_narrowing/returned_local_narrowing.spite entry error
+var console = Console()
+
+func ReturnedLocalNarrowing() {
+    var whole = rounded(2.6)
+    console.print(whole)
+}
+
+func rounded(scaled: Float): Integer {
+    var whole: Integer = scaled.round()
+    return whole
+}
+```
+```diagnostic
+this value is a Float, which may not fit in an Integer: write 'var converted: Integer? = value' on its own line
+```
+
+Write `var whole: Integer? = scaled.round()`, then `crash whole` (or another way to narrow it), then `return whole`.
 
 ---
 

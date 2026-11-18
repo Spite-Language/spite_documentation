@@ -154,7 +154,8 @@ func is_alive(): Boolean {
   only for handing it to something (`registry.record(this)`); `this.name` and `this.helper()` are errors.
 - One function per name, no overloading (`'Shop' declares 'price' twice`): an argument is cast to the
   parameter's type. The last parameter may be
-  `...values: List<Type>`, and the caller writes the values one by one (passing a whole list there is an error).
+  `...values: List<Type>`, and the caller writes the values one by one (passing a whole list there is an error;
+  `...words: String`, not typed as a `List`, is `'...words' receives the arguments as a list: write '...words: List<Type>'`).
 - A call is never passed straight into another call: compute it first into a named `var` and pass the name,
   `var token_text = source.slice(start, end)`. The error: `'text.slice(0, 1)' is called inside an argument of
   'console.print': compute it first into a named 'var' and pass the name`. The holes of a text are not
@@ -1163,8 +1164,10 @@ same name reopens it: `list.spite` adds a member template (`dictionary.spite` on
 A statement is one line: anything after it on the same line (after a `return` value, a call, or the `}` that
 closes an `if`, `while` or `switch`) is a parse error (`'attribute' is left over after the end of the statement`),
 never a second statement. `return` converts to the function's type, so a local declared only to be returned on
-the next line (`var whole: Integer = scaled.round()` then `return whole`) is an error: write
-`return scaled.round()`.
+the next line (`var twice: Long = amount * 2` then `return twice`) is an error: write
+`return amount * 2`. A decimal into a whole number (or a `Double` into a `Float`) is never that case: it is written
+on its own line into a `T?` (`var whole: Integer? = scaled.round()`, `crash whole`, `return whole`), and a plain
+`var whole: Integer = scaled.round()` is the narrowing error `this value is a Float, which may not fit in an Integer`.
 
 ## Bindings: a library from another language
 
