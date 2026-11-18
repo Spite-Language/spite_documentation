@@ -1106,7 +1106,9 @@ made and called in one loop costs what the function's body costs. A call that pa
 function that calls it is given its own copy of that function, evaluated knowing the closure, so the function given
 to `each`, `count` or any walk runs inside the walk with no call through a pointer. A function passed to a template
 by name (`names.each(say_hello)`) is never made into a function value at all. The function value still describes its
-arguments when asked. At most 64 such copies are made in a program, and the copy is kept only when knowing the
+arguments when asked. A copy that finds a call to copy again stops at a function it already copied on the way
+(a recursion), so the copies end; past 64 copies in a program, a size budget, a call calls the function as
+written. The copy is kept only when knowing the
 closure made a call direct or decided a test.
 
 ```spite

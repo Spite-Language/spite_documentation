@@ -560,7 +560,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   hold the member's own type: `'CatKeeper' does not fit type 'Keeper': this program assigns 'pet' through the type,
   which can store a Zoo.Named there, but attribute 'pet' is a Cat`. Library functions, a generic class's functions,
   constructors and variadic parameters are compiled once, and a parameter the body assigns or copies into an untyped
-  local (`var current = node`) keeps its declared type in every copy.
+  local (`var current = node`) keeps its declared type in every copy. A copy calling a function already copied on
+  the way to it with other types (a recursion handing on a new class each time) calls it as written, so copies end.
 - No value or constraint is typed `Number`. Write number code as a generic class that declares the `type` its codegen
   value needs, listing only what it uses (`generic $number_type: Measure` with `type Measure { sum: Spite.Function<Measure, Measure> }`);
   every number class (`Tiny` to `Double`, not `Boolean`) has the operators' functions, `sum` to `remainder`,
@@ -727,7 +728,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `.value` and `.owner`). Members are ordinary lists, so "for every attribute" is a walk:
   `Monster.attributes.each(describe)` with `func describe(attribute: Spite.AttributeDeclaration)`, unrolled while compiling into
   one call per attribute, each copy typed by its attribute (a function of another object handed a constant,
-  `helper.describe(attribute)`, is compiled once for it too). A member by name is `[]` and answers a `T?`
+  `helper.describe(attribute)`, is compiled once for it too, however deep the calls go). A member by name is `[]` and answers a `T?`
   (`Runner.functions["run_each"]`); a selection is a member template (`Runner.functions.filter_name_ends_with("_each")`).
   A name is selected, never built from text. A walk sees private `_` attributes and
   reads and writes them through the walked attribute; a serializer skips them, and attributes holding a singleton,
@@ -1068,7 +1069,8 @@ function a walk visits): `true` when the function can reach a wait. A system nev
 `Program` (itself or through its own class's functions), and in its own class's functions it calls, a statement
 `report.fetch()` or `systems[index].update()` (no arguments, answering nothing, on another object of the program)
 whose function can wait is started by the compiler as a state machine of its own and finishes in a later frame,
-eight per statement at most, all of them before the program ends. Write the IO plainly in the system's own class.
+at most eight unfinished per call site (one more waits where it is written, as the plain call does), all of them
+before the program ends. Write the IO plainly in the system's own class.
 `update.arguments[1].is_mutated` (with `var update = $system_type.functions["last_each"]` narrowed by `crash update`)
 is decided while compiling the same way: `true` when the function, or anything it calls, changes what its argument
 number 1 (from 0) is given or anything reached through it; an engine writes `crash not update.arguments[1].is_mutated`

@@ -603,8 +603,9 @@ with `func register_namespace(namespace: Spite.Namespace) { namespace.classes.ea
 In a copy, `part.has_function("name")` and `part.function_waits("name")` are decided for that class, so the branch
 that does not apply is never compiled and may call what the class lacks. A namespace the program has no folder for is
 an unknown name, like any other. Inside a copy, a call of a function with a constant argument (a walked attribute or function declaration
-included) is compiled once for that argument, up to eight calls deep, so a check split into helper functions decides as one written in a single
-function does; a ninth call deeper is left to the run, and a `crash` there halts when the program does. A walk over an
+included) is compiled once for that argument, however deep the calls go, so a check split into helper functions decides as one written in a single
+function does. The copies end because each is made once per function and constant, and a constant is only ever read
+from the program (a name, a number, a list of its classes), never built from another. A walk over an
 empty list calls nothing.
 
 ### Member templates

@@ -361,8 +361,9 @@ program assigns 'pet' through the type, which can store a Zoo.Named there, but a
 The compiler copies the functions of the program's own classes; a function of the standard library, a generic
 class's function, a constructor and a parameter given a variadic list are compiled once, as written. A parameter the
 body assigns, or copies into a local with no written type (`var current = node`), keeps its declared type in every
-copy, since the local may later hold any value of that type. A copy that would make copies more than eight calls
-deep calls the function as written.
+copy, since the local may later hold any value of that type. A copy that calls a function already copied on the
+way to it, with other types (a recursion that hands on a different class each time), calls that function as
+written, so the copies always end; one with the same types calls the copy it is in.
 
 ## Every operator is a function
 
