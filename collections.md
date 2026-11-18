@@ -1,7 +1,7 @@
 # Lists, dictionaries and member templates
 
 `List<T>` and `Dictionary<Key, Value>` are not built into the compiler. They are ordinary generic classes written in Spite
-(`library/list.spite` and `library/dictionary.spite`) over `Buffer`, the room everything else is built on. The compiler keeps only the syntax: `[1, 2, 3]`, `list[index]`, and `List<T>()`. Read
+(`common/list.spite` and `common/dictionary.spite`) over `Buffer`, the room everything else is built on. The compiler keeps only the syntax: `[1, 2, 3]`, `list[index]`, and `List<T>()`. Read
 those two files to see exactly what a list does; write your own container the same way
 ([memory.md](memory.md#memory-belongs-to-the-compiler)).
 
@@ -887,7 +887,7 @@ A chain that passes a function of a list or of a library class (`names.filter(is
 
 ## How the member templates are written
 
-The templates are ordinary Spite in `library/list.spite`, over the list's own buffer on the heap. Each one is a
+The templates are ordinary Spite in the standard library's `common/list.spite`, over the list's own buffer on the heap. Each one is a
 template ([metaprogramming.md](metaprogramming.md#member-templates)) whose parameter is
 `member: Spite.AttributeDeclaration`: it names a member of the *element*, because the body reads it on an item, and
 `item.attributes[member].value` reads it: the field itself, or a call to the zero-argument function. `filter_member` answers `filter_in_stock`,
@@ -897,8 +897,8 @@ template ([metaprogramming.md](metaprogramming.md#member-templates)) whose param
 func filter_member(member: Spite.AttributeDeclaration): List<$element_type> {
     var filtered = List<$element_type>()
     var index = 0
-    while index < item_count {
-        var item = values.read_value(items, index)
+    while index < _length {
+        var item = _read_value(index)
         if item.attributes[member].value {
             filtered.append(item)
         }
@@ -922,7 +922,7 @@ calls, as the program's own code would. A private member (`_name`) of the elemen
 ([classes_and_files.md](classes_and_files.md#private-names)), so a list whose element class has `_join()` has no `each__join`
 in any build.
 
-A `Dictionary`'s templates are written the same way, in `library/dictionary.spite`: their parameter is
+A `Dictionary`'s templates are written the same way, in `common/dictionary.spite`: their parameter is
 `member: Spite.AttributeDeclaration`, read on a `$value_type`, and each walks a copy of the values, `var listed = values()`,
 so `inventory.sum_price()` is `inventory.values().sum_price()` and a member that changes the dictionary while the
 template runs changes nothing the walk sees. There is no `remove_where_` among them, since removing from that copy

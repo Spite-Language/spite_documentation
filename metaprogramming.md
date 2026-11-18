@@ -610,7 +610,7 @@ empty list calls nothing.
 ### Member templates
 
 The standard library's list functions `filter_<member>()`, `sum_<member>()`, `count_<member>()` and the rest are
-templates over the element's members ([collections.md](collections.md)), written in Spite in `library/list.spite`
+templates over the element's members ([collections.md](collections.md)), written in Spite in `common/list.spite`
 with a parameter `member: Spite.AttributeDeclaration`, so `item.attributes[member].value` reads a member of an element (the body
 reads it on a `$element_type`, which is how it says the template ranges over that class's attributes). A generic class writes its own the same way:
 
@@ -732,7 +732,7 @@ Hero and 7
 One line declares one value, and the lines sit at the top of the file, so skimming it shows what a class
 accepts. Every hole is filled at every call: there are no defaults, and the wrong number of values is an error
 that lists the class's values in order (the second program below). A generic class needs no constructor
-(`library/list.spite` is `generic $element_type` and its functions), and when the constructor's arguments say
+(`common/list.spite` is `generic $element_type` and its functions), and when the constructor's arguments say
 every value, the `<...>` may be left out: `Pair("Hero", 7)` is a `Pair<String, Integer>`. `Pair` declares `var left: $left_type` with no default, since its constructor gives it its value
 ([classes_and_files.md](classes_and_files.md#an-attribute-the-constructor-fills-has-no-default)), whatever type is
 given for `$left_type`; `var left: $left_type = $left_type()` is a default only when every type given is made with

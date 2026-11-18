@@ -1,7 +1,7 @@
 # Reflection
 
 **Every class is an instance of `Spite.Class`.** A class is not a special thing beside the values of a program: it
-is an ordinary object, made from an ordinary class in `library/spite/`, and writing its name reads that object.
+is an ordinary object, made from an ordinary class in `common/spite/`, and writing its name reads that object.
 Every namespace is an instance of `Spite.Namespace`, every function a `Spite.FunctionDeclaration` (a `Spite.Function` once bound to an object), and every
 attribute and argument an instance of `Spite.Attribute` and `Spite.Argument`. Reflection is not a second language
 beside Spite: it is Spite describing itself, with the same lists, the same member templates and the same `[]` the
@@ -490,7 +490,7 @@ too after `fallback described.namespace.parent` ([failure.md](failure.md#narrowi
 
 ## The `Spite` classes
 
-Each class below is ordinary Spite in `library/spite/`. Every member is a get-only attribute named for what it
+Each class below is ordinary Spite in `common/spite/`. Every member is a get-only attribute named for what it
 answers: a question is `is_...` and answers `Boolean`, a collection is a `List` named in the plural. A question
 that would take an argument is a collection indexed or filtered instead, so there is one way to ask it.
 
@@ -1332,7 +1332,7 @@ object.
 
 ## Reflection is read-only
 
-Every member describing the program is a getter with no setter: `library/spite/class.spite` keeps its data in
+Every member describing the program is a getter with no setter: `common/spite/class.spite` keeps its data in
 private fields (`_name`, `_namespace`, `_attributes`, ...) and answers `get_name()`, `get_namespace()` and the rest,
 so `.name` reads through the ordinary getter and writing it is an error. A name starting with `_` is used only
 inside its own class, so the private fields cannot be written from outside either. The one thing reflection

@@ -3,7 +3,7 @@
 The standard library has the maths a game engine is built on: `Vector2`, `Vector3` and `Vector4`, `Matrix3` and
 `Matrix4`, and `Quaternion`, with the boxes, planes, frustums and rays that culling and picking need,
 `Color` with the web's colour formats, and the curves, easings, noise and half-precision floats that animation and
-rendering need. They are plain classes in `library/` holding numbers and
+rendering need. They are plain classes in `common/` holding numbers and
 nothing else, so a binary writer writes each as just its numbers (a `BinaryWriter<Vector3<Float>>` makes 12 bytes, a
 `Matrix4<Float>` 64), the vectors, matrices and quaternions are fixed size, which a [list](collections.md#one-list) can lay out
 flat, and a program that uses none of them carries none of their code. They are built on the number classes' own

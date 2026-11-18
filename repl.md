@@ -105,6 +105,7 @@ spite> func healthy(): Integer {
 ...>     var index = 0
 ...>     while index < monsters.count() {
 ...>         var monster = monsters[index]
+...>         crash monster
 ...>         total = total + monster.health
 ...>         index = index + 1
 ...>     }

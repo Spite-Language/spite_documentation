@@ -1114,7 +1114,7 @@ with `var read: Date? = text`, which answers `null`, as a leap second and a brac
 do ([time.md](https://github.com/Spite-Language/spite_documentation/blob/master/time.md)).
 `DynamicLibrary("ucrtbase.dll", 'identity', "")` calls a native library's functions as members
 (`c_runtime.strlen(text)`, `_as_long`/`_as_double`/`_as_text` for wider results; one instance per file, naming rule and header, a singleton like any other; a `void` function named by the header is called on a line of its own, and reading its answer is a compile error); the standard library's
-`library/windows/`, `linux/` and `mac/` folders reopen the classes each system changes (docs/foreign_libraries.md).
+`windows/`, `linux/` and `mac/` folders reopen the classes each system changes (docs/foreign_libraries.md).
 C calls back into Spite without any C written: a function value given as a foreign call's argument is a C function
 pointer for that call only (`c_runtime.qsort(values, count, 4, ascending)`); a function C keeps or calls from its
 own thread is handed over as `var handler = ForeignCallback(owner.function, 'context_last')` (or `'context_first'`),
@@ -1154,7 +1154,7 @@ for 16-bit floats. A number's raw bits are `Float.bits(): UnsignedInteger` and `
 other signedness is `bits_as_unsigned()` on a signed number and `bits_as_signed()` on an unsigned one (storing a
 signed number in an unsigned type is a narrowing: refused unless proven, `null` in a `T?` for a negative one); they cost nothing (a C union), so use them rather than writing a value
 into memory to read its bytes.
-Every class here, the numbers and `List` included, is a Spite file in `library/`, and a program's own file of the
+Every class here, the numbers and `List` included, is a Spite file in `common/`, and a program's own file of the
 same name reopens it: `list.spite` adds a member template (`dictionary.spite` one over a dictionary's values,
 `member: Spite.AttributeDeclaration`, read on a `$value_type`), `integer.spite` a function on every `Integer`.
 

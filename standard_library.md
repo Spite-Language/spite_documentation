@@ -167,7 +167,6 @@ var console = Console()
 var _e_acute = 233
 
 func RuneMembers() {
-    load "../spite_standard_library/windows"
     var word = "café"
     var index = 0
     while index < word.length() {

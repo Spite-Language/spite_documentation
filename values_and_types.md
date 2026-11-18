@@ -256,10 +256,10 @@ needed`.
 
 ### Numbers are classes
 
-`Integer`, `Long`, `Float`, `Double`, `Boolean` and the rest are classes in `library/` (`library/integer.spite`,
-`library/double.spite`, ...), the way `String` is. Their functions are called on a value like any class's,
+`Integer`, `Long`, `Float`, `Double`, `Boolean` and the rest are classes in `common/` (`common/integer.spite`,
+`common/double.spite`, ...), the way `String` is. Their functions are called on a value like any class's,
 and inside one of them `this` is the number itself. Turning a number into text is `to_string()`, written in Spite in
-`library/long.spite` and `library/double.spite`, and it is what a text hole (`"count {count}"`) calls. A program reopens a number
+`common/long.spite` and `common/double.spite`, and it is what a text hole (`"count {count}"`) calls. A program reopens a number
 class the way it reopens any class ([packages.md](packages.md#monkey-patching-mods)), with a file named after it.
 How wide a number is comes from its class too: each one reaches its own value through `set_this` and `get_this`, as
 any class reaches an attribute through `set_x` and `get_x`, and `set_this` checks the range it holds

@@ -367,7 +367,7 @@ func Game() {
     preload "assets"
     var level = assets.file("levels/first.txt")
     var text = level.read_as_string()
-    fallback text
+    crash text
     console.print(text)
 }
 ```

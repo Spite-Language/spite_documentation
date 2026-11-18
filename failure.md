@@ -1185,7 +1185,7 @@ line, while the crash that ends the run prints every value at its own site. A `f
 is a site per part, so its line names the part that failed; the map gives each part's column, and each value a
 report names the line and column it was read at.
 It holds the fallbacks of the program and of every package it `load`s, never those of the standard library: a
-`fallback` in `library/` is how the library answers routine questions (a key that is not there, text that does not
+`fallback` in the standard library is how the library answers routine questions (a key that is not there, text that does not
 match, a read past the end), and those would push the program's own entries out of the ring. The compiler leaves
 the record out of a library `fallback` altogether, so it costs what an `if` costs. A crash inside the library still
 reports its own site.
@@ -1293,7 +1293,7 @@ system's code for it.
 - **A `T?` of an object is just the pointer**; a `T?` of a number or a `Boolean` is the value with a flag beside
   it, passed by value, never allocated.
 - **A passing `fallback` or `crash` is one branch.** A `fallback` taken in the program or a loaded package also
-  stores one pointer into the 32-entry ring and counts it; one in `library/` does not.
+  stores one pointer into the 32-entry ring and counts it; one in the standard library does not.
 - **A crash's report is written only when it fires**: each site's place and condition are fixed text in the
   program, and the operand values are turned into text on the way out. A `crash` whose condition has a call inside
   a comparison, an `and` or an `or` keeps that call's answer and a flag in locals as it runs, so the report can name

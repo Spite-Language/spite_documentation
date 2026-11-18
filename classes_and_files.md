@@ -199,7 +199,6 @@ func name(): String {
 var console = Console()
 
 func NamedThroughItsClass() {
-    load "../spite_standard_library/windows"
     var shelter = Shelter()
     var cat = Cat()
     var pet: Shelter.Pet = cat

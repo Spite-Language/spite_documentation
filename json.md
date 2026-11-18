@@ -2,7 +2,7 @@
 
 Four classes turn any value into something to send or store, and back: `JsonWriter` and `JsonReader` for JSON
 text, `BinaryWriter` and `BinaryReader` for compact bytes. None of them is a serialiser written per type. Each is
-one generic class in `library/`, written with Spite's own metaprogramming, and the compiler makes the functions a
+one generic class in `common/`, written with Spite's own metaprogramming, and the compiler makes the functions a
 type needs only when a program uses one with it. A program that never names them carries none of it.
 
 A JSON serializer is made once, with no arguments, and used as often as needed: `JsonWriter<Order>()`, then
