@@ -170,7 +170,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
   children) are plain references: the compiler finds the back reference and frees the cycle. Keep the back
   attribute nullable (`var parent: Parent? = null`), set where the child is made or stored; it may hold a union or a
-  `type` when every class it may hold keeps the child the same way.
+  `type` when every class it may hold keeps the child the same way. Two objects made side by side and linked to
+  each other directly are freed when neither leaves that function; when one leaves it, or one `partner` attribute
+  points both ways, the pair leaks until one side is cleared.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
 - An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
   with one; nothing may read it before the constructor gives it (no earlier line, called function, `this` or

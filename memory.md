@@ -713,10 +713,11 @@ owner's list (or in one of its attributes, or in a dictionary) is the link, and 
 together do both, however many calls deep. The owner's list may hold a union or a `type` the child belongs to
 (`List<Entry>` with `union Entry { File Folder }`). A function whose name two classes declare is followed into the
 one of the receiver's class, when that class is known: `this`, a parameter, an object made in the function, or an
-attribute of one of these. A singleton or a generic class is never part of that link. Some cycles keep their counts
-and leak, since nothing proves which side outlives the other: two objects made side by side and then linked to each
-other directly (`question.answer = answer` beside `answer.question = question`), one attribute pointing both ways
-(`partner`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
+attribute of one of these. A singleton or a generic class is never part of that link. Two objects made side by side
+and then linked to each other directly (`question.answer = answer` beside `answer.question = question`) are freed
+when neither leaves the function that made them: the one made later points back. Some cycles keep their counts and
+leak, since nothing proves which side outlives the other: such a pair where one of them leaves its function (`return
+answer`), one attribute pointing both ways (`partner`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
 (`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
 each class of the union, or for a `type` each class of the program that declares all of its members, so one class
 that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`).
@@ -731,13 +732,12 @@ leaked cycle visible instead of an unexplained count. Every program on these pag
 balance. It also fills every byte it hands out that nobody has written yet with the same pattern, so a program that
 reads memory it never wrote fails the same way on every run and in every environment, instead of reading whatever
 the heap held. The table exists only in a `--debug-memory` build, so the other builds carry none of it. The summary looks like this for
-a cycle of two objects that the code does not link as a back reference:
+two people linked to each other through one `partner` attribute, a cycle the compiler does not read as a back
+reference:
 
 ```
-spite: --debug-memory: 4 allocation(s) leaked
-  String: 2 leaked object(s)
-  Question: 1 leaked object(s)
-  Answer: 1 leaked object(s)
+spite: --debug-memory: 2 allocation(s) leaked
+  Person: 2 leaked object(s)
 ```
 
 The same program prints the same summary on every run.
