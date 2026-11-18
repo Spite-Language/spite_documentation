@@ -13,8 +13,9 @@ gh repo clone Spite-Language/spite_standard_library
 bash spite_compiler/scripts/bootstrap.sh --install
 ```
 
-The script downloads the last compiler the source built itself, builds the source with it until two builds write
-the same bytes, and leaves that compiler in `spite_compiler/.spite/spite.exe`; put that folder on your `PATH`.
+The script builds the source with a seed compiler until two builds write the same bytes, and leaves that compiler
+in `spite_compiler/.spite/spite.exe`; put that folder on your `PATH`. The latest compiler is what builds the next
+one, so an old seed may no longer build today's source: a compiler built from a recent commit is the reliable start.
 [ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md) says how it is built.
 Only Windows x64 is written for now.
 
@@ -34,10 +35,9 @@ cd spite_compiler
 .spite/spite.exe --build --executable-path=.spite/spite_next.exe
 ```
 
-It runs in the compiler's folder and reads the standard library cloned beside it. The next compiler is kept when it rebuilds itself to the same bytes. A build
-from nothing, when no `spite.exe` exists yet, is the chain
-[ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md#how-the-compiler-is-built)
-describes.
+It runs in the compiler's folder and reads the standard library cloned beside it. The next compiler is kept when it rebuilds itself to the same bytes. Building
+from nothing, through a chain of older compilers, is not kept working: the latest compiler builds the next
+([ARCHITECTURE.md](https://github.com/Spite-Language/spite_compiler/blob/master/ARCHITECTURE.md#how-the-compiler-is-built)).
 
 ## Run a program
 
@@ -51,8 +51,7 @@ spite --low-ir         # the same for the low representation
 VOLUME=3 spite         # build it and run it with its setting volume
 ```
 
-The executable is `hello_world/.spite/build/hello_world.exe`, and its exit code is what the entry constructor
-answers. `spite` runs it attached to your terminal: what it prints appears as it prints it, what you
+The executable is `hello_world/.spite/build/hello_world.exe`, and its exit code is `0` once the entry constructor returns, or the code a `Program().exit(code)` gives. `spite` runs it attached to your terminal: what it prints appears as it prints it, what you
 type is its standard input, and the compiler exits with the program's exit code. The program is given no flags:
 it reads the settings its `Environment` declares ([programs.md](programs.md)) from the environment, and its
 executable takes them as flags, `.spite/build/hello_world.exe --volume=3`. Nothing is given by position. [compiler.md](compiler.md) lists every option. The programs that every compiler of Spite must pass, one

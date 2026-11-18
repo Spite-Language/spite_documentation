@@ -171,7 +171,7 @@ the compiler writes, and can be deleted whenever you like; no `.spite/` folder i
 | the high representation | none: `high_ir` is on or off | not written; `--high-ir` writes `<program>/.spite/build/<name>.high_ir.txt` |
 | the low representation | none: `low_ir` is on or off | not written; `--low-ir` writes `<program>/.spite/build/<name>.low_ir.txt` |
 
-The executable's exit code is what the entry constructor answers. A path moves the executable:
+The executable's exit code is `0` once the entry constructor returns, or the code a `Program().exit(code)` gives. A path moves the executable:
 
 ```bash
 spite --build --executable-path=build/game.exe

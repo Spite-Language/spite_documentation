@@ -328,8 +328,8 @@ game/game.spite:4: error: 'load "../other/spite_standard_library/windows"' loads
 
 `load` stays for the program's own folders and its packages ([packages.md](packages.md#load-is-a-bundle-boundary)),
 and it may sit under an `if` on a `Build` field. The program's own folder needs no `load`: it is the root the entry
-file sits in. The entry class is constructed when the executable starts, and its exit code is what the constructor
-answers.
+file sits in. The entry class is constructed when the executable starts, and its exit code is `0`
+once the constructor returns, or the code a `Program().exit(code)` gives.
 
 ```gdscript title=loaded_program/loaded_program.spite entry
 var console = Console()

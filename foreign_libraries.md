@@ -301,27 +301,30 @@ trampoline, no class, no atomic counts.
 
 There is no platform layer. The standard library's `common` folder holds what every system shares, and its `windows`,
 `linux` and `mac` folders hold only what differs: each reopens the classes it changes, with a `DynamicLibrary` of its
-own naming the system's real file. The Windows side of `Program` is all of this:
+own naming the system's real file. The Windows side of `Program` adds what only Windows answers, such as the
+working directory:
 
 ```gdscript
-var library = DynamicLibrary("ucrtbase.dll", 'identity', "")
 var kernel = DynamicLibrary("kernel32.dll", 'identity', "")
 
-func sleep(milliseconds: Integer) {
-    kernel.Sleep(milliseconds)
-}
-
-func exit_process(code: Integer) {
-    library.exit(code)
-}
-
-func environment_address(name: String): Long {
-    return library.getenv_as_long(name)
+func working_directory(): String? {
+    var size = 1024
+    var room = Buffer(size * 2)
+    var length = kernel.GetCurrentDirectoryW(size, room)
+    while length >= size {
+        size = length
+        room = Buffer(size * 2)
+        length = kernel.GetCurrentDirectoryW(size, room)
+    }
+    fallback length > 0
+    room.take_written(length * 2)
+    return room._read_wide_string_at(0, length)
 }
 ```
 
-and the shared `Program` calls `exit_process` and `environment_address` without declaring them, because every
-system's folder defines them with the same signature. The compiler reads exactly one of these folders, the one for the
+while `common`'s `Program` keeps what every system calls the same way (`exit` through the C runtime). Today only the
+Windows folder holds code: the executable is always Windows x64, and `linux` and `mac` only load `common`.
+The compiler reads exactly one of these folders, the one for the
 system a program is compiled for, and it loads `common` itself ([programs.md](programs.md#the-standard-library-needs-no-load)), so their functions replace
 or add members by the ordinary reopening rule ([packages.md](packages.md#monkey-patching-mods)).
 `--final-classes` prints each class as it came out, its system's functions included.
