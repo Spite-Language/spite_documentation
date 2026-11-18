@@ -244,6 +244,11 @@ line is a change it made: two fixes in one statement are both made. It fixes:
   the namespace's entry class, see Values);
 - `Game.Job` written outside the namespace `Game` for an enum of its entry class `Game.Game`
   (becomes `Game.Game.Job`);
+- a class of the file's own namespace written through it, anywhere a name is written (a construction, a type, a
+  generic argument, a member read, a tag): inside `sidebar/`, `Sidebar.Picker()` becomes `Picker()`,
+  `Sidebar.Picker.Mode` becomes `Picker.Mode` and `<Sidebar.ClassPicker/>` becomes `<ClassPicker/>`; the path stays
+  when the class declares that plain name itself, for a standard-library class (`Spite.Function`) and for a class of
+  an enclosing namespace;
 - a local or parameter name with one right spelling (camelCase, a doubled `_`, an abbreviation with one expansion, a
   read `_name`), and a keyword one letter off at the start of a line (`retrun`);
 - a local or attribute nothing reads whose value and every write do nothing, and statements after a `return`;

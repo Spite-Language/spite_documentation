@@ -96,6 +96,25 @@ mine
   program's `type Buildable`, are one type when their members are the same, so a `List<Buildable>` of one goes where
   the other's is wanted.
 
+## A class of its own namespace is named plainly
+
+Inside a namespace, its own classes are written without it: `sidebar/editor.spite` makes `Picker()` for
+`sidebar/picker.spite`, never `Sidebar.Picker()`. A path that spells the namespace the class is in is rewritten to
+the plain name with a `fixed:` line, wherever it is written: a construction, a type, a generic argument
+(`List<Picker>`), a union member, a member read (`Sidebar.Picker.Mode` becomes `Picker.Mode`) and a tag
+(`<Sidebar.ClassPicker/>` becomes `<ClassPicker/>`, [markup.md](markup.md#what-a-tag-becomes)). The whole path of
+the namespace goes the same way: `Game.Sidebar.Picker` inside `game/sidebar/` is `Picker`, and
+`Sidebar.Parts.Badge` is `Parts.Badge`.
+
+```
+sidebar/editor.spite:2: fixed: 'Sidebar.Picker' is written inside the namespace 'Sidebar', where 'Picker' already names it; wrote 'Picker' (in Editor)
+```
+
+The path stays where the plain name would mean something else: a name the class declares itself (an `enum`, a
+`union`, a `type`, an attribute or a function, a preset `Picker()` included). A class of the standard library keeps
+its namespace (`Spite.Function`), and a class of an enclosing namespace is left as written (`Game.Picker` inside
+`game/sidebar/`).
+
 ## Monkey patching (mods)
 
 Every loaded root merges into the same namespaces. A second root with the same folder structure and file name

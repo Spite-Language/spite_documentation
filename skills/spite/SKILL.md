@@ -162,7 +162,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   with no arguments, each attribute an assignment, and the children one assignment of a list, `view.children =
   [text, badge]` (each nested tag or `{value}` one entry, typed by the `children` attribute, through `set_children`
   when declared; a whole list is `children={list}`); a lowercase tag calls `render_<tag>` with its attributes as the
-  parameters, by name (`<weapon grade={1}/>` is `render_weapon(1)`), and takes no children. See the markup section of [reference.md](reference.md).
+  parameters, by name (`<weapon grade={1}/>` is `render_weapon(1)`), and takes no children. A tag names a class as
+  code does: `<ClassPicker/>` inside `sidebar/`, never `<Sidebar.ClassPicker/>` (rewritten with a `fixed:` line). See the markup section of [reference.md](reference.md).
 - A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
   blank lines: name the part and call it.
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
@@ -235,6 +236,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Name another class's union or `type` through its class, never bare and never by declaring a copy: `Sibling.Type` in
   the same namespace, `Namespace.Class.Type` from elsewhere (`func shown(component: Framework.Component)`). It compiles
   exactly as a copy declared in your own class would, so a shared `type` serves where `Anything` was a stand-in.
+- A class of the file's own namespace is written plain, never through that namespace: inside `sidebar/`,
+  `Picker()`, `List<Picker>`, `Picker.Mode`, `<ClassPicker/>`. `Sidebar.Picker` there is rewritten to `Picker` with a
+  `fixed:` line, unless the class itself declares a `Picker` (then the path is what tells them apart).
 - The compiler fixes what has one fix, and prints `fixed:` for each: declarations out of order, a local or parameter
   with one right spelling, a file or folder of the program with one right spelling (renamed on the disk with every
   `load` naming it: `ToolHelper.spite` becomes `tool_helper.spite`), a keyword one letter off, a local or attribute that does nothing and is never read, a
