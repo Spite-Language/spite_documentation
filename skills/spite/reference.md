@@ -888,8 +888,10 @@ spite_compiler#589). `a.is_same_instance(b)` asks for the very
   `.namespaces`), `.functions` (empty for the entry class, which is never made twice), and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
   `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`; narrowed by `if found.value.class == Integer`, it is that number, and its `to_string()` answers the number's own; `attribute.value = given`,
-  which is `set_value(given)`, writes the owner's field even when the object is only an `Anything`, cast as an assignment
-  casts (a class with its own `to_string()` and an enum into a `String` field too); a class reaching `given` that no attribute the
+  which is `set_value(given)`, writes the owner's field even when the object is only an `Anything`, by the assignment
+  rules it desugars to (a class with its own `to_string()` and an enum into a `String` field too; a decimal into a
+  whole-number field is judged as `thing.count = 2.5`, though today's writer still truncates or halts there: decided,
+  not built yet, spite_compiler#595); a class reaching `given` that no attribute the
   write can reach takes (the one `.attributes["name"]` names, also through a local `var attributes = held.attributes`,
   `[declaration.name]`, or a list written in place, `[held.attributes["a"], held.attributes["b"]]`, read only by `[ ]`;
   else every attribute listed at run time) is a compile

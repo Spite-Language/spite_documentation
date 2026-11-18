@@ -1143,9 +1143,13 @@ Integer
 
 Such an attribute is written as well as read: `attribute.value = given` is `attribute.set_value(given)`, which writes
 the owner's field, so a program can copy every attribute of one object onto another it only holds as an `Anything`.
-The value is cast to the attribute's class the way an assignment casts it (an `Integer` into a `Float` attribute, a
-`Float` into an `Integer` one, and into a `String` attribute any class with its own `to_string()` and an enum, by its name), a function value
-goes back into a function attribute of the same type, and `null` into a nullable one. Counts and back references are
+It is the assignment it desugars to, with no rule of its own: the value meets the attribute's class exactly as
+in `owner.field = given` (an `Integer` into a `Float` attribute, into a `String` attribute any class with its own
+`to_string()` and an enum, by its name, a function value into a function attribute of the same type, `null` into a
+nullable one), and a decimal into a whole-number attribute is judged as `thing.count = 2.5` is
+([values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed)). Today's generated writer still
+truncates such a decimal or halts on it: decided, not built yet
+([spite_compiler#595](https://github.com/Spite-Language/spite_compiler/issues/595)). Counts and back references are
 kept as an assignment keeps them, and a private attribute is neither listed nor written, as it is not read.
 
 The compiler decides the cast while compiling. It knows the classes that reach `given` (an `Anything` holds only the
