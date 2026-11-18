@@ -137,12 +137,17 @@ A number put into a narrower one goes through that class's cast, which is `null`
 (D1895). Into a `T?` that `null` is the answer: `var small: Tiny? = count` is `null` when `count` is 300, and so is
 `var positive: Byte? = -1`. Into a plain number the compiler must see that it fits, from the ranges it proves
 ([proofs.md](proofs.md#a-range-proves-arithmetic-fits)): a written number, an attribute nothing writes, a local
-bounded by a condition (`if count <= largest { var small: Tiny = count }`). Otherwise it is a compile error, in an
-assignment, an argument or a `return` alike, so nothing halts at run time and nothing narrows silently:
+bounded by a condition (`if count >= smallest and count <= largest { var small: Tiny = count }`), a `T?` local
+included where it is narrowed (`fallback held and held <= largest`, then `return held`). Otherwise it is a compile
+error, in an assignment, an argument or a `return` alike, so nothing halts at run time and nothing narrows silently:
 
 ```
-this value is an Integer, which may not fit in a Tiny: write 'var converted: Tiny? = value' on its own line, which is null when it does not fit, and narrow that, ...
+this value is an Integer, which may not fit in a Tiny: write 'var converted: Tiny? = value' on its own line, which is null when it does not fit, and narrow that, or bound the value first with a condition ('if value >= smallest and value <= largest { }')
 ```
+
+The condition the error names is the one that proves this narrowing: both sides for an `Integer` into a `Tiny`, only
+`value <= largest` for an `UnsignedInteger` into an `Integer`, only `value >= smallest` for an `Integer` into an
+`UnsignedInteger`.
 
 A whole number into a decimal just works everywhere, even if a very large value rounds (D1899): `real * count`, an
 `Integer` passed for a `Float`, `return count` from a function answering a `Float`. What loses information is written
@@ -166,6 +171,12 @@ func NarrowingACast() {
 ```output
 3 null
 ```
+
+A decimal bounded on both sides by a condition that holds needs no `T?`: inside `if scaled <= 1000.0 and scaled >=
+-1000.0 { }`, `var whole: Integer = scaled` compiles, and so does `var single: Float = wide` for a bounded `Double`
+([proofs.md](proofs.md#a-range-proves-a-decimal-fits)). The bound has to come from a comparison that holds: every
+comparison with `nan` is false, so past `if scaled > 1000.0 or scaled < -1000.0 { return 0 }` a `nan` still arrives,
+and that form, which bounds a whole number, leaves a decimal unproven.
 
 `take(real)` with an `Integer` parameter and `return real` from a function answering an `Integer` are refused,
 telling you to write `var converted: Integer? = value` on the line above; in arithmetic the wider operand goes first

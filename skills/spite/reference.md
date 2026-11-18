@@ -1184,7 +1184,9 @@ never a second statement. `return` converts to the function's type, so a local d
 the next line (`var twice: Long = amount * 2` then `return twice`) is an error: write
 `return amount * 2`. A decimal into a whole number (or a `Double` into a `Float`) is never that case: it is written
 on its own line into a `T?` (`var whole: Integer? = scaled.round()`, `crash whole`, `return whole`), and a plain
-`var whole: Integer = scaled.round()` is the narrowing error `this value is a Float, which may not fit in an Integer`.
+`var whole: Integer = scaled.round()` is the narrowing error `this value is a Float, which may not fit in an Integer`,
+unless the value is a local a holding condition bounds on both sides (`var rounded = scaled.round()`, then inside
+`if rounded >= smallest and rounded <= largest { }` the plain `var whole: Integer = rounded` compiles).
 
 ## Bindings: a library from another language
 

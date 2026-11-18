@@ -335,7 +335,9 @@ leaves `size` at most `limit`); a total assigned once per pass holds at most as 
   total of `Integer` terms over a list carries no check. An attribute nothing writes outside its default, when that
   default is a whole-number literal, has that number's range (`var _hundred = 100` bounds as `100` does), except in
   a `--repl`, `--repl-port`, `--hot-reload` or `--development` build; any other attribute, a list item or a call's
-  answer has its type's range.
+  answer has its type's range. A local declared `T?` (`var held = bytes.read_unsigned_integer_big_endian_at(at)`)
+  is bounded like a plain one where it is narrowed: after `fallback held and held <= largest`, or
+  `if not held or held > largest { return 0 }`, `return held` into an `Integer` is proven.
 - **Buys**: an operation the ranges prove carries no overflow check.
 - **Falls back**: the check stays. See
   [a range proves arithmetic fits](#a-range-proves-arithmetic-fits).
@@ -352,6 +354,21 @@ func Ranged(): Long {
     return sum
 }
 ```
+
+### A range proves a decimal fits
+
+- **Proves**: a `Float` or `Double` fits the whole number, or the `Float`, it is put into.
+- **Rule**: a decimal local is bounded only by a comparison that holds as written: inside `if scaled <= largest and
+  scaled >= smallest { }`, past `fallback scaled >= smallest and scaled <= largest`, inside a `while` on such a
+  condition. Every comparison with `nan` is false, so one that holds proves the value is not `nan`, and a bound on
+  both sides proves it is not infinite either. One that does not hold proves nothing: past `if scaled > largest or
+  scaled < smallest { return 0 }` a `nan` still arrives, so that form, which bounds a whole number, does not bound a
+  decimal. A bound is a written decimal, an attribute nothing writes holding one, or a whole number the ranges know.
+- **Buys**: `var whole: Integer = scaled` and `var single: Float = wide` compile where the value is bounded, with no
+  test at run time; the line is still its own (a decimal into a whole number drops the fraction toward zero). Into a
+  `T?` it is present with no test.
+- **Falls back**: the narrowing error, whose advice names a condition on both sides: `('if value >= smallest and
+  value <= largest { }')`. Decimal arithmetic keeps no range.
 
 ### A wider operand is written first
 
