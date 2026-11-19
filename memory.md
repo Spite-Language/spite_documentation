@@ -717,15 +717,16 @@ program links in a way the compiler cannot read keeps its counts and shows up th
 clear the `T?` field that closes the loop when you are done with it. The compiler picks the back reference of a cycle
 from how the code links its objects: one function that sets `child.parent = owner` and stores the child in the
 owner's list (or in one of its attributes, or in a dictionary) is the link, and so is a pair of functions that
-together do both, however many calls deep. The owner's list may hold a union or a `type` the child belongs to
+together do both, however many calls deep and through however many attributes
+(`box.inner.deeper.deepest.first.beta = second` in a called function). The owner's list may hold a union or a `type` the child belongs to
 (`List<Entry>` with `union Entry { File Folder }`). A function whose name two classes declare is followed into the
 one of the receiver's class, when that class is known: `this`, a parameter, an object made in the function, or an
 attribute of one of these. A singleton or a generic class is never part of that link. Two objects made side by side
 and then linked to each other directly (`question.answer = answer` beside `answer.question = question`) are freed
 when neither leaves the function that made them: the one made later points back. Some cycles keep their counts and
 leak, since nothing proves which side outlives the other: such a pair where one of them leaves its function (`return
-answer`), one attribute pointing both ways (`partner`), a link a called function makes through more than three
-attributes in a row (`box.inner.deeper.deepest.first.beta = second`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
+answer`), one attribute pointing both ways (`partner`), a pair one of whose attributes a function that calls itself
+stores one attribute deeper on each call (`pair_down(link.next, second)`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
 (`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
 each class of the union, or for a `type` each class of the program that declares all of its members, so one class
 that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`).
