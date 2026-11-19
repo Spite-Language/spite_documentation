@@ -123,8 +123,12 @@ See [Nothing fails silently](failure.md#nothing-fails-silently).
 - **Rule**: a narrowed attribute read is refused when a call between the check and the read may assign that
   attribute, followed through everything the call reaches. A constructor's writes to its own object do not count; a
   wait writes nothing in a program in which the compiler starts no waiting work, and anything in one where it does; a call
-  through a function value reaches every function taken as a value with its signature, wherever the program takes it
-  (every function value only when no function is taken with that signature); a call into C reaches the
+  through a function value reaches only the functions that can flow into what it calls: the local, parameter,
+  attribute, list or generic class (an observer's `List<Spite.Function<V, Nothing>>`) it was stored in, followed
+  over the whole program, and nothing when no function ever flows there; where the compiler cannot follow the value,
+  it reaches every function taken as a value with its signature (every function value only when no function is
+  taken with that signature). A function value handed to a function that only calls it counts as called where it is
+  handed; a call into C reaches the
   functions handed to a `ForeignCallback`, which C may call back, and nothing else; a `drop()` that may run is
   followed too. Inside a loop, a call anywhere in the body undoes a narrowing made before the loop for the next pass.
   A call in a condition counts: a side of an `and` is proven before a call on a later side, and after one on an

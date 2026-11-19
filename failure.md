@@ -319,7 +319,7 @@ goblin 1
 ```
 
 What the compiler follows: calls by name, method calls through the receiver's class, constructors, and what a
-class's attribute defaults call. Calling a function value (`change(text)`) reaches every function taken as a value with its signature, wherever in the program it is taken (every function value only when none is taken with it), and a call into C reaches the functions handed to a `ForeignCallback`, never every function value. A list is told apart by the attribute that holds it; a list reached any other way (a parameter, an item of another list) counts against every list of its class. Inside a `while`, a call that undoes a proof made before the loop and
+class's attribute defaults call. Calling a function value (`change(text)`) reaches only the functions that can flow into what it calls (the local, parameter, attribute, list or generic class it was stored in, followed over the whole program), and every function taken as a value with its signature only where the compiler cannot follow the value (every function value when none is taken with it); a function value handed to a function that only calls it counts as called where it is handed; and a call into C reaches the functions handed to a `ForeignCallback`, never every function value. A list is told apart by the attribute that holds it; a list reached any other way (a parameter, an item of another list) counts against every list of its class. Inside a `while`, a call that undoes a proof made before the loop and
 read inside it is an error naming the call, the same as an assignment would be.
 
 ### A new name for a new type
