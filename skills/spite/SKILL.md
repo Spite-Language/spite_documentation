@@ -129,6 +129,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   constructor takes arguments has none, so a `fallback` there is an error: answer `T?` or `crash`); answer a `T?` when a
   caller must tell that from a real answer. `crash condition` halts on
   a developer mistake. Neither takes a message: the crash report shows the values.
+  An `if` with no `else` that only returns what a `fallback` would is rewritten into that `fallback` (`fixed:`), its
+  condition turned around: `<` becomes `>=` only between whole numbers (`fallback count >= 0 and count <= limit`), and a
+  comparison of decimals stays under `not` (`fallback not (scaled > limit)`), since NaN fails every comparison.
 - `crash flag` and `fallback flag` on a `Boolean?` pass only when it is there and `true`: `crash flags[index]` on a
   `List<Boolean?>` halts on `false` too. To test that it is there alone, write `crash flag == true or flag == false`.
 - A narrowing, a `[]` proof included, lasts until a write or a call that may undo it or shrink the list (the compiler follows the call, whatever its answer is used for). Narrow again after

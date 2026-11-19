@@ -680,9 +680,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
     builds with no arguments, and a Day has none`): make the result `Day?`, or `crash`. A caller that must tell
     "missing" from a real `0` or `""` gets a function answering a `T?`. An `if` with no `else` that only returns
     that same value (`if x { return null }`, `{ return 0 }`, `{ return "" }`, `{ return }`) or is the last
-    statement and only checks a value is there is rewritten by the compiler into the `fallback` (`fixed: ...`); a condition
-    comparing an order stays whole under `not` (`fallback not (count < 0 or count > limit)`), since NaN fails every
-    comparison. An
+    statement and only checks a value is there is rewritten by the compiler into the `fallback` (`fixed: ...`); an
+    order is turned around only where both sides are whole numbers (`fallback count >= 0 and count <= limit`, a second
+    `fixed:` line once the types are known); one comparing a decimal stays whole under `not` (`fallback not (scaled >
+    limit)`), since NaN fails every comparison. An
     `if` with no `else` that ends in `return` proves the opposite of its condition after it: `if not found { return -1
     }` narrows `found`, `if index >= names.count() { return "" }` proves `names[index]`;
   - absence is a bug: `crash condition` halts with

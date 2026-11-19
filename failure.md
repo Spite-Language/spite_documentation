@@ -865,11 +865,15 @@ false
 ```
 
 The fix turns the condition around for you and never changes what the program does: `if count == 0 or name.is_empty()`
-becomes `fallback count != 0 and not name.is_empty()`. A condition that compares an order (`<`, `<=`, `>`, `>=`) anywhere
-is kept whole under one `not`: `if count < 0 or count > limit` becomes `fallback not (count < 0 or count > limit)`.
-A decimal's order is not total, since NaN fails every comparison: `not (scaled > limit)` holds for NaN and
-`scaled <= limit` does not. The fix reads the syntax tree, which has no types, so it keeps the `not` for whole numbers
-too. Two cases stay errors naming that `fallback`, since the fix is not
+becomes `fallback count != 0 and not name.is_empty()`. An order (`<`, `<=`, `>`, `>=`) is turned around only
+where both its sides are whole numbers: `if count < 0 or count > limit` on whole numbers becomes
+`fallback count >= 0 and count <= limit`. A decimal's order is not total, since NaN fails every comparison:
+`not (scaled > limit)` holds for NaN and `scaled <= limit` does not, so a condition comparing a decimal stays whole
+under one `not`, `fallback not (scaled > limit or count < 0)`. The rewrite of the `if` reads the syntax tree, which
+has no types, so it first writes the `not` around any order; once building knows the types, a second `fixed:` line
+moves the `not` in where every order it turns compares whole numbers (`'not (count < 0 or count > limit)' only
+compares whole numbers, which are never NaN, so the 'not' goes in`). A `fallback not (...)` you write yourself is
+turned the same way. Two cases stay errors naming that `fallback`, since the fix is not
 the compiler's to make: an `if` in a constructor, which takes no `fallback`, and an `if` holding a comment, which
 the rewrite would lose. So does one in a library's file, which the compiler never rewrites.
 
