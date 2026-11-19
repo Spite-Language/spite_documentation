@@ -419,10 +419,13 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `var target: Pet` (and `var held: $held_type` in a generic class), below the attributes with a default; a path that
   leaves it without a value is an error naming the path, and so is anything that reads it first: a line of the
   constructor before it is given, a function of the class the constructor calls before then, `this` handed out
-  before then, or another attribute's default. A reopening that replaces the constructor must fill the attributes
+  before then, or another attribute's default. A default that only names a function of the class
+  (`var act: Spite.Function<Nothing> = rest`) reads nothing; what calls or hands on `act` reads what `rest` reads.
+  A reopening that replaces the constructor must fill the attributes
   without a default of every file of the class; one of a library class it leaves without a value is an error at
   that constructor, naming the library's declaration (`the attribute is declared at spite_standard_library://...`). A default the constructor always replaces that makes
-  nothing else (a literal, `null` for a `T?`, an empty `List`/`Dictionary`) is removed by a `fixed:` line; one like `Pet()` stays and runs, and `= null` on a type without `?` stays an error.
+  nothing else (a literal, `null` for a `T?`, an empty `List`/`Dictionary`) and no other default reads, directly or
+  through a function of the class it calls or names, is removed by a `fixed:` line; one like `Pet()` stays and runs, and `= null` on a type without `?` stays an error.
 - `null` assigned, passed, appended or answered where a type without `?` is wanted is a compile error too, never a
   default (`0`, `false`, `""`, an enum's first value, an object of a class or a `type`): `'null' is given where a
   Crate is needed, and a Crate never holds null: write 'Crate?' where none is a real answer, otherwise give it a real

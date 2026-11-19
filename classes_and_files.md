@@ -352,6 +352,35 @@ The defaults run before the constructor, so a default that reads it, directly or
 too: `the default of 'label' reads 'target', which has no default: the defaults run before the constructor gives
 'target' its value, so give 'label' a default that does not read 'target' and set it in the constructor`.
 
+A default that only names a function of its object, a function value, reads nothing: nothing calls it while the
+defaults run, so it may name a function that reads an attribute the constructor fills:
+
+```gdscript title=default_names_a_function/holder.spite
+var console = Console()
+var act: Spite.Function<Nothing> = rest
+var name: String
+
+func Holder(given: String) {
+    name = given
+}
+
+func rest() {
+    console.print(name, "rests")
+}
+```
+```gdscript title=default_names_a_function/default_names_a_function.spite entry
+func DefaultNamesAFunction() {
+    var holder = Holder("ivy")
+    holder.act()
+}
+```
+```output
+ivy rests
+```
+
+What calls it reads what the function reads: a later default calling `act()`, directly or through a function, or
+handing `act` on, and a line of the constructor calling it before `name` has its value, are the errors above.
+
 When a later file reopens the class and replaces its constructor, that constructor is the one that builds every
 object, so it gives a value to every attribute without a default, whichever file declares it; one it leaves
 without a value is the same error, saying `the class is built by the constructor in another of its files`.
@@ -392,7 +421,8 @@ fixed: the default of 'values' was made and then replaced by the constructor on 
 ```
 
 It applies when the default makes nothing else (a number, a text, `true`, `false`, an enum value, `null` for a `T?`,
-or an empty `List` or `Dictionary`), no other default reads it, and the constructor assigns it among its first plain assignments,
+or an empty `List` or `Dictionary`), no other default reads it, directly or through a function of its object it
+calls or names, and the constructor assigns it among its first plain assignments,
 before any statement that reads it, names `this` or calls a function of its own class. A default whose making can
 do more, such as `Pet()`, stays and runs as written; write the attribute without a default yourself when the
 constructor fills it.
