@@ -31,7 +31,7 @@ REPL can look at any of it.
 |---|---|---|
 | `String` | immutable text | [below](#string) |
 | `Integer`, `Long`, `Float`, `Double`, `Boolean`, ... | numbers, as classes, with their maths (`square_root()`, `sine()`, `Float.Pi()`, ...) | [values_and_types.md](values_and_types.md#numbers-are-classes), [maths](values_and_types.md#maths-functions) |
-| `Nothing`, `Anything` | the language's two empty unions, declared in the library's `Spite` class: `Nothing` holds no value (what a function that answers nothing returns), and `Anything` is filled by the compiler with the classes that reach each place | [functions_and_operators.md](functions_and_operators.md) |
+| `Nothing` | the language's one empty union, declared in the library's `Spite` class: it holds no value (what a function that answers nothing returns) | [values_and_types.md](values_and_types.md#nothing) |
 | `List<T>`, `Dictionary<Key, Value>` | containers, and the member templates | [collections.md](collections.md) |
 | `Observer<Value>`, `ListChange<T>`, `DictionaryChange<Key, Value>` | telling readers that something changed, and what a list or a dictionary changed | [collections.md](collections.md#observer-tells-who-subscribed) |
 | `Console` | the terminal: print, read a line | [below](#console) |
@@ -814,7 +814,7 @@ next: A12 for 3 boarding true 2.5 Ticket
 `...values: List<Debuggable>` (`to_debug: Spite.Function<String>`), and every value answers that without writing anything: a
 class shows its name and every attribute, nesting into the attributes that are classes, a `List` shows `[a, b]`, a
 `Dictionary` `{"key": value}`, text is quoted, an enum value is written `'like_this'`, and an absent
-`T?` is `null`, an item of a `List<Anything?>` or a value of a `Dictionary<String, Integer?>` included (`[null, "kept"]`). An object already being shown further up (the same object, not one `==` calls equal) is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
+`T?` is `null`, an item of a `List<String?>` or a value of a `Dictionary<String, Integer?>` included (`[null, "kept"]`). An object already being shown further up (the same object, not one `==` calls equal) is written `Name {...}`, so a cycle ends. A value of a `type` or a `union` is shown
 as the class it is, and answers `to_debug()` whether or not the `type` names it, so a `List<Driver>` holding a
 `Holder` and a `Wheel` shows `[Holder { mounted: 0 }, Wheel { turns: 1 }]`, and an attribute that holds a singleton is shown too (`Holder { ledger: Ledger { entries: 4 }, label: "kept" }`). A class that
 declares its own `to_debug()` is shown by it wherever it appears, and a class nothing asks to show gets none:

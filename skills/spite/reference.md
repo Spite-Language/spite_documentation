@@ -541,8 +541,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   type, a shape a class fits; ...`): list the classes that fit, or take the `type` itself where any class that fits
   will do, since a function taking one is copied for each class (D2504). A union lists classes directly: another union
   as a member, bare or `Shelf.Stored`, is refused at its line (`'Inner' cannot be a member of union 'Outer': a union
-  lists classes directly, and 'Inner' is a union; list the classes of 'Inner' in 'Outer' themselves`), and so is
-  `Anything` (`... and Anything is a union the compiler fills with every class; ...`) (D2544). Every member mistake (an
+  lists classes directly, and 'Inner' is a union; list the classes of 'Inner' in 'Outer' themselves`) (D2544). Every member mistake (an
   unknown name too) is reported at the member's line, and every union is checked, even in a generic class nothing makes.
 - A `type` declares a shape (`label: String` and `render: Spite.Function<Integer, String>`, one per line, with `Spite.Function<Nothing>` for no answer and never a call form `render(Integer): String`, which the compiler rewrites; a function of the class or an attribute holding such a function meets it, and `item.render(12)` calls either; a required function
   naming the *types* it takes and never the names) and accepts any class, or
@@ -551,33 +550,38 @@ of the standard library or of a repository pinned to a commit is never rewritten
   contract matches it fits, numbers included (`Integer` fits `type Textual { to_string: Spite.Function<String> }`),
   an enum fits a `type` asking only `to_string`, a union fits when each class does. To admit only some classes write
   a `union`, not a `type`. A `T?` fits a `type` that asks only for
-  `to_string()` and `to_debug()` (null answers both with `null`), an `Anything?` and a `T?` of a `type` included:
-  `console.print(attribute.value)` and, on an `Anything?` or a `T?` of a `type` asking `to_string()`, a hole `"{attribute.value}"` show `null` when it holds none, while
+  `to_string()` and `to_debug()` (null answers both with `null`), a `T?` of a `type` included:
+  `console.print(attribute.value)` and, on a `T?` of a `type` asking `to_string()` or a null `attribute.value`, a hole `"{attribute.value}"` show `null` when it holds none, while
   `attribute.value.to_string()` is narrowed first; any other `type` needs it narrowed or proven present
   first (`this value may be null (it is a Rock?), but a Singer is needed: ...`). A `type` with `?` takes any `T?`
   whose `T` fits, kept as it is (`var held: Component? = maybe_label()`, a `List<Component?>` item, a `render():
   Component?` answering a `Label?`). Every value answers `to_debug()`,
   so `driver.to_debug()` and `console.debug(drivers)` work on a value or a `List` of any `type`, naming `to_debug`
   or not, each element shown as the class it is: `[Holder { mounted: 0 }, Wheel { turns: 1 }]`.
-- `Anything` and `Nothing` are the language's own unions, declared empty in the library's `Spite` entry class and
-  named plainly: `component: Anything` and `List<Anything>()` accept any object (a number keeps its class, with no
-  allocation), and `Nothing` stays empty, the answer of a function with no answer. `var held: Nothing` is an error
-  (`'held' is declared 'Nothing', ...`), and so is any other union with no members (`'union Hollow' lists no members,
-  ...`). Never declare an empty `type` or `union` of your own.
-  `Anything` never holds `null`: `null` assigned, passed, appended, answered or declared into a plain `Anything` is a
-  compile error (`'null' is given where an Anything is needed, and an Anything never holds null: ...`). `Anything?`
-  is a smell: write it only where none is a real answer, and prefer a real type.
-  `Anything` is a union the compiler fills: each attribute, parameter, answer or local written `Anything` holds only
-  the classes that reach it (a value moved from one into another brings them along), and a use asks only of those.
-  So `console.print(attribute.value)` prints when only numbers and text reach `.value`, while printing
-  `attribute.owner` of a class without `to_string()` is refused, and `value.to_string()` on an `Anything` needs each
-  class reaching it to have its own (`'Crate' reaches this Anything and has no function 'to_string': match the value
-  first against a class or a type that has one`), and so does a hole `"{value}"`, as on any union. An `Anything` inside a generic or a function type is filled per place too: each `List<Anything?>`
-  written (attribute, parameter, answer, local, made in a line) holds only the classes that reach it, and a list
-  passed, returned or assigned into another place joins the two.
-- A function of your program whose parameter is a `union`, a `type` (`Anything` included) or a generic holding one is
+- Every place names what it holds (D2635): an attribute, parameter, answer, local, type member and generic argument
+  is a class, a union of classes, a `type` of the functions and attributes it is used through, or a `$name`. There is
+  no type of every class: `Anything` anywhere (`List<Anything>`, `Spite.Function<Anything?, String>` too) is refused
+  at its line (`'Anything' is not a type: say what the attribute 'held' holds, with its class, a union of its classes,
+  a 'type' of the functions and attributes it is used through (like a 'Component'), or a generic class's '$name'`),
+  and `Anything.members` too (`'Anything' is not part of Spite: ...; 'Spite.Class.instances' lists the classes of the
+  program`). For any object write the `type` of what the code uses: every class (numbers, enums, function values)
+  answers `to_debug()`, so `type Shown { to_debug: Spite.Function<String> }` takes any object and says so; a function
+  taking it is still compiled per class, and a `List<Shown>` keeps each item's class.
+- `Nothing` is the language's own empty union, declared in the library's `Spite` entry class and named plainly: the
+  answer of a function with no answer. `var held: Nothing` is an error (`'held' is declared 'Nothing', ...`). Any
+  other empty `type` or `union` is refused: `'type Held' lists no members, so it says nothing of what its values are:
+  list the functions and attributes they are used through, or name their class, or a union of their classes` and
+  `'union Hollow' lists no members, so no value of it can exist: list the classes it holds; only the language's own
+  'Nothing' is declared empty`.
+- The library's reflection reads a value known only at run time (`attribute.value`, `.owner`, a run-time `call()`
+  answer, `call.arguments` values, `part()` of a run-time class) as a union the compiler fills with the classes that
+  reach it, which no program writes. Printing or a hole on it goes through the compiler's `type Printable {
+  to_string: Spite.Function<String> }`: `console.print(attribute.value)` prints when only numbers and text reach it,
+  a null one shows `null`, and a class without `to_string` is refused (`'Crate' does not fit type 'Printable': it has
+  no function 'to_string'`).
+- A function of your program whose parameter is a `union`, a `type` or a generic holding one is
   compiled once per argument type each call hands it (a `Cat` for `named: Named`, a `List<Health>` for
-  `items: List<Anything>`), with no test of the class while running; copies whose machine code comes out the same are
+  `items: List<Shown>`), with no test of the class while running; copies whose machine code comes out the same are
   one. Each copy is checked as written for its types, and a mistake there names the copy and the call:
   `a Chain cannot be used where a Link? is needed: ..., in its copy for (Link, Chain) that the call at line 10 in
   Zoo.Zoo makes`. So `link(node, other)` writing
@@ -661,7 +665,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   writes the switch for you, naming every value; an `else if` chain of three is the same.
   The subject runs once however many cases there are, whatever it holds (a call, a chain through a call, an index, a getter). A subject holding a call narrows nothing in its cases, since writing it again calls again: `var held = thing.pop().target`, then `switch held`.
 - `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside. An `or` of
-  class tests of one value (`if value.class == Monster or value.class == Player { }`, an `Anything` too) compiles the block
+  class tests of one value (`if value.class == Monster or value.class == Player { }`, through a union or a `type` too) compiles the block
   once per class, each copy narrowed to its class, so a use is refused only where one of them does not fit, in that
   class's own words; the `else` narrows nothing.
   A `.class` known while compiling of something holding a call (`thing.pop().class == Thing`, `count().class.name`)
@@ -767,10 +771,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `attribute.name == "health"` and `attribute.class == List<Integer>`, which compares the generic arguments too
   (`List<String>` is false; `attribute.class == List` is any list), so the branch not taken is never compiled.
   `attribute.class.satisfies_type(Number)` folds the same way: whether the class can stand in for a type, given by
-  name (a `type`, a union, a class, `Anything`, or `Number`, the compiler's own type of a number's operators, which
+  name (a `type`, a union, a class, or `Number`, the compiler's own type of a number's operators, which
   every number class `Byte` to `Double` and a program's own number class with them satisfy; `Number` cannot be
   declared or hold a value). Asked of a class known
-  only at run time (`value.class` through `Anything`) it is a compile error. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
+  only at run time (`value.class` of an `attribute.value`) it is a compile error. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
   The walked attribute is an object of its declared class, not text: its members fold, and used whole it is that
   class's object (`Monster.attributes["health"]`, or the instance's `Spite.Attribute`), so a hole or a `String`
   parameter shows its name, a copy or a list keeps it, `.attributes`/`.functions` list its own, `attribute == "health"`
@@ -815,21 +819,21 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `value.class == part` narrows `value` (`value.render()`). A walked declaration handed to another function,
   `describe(attribute, "x")`, makes that function's copy for it. A filter over such a list runs at run time.
   A `Spite.Class` known only at run time, called with no arguments (`part()`, an attribute `kind()`, `thing.class()`,
-  `argument.class()`), makes an object of it typed `Anything`.
+  `argument.class()`), makes an object of it, a value the compiler fills with the classes it can make there.
 - A call built before it runs: `var call = Spite.Call(MoveSystem.functions["run_each"], system)` (a declaration and
   an instance of its class, the only way to build one), `call.arguments["position"] = value`, `call.call()`; known
   while compiling it is the direct call. Known only at run time, `call()` halts on an argument missing, of another
   type, or not taken; `call.arguments["count"] = null` is a filled argument, taken by `count: Integer?` and halting
-  for `count: Integer`. A parameter typed `Anything` or a `type` holds what the program writes into `call.arguments`,
+  for `count: Integer`. A parameter typed by a `type` holds what the program writes into `call.arguments`,
   numbers and enums included (`said: Shown` takes `3` and `'blue'`), and no other class: a class never passed is
   never asked to fit how the function uses it. `call.call()` answers the function's answer: its declared type when known while compiling,
-  an `Anything?` when known only at run time (`null` for a function that answers nothing), which alone of all answers
+  a value the compiler fills with what it can answer when known only at run time (`null` for a function that answers nothing), which alone of all answers
   may be dropped (`call.call()` on its own line).
   There is no `call_with`.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,
   `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
-  `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field, which straight off the index has the field's own type (`troll.attributes[health].value` is an `Integer`, a plain read of `troll.health`), as does `.value` off a literal name the class declares once the index is proven (`crash troll.attributes["health"]`; before that, an operator or a call on that `.value` is refused like a print of it, "'troll.attributes["health"]' may be missing ... so 'value' cannot be read from it yet: narrow it first"), and off a `Spite.Attribute` kept in a `var` given once from either (`var bound = troll.attributes[health]`, the field as it was when kept); one assigned again or handed in holds `.value` as an `Anything?`. Another class's
+  `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field, which straight off the index has the field's own type (`troll.attributes[health].value` is an `Integer`, a plain read of `troll.health`), as does `.value` off a literal name the class declares once the index is proven (`crash troll.attributes["health"]`; before that, an operator or a call on that `.value` is refused like a print of it, "'troll.attributes["health"]' may be missing ... so 'value' cannot be read from it yet: narrow it first"), and off a `Spite.Attribute` kept in a `var` given once from either (`var bound = troll.attributes[health]`, the field as it was when kept); one assigned again or handed in holds `.value` as a value the compiler fills with what every attribute reaching it holds. Another class's
   declaration is a compile error naming both classes, and one the compiler cannot tie to a class is refused: write
   `troll.attributes[declaration.name]` (a `Spite.Attribute?`). Inside its own class an instance is indexed bare,
   `attributes[health]` (never `this.attributes[...]`), under the same checks. A walk or a template means the same:
@@ -842,7 +846,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`
   (the `File` a function or an attribute is written in); `Loader.is_stateful`,
-  `Vector3<Float>.is_fixed_size` (a generic class is named with its codegen values), `Monster.is_singleton`. `.returns` is exactly the declared answer: a `Spite.Class` (`Integer?` too), a `Spite.Union` (a union, `Anything`, and `Nothing`, the
+  `Vector3<Float>.is_fixed_size` (a generic class is named with its codegen values), `Monster.is_singleton`. `.returns` is exactly the declared answer: a `Spite.Class` (`Integer?` too), a `Spite.Union` (a union, and `Nothing`, the
   empty union, for a function that answers nothing, never `null`) or a `Spite.Type`; read `.name` on any, compare with `== Integer` or `== Nothing`; only `.namespace`, `.parent` and a bound attribute's `.value` can be `null`. A reflection field the program never reads costs nothing: it has no slot and is not built, so reading more of a class is what pays; a write to it still runs a call or a making that does something. A class's `.generics` is a
   `Dictionary<String, Spite.Class>` of its `generic` lines by name without the `$`
   (`numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer`); there is no `.element_type` on a class. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
@@ -873,7 +877,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   given one comparing every attribute in declaration order with its own `==` (private ones included, back
   references too; a cycle answers `true` for a pair already being compared, so it never loops; an object
   always equals itself; a `List` compares its items in order, a `Dictionary` its values key by key; singletons
-  and enums compare as before; a value typed by a `type`, a union or `Anything`, in an attribute or written
+  and enums compare as before; a value typed by a `type` or a union, in an attribute or written
   `a == b`, compares through the class it holds: the same class calls that class's `equals`, different classes are
   not equal, two `null`s are equal, `null` never equals a value; such a value goes on the left, `held == circle`,
   and `circle == held` is swapped to it with a `fixed:` line). `a === b` asks for the very
@@ -905,7 +909,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   with one is an error (`'Phase' is not a generic class, so it takes no type in '<>': write 'Phase' alone`). The entry
   class is never generic (`'Game' is the entry class and declares 'generic $item_type'`): put what needs `generic`
   lines in a class the entry class makes. A function never has codegen values of its own (`func pick<$value_type>(...)` is an error): a
-  function that takes any object takes `Anything` or a `type`. `if $value_type == Integer { }` is decided at compile time. `generic $item_type: Printable` (with the class's own `type Printable`) accepts
+  function that takes any object takes a `type` of what it uses (`type Shown { to_debug: Spite.Function<String> }`). `if $value_type == Integer { }` is decided at compile time. `generic $item_type: Printable` (with the class's own `type Printable`) accepts
   only classes that fit that `type` (a function value never fits; a `T?` fits when its `T` does and the `type` needs
   only `to_string()` or `to_debug()`, which null answers as `null`, so `Shelf<String?>` prints a null item as `null`); any other is an error where the class is
   named, not inside the generic. An enum, a `union` or a `type` is named outside its class through that class
@@ -934,10 +938,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
   the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
   `.namespaces`), `.functions` (empty for the entry class, which is never made twice), and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
   `value.attributes`
-  (`.name`, `.class`, `.value`: the value itself, an `Anything?` whose text is `.value.to_string()`; narrowed by `if found.value.class == Integer`, it is that number, and its `to_string()` answers the number's own; `attribute.value = given`,
-  which is `set_value(given)`, writes the owner's field even when the object is only an `Anything`, by the assignment
+  (`.name`, `.class`, `.value`: the value itself, a value the compiler fills with the classes that reach it, whose text is `.value.to_string()`; narrowed by `if found.value.class == Integer`, it is that number, and its `to_string()` answers the number's own; `attribute.value = given`,
+  which is `set_value(given)`, writes the owner's field even when the object is only held through a `type`, by the assignment
   rules it desugars to, judged at that line with the assignment's words (a class with its own `to_string()` and an
-  enum into a `String` field too; the value an `Anything` holds has no range, so a decimal or a wider number into a
+  enum into a `String` field too; the value read from an attribute keeps its class but not its range, so a decimal or a wider number into a
   plain whole-number field is refused, even a written `2.5` or `3`, and into a `T?` field it is `null` when it does
   not fit; a value that may be null into a field that is not nullable is refused unless the field is a number, where
   null is 0; a conversion answering `T?` into a plain `T` field is refused); a class reaching `given` that no
@@ -946,14 +950,13 @@ of the standard library or of a repository pinned to a commit is never rewritten
   held.attributes["b"]]`, read only by `[ ]`; else every attribute listed at run time, and then refused only when
   none takes it) is a compile error at that line, and the program stops at run time only on a pairing the compiler
   cannot see (a write reaching several attributes given what one takes and another does not, or a `null` into one
-  that is neither nullable nor a number; a program built with a prompt or hot reload); a value written into an `Anything` attribute joins that attribute's own
-  `Anything`, so printing it needs `to_string` only of the classes written there; private attributes are neither listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
+  that is neither nullable nor a number; a program built with a prompt or hot reload); a value written into an attribute read only at run time joins the classes the compiler fills there, so printing it needs `to_string` only of the classes written there; private attributes are neither listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`; a nullable one held in an attribute is narrowed through its path like any value: `fallback button.on_press` then `button.on_press()`), and
-  `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's), which `Anything.members` answers too, keyed by name (`Nothing.members` is empty). `class`, bare inside a class's function, is the class
+  `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's), keyed by name (`Nothing.members` is empty). `class`, bare inside a class's function, is the class
   of the instance it answers on, and a class name reads its own class object: `Monster.name` is `"Monster"`.
   A bound `Spite.Function` answers only `.name`, `.owner`, `.declaration` and `call_function()`: ask `.arguments`,
-  `.returns`, `.reads` and the rest of `function.declaration` (`a Spite.Function has no 'returns' of its own`). A function value is a `Spite.Function` and fits `Anything`: read only at
+  `.returns`, `.reads` and the rest of `function.declaration` (`a Spite.Function has no 'returns' of its own`). A function value is a `Spite.Function` and fits any `type` whose members it has (`Shown`): read only at
   run time (a `Spite.Function<Nothing>?` attribute through `fresh.attributes`) it answers the same declaration, name and
   owner as where it was named: `.name` is always its declaration's name. A walk
   over `Monster.attributes` hands `Spite.AttributeDeclaration`s and a walk over `troll.attributes` hands
@@ -1143,7 +1146,7 @@ different classes, write `writer.schema()` (a `Long` the compiler works out from
 the start of a file or connection and compare it with `reader.schema()` before reading. Attributes named `_...`
 and attributes holding a singleton are left out of both. A JSON key that is not an attribute's name comes from a map
 given to the serializer, keyed by the attribute (`{MeshRecord.attributes["minimum_level_of_detail"]: "min_lod"}`);
-a class never declares `json_key_<attribute>()`, which is an error. A union, a `type` (`Anything` included) or a function value anywhere in what they see is a compile error at
+a class never declares `json_key_<attribute>()`, which is an error. A union, a `type` or a function value anywhere in what they see is a compile error at
 the line that makes the writer or reader (`JsonWriter cannot write 'Owner': 'Owner.pet' is the union Pet, ...`):
 keep what they see to the kinds above ([json.md](https://github.com/Spite-Language/spite_documentation/blob/master/json.md)).
 Measure with `clock.elapsed()`, the monotonic clock: a `Duration`; subtract two readings (`clock.elapsed() - started`). Every wait is a `Duration` too: `var frame_time = Duration(16, 'milliseconds')`, then `program.sleep(frame_time)`.

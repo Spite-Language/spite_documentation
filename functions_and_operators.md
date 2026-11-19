@@ -260,51 +260,33 @@ func shout(...words: String) {
 '...words' receives the arguments as a list: write '...words: List<Type>'
 ```
 
-## Anything, and plain values where a `type` is wanted
+## Plain values where a `type` is wanted
 
-`Anything` is the language's union of every class, filled per place (below): `component: Anything` takes any
-value and `List<Anything>()` holds any. Do not declare an empty `type` or union of your own. A function taking
-`Anything` (or any `type` or union) is compiled once for each class that reaches it, so a number, a `Boolean` or an enum value passed to
-it arrives as itself; stored in a `List<Anything>` it keeps its class beside it, and `if component.class == Health`
-narrows it back. A value of a union passed where a `type` is wanted brings the union's members into the shape, so
-a function the members share can be called on it. An enum value answers `to_string()` (its name) and `to_debug()`,
-which is all a shape can ask of it, and `.class` read through the shape names the value's real class (`Integer`,
-the enum). `Spite.Attribute.value`, the value an attribute holds, is typed `Anything?`. An `Anything` costs
-nothing until a value is passed to it.
+Every place names what it holds ([values_and_types.md](values_and_types.md#every-place-names-what-it-holds)): there is
+no type of every class, and a `type` or union with no members is refused. A function taking a `type` (or a union) is
+compiled once for each class that reaches it, so a number, a `Boolean` or an enum value passed to it arrives as
+itself; stored in a `List<Shown>` it keeps its class beside it, and `if shown.class == Health` narrows it back. A
+value of a union passed where a `type` is wanted brings the union's members into the shape, so a function the
+members share can be called on it. An enum value answers `to_string()` (its name) and `to_debug()`, which is all a
+shape can ask of it, and `.class` read through the shape names the value's real class (`Integer`, the enum). Where a
+value is only shown, walked or kept, the `type` says so: every class answers `to_debug()`, so
+`type Shown { to_debug: Spite.Function<String> }` takes any object, numbers included.
 
-`Anything` is a union whose members the compiler fills, and it behaves like any union. Each place written
-`Anything` or `Anything?` (an attribute, a parameter, an answer, a local) holds only the classes that reach it, and a
-value moved from one into another brings them along; what a use asks is asked only of those classes. A
-`Spite.Attribute` keeps its object in `.owner` and the field in `.value`, so `console.print(found.value)` prints
-when only numbers and text reach `.value`, though the class `.owner` holds has no `to_string()`, and
-`console.print(found.owner)` is refused for that class: "'Gauge' does not fit type 'Printable': it has no function
-'to_string'". Calling `to_string()` on an `Anything`, or showing it in a hole (`"holds {_held}"`), needs every
-class that reaches it to have its own, as a hole on any union does; nothing stands in for a missing one. So match
-the value against a class or a type that has one first:
-
-```spite
-var _held: Anything
-
-func label(): String {
-    return _held.to_string()
-}
-```
-```diagnostic
-'Crate' reaches this Anything and has no function 'to_string': match the value first against a class or a type that has one
-```
-
-An `Anything` inside a generic or a function type is filled per use the same way: each place that writes
-`List<Anything?>` (an attribute, a parameter, an answer, a local, a `List<Anything?>()` made in a line) holds only the
-classes that reach it, and a list passed, returned or assigned from one place into another joins the two, since both
-then hold the one list. So a list of crates and a list of gauges are apart: printing the gauges' items asks
-`to_string()` only of `Gauge`. A function value held as `Spite.Function<Anything?, String>` brings what is handed to it
-into its own parameter only.
+A value reflection reads where the compiler cannot name its class while compiling (`Spite.Attribute.value` read
+through a run-time name, a run-time `call()`'s answer, `part()` of a class known only at run time) is a union the
+compiler fills, which no program writes: each such place holds only the classes that reach it, and what a use asks
+is asked only of those classes. A `Spite.Attribute` keeps its object in `.owner` and the field in `.value`, so
+`console.print(found.value)` prints when only numbers and text reach `.value`, though the class `.owner` holds has no
+`to_string()`, and `console.print(found.owner)` is refused for that class: "'Gauge' does not fit type 'Printable': it
+has no function 'to_string'". Calling `to_string()` on such a value, or showing it in a hole, goes through the
+compiler's `type Printable` ([values_and_types.md](values_and_types.md#a-hole-shows-a-value-through-its-own-to_string)):
+every class that reaches it needs its own, and nothing stands in for a missing one.
 
 A `T?` fits a `type` unnarrowed only when null can answer everything the `type` asks, which is `to_string()` and
-`to_debug()`: both answer `null` for it. That holds for an `Anything?` and a `T?` of a `type` too, whatever classes
-reach it: `console.print(found.value)` and `console.debug(found.value)` show `null` when the attribute holds none,
-and so does a hole `"{found.value}"` on an `Anything?` or on a `T?` of a `type` that asks for `to_string()`
-(`var held: Shown? = null`, `"[{thing.held}]"` shows `[null]`), while `found.value.to_string()` needs it narrowed first. Any other `type` needs the value narrowed first, or proven present
+`to_debug()`: both answer `null` for it. So `console.print(found.value)` and `console.debug(found.value)` show `null`
+when the attribute holds none, and so does a hole `"{found.value}"`, or one on a `T?` of a `type` that asks for
+`to_string()` (`var held: Shown? = null`, `"[{thing.held}]"` shows `[null]`), while `found.value.to_string()` needs it
+narrowed first. Any other `type` needs the value narrowed first, or proven present
 ([proofs.md](proofs.md#a-value-proven-present-is-a-t)): `var singer: Singer = maybe_rock` with a `Rock?` is "this value may be null (it is a
 Rock?), but a Singer is needed: narrow it first with 'if value { }', 'fallback value' or 'crash value'".
 
@@ -342,24 +324,9 @@ func Hunt(new_target: Pet) {
 the attribute 'target' is declared 'Pet', not 'Pet?', so it never holds null: write 'var target: Pet' with no default when the constructor gives it its value, 'var target: Pet = Pet()' for a default, or 'var target: Pet? = null' for none yet, narrowed before use
 ```
 
-`Anything` holds only classes, never `Null`, so a plain `Anything` always holds a value too, and its words
-add that a real type says more:
-
-```spite
-var held = List<Anything>()
-held.append(null)
-```
-```diagnostic
-'null' is given where an Anything is needed, and an Anything never holds null: write 'Anything?' only where none is a real answer (a real type says more), otherwise give it a value
-```
-
-`Anything?` holds `null` too, and is narrowed before use like any `T?`. Treat it as a smell: write it only where
-"none" is a real answer, such as the value of an attribute declared `T?` (`Spite.Attribute.value`) or an
-argument a run-time call leaves out, and prefer a real type, a union or a `T?` of a real class everywhere else.
-
 ## A function taking a union or a type is copied per argument type
 
-A function whose parameter is a `union` or a `type`, or a generic holding one (`List<Anything>`, `List<Named>`),
+A function whose parameter is a `union` or a `type`, or a generic holding one (`List<Shown>`, `List<Named>`),
 is compiled once for each type a call hands it: `shown(cat)` with `func shown(named: Named)` calls a copy whose
 `named` is a `Cat`, so reading `named.name` reads the cat's own attribute with no test of its class while running.
 Each copy is checked as if it were written for that type, so a body that does not fit a copy is a compile error at
@@ -367,21 +334,25 @@ the line in the body, naming the copy and the call that made it. Copies whose ma
 one function in the executable ([optimizations.md](optimizations.md#functions-whose-machine-code-is-the-same-are-one)).
 
 ```spite
+type Stocked {
+    to_debug: Spite.Function<String>
+}
+
 func Armory() {
     var healths = List<Health>()
     stocked(healths)
 }
 
-func stocked(items: List<Anything>) {
+func stocked(items: List<Stocked>) {
     var sword = Sword()
     items.append(sword)
 }
 ```
 ```diagnostic
-a Sword cannot be used where a Health is needed: a value is cast to the class a place wants through that class's conversion, and Health declares no 'Health(from: Sword)', in its copy for (List<Health>) that the call at line 3 in Armory.Armory makes
+a Sword cannot be used where a Health is needed: a value is cast to the class a place wants through that class's conversion, and Health declares no 'Health(from: Sword)', in its copy for (List<Health>) that the call at line 7 in Armory.Armory makes
 ```
 
-So a `List<Health>` goes where a `List<Anything>` is wanted whenever the body only does what a `List<Health>` can:
+So a `List<Health>` goes where a `List<Stocked>` is wanted whenever the body only does what a `List<Health>` can:
 `items.count()` and reading its items fit, appending a `Sword` does not. Writing through a `type` is checked the
 same way: with `type Node { next: Node }`, `link(first, second)` writing `first.next = second` compiles for two
 `A` objects and is refused for an `A` and a `B`, since `A.next` holds an `A`. A class naming itself
@@ -516,7 +487,7 @@ needs it to define 'sum(other)'
 
 `a == b`, `a != b`, `a < b`, `a <= b`, `a > b` and `a >= b` are calls on `a` (`equals`, `less_than`,
 `greater_than`), made before anything is typed, so `b` goes into `a`'s parameter through the same casts as any
-argument or assignment: numbers, `T?` values, unions, `type`s and `Anything` alike, and nothing is widened, cut or
+argument or assignment: numbers, `T?` values, unions and `type`s alike, and nothing is widened, cut or
 judged for the comparison alone. On numbers, enums and the other built-in classes the call is the machine's own
 comparison. When `b` may not fit (`count < total` with an `Integer` `count` and a `Long` `total`, `progress > -0.5`
 with an `Integer` `progress`, `circle == held` with a `Circle` and a union value):
@@ -566,7 +537,7 @@ given `equals` is called like a written one: the right side casts like any argum
   of one equals the node at the same place in the other.
 - A singleton and an enum compare as they always did: a singleton is one object per value of its arguments, an enum
   by its value.
-- A value typed by a `type`, a union or `Anything` compares through the class it holds: two values of the same class
+- A value typed by a `type` or a union compares through the class it holds: two values of the same class
   call that class's `equals` (its own or the given one, a number or a text by its value), two of different classes
   are not equal, two `null`s are equal and `null` is never equal to a value. This holds for an attribute the given
   `equals` compares and for `a == b` written on such values alike. Such a value goes on the left: a class on the

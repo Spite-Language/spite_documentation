@@ -6,7 +6,7 @@ no runtime object, no new type, no rule that holds only for tags. A function wri
 written by hand build to the same program (D2300, which replaced D18).
 
 ```gdscript
-func render(): Anything? {
+func render(): Theme.Window {
     return <Theme.Window title="Wardrobe" on_close={close_sidebar}>
         <View justify_content='center' padding={24} wrap>
             <Text content="Face"/>
@@ -20,7 +20,7 @@ func render(): Anything? {
 is built exactly as
 
 ```gdscript
-func render(): Anything? {
+func render(): Theme.Window {
     var window_2 = Theme.Window()
     window_2.title = "Wardrobe"
     window_2.on_close = close_sidebar
@@ -84,7 +84,7 @@ assignment. A tag that sets `children` and holds children too is refused, and so
 `List` or a `Boolean` (there is no `condition && <Tag/>`). It reads that from what the file declares, since it builds
 the statements before any name is resolved: a literal, a comparison, a parameter, a local or attribute with a
 declared type or a value it can read, and a call of a function of the same class. A list it cannot see is never
-silent when the element type is a class or a `type`, since a list does not fit it: `'List<Anything?>' does not fit
+silent when the element type is a class or a `type`, since a list does not fit it: `'List<...>' does not fit
 type 'Component': it has no function 'describe'`.
 
 ## Text between tags

@@ -685,6 +685,14 @@ real zero. Reading with `[]` is the exception: an index or a key that may not be
 ([failure.md](failure.md#reading-with--answers-t)). See [standard_library.md](standard_library.md) for the full
 method table.
 
+#### A hole shows a value through its own `to_string`
+
+A hole asks the value's own `to_string()`. A value whose class is known only as the program runs, a `T?` of a `type`
+or a value reflection reads (`"{attribute.value}"`), goes through the compiler's `type Printable { to_string:
+Spite.Function<String> }`: every class that reaches the hole must have its own `to_string()`, and a null shows `null`.
+A class without one is refused where it reaches the hole: `'Crate' does not fit type 'Printable': it has no function
+'to_string'`. Match the value against a class or a `type` that has one first.
+
 A `type` or a `union` says what a value must have and makes no object: `Tag("favourite")` is an error, `'Tag' is a type, so it makes no object: it says what a value must have; make an object of a class that fits it`.
 
 ## `T?`: values that may be null
@@ -735,32 +743,51 @@ a type. `value.class == Null` compiles and answers whether the value is null, bu
 and narrows: as the condition of an `if` or a `while` it is rewritten, with a `fixed:` line, to `if not value` (and
 `value.class != Null` to `if value`).
 
-### `Anything` and `Nothing`
+### Every place names what it holds
 
-Two unions are the language's own, declared empty in the library's `Spite` entry class
-(`spite_standard_library/common/spite/spite.spite`) and named plainly everywhere:
+An attribute, a parameter, an answer, a local and a generic's value each say what they hold: a class, a union of
+classes, a `type` of the functions and attributes the value is used through, or a generic class's `$name`. There is
+no type of every class: `Anything` is not part of Spite (D2635), and a program that writes it is refused at the line,
+naming the place:
 
-- `Anything` is the union the compiler fills with the classes that reach it, each place on its own
-  ([functions_and_operators.md](functions_and_operators.md#anything-and-plain-values-where-a-type-is-wanted)). It
-  holds no `Null`: a value that may be missing is `Anything?`, a smell kept for where none is a real answer.
-- `Nothing` is the union that stays empty, so no value is ever of it. A function with no answer answers `Nothing`
-  (`Spite.Function<String, Nothing>`, and its declaration's `.returns` is the `Nothing` union), and a value declared
-  `Nothing` is refused:
+```gdscript title=anything_named/anything_named.spite entry error
+var console = Console()
+var held: Anything? = null
+
+func AnythingNamed() {
+    console.print("held")
+}
+```
+```diagnostic
+'Anything' is not a type: say what the attribute 'held' holds, with its class, a union of its classes, a 'type' of the functions and attributes it is used through (like a 'Component'), or a generic class's '$name'
+```
+
+So a value is always used through what its place says, and the compiler optimises from that: a function taking a
+`type` is copied for each class that reaches it ([functions_and_operators.md](functions_and_operators.md#a-function-taking-a-union-or-a-type-is-copied-per-argument-type)),
+and a list of a `type` keeps each item's class beside it. Where a value is only shown or walked, the `type` names
+that: `type Shown { to_debug: Spite.Function<String> }` takes any object, since every class answers `to_debug()`,
+and says so. `Spite.Class.instances` lists the classes of the program.
+
+A `type` or a `union` with no members says nothing of what it holds, so it is refused too:
+
+```diagnostic
+'type Held' lists no members, so it says nothing of what its values are: list the functions and attributes they are used through, or name their class, or a union of their classes
+'union Hollow' lists no members, so no value of it can exist: list the classes it holds; only the language's own 'Nothing' is declared empty
+```
+
+### `Nothing`
+
+`Nothing` is the language's own union that stays empty, declared in the library's `Spite` entry class
+(`spite_standard_library/common/spite/spite.spite`) and named plainly everywhere, so no value is ever of it. A
+function with no answer answers `Nothing` (`Spite.Function<String, Nothing>`, and its declaration's `.returns` is the
+`Nothing` union), and a value declared `Nothing` is refused:
 
 ```diagnostic
 'held' is declared 'Nothing', the union no value is ever of, so it could never hold anything: remove it, or give it
 the type of what it holds
 ```
 
-Read as a union, `Anything.members` lists every class of the program, the same classes as `Spite.Class.instances`,
-and `Nothing.members` is empty ([reflection.md](reflection.md#spiteunion-and-spitetype)).
-
-Any other union declared with no members is refused:
-
-```diagnostic
-'union Hollow' lists no members, so no value of it can exist: list the classes it holds; only the language's own
-'Anything' and 'Nothing' are declared empty
-```
+`Nothing.members` is empty ([reflection.md](reflection.md#spiteunion-and-spitetype)).
 
 A `var` may be written again in the same scope, and the new one may hold another type:
 
@@ -1053,14 +1080,11 @@ copied for each class
 List the classes that fit instead, or take the `type` itself where any class that fits will do. A union may still
 hold a class whose attributes are typed by a `type`.
 
-A union named as a member, written bare or through its class (`Shelf.Stored`), is refused at its line too, and so is
-`Anything`, the union the compiler fills with every class:
+A union named as a member, written bare or through its class (`Shelf.Stored`), is refused at its line too:
 
 ```diagnostic
 'Inner' cannot be a member of union 'Outer': a union lists classes directly, and 'Inner' is a union; list the classes
 of 'Inner' in 'Outer' themselves
-'Anything' cannot be a member of union 'Held': a union lists classes directly, and Anything is a union the compiler
-fills with every class; list the classes themselves, or type the parameter 'Anything' where any class will do
 ```
 
 Write the classes of the inner union into the outer one. A value of the inner union still fits the outer one when
@@ -1114,10 +1138,8 @@ from the object's own tag rather than from the declared type. An object literal 
 answers `Object`.
 
 This is what makes fast, JSON-shaped code possible: accept a `type`, and both a real class instance and a
-plain `{ key: value }` literal work. Any object at all is `Anything`, the language's union the compiler fills
-with the classes that reach each place (`component: Anything`, `List<Anything>()`; see
-[functions_and_operators.md](functions_and_operators.md)): never declare an empty `type` or union of your own. `Anything` never holds `null`: `null` given to one is a compile error,
-and `Anything?` is a smell kept for where none is a real answer ([functions_and_operators.md](functions_and_operators.md#null-only-goes-where-a-t-is-wanted)).
+plain `{ key: value }` literal work. A `type` names what its values are used through, and one with no members is
+refused ([Every place names what it holds](#every-place-names-what-it-holds)).
 A `type`, like an `enum` and a `union`, takes no `=` and no commas.
 
 An attribute of a `type` may itself be a union, met by that union or one of its classes; one whose type is another
@@ -1209,7 +1231,7 @@ func show(item: Renderable) {
 `show` above is compiled twice, once for `Badge` and once for `Banner`: a function that takes a `type` gets a
 copy for each class that reaches it, and in that copy `item` is that class, so `item.render(12)` is a direct call.
 A number, `Boolean` or enum value passed to it arrives as the plain value. When the class is known only as the
-program runs (a value read from a `List<Anything>`, say), the call tests the value's class against every class the
+program runs (a value read from a `List<Renderable>`, say), the call tests the value's class against every class the
 program ever gives that `type` and runs the matching copy. A class that never reaches the function gets no copy,
 so nothing is compiled for it.
 

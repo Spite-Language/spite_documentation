@@ -221,7 +221,7 @@ var read_count = update.reads.count()
 
 Whether a class can stand in for a type is a question that takes an argument, the type's name:
 `attribute.class.satisfies_type(Number)` in a walk is `true` in the copies for numbers and `false` in the others, so
-a walker branches on numbers with no test left at run time. It takes a `type`, a union, a class, `Anything` or
+a walker branches on numbers with no test left at run time. It takes a `type`, a union, a class or
 `Number`, the compiler's own type of the operators a number answers, which every number class and a program's own
 number class satisfy ([reflection.md](reflection.md#whether-a-class-satisfies-a-type)):
 
@@ -755,7 +755,7 @@ one that runs.
 
 Only a class has codegen values. A function never lists its own (`func pick<$value_type>(...)` is an error), and
 there are no generic functions to write instead: a function that takes any class takes a
-`type` or `Anything`, the union the compiler fills ([reflection.md](reflection.md#known-only-at-run-time)), or it belongs to a
+`type` of what it uses ([values_and_types.md](values_and_types.md#every-place-names-what-it-holds)), or it belongs to a
 generic class.
 
 A codegen value is always a type, never a value like `true` or `10`. A value that picks a branch is an ordinary
@@ -1142,7 +1142,7 @@ at compile time:
 - A **generic class** exists only for the values a program gives it, and each of its functions is compiled for one
   set of values only when surviving code calls it; a [constraint](#constraining-what-a-generic-accepts) is checked
   by the compiler and emits nothing.
-- A **function that takes a `type`** or a union (`Anything` included) is compiled once for each class that reaches it, and a
+- A **function that takes a `type`** or a union is compiled once for each class that reaches it, and a
   value whose class is known only at run time picks its copy by a `switch` over the classes the program admits to
   that `type` ([values_and_types.md](values_and_types.md#inline-types-and-duck-typing)). A class that
   never reaches the function has no copy of it.

@@ -499,7 +499,7 @@ creature.class == Fish { }` the block is compiled once per class, each copy with
 the way a function taking a union is copied per argument type. A use is refused only where one of those classes
 does not fit it, with the words that class gets alone (`a Fish cannot be used where an Integer is needed: ...`), so
 `var shown: String = value` inside `if value.class == String or value.class == Integer` compiles, since both cast to
-text. An `Anything` narrows the same way. The `else` and anything mixed into the `or` (a test of another value, a
+text. A value held through a `type` narrows the same way. The `else` and anything mixed into the `or` (a test of another value, a
 comparison) narrow nothing.
 
 A generic class is named with its codegen values and no parentheses: `found.class == Storage<Health>`, or
@@ -559,7 +559,7 @@ true: test for one of the classes it holds`). The rules for class tests are with
 ```gdscript title=codegen_class_test_doc/find.spite
 generic $wanted_type
 
-func first(items: List<Anything>): $wanted_type? {
+func first(items: List<CodegenClassTestDoc.Shown>): $wanted_type? {
     var index = 0
     var found: $wanted_type? = null
     while index < items.count() {
@@ -573,10 +573,14 @@ func first(items: List<Anything>): $wanted_type? {
 }
 ```
 ```gdscript title=codegen_class_test_doc/codegen_class_test_doc.spite entry
+type Shown {
+    to_debug: Spite.Function<String>
+}
+
 var console = Console()
 
 func CodegenClassTestDoc() {
-    var items = List<Anything>()
+    var items = List<Shown>()
     items.append("hello")
     items.append(42)
     var find_text = Find<String>()

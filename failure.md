@@ -52,7 +52,7 @@ func find_target(): Monster? {
 ```
 
 A `T?` must be **narrowed** before a member is read, a function is called on it, it is printed, or it is passed
-where a plain value is wanted, a `type` or `Anything` included. There is no
+where a plain value is wanted, a `type` included. There is no
 `value == null`: comparing against `null` is an error naming the forms below:
 
 ```gdscript title=null_comparison_error/null_comparison_error.spite entry error
@@ -1055,7 +1055,7 @@ the answer goes nowhere, is a compile error. The library answers what the outsid
 not land is `false`, a file that is not there is `null`) and leaves the decision to the program, which uses the
 answer: keeps it, passes it, returns it, compares it, or at least writes `fallback` to carry on without it or
 `crash` when its absence is a bug. One call may stand alone: `call.call()` of a `Spite.Call` known only at run
-time, whose `Anything?` is `null` for a function that answers nothing
+time, whose answer is `null` for a function that answers nothing
 ([reflection.md](reflection.md#a-call-built-before-it-runs)).
 
 ```gdscript title=dropped_answer_error/dropped_answer_error.spite entry error

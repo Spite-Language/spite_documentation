@@ -293,12 +293,12 @@ A **count** is an unsigned LEB128 varint: seven bits per byte, low bits first, t
 the last, so a count below 128 is one byte.
 
 Anything else a class holds (another class, a list of lists, a dictionary of classes) is one of these again,
-so each writer and reader goes as deep as the class does. A `union` (`Anything` included), a `type` or a function
+so each writer and reader goes as deep as the class does. A `union`, a `type` or a function
 value anywhere in what they see has no form in either, and making one is a compile error at your line, naming the
 attribute: `JsonWriter cannot write 'Owner': 'Owner.pet' is the union Pet, and JSON does not say which member a
 value is`, or `BinaryReader cannot read 'Owner': 'Owner.pet' is the union Pet, and the bytes do not say which
-member a value is`. A `type`, `Anything` or a function value is refused the same way, with a reason that ends
-`has no JSON form` or `has no binary form` (`'Owner.held' is an Anything, which has no JSON form`). The compiler looks everywhere the walk goes (through a `T?`, a list's
+member a value is`. A `type` or a function value is refused the same way, with a reason that ends
+`has no JSON form` or `has no binary form`. The compiler looks everywhere the walk goes (through a `T?`, a list's
 elements, a dictionary's values and every attribute of every class it reaches) and names the attribute that holds the
 trouble, `Owner.pet`, so a union inside a list is found where the list is. Keep what they see to the types in this
 table.

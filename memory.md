@@ -62,7 +62,7 @@ original label b
 `==` on two class instances calls the class's `equals`
 ([functions_and_operators.md](functions_and_operators.md#every-operator-is-a-function)): one the class declares, or
 the one every class without it is given, which compares each attribute with its own `==`, so a copy equals its
-original. A value typed by a `type`, a union or `Anything` compares through the class it holds, never by which object
+original. A value typed by a `type` or a union compares through the class it holds, never by which object
 it is. `a === b` asks whether two names hold the very same object; write it only where that is
 what you mean, since it keeps the compiler from sharing a copy with its original. A `String` always compares by
 content.

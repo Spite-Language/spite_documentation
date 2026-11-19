@@ -470,7 +470,7 @@ the function that takes the items one by one. A function walks a list when its w
 build. So `shelf.add_all([face])`, with this `add_all`, costs what the call `add(face)` costs:
 
 ```spite
-func add_all(items: List<Anything?>) {
+func add_all(items: List<Face>) {
     items.each(add)
 }
 ```
@@ -678,7 +678,7 @@ func built(): Panel {
 }
 ```
 
-`Panel` declares `var children = List<Anything>()`, but `built` assigns `children` before anything reads `panel`,
+`Panel` declares `var children = List<Note>()`, but `built` assigns `children` before anything reads `panel`,
 so the panel is made without its default list. A tag is written this way, so `<Panel><Note/></Panel>` makes one
 list, not two. It applies to each attribute assigned on a local in the statements right after the local's making,
 in the same block, before any statement that reads the local, when its constructor does not read that attribute or

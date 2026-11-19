@@ -272,7 +272,7 @@ A `Spite.Attribute` kept in a `var` given once from such an index, `var bound = 
 has that attribute's own type, the field as it was when `bound` was made, as a `Spite.Attribute` holds it. A literal
 name answers a `Spite.Attribute?`, so prove `bound` present first (`crash bound`). A `var` assigned again, one given
 any other value, or a `Spite.Attribute` handed in as a parameter is any attribute, and its `.value` is an
-[`Anything?`](functions_and_operators.md#anything-and-plain-values-where-a-type-is-wanted) holding what every
+value [the compiler fills](functions_and_operators.md#plain-values-where-a-type-is-wanted) with what every
 attribute that reaches a `Spite.Attribute` holds.
 
 ```gdscript title=kept_attribute/shelf.spite
@@ -366,7 +366,7 @@ run time is a real object, and `call()` halts, naming what it found, when the in
 declares the function, or when an argument is missing, of another type than the parameter's (a number, a `String`,
 an enum, an object, a nullable one, a `type` or a union), `null` for a parameter that is not nullable, or one the
 function does not have (the first extra key
-in the order they were filled, and the names it does take, or "it takes no arguments"). A parameter typed `Anything` or a `type`
+in the order they were filled, and the names it does take, or "it takes no arguments"). A parameter typed by a `type`
 holds the classes the program writes into `call.arguments`, numbers and enums included (`said: Shown` takes `3`,
 `2.5` and `'blue'`), and only those: a class nothing passes is never asked to fit how the function uses the
 parameter. A function that uses a
@@ -374,15 +374,15 @@ parameter as a type (`Binding<part>()`) exists only as the copies a walk makes, 
 halts naming that argument, and nothing else about it is built for run time: such a walk folds wherever it is
 reached, below a test function too. `call.call()` answers what
 the function answers: typed from the declaration when the function is named in the code (`var worth = call.call()` is
-an `Integer` for `func worth(): Integer`), and an `Anything?` when the call is known only at run time, the value itself
+an `Integer` for `func worth(): Integer`), and a value the compiler fills with what the function can answer when the call is known only at run time, the value itself
 (a number keeps its class) or `null` for a function that answers nothing; that one answer may be left unused, so
 `call.call()` on a line of its own runs a function that answers nothing. A function value it answers comes back as
-a `Spite.Function`, as any function value does where `Anything` is wanted. `call.arguments` is a
-`Dictionary<String, Anything?>`, so `call.arguments["count"] = null` fills the argument with `null`: a nullable
+a `Spite.Function`, as any function value does where a `type` is wanted. `call.arguments` holds a value or `null`
+under each name, so `call.arguments["count"] = null` fills the argument with `null`: a nullable
 parameter (`count: Integer?`, `badge: Badge?`, `word: String?`) takes it, and `count: Integer` halts that it is not
 an Integer. A parameter that takes a function value is given the function bound to its object,
 `call.arguments["change"] = doubler.functions["doubled"]`, and `call()` halts when its signature is another. Calling a class known only at run time
-makes an object of it, typed `Anything`, wherever the class object is held: `part()` with `part: Spite.Class`, an
+makes an object of it, of the classes the compiler can make there, wherever the class object is held: `part()` with `part: Spite.Class`, an
 attribute `kind()`, or a member read, `thing.class()` or `argument.class()`. It halts, saying why, for the program's
 entry class (made once when the program starts) and for a class whose constructor takes arguments: write the
 class's name where the compiler can see it to make one of those.
@@ -409,7 +409,7 @@ always means one thing.
 A class name given where a `Spite.Class` is wanted (an argument, a `var` declared `Spite.Class`, a `return`) is
 its class object, and `==` between a `Spite.Class` and a class name compares the two objects. Anywhere else a bare
 class name is the error that says to write `Health()`, since making one is nearly always what was meant, and
-`var kind = Health` with no type is that error too, as is an argument whose parameter is a `type` or `Anything`
+`var kind = Health` with no type is that error too, as is an argument whose parameter is a `type`
 (a file is a class named after the file, so `class Health {` at the top of one is "there is no 'class' keyword"):
 
 ```gdscript title=passing_a_class/ui/pressed.spite
@@ -423,8 +423,12 @@ func amount(): Integer {
 }
 ```
 ```gdscript title=passing_a_class/passing_a_class.spite entry
+type Component {
+    to_debug: Spite.Function<String>
+}
+
 var console = Console()
-var components = List<Anything>()
+var components = List<Component>()
 
 func PassingAClass() {
     var health = Health()
@@ -439,7 +443,7 @@ func PassingAClass() {
 }
 
 func remove_component(component_class: Spite.Class) {
-    var kept = List<Anything>()
+    var kept = List<Component>()
     var index = 0
     while index < components.count() {
         var component = components[index]
@@ -582,7 +586,6 @@ the code, the way a class name is written for a `Spite.Class`:
 | a `type` the code can name, `Named` | a class with each of its members, typed as the type says ([values_and_types.md](values_and_types.md#inline-types-and-duck-typing)) |
 | a union the code can name, `Pet` | each of its member classes |
 | a class, `Monster` or `List<Integer>` | that class, its generic arguments included |
-| `Anything` | every class |
 | `Number` | a class answering a number's operators: every number class, `Byte` to `Double`, and a program's own |
 
 `Number` is the compiler's own `type`, the operators a number answers: `sum`, `subtract`, `multiply`, `divide` and
@@ -626,7 +629,7 @@ troll 20 5
 ```
 
 The copy of `double` compiled for `name` has no `if` and no multiplication; the copies for `health` and `speed` are
-the multiplication alone. Asked of a class known only at run time, `value.class` through `Anything`, it is an error
+the multiplication alone. Asked of a class known only at run time, `value.class` of a value reflection reads, it is an error
 that says so (`'held.class.satisfies_type(...)' is answered while compiling, and 'held.class' is a class known only
 at run time: ask it of a class named in the code or walked from one`), and so is an argument that is not a type's
 name.
@@ -762,10 +765,10 @@ Mirrored 3 1
 
 A `Spite.Type` answers `.name`, `.name_with_namespaces` and `.owner`.
 
-The language's own unions are read by their names. `Anything.members` lists every class of the program, the same classes
-as `Spite.Class.instances`, keyed by their names with namespaces, and `Anything.members.each(visit)` walks them while
-compiling like any union's members; `Nothing.members` is empty. Their `.name_with_namespaces` is their plain name
-(`Anything`), and their `.owner` is the library's `Spite` class.
+The language's own empty union is read by its name: `Nothing.members` is empty, its `.name_with_namespaces` is its
+plain name (`Nothing`), and its `.owner` is the library's `Spite` class. There is no union of every class
+([values_and_types.md](values_and_types.md#every-place-names-what-it-holds)): `Spite.Class.instances` lists the classes
+of the program.
 
 ### `Spite.FunctionDeclaration`
 
@@ -776,7 +779,7 @@ object, so nothing in it can be called by itself.
 |---|---|---|
 | `.name` | the function's name | `alive.name` is `alive` |
 | `.arguments` | a `List<Spite.Argument>`, in order | `hurt.arguments[0].name` is `amount` |
-| `.returns` | exactly the answer it declares: a `Spite.Class` for a class (`Integer?` too), a `Spite.Union` for a union, for `Anything` and for `Nothing` (the empty union, also when none is declared), a `Spite.Type` for a `type`. `.name` and `.name_with_namespaces` are read on any of them, and `declared.returns == Integer` or `== Nothing` compares it | `alive.returns` is `Boolean` |
+| `.returns` | exactly the answer it declares: a `Spite.Class` for a class (`Integer?` too), a `Spite.Union` for a union and for `Nothing` (the empty union, also when none is declared), a `Spite.Type` for a `type`. `.name` and `.name_with_namespaces` are read on any of them, and `declared.returns == Integer` or `== Nothing` compares it | `alive.returns` is `Boolean` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
 | `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |
@@ -805,10 +808,11 @@ whether an attribute's class is a singleton is `attribute.class.is_singleton`, n
 
 #### A function value is a `Spite.Function`
 
-A function value is an instance of `Spite.Function`, so it fits `Anything` (and any `type` whose members
-`Spite.Function` has) like any other object. Named where it is made (`var held: Anything = shout`), it is the bound
+A function value is an instance of `Spite.Function`, so it fits any `type` whose members `Spite.Function` has
+(`type Shown { to_debug: Spite.Function<String> }`) like any other object. Named where it is made
+(`var held: Shown = shout`), it is the bound
 function above. Read from a place that only holds it at run time, such as an attribute
-`var on_press: Spite.Function<Nothing>? = null` walked through `fresh.attributes` with `fresh: Anything`, it is the
+`var on_press: Spite.Function<Nothing>? = null` walked through `fresh.attributes` with `fresh: Shown`, it is the
 same `Spite.Function` as if it were named there: the compiler knows every function the program takes as a value, finds
 the one held by its signature and its address, and answers its declaration and its owner. A function's name is its
 declaration's, so `.name` is never empty. A `null` there stays `null`.
@@ -818,8 +822,8 @@ declaration's, so `.name` is never empty. A `null` there stays `null`.
 | Member | Answers | Example |
 |---|---|---|
 | `Spite.Call(declaration, instance)` | a call of a `Spite.FunctionDeclaration` on an instance of its class, nothing run yet | `Spite.Call(MoveSystem.functions["run_each"], system)` |
-| `.arguments` | its arguments by name, a `Dictionary<String, Anything?>`, each written once before the call runs; `null` fills a nullable parameter | `call.arguments["position"] = position` |
-| `call()` | runs it, answering what the function answers: its own type when the function is named in the code, `Anything?` when known only at run time (`null` when it answers nothing) | `var shown = call.call()` |
+| `.arguments` | its arguments by name, each a value or `null`, written once before the call runs; `null` fills a nullable parameter | `call.arguments["position"] = position` |
+| `call()` | runs it, answering what the function answers: its own type when the function is named in the code, a value the compiler fills with what it can answer when known only at run time (`null` when it answers nothing) | `var shown = call.call()` |
 
 ### `Spite.Argument`
 
@@ -908,7 +912,7 @@ writes: position, trail
 ```
 
 A function known only at run time answers the same lists: one kept in a list and read later, a function value
-like `movement.remember`, or one read from `value.class.functions` through `Anything`. The program carries what
+like `movement.remember`, or one read from `value.class.functions` of a value known only at run time. The program carries what
 each function reads and writes only when some code asks `.reads` or `.writes` of such a function. The functions of
 the program and the packages it loads answer; a function of the standard library, a function value taken through a
 `type` (which has no single function behind it) and any function in a `--hot-reload` build, where reloading would
@@ -1100,9 +1104,9 @@ when something calls it with an object known at run time or takes it as a value.
 
 ## Known only at run time
 
-A value typed `Anything` or a union, a reflection object kept in an attribute and read later, and everything typed
-at the REPL prompt are only known at run time. Reflection still answers them, from tables the program builds only
-for the classes such a read can reach, and there `attribute.value` is an `Anything?`: the value itself (a number
+A value typed by a `type` or a union whose class is not known in its copy, a reflection object kept in an attribute
+and read later, and everything typed at the REPL prompt are only known at run time. Reflection still answers them, from tables the program builds only
+for the classes such a read can reach, and there `attribute.value` is a value the compiler fills with what the attributes hold: the value itself (a number
 keeps its class, held with its class's tag, and text is boxed), `null` only when the attribute holds `null`. Its text is `.value.to_string()`,
 and narrowed by its class (`if found.value.class == Boolean`), `.value` is that number itself: `found.value.to_string()`
 answers what the `Boolean`'s own `to_string()` answers.
@@ -1116,8 +1120,12 @@ var speed = 3
 var target: Health? = null
 ```
 ```gdscript title=attribute_objects/attribute_objects.spite entry
+type Component {
+    to_debug: Spite.Function<String>
+}
+
 var console = Console()
-var components = List<Anything>()
+var components = List<Component>()
 
 func AttributeObjects() {
     var player = Player()
@@ -1125,7 +1133,7 @@ func AttributeObjects() {
     components.each(show_component)
 }
 
-func show_component(component: Anything) {
+func show_component(component: Component) {
     var described: String = component.class
     if component.class == Health {
         described = "Health {component.amount}"
@@ -1133,7 +1141,7 @@ func show_component(component: Anything) {
     console.print(described)
 }
 
-func add_every_attribute(bundle: Anything) {
+func add_every_attribute(bundle: Component) {
     var attributes = bundle.attributes
     attributes.each(add_value)
 }
@@ -1149,16 +1157,16 @@ Integer
 ```
 
 Such an attribute is written as well as read: `attribute.value = given` is `attribute.set_value(given)`, which writes
-the owner's field, so a program can copy every attribute of one object onto another it only holds as an `Anything`.
+the owner's field, so a program can copy every attribute of one object onto another it only holds through a `type`.
 It is the assignment it desugars to, with no rule of its own, judged at the write's line with the assignment's words:
 the value meets the attribute's class exactly as in `owner.field = given` on its own line (an `Integer` into a `Float`
 attribute, into a `String` attribute any class with its own `to_string()` and an enum, by its name, a function value
-into a function attribute of the same type, `null` into a nullable one). The value an `Anything` holds keeps its class
+into a function attribute of the same type, `null` into a nullable one). The value read from an attribute keeps its class
 but not its range, so a number that may not fit is narrowed as an assignment narrows a number nothing bounds
 ([values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed)): a `Float` or a `Long` written
 into an `Integer?` attribute is `null` when it does not fit, and into a plain `Integer` it is refused, a written `2.5`
 or `3` too, with `this value is a Float, which may not fit in an Integer: write 'var converted: Integer? = value' on
-its own line, ...`. A value that may be null (a `String?`, an `Anything?`) into an attribute that is not nullable is
+its own line, ...`. A value that may be null (a `String?`, an `attribute.value`) into an attribute that is not nullable is
 refused as `thing.label = maybe` is (`this value may be null (it is a String?), but a String is needed: narrow it first
 ...`), and so is a conversion that answers `Feet?` into a plain `Feet` attribute, while a number that may be null is
 0 when it is null, as `thing.count = maybe` is
@@ -1167,15 +1175,13 @@ into an attribute that is not nullable is `'null' is given where an Integer is n
 references are kept as an assignment keeps them, and a private attribute is neither listed nor written, as it is not
 read.
 
-The compiler decides the cast while compiling. It knows the classes that reach `given` (an `Anything` holds only the
-classes that reach it) and the attributes the write can reach: the one `.attributes["whole"]` names, written in the
+The compiler decides the cast while compiling. It knows the classes that reach `given` (a `type` parameter is copied for
+each class that reaches it) and the attributes the write can reach: the one `.attributes["whole"]` names, written in the
 write or in the local it reads, through a listing kept in a local (`var attributes = held.attributes`, then
 `attributes["whole"]`) or by a declaration's name (`held.attributes[declaration.name]`), the ones a list written in
 place names (`var chosen = [held.attributes["whole"], held.attributes["label"]]`, then `chosen[index]`), or else every
 attribute the program lists at run time. A local listing or list is followed only while it is read by `[ ]` and never
-changed. A value written into an `Anything` attribute adds its class to that attribute's own `Anything`, as an
-assignment would, so printing the attribute later asks `to_string` of the classes written there and of no
-other. A class no conversion of the attribute's class takes is an error at the write's line, naming the class and the
+changed. A class no conversion of the attribute's class takes is an error at the write's line, naming the class and the
 attribute: `set_value() gives 'Meter.whole' a Gadget, which is not an Integer and which no conversion of Integer
 takes, so it cannot be cast the way an assignment would cast it`. A write that can reach several attributes writes one
 known only while running, so it is judged against all of them: it is refused when none takes a class reaching it as an
@@ -1207,7 +1213,7 @@ func AttributeCopies() {
     console.print(target.ratio)
 }
 
-func copy_every_attribute(source: Anything, target: Anything) {
+func copy_every_attribute(source: Button, target: Button) {
     var from = source.attributes.values()
     var into = target.attributes
     var index = 0
@@ -1225,20 +1231,24 @@ go 3 1.5
 2
 ```
 
-`Anything` is the language's union the compiler fills with the classes that reach each place, so a function that
-takes any object says `component: Anything`. What needs a constant says so while compiling: a function whose result is typed by its
+A function that takes any object names what it uses, `component: Component` with a `type Component` of it
+([values_and_types.md](values_and_types.md#every-place-names-what-it-holds)). What needs a constant says so while compiling: a function whose result is typed by its
 reflection parameter cannot be handed an object known only at run time.
 
 ```gdscript title=run_time_type/gadget.spite
 var power = 3
 ```
 ```gdscript title=run_time_type/run_time_type.spite entry error
+type Shown {
+    to_debug: Spite.Function<String>
+}
+
 var console = Console()
 
 func RunTimeType() {
     var gadget = Gadget()
-    var anything: Anything = gadget
-    var attributes = anything.attributes
+    var shown: Shown = gadget
+    var attributes = shown.attributes
     var first = attributes.values().first()
     crash first
     var made = fresh(first)

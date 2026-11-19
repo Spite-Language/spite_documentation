@@ -118,7 +118,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it. Find classes by walking,
   never by registering them: `Spite.Class.instances.each(bind)`, `Theme.classes.each(bind)` and
   `window.register_namespace(Theme)` each make a copy of the walker per class, where the class is a type
-  (`Binding<part>()`, `value.class == part` narrows). On an object known only at run time (`held: Anything`),
+  (`Binding<part>()`, `value.class == part` narrows). On an object known only at run time (`held: Shown`, an item of a `List<Shown>`),
   `held.attributes` hands bound `Spite.Attribute`s whose `.value` is read and written: `destination.value =
   attribute.value` copies a field by the assignment rules it desugars to, judged at that line with the assignment's
   words (the held value has no range: a decimal or wider number into a plain whole-number field is refused, into a
@@ -207,23 +207,26 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   with `func size(given: Integer): Thing`); otherwise write it, `var base: Thing = ...`.
 - A `[` on a new line starts a list literal, never an index into the line above: `[Root].each(registry.register)`
   is a statement of its own.
-- `Anything` is a union the compiler fills: each attribute, parameter, answer or local written `Anything` holds only
-  the classes that reach it, so printing a `Spite.Attribute`'s `.value` asks `to_string()` only of what the
-  attributes held, and a hole `"{value}"` on an `Anything`, like `value.to_string()`, is refused unless every class
-  reaching it has its own `to_string()`, as on any union. An `Anything?` holding none shows `null` when printed,
-  debugged or put in a hole, even when no class ever reaches it. Each `List<Anything?>` (or `Anything` in a function type)
-  written is its own place too: a list of crates does not stop printing a list of gauges, unless one is passed into
-  the other's place. `troll.attributes[declaration]` is troll's `Spite.Attribute`
+- Every place names what it holds: an attribute, a parameter, an answer, a local and a generic's value are a class, a
+  union of classes, a `type` of what the value is used through, or a `$name`. `Anything` is not part of Spite and
+  writing it is an error naming the place (`'Anything' is not a type: say what the parameter 'held' holds, ...`); a
+  `type` or union with no members is an error too (only `Nothing` is empty). For "any object" write a `type` of what
+  you use: every class answers `to_debug()`, so `type Shown { to_debug: Spite.Function<String> }` takes any object,
+  numbers too, and a component is a `Component`. `Spite.Class.instances` lists the program's classes. A value reflection
+  reads at run time (`attribute.value`, a run-time `call()`) is a union the compiler fills with what reaches it, so
+  printing a `Spite.Attribute`'s `.value` asks `to_string()` only of what the attributes held, and a hole on it, like
+  `value.to_string()`, needs each class reaching it to have its own (`'Crate' does not fit type 'Printable': it has no
+  function 'to_string'`); one holding none shows `null`. `troll.attributes[declaration]` is troll's `Spite.Attribute`
   everywhere, in a walk or a template too: read and write the field through `.value`
   (`copy.attributes[attribute].value = price.attributes[attribute].value`); any other declaration as the key, in a
   walk too, must be of troll's own class and kept in a `var` given once, and `troll.attributes[health].value` read
   straight off it is troll's `health` with its own type (an `Integer` adds and prints), as is `.value` off a proven
   literal name (`crash troll.attributes["health"]` first; unproven, `+` or a call on that `.value` is refused as
   "may be missing ... narrow it first") and off a `Spite.Attribute` kept in a `var` given once from
-  either (`var bound = troll.attributes[health]`, the field as it was then); one assigned again or handed in is an
-  `Anything?`. Inside its own class it is bare,
+  either (`var bound = troll.attributes[health]`, the field as it was then); one assigned again or handed in holds
+  what any attribute reaching it holds. Inside its own class it is bare,
   `attributes[declaration]`, as for its own attributes (`this.attributes` is refused). `troll[attribute]` is `troll.get_at(attribute)` there too, refused on a class without `get_at`.
-- A function taking a `union` or a `type`, or a generic of one (`List<Anything>`, `List<Named>`), is compiled once per
+- A function taking a `union` or a `type`, or a generic of one (`List<Shown>`, `List<Named>`), is compiled once per
   argument type a call hands it, and each copy is checked as if written for that type: `shown(healths)` with a
   `List<Health>` compiles while the body only does what a `List<Health>` can, and `items.append(sword)` in it is
   `a Sword cannot be used where a Health is needed: ..., in its copy for (List<Health>) that the call at line 3 in
@@ -241,7 +244,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `Price` has a `to_string()` (then it compares as text). Never expect a comparison across types to be `false`.
 - Every class has `equals`: one without its own compares every attribute with that attribute's `==` (private ones
   too, back references such as `parent` included; cycles never loop), so two `Point(1, 2)` are equal, a deep copy
-  equals its original, and `list.contains(item)` finds an equal item. A value typed by a `type`, a union or `Anything`
+  equals its original, and `list.contains(item)` finds an equal item. A value typed by a `type` or a union
   compares through the class it holds: the same class calls its `equals`, different classes are not equal, two `null`s
   are equal and `null` never equals a value. Two function values are equal when they are the same function on equal
   owners (`reader.changed == other_reader.changed` asks `reader == other_reader`; another function is never equal),
@@ -258,13 +261,13 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class
   named like the folder); the other classes of that namespace write `Bunda.Pet`, a class outside it
   `Bunda.Bunda.Pet`, and only the entry class writes `Pet`.
-- A union lists classes directly: a `type`, another union or `Anything` as a member is an error at its line. Write the
+- A union lists classes directly: a `type` or another union as a member is an error at its line. Write the
   inner union's classes into the outer one; for a `type`, list the classes that fit, or take the `type` itself where
   any class that fits will do (a function taking one is copied per class). Every member
   error points at the member's own line, and a union in a generic class nothing makes is checked all the same.
 - Name another class's union or `type` through its class, never bare and never by declaring a copy: `Sibling.Type` in
   the same namespace, `Namespace.Class.Type` from elsewhere (`func shown(component: Framework.Component)`). It compiles
-  exactly as a copy declared in your own class would, so a shared `type` serves where `Anything` was a stand-in.
+  exactly as a copy declared in your own class would, so a shared `type` serves wherever several classes meet.
 - A class of the file's own namespace is written plain, never through that namespace: inside `sidebar/`,
   `Picker()`, `List<Picker>`, `Picker.Mode`, `<ClassPicker/>`. `Sidebar.Picker` there is rewritten to `Picker` with a
   `fixed:` line, unless the class itself declares a `Picker` (then the path is what tells them apart).
