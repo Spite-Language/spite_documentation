@@ -170,15 +170,18 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
   children) are plain references: the compiler finds the back reference and frees the cycle. Keep the back
   attribute nullable (`var parent: Parent? = null`), set where the child is made or stored (through any number of
-  calls and attributes); it may hold a union or a `type` when every class it may hold keeps the child the same way.
-  Two objects made side by side and linked to each other directly are freed when neither leaves that function, through
-  one `partner` attribute both ways too (the compiler clears the slot that closed the cycle as the names go, so that
-  `drop()` sees `null`); when one leaves it, another function links them, or a function that calls itself links the
-  pair one attribute deeper each call (`pair_down(link.next, second)`), the pair leaks until one side is cleared. An
-  attribute whose default names its own function (`var act: Spite.Function<Nothing> = rest`) is freed with its object
-  when it is only called, narrowed or set to `null`; `copy()` binds the copy's value to the copy. Freeing takes no
-  stack per level: a structure a million levels deep frees wherever its depth is (first child, `left`, last link), so
-  build it the way that reads best.
+  calls and attributes); it may hold a union or a `type` when every class it may hold keeps the child the same way. A
+  plain `var parent: Parent` frees only when no child outlives its parent: made by it (`Child(name, this)`), kept only
+  in its list, used only while the parent is held by `this`, a parameter or an outer-block local never assigned again;
+  never returned, stored elsewhere, copied or handed to a function value, and neither class's `drop()` reads the list
+  or `parent`. Anything else leaks. Two objects made side by side and linked to each other directly are freed when
+  neither leaves that function, through one `partner` attribute both ways too (the compiler clears the slot that
+  closed the cycle as the names go, so that `drop()` sees `null`); when one leaves it, another function links them, or
+  a function that calls itself links the pair one attribute deeper each call (`pair_down(link.next, second)`), the
+  pair leaks until one side is cleared. An attribute whose default names its own function (`var act:
+  Spite.Function<Nothing> = rest`) is freed with its object when it is only called, narrowed or set to `null`;
+  `copy()` binds the copy's value to the copy. Freeing takes no stack per level: a structure a million levels deep
+  frees wherever its depth is (first child, `left`, last link), so build it the way that reads best.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
 - An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
   with one; nothing may read it before the constructor gives it (no earlier line, called function, `this` or

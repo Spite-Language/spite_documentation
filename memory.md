@@ -728,11 +728,13 @@ attribute both ways are freed the same way, below. Some cycles keep their counts
 which side outlives the other: such a pair where one of them leaves its function (`return answer`), a pair linked
 both ways through one attribute by another function (`first.join(second)` beside `second.join(first)`), a pair one
 of whose attributes a function that calls itself stores one attribute deeper on each call (`pair_down(link.next,
-second)`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
+second)`), and a back attribute that cannot be null, unless no child outlives its parent
+([below](#a-parent-that-cannot-be-null)). A back attribute may hold a union or a `type`
 (`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
 each class of the union, or for a `type` each class of the program that declares all of its members, so one class
-that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`).
-There is no `Weak<T>` to write, and naming one is an unknown-type error.
+that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`):
+that one is freed however the children are used. There is no `Weak<T>` to write, and naming one is an unknown-type
+error.
 
 ### Two objects linked both ways through one attribute
 
@@ -785,6 +787,89 @@ the pair is gone
 
 A pair linked by calls of another function, made in two blocks, held under a second name, or one of whose objects
 leaves its function keeps its counts and leaks, which `--debug-memory` names; clear one side when you are done.
+
+### A parent that cannot be null
+
+A back attribute may be a plain `Parent`, set by the constructor and never `null`. It has no `null` to answer once
+its parent is freed, so the compiler frees such a family only when it proves that no child outlives its parent:
+the parent makes each child with `Child(name, this)` and keeps it only in its own list, and every function of the
+program uses a child only while the parent it was read from is still held by `this`, a parameter, or a local of the
+function's outer block that is never assigned again. Within that, a child can be kept in a local, read, called,
+compared, narrowed, handed to your own functions, and the list read by index, `first()`, `last()`, `remove_first()`,
+`remove_last()`, walked by `each` and the like with a function that takes a child, searched, counted or cleared. When
+the last holder of the parent goes, its `drop()` runs, then each child's, in the list's order.
+
+```gdscript title=parent_without_null_doc/parent.spite
+var console = Console()
+var children = List<Child>()
+var name: String
+
+func Parent(new_name: String) {
+    name = new_name
+}
+
+func adopt(child_name: String) {
+    var child = Child(child_name, this)
+    children.append(child)
+}
+
+func drop() {
+    console.print(name, "is freed")
+}
+```
+```gdscript title=parent_without_null_doc/child.spite
+var console = Console()
+var parent: Parent
+var name: String
+
+func Child(new_name: String, new_parent: Parent) {
+    name = new_name
+    parent = new_parent
+}
+
+func describe(): String {
+    return "{name} of {parent.name}"
+}
+
+func drop() {
+    console.print(name, "is freed")
+}
+```
+```gdscript title=parent_without_null_doc/parent_without_null_doc.spite entry
+var console = Console()
+
+func ParentWithoutNullDoc() {
+    visit()
+    console.print("the family is gone")
+}
+
+func visit() {
+    var parent = Parent("ada")
+    parent.adopt("grace")
+    parent.adopt("linus")
+    parent.children.each(introduce)
+}
+
+func introduce(child: Child) {
+    var described = child.describe()
+    console.print(described)
+}
+```
+```output
+grace of ada
+linus of ada
+ada is freed
+grace is freed
+linus is freed
+the family is gone
+```
+
+Anything else keeps the counts, and every family of those classes leaks, which `--debug-memory` names: a child
+returned, stored in an attribute or in a list of its own, bound in or handed to a function value, or carried as a
+union or a `type`; the list kept in a local or copied; a child that adds itself to its parent's list; a `copy()` or
+`deep_copy()` of either class; a `drop()` of either class that reads the parent's list or the back attribute, or calls
+a function of its own class. One such use anywhere in the program keeps the attribute counted everywhere, and no child
+is ever freed while something still reads it. When you need any of those, write `var parent: Parent?`.
 
 ## `--debug-memory`
 
