@@ -718,7 +718,8 @@ clear the `T?` field that closes the loop when you are done with it. The compile
 from how the code links its objects: one function that sets `child.parent = owner` and stores the child in the
 owner's list (or in one of its attributes, or in a dictionary) is the link, and so is a pair of functions that
 together do both, however many calls deep and through however many attributes
-(`box.inner.deeper.deepest.first.beta = second` in a called function). The owner's list may hold a union or a `type` the child belongs to
+(`box.inner.deeper.deepest.first.beta = second` in a called function), a function that calls itself one attribute
+deeper each call (`pair_down(link.next, second)`) included. The owner's list may hold a union or a `type` the child belongs to
 (`List<Entry>` with `union Entry { File Folder }`). A function whose name two classes declare is followed into the
 one of the receiver's class, when that class is known: `this`, a parameter, an object made in the function, or an
 attribute of one of these. A singleton or a generic class is never part of that link. Two objects made side by side
@@ -726,9 +727,9 @@ and then linked to each other directly (`question.answer = answer` beside `answe
 when neither leaves the function that made them: the one made later points back. Two such objects linked through one
 attribute both ways are freed the same way, below. Some cycles keep their counts and leak, since nothing proves
 which side outlives the other: such a pair where one of them leaves its function (`return answer`), a pair linked
-both ways through one attribute by another function (`first.join(second)` beside `second.join(first)`), a pair one
-of whose attributes a function that calls itself stores one attribute deeper on each call (`pair_down(link.next,
-second)`), and a back attribute that cannot be null, unless no child outlives its parent
+both ways through one attribute by another function (`first.join(second)` beside `second.join(first)`), a pair a
+function that calls itself may link the other way one attribute deeper (the deeper calls closing a link the
+program also makes the other way round), and a back attribute that cannot be null, unless no child outlives its parent
 ([below](#a-parent-that-cannot-be-null)). A back attribute may hold a union or a `type`
 (`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
 each class of the union, or for a `type` each class of the program that declares all of its members, so one class
