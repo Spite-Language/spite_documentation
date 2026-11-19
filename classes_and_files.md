@@ -907,7 +907,9 @@ Lamp { lit: false, room: "hall" }
 A name starting with `_` is private: it is read, written or called only inside its own class (a reopening of
 the class counts as inside), and using it from anywhere else is an error that names the getter when there is
 one: `'_hidden' is private to 'Secret': a name starting with '_' is used only inside its own class, and 'hidden'
-reads it from outside`. A private function with no getter gets the same error without that last clause. On a parameter, and only there, the prefix says
+reads it from outside`. A private function with no getter gets the same error without that last clause. A
+private attribute's setter and getter are private too, `_set_open(value)` and `_get_open()`, and a bare `_open`
+inside the class goes through them ([functions_and_operators.md](functions_and_operators.md#settergetter-interception)). On a parameter, and only there, the prefix says
 instead that the body ignores it on purpose; a private attribute nothing reads is an error like any other, and
 no spelling silences it ([style.md](style.md#nothing-unused)).
 

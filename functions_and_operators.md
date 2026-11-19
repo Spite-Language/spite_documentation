@@ -697,7 +697,7 @@ false true
 
 ## Setter/getter interception
 
-Attribute access **from outside a class** also goes through operator-style functions. `person.age = 1` calls
+Attribute access also goes through operator-style functions, from outside a class and inside it. `person.age = 1` calls
 `set_age(1)` when the class defines it (an exact function, or a template; see
 [metaprogramming.md](metaprogramming.md)); `person.age` (a read) calls `get_age()` the same way. An exact
 function always wins over a template. Compound assignment goes through both: `person.age = person.age + 1`
@@ -752,11 +752,57 @@ balance 120
 owner BOB
 ```
 
-Inside a class's own functions, a bare `age = 1` (no receiver) stays a plain field write when the class has an
-attribute named `age`: interception only applies to `receiver.field` written from outside. A bare name that no
-local and no attribute holds goes through the class's own `get_<name>()` and `set_<name>(value)`. A getter may compute and hand back a fresh
-`String` or `List` as safely as it returns a field. It costs nothing hidden: an intercepted access is a direct
-call, and every other access a plain field read or write.
+Inside the class's own functions it is the same: a bare `age = 1` calls `set_age(1)` and a bare `age` calls
+`get_age()` when the class declares them, and so does `other.age` on another object of the class. The attribute is
+the storage behind them, which only they reach (like a C# auto-property): inside `set_age` and `get_age` a bare
+`age` reads and writes the attribute itself. A constructor reaches the storage too, since it sets the starting
+values before anything can watch them and a setter that compares with the value it replaces would find none; a
+default (`var age = 3`) is the storage's starting value. A function the constructor calls is not the constructor,
+so its writes run the setter. Only a function the class declares by that name does this: a template answers
+`receiver.field` from outside only. A bare name that no local and no attribute holds goes through `get_<name>()`
+and `set_<name>(value)` as well.
+
+```gdscript title=interception_inside/thermostat.spite
+var changes = 0
+var target: Integer
+
+func Thermostat(starting_target: Integer) {
+    target = starting_target
+}
+
+func set_target(value: Integer) {
+    changes = changes + 1
+    target = value.clamp(10, 30)
+}
+
+func warm_up() {
+    target = target + 15
+}
+```
+```gdscript title=interception_inside/interception_inside.spite entry
+var console = Console()
+
+func InterceptionInside() {
+    var thermostat = Thermostat(25)
+    console.print(thermostat.target, thermostat.changes)
+    thermostat.warm_up()
+    console.print(thermostat.target, thermostat.changes)
+}
+```
+```output
+25 0
+30 1
+```
+
+Every write outside the setter runs it, so a setter that writes another attribute whose setter writes this one
+back is a recursion like any other, reported at run time as a stack overflow. A setter that only stores its
+parameter (`func set_age(value: Integer) { age = value }`) and a getter that only answers the attribute are compiled
+as the plain write and read: they cost nothing and keep what a check proved. A getter may compute and hand back a
+fresh `String` or `List` as safely as it returns a field. An intercepted access is a direct call, which the compiler
+inlines like any small function.
+
+A private attribute's functions are private too: `_open = true` calls `_set_open(true)` and a bare `_open` calls
+`_get_open()`, never `set__open`.
 
 A setter may stand without any attribute behind it: `ticket.id = 4` calls the class's own `set_id(value)` beside a
 private `_id`, and a getter without an attribute answers the read. Only a function the class itself declares does
@@ -859,12 +905,12 @@ is read as `thing.return`. `type` and `singleton` are the exceptions: they are r
 The rule holds on every class (built in, library or your own), through a `type` or a union value (when every
 member offers the operator), and inside the class itself: `negate()` inside `Duration` is refused, write `-this`.
 Inside a class, a bare `set_turns(3)` is refused the same way (`'set_turns' is what writing 'turns' calls: write
-'turns = 3'`), and so is a bare `get_largest()`. The exception is a class with an attribute of that name, or a local
-that hides it: there a bare `turns = 3` writes the attribute itself, so the call is the only way to the setter. A
-bare name that no local and no attribute holds reads through `get_<name>()` and writes through `set_<name>(value)`.
-Two calls are not refused: `get_attribute`/`set_attribute` called with an attribute that is a value, such as one a
-walk hands you, and a getter called with no receiver where the class holds the attribute, since the bare name
-there is the raw field.
+'turns = 3'`), and so is a bare `get_largest()`, whether or not the class has an attribute of that name, since a bare
+`turns = 3` runs the setter. A private one names its own form: `'_set_open' is what writing '_open' calls: write
+'_open = true'`. The exception is where the bare name reaches the storage instead, in a constructor or in the
+other accessor of the same attribute, or where a local hides it, and for a template's `get_age()` beside an attribute `age`: there the call is the only way to the function.
+`get_attribute`/`set_attribute` called with an attribute that is a value, such as one a walk hands you, are not
+refused either.
 
 ## One name, one function
 

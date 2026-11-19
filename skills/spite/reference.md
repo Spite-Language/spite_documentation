@@ -851,7 +851,14 @@ of the standard library or of a repository pinned to a commit is never rewritten
 - A getter with no setter makes a read-only attribute: `get_fahrenheit()` answers `.fahrenheit`, and assigning
   it is an error.
 - `person.age = 1` calls `set_age(1)` and `person.age` calls `get_age()` when the class has them, with or without
-  an attribute named `age` (`get_id()` and `set_id(value)` over a private `_id` make a checked `.id`).
+  an attribute named `age` (`get_id()` and `set_id(value)` over a private `_id` make a checked `.id`). Inside the
+  class it is the same: a bare `age = 1` runs `set_age(1)` and a bare `age` runs `get_age()`, `other.age` too. The
+  attribute is their storage: inside `set_age`/`get_age` and in a constructor a bare `age` reads and writes the
+  attribute itself (a default is its starting value, and a function the constructor calls runs the setter). A setter
+  that only stores its parameter and a getter that only answers the attribute compile to the plain write and read.
+  Two setters that write each other's attribute recurse until the stack overflows. A template (`set_attribute`)
+  answers only from outside. A private attribute's are private: `_open = true` runs `_set_open(true)`, `_open`
+  runs `_get_open()`.
 - Operators are functions a class may define: `sum`, `subtract`, `multiply`, `divide`, `remainder`, `equals`,
   `less_than`, `greater_than`, `negate`, `get_at(index)`, `set_at(index, value)`. Without `equals`, a class is
   given one comparing every attribute in declaration order with its own `==` (private ones included, back
@@ -874,8 +881,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   nothing is there); a plain `T` is an error. A read through your own class is narrowed by what you write (`crash
   shelf[0]`): a loop over `shelf.count()` proves nothing about it. The operator is the only way to call its function:
   `a.sum(b)` is an error saying `write 'a + b'`, and `person.get_age()` / `person.set_age(3)` say to write
-  `person.age` / `person.age = 3`; inside the class a bare `set_turns(3)` is refused the same way when an attribute or
-  local named `turns` exists. Only a function passed as a value (`run_callback(point.get_x)`) is written by name.
+  `person.age` / `person.age = 3`; inside the class a bare `set_turns(3)` or `_set_open(true)` is refused the same
+  way, except in a constructor, in the other accessor of that attribute, or where a local named `turns` hides it. Only a function passed as a value (`run_callback(point.get_x)`) is written by name.
   Functions the compiler calls have fixed shapes: `func drop()`, `func to_string(): String`, `func to_debug():
   String`, `func equals(other: ThisClass): Boolean`, `less_than`/`greater_than(other: ThisClass): Boolean`; another
   signature is an error that writes the one it must have.
