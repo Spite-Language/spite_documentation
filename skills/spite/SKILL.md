@@ -179,9 +179,12 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   never returned, stored elsewhere, copied or handed to a function value, and neither class's `drop()` reads the list
   or `parent`. Anything else leaks. Two objects made side by side and linked to each other directly are freed when
   neither leaves that function, through one `partner` attribute both ways too (the compiler clears the slot that
-  closed the cycle as the names go, so that `drop()` sees `null`); when one leaves it, another function links them, or
-  a function that calls itself links the pair the other way one attribute deeper, the pair leaks until one side is
-  cleared. A function that calls itself one attribute deeper each call (`pair_down(link.next, second)`) links a pair
+  closed the cycle as the names go, so that `drop()` sees `null`), and so is a pair where one is reached through an
+  attribute of an object the function made (`last.first`) and the other is held by an outer-block `var`, even when
+  another function links them, as long as nothing the function made leaves it and that function is called nowhere
+  else (the one reached through the attribute points back); when one leaves it, another function called from
+  elsewhere too links them, or a function that calls itself links the pair the other way one attribute deeper, the
+  pair leaks until one side is cleared. A function that calls itself one attribute deeper each call (`pair_down(link.next, second)`) links a pair
   like any other function. An attribute whose default names its own function (`var act:
   Spite.Function<Nothing> = rest`) is freed with its object when it is only called, narrowed or set to `null`;
   `copy()` binds the copy's value to the copy. Freeing takes no stack per level: a structure a million levels deep

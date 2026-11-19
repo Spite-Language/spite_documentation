@@ -724,10 +724,16 @@ deeper each call (`pair_down(link.next, second)`) included. The owner's list may
 one of the receiver's class, when that class is known: `this`, a parameter, an object made in the function, or an
 attribute of one of these. A singleton or a generic class is never part of that link. Two objects made side by side
 and then linked to each other directly (`question.answer = answer` beside `answer.question = question`) are freed
-when neither leaves the function that made them: the one made later points back. Two such objects linked through one
+when neither leaves the function that made them: the one made later points back. So is a pair the function makes
+where one object is reached through an attribute of another it made (`last.first`, an `Alpha` that `Link`'s
+constructor made) and the other is held by a `var` of the function's outer block, linked both ways there or by a
+function it calls (`pair_down(head, second, 2)`), when nothing the function makes leaves it and every call of the
+linking function is one such: the object reached through the attribute points back, so a `drop()` that runs as the
+names go may read its back attribute as `null`. Two such objects linked through one
 attribute both ways are freed the same way, below. Some cycles keep their counts and leak, since nothing proves
 which side outlives the other: such a pair where one of them leaves its function (`return answer`), a pair linked
-both ways through one attribute by another function (`first.join(second)` beside `second.join(first)`), a pair a
+both ways through one attribute by another function (`first.join(second)` beside `second.join(first)`), a pair
+reached through attributes on both sides, or whose linking function is also called elsewhere, a pair a
 function that calls itself may link the other way one attribute deeper (the deeper calls closing a link the
 program also makes the other way round), and a back attribute that cannot be null, unless no child outlives its parent
 ([below](#a-parent-that-cannot-be-null)). A back attribute may hold a union or a `type`
