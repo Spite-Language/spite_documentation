@@ -33,6 +33,7 @@ starting a statement of its own: `[Root].each(registry.register)` below another 
 | `list[index] = value` | | calls `set_at(index, value)`; an index out of range halts, naming the line |
 | `get_at(index)` | `T?` | what `list[index]` calls, `null` out of range; it is only called through `[]` ([Use the operator](functions_and_operators.md#use-the-operator-not-its-function)) |
 | `remove_at(index)` | | an index out of range halts |
+| `remove(value)` | | removes the first element equal to `value`, compared like `contains`; nothing happens when none is |
 | `remove_swapping(index)` | | moves the last element into `index` instead of moving every later one down ; an index out of range halts |
 | `remove_where(test)` / `remove_where_<member>()` | | removes every element the test is true for, in one pass, keeping the rest in order ([below](#removing-many-at-once)) |
 | `truncate(count)` | | keeps the first `count` elements and releases the rest; nothing happens when `count` is out of range |
@@ -47,7 +48,7 @@ starting a statement of its own: `[Root].each(registry.register)` below another 
 | `copy()` / `deep_copy()` | `List<T>` | one level, or all the way down ([memory.md](memory.md)) |
 
 `append`, `remove_last`, `list[index]` and their kin take the same time however long the list is; `prepend`,
-`insert`, `remove_first` and `remove_at` move every later element, and `contains` looks at each in turn, unless
+`insert`, `remove_first`, `remove_at` and `remove` move every later element, and `contains` looks at each in turn, unless
 the list is only appended to, searched and read: then the compiler keeps a hash index beside it and `contains` and
 `index_of` take the same time however long it is
 ([a list used as a set](optimizations.md#a-list-used-as-a-set-keeps-a-hash-index)). An empty
@@ -57,7 +58,7 @@ Names say where: `append` and `prepend`, never `add`; `remove_last`, never `pop`
 which to write. A list keeps its own room: there is no `reserve`, because how much room a list holds is the
 compiler's to decide.
 
-`contains` and `index_of` compare with `==`, so on a list of a class they ask the class's `equals`, written or the
+`contains`, `index_of` and `remove` compare with `==`, so on a list of a class they ask the class's `equals`, written or the
 one every class is given ([Every class has equals](functions_and_operators.md#every-class-has-equals)): a list
 holding a `Tool()` contains any other `Tool()` with the same attributes. To search by one member, ask with `any(f)`
 or `find_by_<member>` (and `find_index_by_<member>` for its place, [below](#member-templates-loops-you-do-not-write)).

@@ -344,7 +344,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `position` moves where the value lands, and `boxes[next].amount = refill()` reads `boxes[next]` after `refill()`, in
   a state machine too. A proof of the target that the value's call may take back is refused there: name the object
   first (`var target = keeper.target`, then `target.body = made()`).
-- `List<T>`: `[1, 2, 3]`, `append`, `prepend`, `insert`, `remove_at`, `remove_last`, `remove_first`, `first`,
+- `List<T>`: `[1, 2, 3]`, `append`, `prepend`, `insert`, `remove_at`, `remove(value)` (the first element `==` `value`; nothing happens when none is), `remove_last`, `remove_first`, `first`,
   `last` (both a `T?`, `null` on an empty list, like `[]`: `var first = names.first()` then `crash first`), `count`, `contains` (compares with `==`, so on a list of a class it asks the class's `equals`, the given one
   comparing attributes; to search by one member use `any(f)` or `find_by_<member>`; a list of texts or whole numbers only
   appended to, searched and read gets a hash index from the compiler (a small one costs what a plain search costs), so `if not seen.contains(name) {
@@ -489,7 +489,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   its `Spite.Class` object, which has no `is_alive`): pass an instance's, `monster.is_alive`.
   Two function values compare with `==` as the same function bound to equal owners (the owner's `==`, a number or a
   text by its value): `ada.heard == also_ada.heard` when `ada == also_ada`, never for two different functions; so
-  `handlers.index_of(bob.heard)`, `contains` and `handlers.remove_at(found)` after it unsubscribe a handler from a
+  `handlers.index_of(bob.heard)`, `contains` and `handlers.remove(bob.heard)` find and unsubscribe a handler in a
   `List<Spite.Function<Integer, Nothing>>`, inside a generic class too, and a given `equals` compares a function
   value attribute the same way. Comparing keeps nothing alive.
 - `enum`, `union` and `type` declarations take no `=`, one entry per line, no commas:

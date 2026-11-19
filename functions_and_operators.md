@@ -656,9 +656,9 @@ so a class asked about anywhere is copied as written. `==` asks only the value, 
 of the same class, and owners equal by the owner's `==` (its own `equals` or the given one, a number or a text by its
 value). Two `reader.changed` taken from one `reader` are equal, `first.changed` and `second.changed` are equal when
 `first == second`, and two different functions are never equal, whatever their owners. `!=` is the opposite. It works
-wherever the function is known only at run time, so `list.index_of(handler)` and `list.contains(handler)` find an
-equal function value in a `List<Spite.Function<...>>`, a generic class's list included, and a class's given `equals`
-compares a function value attribute the same way. Comparing keeps nothing alive: it reads both values and their
+wherever the function is known only at run time, so `list.index_of(handler)`, `list.contains(handler)` and
+`list.remove(handler)` find an equal function value in a `List<Spite.Function<...>>`, a generic class's list
+included, and a class's given `equals` compares a function value attribute the same way. Comparing keeps nothing alive: it reads both values and their
 owners and lets go.
 
 ```gdscript title=function_value_compare_doc/listener.spite
@@ -684,9 +684,7 @@ func FunctionValueCompareDoc() {
     handlers.append(ada.heard)
     handlers.append(bob.heard)
     console.print(ada.heard == also_ada.heard, ada.heard == bob.heard)
-    var found = handlers.index_of(bob.heard)
-    crash found
-    handlers.remove_at(found)
+    handlers.remove(bob.heard)
     var holds_bob = handlers.contains(bob.heard)
     var holds_ada = handlers.contains(also_ada.heard)
     console.print(holds_bob, holds_ada)
