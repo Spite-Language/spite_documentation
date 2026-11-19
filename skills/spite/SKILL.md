@@ -240,7 +240,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   too, back references such as `parent` included; cycles never loop), so two `Point(1, 2)` are equal, a deep copy
   equals its original, and `list.contains(item)` finds an equal item. A value typed by a `type`, a union or `Anything`
   compares through the class it holds: the same class calls its `equals`, different classes are not equal, two `null`s
-  are equal and `null` never equals a value.
+  are equal and `null` never equals a value. Two function values are equal when they are the same function on equal
+  owners (`reader.changed == other_reader.changed` asks `reader == other_reader`; another function is never equal),
+  so `handlers.index_of(screen.show)` and `contains` find a handler in a `List<Spite.Function<...>>`, generic code too.
   `==` always means `equals`. To ask whether two names hold the very same object write `a === b` (`a !== b` for
   not), and only where that is truly meant (a copy is a new object, a back reference points at this very node): it
   pins the object, so the compiler can no longer share a copy with its original. `===` works on objects of one class,

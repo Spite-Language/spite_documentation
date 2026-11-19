@@ -487,6 +487,11 @@ of the standard library or of a repository pinned to a commit is never rewritten
   that needs more than the element is collected by a `while`. `map_` on a `Boolean` member (`map_is_alive()`)
   is an error naming `filter_`, `count_`, `any_` and `all_`. `Monster.is_alive` is no function value (a class is
   its `Spite.Class` object, which has no `is_alive`): pass an instance's, `monster.is_alive`.
+  Two function values compare with `==` as the same function bound to equal owners (the owner's `==`, a number or a
+  text by its value): `ada.heard == also_ada.heard` when `ada == also_ada`, never for two different functions; so
+  `handlers.index_of(bob.heard)`, `contains` and `handlers.remove_at(found)` after it unsubscribe a handler from a
+  `List<Spite.Function<Integer, Nothing>>`, inside a generic class too, and a given `equals` compares a function
+  value attribute the same way. Comparing keeps nothing alive.
 - `enum`, `union` and `type` declarations take no `=`, one entry per line, no commas:
 
   ```gdscript

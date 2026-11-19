@@ -570,7 +570,7 @@ given `equals` is called like a written one: the right side casts like any argum
   left takes only its own class, so `circle == held` is swapped to `held == circle` with a `fixed:` line.
 - A `List` equals another holding equal items in the same order, and a `Dictionary` another holding equal values
   under the same keys, so a class holding them compares what they hold.
-- A function value held in an attribute is equal only to the same function value.
+- A function value held in an attribute compares like any function value ([Comparing function values](#comparing-function-values)).
 - A `Dictionary` keyed by an object still finds each key by identity (one object, one key), whatever `equals`
   answers; a class that declares its own `equals` still cannot be a key.
 
@@ -649,6 +649,53 @@ Use `===` as little as possible: only where the program really means one object,
 reached. Asking which object a value is pins it: the compiler can no longer choose to share a copy with its original or to copy where it would share
 ([A deep copy nothing changes is the original](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md#a-deep-copy-nothing-changes-is-the-original)),
 so a class asked about anywhere is copied as written. `==` asks only the value, which a shared copy answers alike.
+
+### Comparing function values
+
+`a == b` on two function values answers whether they are the same function bound to equal owners: the same function
+of the same class, and owners equal by the owner's `==` (its own `equals` or the given one, a number or a text by its
+value). Two `reader.changed` taken from one `reader` are equal, `first.changed` and `second.changed` are equal when
+`first == second`, and two different functions are never equal, whatever their owners. `!=` is the opposite. It works
+wherever the function is known only at run time, so `list.index_of(handler)` and `list.contains(handler)` find an
+equal function value in a `List<Spite.Function<...>>`, a generic class's list included, and a class's given `equals`
+compares a function value attribute the same way. Comparing keeps nothing alive: it reads both values and their
+owners and lets go.
+
+```gdscript title=function_value_compare_doc/listener.spite
+var console = Console()
+var name: String
+
+func Listener(starting_name: String) {
+    name = starting_name
+}
+
+func heard(amount: Integer) {
+    console.print(name, "heard", amount)
+}
+```
+```gdscript title=function_value_compare_doc/function_value_compare_doc.spite entry
+var console = Console()
+var handlers = List<Spite.Function<Integer, Nothing>>()
+
+func FunctionValueCompareDoc() {
+    var ada = Listener("ada")
+    var bob = Listener("bob")
+    var also_ada = Listener("ada")
+    handlers.append(ada.heard)
+    handlers.append(bob.heard)
+    console.print(ada.heard == also_ada.heard, ada.heard == bob.heard)
+    var found = handlers.index_of(bob.heard)
+    crash found
+    handlers.remove_at(found)
+    var holds_bob = handlers.contains(bob.heard)
+    var holds_ada = handlers.contains(also_ada.heard)
+    console.print(holds_bob, holds_ada)
+}
+```
+```output
+true false
+false true
+```
 
 ## Setter/getter interception
 
