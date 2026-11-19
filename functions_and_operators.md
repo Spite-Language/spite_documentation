@@ -121,8 +121,43 @@ reflection; pass `monster.is_alive`, or use a member template such as `filter_is
 An attribute may hold a function value (`var on_press: Spite.Function<Nothing>? = null`, set later). A nullable
 one is narrowed through its path like any other value before it is called: `fallback button.on_press`, then
 `button.on_press()`, and a local that only copied it is rewritten to that form. One whose
-default names its own class's function is bound to the object itself, which is a cycle that leaks like any other
-until one side is cleared (see [memory.md](memory.md)).
+default names its own class's function (`var act: Spite.Function<Nothing> = rest`) is bound to the object itself.
+When the program only calls it (`holder.act()`, `act.call_function()`), narrows it or clears it (`act = null`), it
+holds the object without a count, so the object is freed when its last other holder goes and the value goes with
+it. A call through it holds the object for the call, so a call that lets go of the object's last other holder still
+runs on a live object, freed when the call returns. `copy()` and `deep_copy()` bind the copy's value to the copy. Read
+for anything else (stored, passed, returned), it keeps its count, and the cycle leaks like any other until one side
+is cleared (see [memory.md](memory.md#cycles-are-freed)).
+
+```gdscript title=own_function_default_doc/holder.spite
+var console = Console()
+var name = "nobody"
+var act: Spite.Function<Nothing> = rest
+
+func rest() {
+    console.print(name, "rests")
+}
+
+func drop() {
+    console.print(name, "is freed")
+}
+```
+```gdscript title=own_function_default_doc/own_function_default_doc.spite entry
+func OwnFunctionDefaultDoc() {
+    var original = Holder()
+    original.name = "jay"
+    var copied = original.copy()
+    copied.name = "kim"
+    original.act()
+    copied.act()
+}
+```
+```output
+jay rests
+kim rests
+jay is freed
+kim is freed
+```
 
 **A variable never has the name of a function it can see.** Since a function's
 name is already a value, a local, parameter or attribute named like a function of its class would make that name

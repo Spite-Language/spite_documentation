@@ -723,14 +723,68 @@ together do both, however many calls deep and through however many attributes
 one of the receiver's class, when that class is known: `this`, a parameter, an object made in the function, or an
 attribute of one of these. A singleton or a generic class is never part of that link. Two objects made side by side
 and then linked to each other directly (`question.answer = answer` beside `answer.question = question`) are freed
-when neither leaves the function that made them: the one made later points back. Some cycles keep their counts and
-leak, since nothing proves which side outlives the other: such a pair where one of them leaves its function (`return
-answer`), one attribute pointing both ways (`partner`), a pair one of whose attributes a function that calls itself
-stores one attribute deeper on each call (`pair_down(link.next, second)`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
+when neither leaves the function that made them: the one made later points back. Two such objects linked through one
+attribute both ways are freed the same way, below. Some cycles keep their counts and leak, since nothing proves
+which side outlives the other: such a pair where one of them leaves its function (`return answer`), a pair linked
+both ways through one attribute by another function (`first.join(second)` beside `second.join(first)`), a pair one
+of whose attributes a function that calls itself stores one attribute deeper on each call (`pair_down(link.next,
+second)`), and a back attribute that cannot be null. A back attribute may hold a union or a `type`
 (`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
 each class of the union, or for a `type` each class of the program that declares all of its members, so one class
 that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`).
 There is no `Weak<T>` to write, and naming one is an unknown-type error.
+
+### Two objects linked both ways through one attribute
+
+`first.partner = second` beside `second.partner = first` links two objects through one attribute, so neither side
+points back. When both are made side by side in one block of a function, each under one name, and neither leaves the
+function, the compiler clears the slot that closed the cycle (`second.partner`, the store written later) right before
+the two names go, so the pair is freed there. That object's `drop()` reads the attribute as `null`; the other one's
+still reads its partner, which is freed right after it. Nothing of this runs but the one store the compiler writes
+where the names go.
+
+```gdscript title=partner_pair_doc/person.spite
+var console = Console()
+var partner: Person? = null
+var name: String
+
+func Person(new_name: String) {
+    name = new_name
+}
+
+func drop() {
+    if partner {
+        console.print(name, "is freed, still with", partner.name)
+    } else {
+        console.print(name, "is freed alone")
+    }
+}
+```
+```gdscript title=partner_pair_doc/partner_pair_doc.spite entry
+var console = Console()
+
+func PartnerPairDoc() {
+    pair_up()
+    console.print("the pair is gone")
+}
+
+func pair_up() {
+    var first = Person("ann")
+    var second = Person("bob")
+    first.partner = second
+    second.partner = first
+    console.print(first.name, "and", second.name, "are partners")
+}
+```
+```output
+ann and bob are partners
+ann is freed, still with bob
+bob is freed alone
+the pair is gone
+```
+
+A pair linked by calls of another function, made in two blocks, held under a second name, or one of whose objects
+leaves its function keeps its counts and leaks, which `--debug-memory` names; clear one side when you are done.
 
 ## `--debug-memory`
 
@@ -741,8 +795,8 @@ leaked cycle visible instead of an unexplained count. Every program on these pag
 balance. It also fills every byte it hands out that nobody has written yet with the same pattern, so a program that
 reads memory it never wrote fails the same way on every run and in every environment, instead of reading whatever
 the heap held. The table exists only in a `--debug-memory` build, so the other builds carry none of it. The summary looks like this for
-two people linked to each other through one `partner` attribute, a cycle the compiler does not read as a back
-reference:
+two people who join each other through one `partner` attribute in a function of their class (`first.join(second)`
+beside `second.join(first)`), a cycle the compiler does not read:
 
 ```
 spite: --debug-memory: 2 allocation(s) leaked
