@@ -228,7 +228,7 @@ func is_alive(): Boolean {
   `max` are still errors, as abbreviations.)
 - A function body holds no empty lines: the blank line is where a second function wants to be, so name the part
   below it and call it. The formatter (and so every compile) deletes one you write.
-- A file holds at most 1200 statements, its file content budget: more is an error (`this file holds 1201 statements, over its file content budget of 1200: ...`), with no way to lift it. Every statement counts as one at any depth, and so does a class-level `var`; a statement spread over many lines is one. Comments, blank lines, closing braces, function headers, the entries of an enum, union or type, and the cases of a `switch` (the `switch` itself is one) count nothing, so an enum or an exhaustive switch over it can be any size. Get back within it by cleaning up, not by cutting the file at the number: group state into an object, and give each concern a file of its own.
+- A file holds at most 1200 statements, its file content budget: more is an error (`this file holds 1201 statements, over its file content budget of 1200: ...`), with no way to lift it; it is told alone (no fix is written and the file's other mistakes wait), and a file of any length (an `else if` chain of thousands of links) gets it, never a crash. Every statement counts as one at any depth, and so does a class-level `var`; a statement spread over many lines is one. Comments, blank lines, closing braces, function headers, the entries of an enum, union or type, and the cases of a `switch` (the `switch` itself is one) count nothing, so an enum or an exhaustive switch over it can be any size. Get back within it by cleaning up, not by cutting the file at the number: group state into an object, and give each concern a file of its own.
 - A comment is one line, right above a function or at the top of the file (the class's heading; one anywhere else
   between declarations is moved there), and nothing but a link to a markdown heading:
   `# notes.md#why-this-exists` (relative to the folder of the file it is in, like `load`; the file and the heading must exist; anchors as GitHub makes them, a repeated heading's second one `#details-1`). One inside a function or inside an `enum`, `union` or `type` body is an error. Only the program's own files are checked: the comments of the standard library and of a package are dropped when they are read, so their links never stop a build.
@@ -677,7 +677,9 @@ of the standard library or of a repository pinned to a commit is never rewritten
     builds with no arguments, and a Day has none`): make the result `Day?`, or `crash`. A caller that must tell
     "missing" from a real `0` or `""` gets a function answering a `T?`. An `if` with no `else` that only returns
     that same value (`if x { return null }`, `{ return 0 }`, `{ return "" }`, `{ return }`) or is the last
-    statement and only checks a value is there is rewritten by the compiler into the `fallback` (`fixed: ...`). An
+    statement and only checks a value is there is rewritten by the compiler into the `fallback` (`fixed: ...`); a condition
+    comparing an order stays whole under `not` (`fallback not (count < 0 or count > limit)`), since NaN fails every
+    comparison. An
     `if` with no `else` that ends in `return` proves the opposite of its condition after it: `if not found { return -1
     }` narrows `found`, `if index >= names.count() { return "" }` proves `names[index]`;
   - absence is a bug: `crash condition` halts with

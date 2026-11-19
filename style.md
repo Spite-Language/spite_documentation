@@ -403,7 +403,9 @@ no flag, setting or comment lifts it. A file that long is rarely one thing: past
 drawing.spite: error: this file holds 1201 statements, over its file content budget of 1200: clean it up until it is back within it, grouping state into an object and giving each concern a file of its own (in Drawing)
 ```
 
-The compiler counts from the parsed file, so formatting changes nothing:
+The compiler counts as soon as the file is parsed, so formatting changes nothing. A file over the budget gets this
+error alone: it is not rewritten and its other mistakes wait until it is back within it. A file of any length gets the
+error, never a crash (an `else if` chain of thousands of links is read in a loop):
 
 | Counts as one | Counts as nothing |
 |---|---|
