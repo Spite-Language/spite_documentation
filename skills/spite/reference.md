@@ -855,9 +855,13 @@ of the standard library or of a repository pinned to a commit is never rewritten
   and enums compare as before; a value typed by a `type`, a union or `Anything`, in an attribute or written
   `a == b`, compares through the class it holds: the same class calls that class's `equals`, different classes are
   not equal, two `null`s are equal, `null` never equals a value; such a value goes on the left, `held == circle`,
-  and `circle == held` is swapped to it with a `fixed:` line). `a.is_same_instance(b)` asks for the very
-  same object (one argument of the same class, `false` for a missing one); use it as little as possible, since it
-  stops the compiler sharing a copy with its original. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
+  and `circle == held` is swapped to it with a `fixed:` line). `a === b` asks for the very
+  same object and `a !== b` for not (no function; on one class, a `type`, `Anything` or a union of classes with no
+  narrowing, a `T?` side needing none: two missing are the same, one missing never is); use it as little as possible, since it
+  stops the compiler sharing a copy with its original. `===` on a number, `Boolean`, `String` or enum
+  is the error `'===' asks whether two names hold the very same object, and a 'Integer' is a value, not
+  an object: compare it with '=='`; two classes that are never one object are refused too, and
+  `a.is_same_instance(b)` written is `'is_same_instance' is what '===' calls: write 'a === b', or 'a !== b' for 'not a.is_same_instance(b)'`. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
   `equals`) like any argument, so `price == "10"` needs `func Price(from: String): Price?` and without it is the error
   `a String cannot be used where a Price is needed: ... Price declares no 'Price(from: String)'`, never a silent
   `false`; a value with `to_string()` compared with a text compares as text instead when no such conversion exists
@@ -1277,7 +1281,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `Heap<Node>`, `&Node` | `there is no 'Heap<T>'`, `Spite has no '&Type'` | `Node`: every class is a reference already |
 | `if value do name { }` | `Spite has no 'do'` | `if value { }`: the name itself is narrowed inside |
 | `items.map(item => item * 2)` | `expected a value and found '='` | no lambdas and no `map(function)`: give the element's class a read-only attribute, `get_double()`, and write `items.map_doubles()` (the member in the plural) |
-| `value == null`, `value != null` | `'null' is not a value to compare against or pass around` | `if value { } else { }`, `fallback value`, `crash value`, or `switch` |
+| `value == null`, `value != null`, `value === null` | `'null' is not a value to compare against or pass around` | `if value { } else { }`, `fallback value`, `crash value`, or `switch` |
 | `price == "cost"` (a `Price` with no cast from text) | `a String cannot be used where a Price is needed: a value is cast to the class a place wants through that class's conversion, and Price declares no 'Price(from: String)'` | compare what you mean (`price.label == "cost"`), or declare `func Price(from: String): Price?` |
 | `Parallel(...)`, `task.wait()`, `await task` | `'Parallel' is not part of Spite: the compiler decides what runs at once, so call the function itself` | call the function itself |
 | `new Date()`, `DateTime.Now`, `datetime.now()` | | `clock.now()`, an `Instant`; shown through a zone from `TimeZones()`, never stored as a local reading |

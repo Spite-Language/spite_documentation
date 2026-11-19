@@ -551,6 +551,8 @@ is an error (`'+' on a value read as 'Labeled' needs the class that fits the typ
 compiling`): take the value through a codegen value the type constrains, `generic $value_type: Addable`. `==` and
 `!=` are the exception, since every class has `equals`: on values read as any `type` they compare through the class
 each holds, and two of different classes are not equal ([Every class has equals](functions_and_operators.md#every-class-has-equals)).
+`===` and `!==` ask whether two values hold the very same object, on a value read as any `type` and on a union
+whose members are all classes, with nothing to narrow first ([The same instance](functions_and_operators.md#the-same-instance)).
 
 ## `String`
 

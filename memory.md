@@ -63,7 +63,7 @@ original label b
 ([functions_and_operators.md](functions_and_operators.md#every-operator-is-a-function)): one the class declares, or
 the one every class without it is given, which compares each attribute with its own `==`, so a copy equals its
 original. A value typed by a `type`, a union or `Anything` compares through the class it holds, never by which object
-it is. `a.is_same_instance(b)` asks whether two names hold the very same object; write it only where that is
+it is. `a === b` asks whether two names hold the very same object; write it only where that is
 what you mean, since it keeps the compiler from sharing a copy with its original. A `String` always compares by
 content.
 
@@ -160,8 +160,8 @@ func SharedLeaf() {
     var leaf = Leaf("shared")
     var box = Box(leaf, leaf)
     var copied = box.deep_copy()
-    var one_leaf = copied.left.is_same_instance(copied.right)
-    var is_the_original = copied.left.is_same_instance(leaf)
+    var one_leaf = copied.left === copied.right
+    var is_the_original = copied.left === leaf
     copied.left.name = "changed"
     console.print(one_leaf, is_the_original, copied.right.name, leaf.name)
 }

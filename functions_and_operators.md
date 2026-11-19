@@ -412,6 +412,7 @@ Every operator is a shortcut for a function a class can define to support it, wi
 | `a / b` | `divide(b)` |
 | `a % b` | `remainder(b)` |
 | `a == b` / `a != b` | `equals(b)` (negated for `!=`) |
+| `a === b` / `a !== b` | none: asks for the very same object ([The same instance](#the-same-instance)) |
 | `a < b` / `a > b` | `less_than(b)` / `greater_than(b)` |
 | `a <= b` / `a >= b` | derived from the two above, no own function |
 | unary `-a` | `negate()` |
@@ -578,13 +579,74 @@ attributes.
 
 ### The same instance
 
-`a.is_same_instance(b)` answers whether `a` and `b` are the very same object, not two equal ones. It takes one value
-of the same class (a missing one is never the same instance), and works on every object of a class; a number, a
-`String` or an enum is a value and is compared with `==`.
+`==` always asks `equals`, never which object a value is. `a === b` asks whether `a` and `b` hold the very same
+object, not two equal ones, and `a !== b` is its opposite, the way `!=` is the opposite of `==`. They bind like
+`==`, call no function and need no narrowing:
 
-Use it as little as possible: only where the program really means one object, such as checking that a
-`deep_copy()` made a new object or that a back reference points at this very node. Asking which object a value is pins
-it: the compiler can no longer choose to share a copy with its original or to copy where it would share
+- on two objects of one class (`first === kept`); a class on one side and another class on the other is an error,
+  since they are never the same object: `'===' asks whether two names hold the very same object, and a 'Crate' is
+  never the same object as a 'Box'`;
+- on a value typed by a `type` or `Anything`, and on a value of a union whose every member is a class, beside any
+  value it may hold: `part === wanted` with a `Part` from a `List<Part>`, `held === apple` with a `Fruit`, with no
+  `if part.class == Label` first;
+- on a `T?` side: two missing values are the same, a missing one is never the same as an object, so a list read
+  (`child === root.children[0]`) needs no narrowing.
+
+A number, a `Boolean`, a `String` or an enum is a value, not an object (a union holds only classes, so `===` always
+takes one): `===` on them is an error naming the comparison to write, `'===' asks whether two names hold the very same object, and a
+'Integer' is a value, not an object: compare it with '=='` (`'!='` for `!==`). Comparing against `null` is the same
+error as `== null`: write `if value`, `fallback value` or `crash value`.
+
+```gdscript title=same_instance_doc/label.spite
+var text: String
+
+func Label(starting_text: String) {
+    text = starting_text
+}
+
+func name_of(): String {
+    return "label {text}"
+}
+```
+```gdscript title=same_instance_doc/same_instance_doc.spite entry
+type Part {
+    name_of: Spite.Function<String>
+}
+
+var console = Console()
+
+func SameInstanceDoc() {
+    var parts = List<Part>()
+    var title = Label("title")
+    var copied = Label("title")
+    parts.append(copied)
+    parts.append(title)
+    var place = place_of(parts, title)
+    console.print(place, copied == title, copied === title, copied !== title)
+}
+
+func place_of(parts: List<Part>, wanted: Part): Integer {
+    var index = 0
+    while index < parts.count() {
+        var part = parts[index]
+        if part === wanted {
+            return index
+        }
+        index = index + 1
+    }
+    return -1
+}
+```
+```output
+1 true false true
+```
+
+`a.is_same_instance(b)` written by name is refused like every operator's function: `'is_same_instance' is what
+'===' calls: write 'first === second', or 'first !== second' for 'not first.is_same_instance(second)'`.
+
+Use `===` as little as possible: only where the program really means one object, such as checking that a
+`deep_copy()` made a new object, that a back reference points at this very node, or which child of a tree an event
+reached. Asking which object a value is pins it: the compiler can no longer choose to share a copy with its original or to copy where it would share
 ([A deep copy nothing changes is the original](https://github.com/Spite-Language/spite_compiler/blob/master/OPTIMIZATIONS.md#a-deep-copy-nothing-changes-is-the-original)),
 so a class asked about anywhere is copied as written. `==` asks only the value, which a shared copy answers alike.
 
@@ -713,6 +775,7 @@ way and a reader never wonders whether `get_x()` and `.x` differ:
 | `shelf.get_at(0)` / `names.get_at("ann")` on a `List` or a `Dictionary`, and the `set_at` of both | `shelf[0]` / `names["ann"]`, and `shelf[0] = book` / `names["ann"] = 3` |
 | `a.sum(b)`, `a.subtract(b)`, `a.multiply(b)`, `a.divide(b)`, `a.remainder(b)` | `a + b`, `a - b`, `a * b`, `a / b`, `a % b` |
 | `a.equals(b)` / `not a.equals(b)` | `a == b` / `a != b` |
+| `a.is_same_instance(b)` / `not a.is_same_instance(b)` | `a === b` / `a !== b` |
 | `a.less_than(b)` / `a.greater_than(b)` | `a < b` / `a > b` |
 | `a.negate()` | `-a` |
 
