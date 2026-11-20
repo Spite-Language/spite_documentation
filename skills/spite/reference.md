@@ -656,7 +656,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
 - Every proof the compiler makes (narrowing, proven `[]` reads, a proven divisor, frame objects,
   singleton locks) is listed in [proofs.md](https://github.com/Spite-Language/spite_documentation/blob/master/proofs.md), with when it does **not** apply. Read its "Which proofs
   apply to my code" first: where a proof does not hold, you write the check yourself.
-- A `switch` is over a union, a `T?`, an enum, a `Boolean` or a value of a `type`, and names every member or value: there is no `_:`,
+- A `switch` is over a union, a `T?`, an enum or a `Boolean`, and names every member or value: there is no `_:`,
   so a member added later is an error at every switch until it has a case. A member is its whole class, not its last name: a union holding `First.Item` and `Second.Item` needs both cases (`this switch over 'Held' has no case for Second.Item: ...`). Cases may share a one-line body
   (`Cat: walk()` and `Dog: walk()`); when all but one share it, write `if value.class == Fish { swim() } else { walk() }`, unless the shared body reads the switched value, which stays a `switch`.
   Value cases are `'red': return 30` or `true:`/`false:`, and a `Boolean` needs both (`this switch over 'count > 2' has no case for false: ...`); for one of them write an `if`. A `switch` over a number or a text is an error: choose with
@@ -673,15 +673,16 @@ of the standard library or of a repository pinned to a commit is never rewritten
   A `.class` known while compiling of something holding a call (`thing.pop().class == Thing`, `count().class.name`)
   still makes the call once; only the answer folds.
   In a generic class, `value.class == $wanted_type` tests for the class the codegen value is bound to; `.class` against a
-  union (written out or bound to `$wanted_type`) is an error, since a value's class is one class.
-- `value.class == Named`, with `Named` a `type`, asks whether the class fits it: a value held as a `type` or a union
-  (`value: Component`) is narrowed to another `type` it may fit, and inside `if value.class == AnyCustom { }` it reads
-  as that type (`value.key`); the `else` narrows nothing. Each copy of the function (one per argument class, a generic
-  class's copies included) folds it; a value known only at run time compares its class with the fitting classes that
-  reach it. A union none of whose members fits is an error. In a `switch`, a `type` is a case too: over a union it
-  covers every member that fits it, and a switch over a value of a `type` ends with that `type` itself as its last
-  case (`AnyCustom: return value.key` then `Component: return "other"`), since more classes may fit than it can list.
-  `value.class.satisfies_type(AnyCustom)` on a class known only at run time is refused and names this form.
+  union or a `type` (written out or bound to `$wanted_type`) is an error, since a class is never a type.
+- A class is not a type, so it is never compared with one: `value.class.satisfies_type(Named)` asks whether the class
+  fits `Named`, and a value held as a `type` or a union (`value: Component`) is narrowed by it, so inside
+  `if value.class.satisfies_type(AnyCustom) { }` it reads as that type (`value.key`); the `else` narrows nothing. Each
+  copy of the function (one per argument class, a generic class's copies included) folds it; a value known only at run
+  time compares its class with the fitting classes that reach it. A union none of whose members fits is an error.
+  `value.class == AnyCustom` (or `!=`) is rewritten to it with a `fixed:` line in an `if`, `while`, `fallback`,
+  `return` or local's value, and refused naming it elsewhere. A `switch` case is a class, never a type (`'Named' is a
+  type, so it is not a case: ...`), and a value of a `type` is not switched on: write `if` tests. Ask it of a named
+  value: `first_shown().class.satisfies_type(...)` is refused, so hold the answer in a local first.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every
   `return` of which cannot be null. Read it with nothing written; a `fallback`, `crash` or `if` on it is `is already

@@ -1070,9 +1070,9 @@ alive true
 Like `enum` and `type`, a `union` takes no `=` and lists one member per line. A `switch` names every
 member, with no `_:` for the rest, so a member added later is an error at every switch, and two members may share
 a one-line case. `enemy.class == Monster` asks which member a value is
-([control_flow.md](control_flow.md#switch-over-a-union)), and `enemy.class == Named`, with `Named` a `type`, whether
-it is a member that fits `Named`, narrowing it to that type inside the `if`
-([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)). `Monster?` is exactly this kind of union: `Monster` and
+([control_flow.md](control_flow.md#switch-over-a-union)), and `enemy.class.satisfies_type(Named)`, with `Named` a
+`type`, whether it is a member that fits `Named`, narrowing it to that type inside the `if`
+([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)); a class is never compared with a type. `Monster?` is exactly this kind of union: `Monster` and
 `Null`, the class whose only value is `null`. So a `Monster?` fits an `Enemy?` with nothing to narrow, in a
 `return`, an assignment and an argument alike: `Monster` fits `Enemy`, and `null` fits the `?`. It fits a plain
 `Enemy` only once narrowed.
@@ -1166,9 +1166,9 @@ fit and the error names the attribute.
 
 One rule decides whether a class fits a `type`, wherever the compiler asks: a value given where the `type` is
 wanted, a class's attribute or function checked against a member's type, a generic's constraint
-(`generic $item_type: Named`), `$item_type == Named`, `value.class == Named`
-([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)) and `kind.satisfies_type(Named)`
-([reflection.md](reflection.md#whether-a-class-satisfies-a-type)). As long as the contract matches, it fits: a class
+(`generic $item_type: Named`), `$item_type == Named`, `kind.satisfies_type(Named)`
+([reflection.md](reflection.md#whether-a-class-satisfies-a-type)) and `value.class.satisfies_type(Named)`
+([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)). As long as the contract matches, it fits: a class
 fits when it has each member the `type` writes, in its form and typed as the `type` says. An attribute member needs
 an attribute; a function member needs a function with as many parameters, each of the type asked, answering the
 type asked, or an attribute holding such a function that cannot be `null`, or a function one of the class's member

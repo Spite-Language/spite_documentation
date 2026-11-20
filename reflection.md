@@ -634,7 +634,7 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 | `.is_list`, `.is_dictionary`, `.is_optional`, `.is_enum` | the kind of a type | `$value_type.is_list` |
 | `.generics` | a `Dictionary<String, Spite.Class>`: the class each `generic` line was given, keyed by its name without the `$`, in `generic`-line order; empty for a class that is not generic | `numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer` |
 | `.source_files` | a `List<File>`: every file that declares or reopens the class, in load order | `Monster.source_files.first()` |
-| `satisfies_type(...)` | whether it can stand in for a type, decided while compiling ([below](#whether-a-class-satisfies-a-type)) | `Integer.satisfies_type(Number)` is `true` |
+| `satisfies_type(...)` | whether it can stand in for a type, decided while compiling, or for a named value's class from the classes listed while compiling ([below](#whether-a-class-satisfies-a-type)) | `Integer.satisfies_type(Number)` is `true` |
 
 `.generics` holds the same names a codegen value reads while compiling, `$list_type.element_type`; a dictionary's are `"key_type"` and `"value_type"`. A literal name on a
 class known while compiling folds and is proven present, and a name the class has no `generic` line for is a compile
@@ -699,12 +699,17 @@ troll 20 5
 ```
 
 The copy of `double` compiled for `name` has no `if` and no multiplication; the copies for `health` and `speed` are
-the multiplication alone. Asked of a class known only at run time, `value.class` of a value reflection reads, it is an error
-that names the test that works on a value, `if held.class == Number`, which narrows it
-([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)): `'held.class.satisfies_type(...)' is
-answered while compiling, and 'held.class' is a class known only at run time: to test whether the value fits
-'Number', write 'if held.class == Number', which narrows it to that type inside`. An argument that is not a type's
-name is an error too.
+the multiplication alone.
+
+Asked of a named value's class, `held.class.satisfies_type(Named)`, it is how a value is narrowed to a type it may fit
+([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)): inside the `if`, `held` reads as a
+`Named`. Each copy of a function taking a `type` folds it, and where the value's class is known only at run time it
+compares that class with the classes that reach that place and fit, a list made while compiling, with nothing searched
+while running. A class is never compared with a type: `held.class == Named` is rewritten to this question, or refused
+naming it. The class of anything else known only at run time, such as a call's answer, is an error that names the
+form (`'first_shown().class.satisfies_type(...)' asks of a class known only at run time, which is answered
+for the class of a named value: hold the value in a local first and ask 'held.class.satisfies_type(Number)', which
+narrows 'held' to that type inside an 'if'`), and so is an argument that is not a type's name.
 
 ### `Spite.Namespace`
 

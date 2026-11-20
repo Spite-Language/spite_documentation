@@ -10,7 +10,7 @@ switch enemy {
 }
 ```
 
-That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum, a `Boolean` or a value of a `type`), plus
+That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum or a `Boolean`), plus
 `fallback` and `crash` ([failure.md](failure.md)). There is no
 `for`, no `break` or `continue`, no ternary `? :`, and no `do`. Before reaching for a loop at all, check whether a
 [member template](collections.md#member-templates-loops-you-do-not-write) already says it:
@@ -550,11 +550,11 @@ against `$wanted_type` bound to `Health`, or a union that does not hold the boun
 while compiling, and it is never the "never true" error, since another binding may make it true. The same goes
 for any class test inside a generic class: one that can never be true for one instantiation (`held.class == Health` in
 a `Box<Label>`) folds to `false` and its branch is removed from that copy, while outside a generic it stays the
-error. A value's `.class` is always one class, so testing it against a union, written out or bound to
-the codegen value, is an error rather than a test that is never true (`'$wanted_type' is a type here, bound to
-'Pet', a union, so it cannot be used as a value: 'item.class' is always one class, so the test could never be
-true: test for one of the classes it holds, or for a 'type' they fit`). Testing it against a `type` asks whether the
-class fits that type ([below](#a-value-narrowed-by-a-type-it-may-fit)). The rules for class tests are with
+error. A value's `.class` is always one class, and a union or a `type` is not a class, so comparing the two, written
+out or bound to the codegen value, is an error rather than a test that is never true (`'$wanted_type' is a type here,
+bound to 'Pet', a union, not a class, so 'item.class' is never equal to it: test for one of the classes it holds, or
+ask whether the class is one of them with 'item.class.satisfies_type($wanted_type)'`). Whether the class fits a
+`type` is asked, not compared ([below](#a-value-narrowed-by-a-type-it-may-fit)). The rules for class tests are with
 [unions](values_and_types.md#unions).
 
 ```gdscript title=codegen_class_test_doc/find.spite
@@ -637,17 +637,18 @@ shorter form.
 
 ## A value narrowed by a type it may fit
 
-`value.class == Named`, where `Named` is a `type`, asks whether the value's class fits `Named`
-([what fits a type](values_and_types.md#what-fits-a-type)), the way `$item_type == Named` does inside a generic class.
-It is how a value held as one `type` or as a union is narrowed to another `type` it may fit: inside
-`if value.class == Named { }` the value reads as a `Named` (`value.name`), and the `else` narrows nothing. A
-union none of whose members fits the `type` is refused, since the answer could only be `false`: `'creature' is a
-'Creature', which holds only Cat, Fish, and none of them fits the type 'Named', so it never fits it: test for a type
-one of them fits`.
+A class is not a type, so a class is never compared with one: whether a value's class can be used where a `type` is
+wanted is asked, with `value.class.satisfies_type(Named)` ([reflection.md](reflection.md#whether-a-class-satisfies-a-type)),
+by the one rule for [what fits a type](values_and_types.md#what-fits-a-type). It is how a value held as one `type` or
+as a union is narrowed to another `type` it may fit: inside `if value.class.satisfies_type(Named) { }` the value reads
+as a `Named` (`value.name`), and the `else` narrows nothing. A union none of whose members fits the `type` is refused,
+since the answer could only be `false`: `'creature' is a 'Creature', which holds only Cat, Fish, and none of them fits
+the type 'Named', so it never fits it: ask for a type one of them fits`. Given a union, it asks whether the class is
+one of the union's members (`creature.class.satisfies_type(Furry)`), narrowing nothing.
 
 Nothing is searched while running. A function taking the `type` is copied per argument type, so in each copy the
-class is known and the test folds to `true` or `false`, the dead branch removed, as for any class test in a copy; a
-generic class's copies (`Custom<Glow>`, `Custom<Shine>`) are classes like any other and each answers for itself. A
+class is known and the question folds to `true` or `false`, the dead branch removed, as for any class test in a copy;
+a generic class's copies (`Custom<Glow>`, `Custom<Shine>`) are classes like any other and each answers for itself. A
 value whose class is known only while running (an item of a `List<Component>`) compares its class with the classes
 that reach that place and fit, a list the compiler fills while compiling.
 
@@ -705,17 +706,17 @@ func TypeTestDoc() {
 }
 
 func key_of(value: Component): String {
-    if value.class == AnyCustom {
+    if value.class.satisfies_type(AnyCustom) {
         return value.key
     }
     return "none"
 }
 
 func shown_of(value: Component): String {
-    switch value {
-        AnyCustom: return "strength {value.strength()}"
-        Component: return "other"
+    if value.class.satisfies_type(AnyCustom) {
+        return "strength {value.strength()}"
     }
+    return "other"
 }
 ```
 ```output
@@ -724,13 +725,20 @@ none other
 plain
 ```
 
-A `switch` over a value of a `type` takes types and classes as its cases, tried in order, each narrowing the value
-like the `if`. More classes may fit a `type` than a switch can list, so its last case is the subject's own `type`
-(`Component:` above), for every value no case before it takes, and a switch without it is `this switch over 'value'
-has no case for every Component: more classes may fit the type 'Component' than a switch can list, so its last case
-is 'Component:', for every value no case before it takes`. In a switch over a union, a `type` as a case covers every
-member that fits it, so `Named: return creature.name` beside `Fish: return "fish"` covers a `Cat`, a `Dog` and a
-`Fish`.
+`value.class == AnyCustom` compares the class with a type, which no class equals. In an `if`, a `while`, a
+`fallback`, a `return` or a local's value, the compiler writes the question in its place, with a `fixed:` line
+(`'value.class == AnyCustom' compares a class with a type, which no class equals: wrote
+'value.class.satisfies_type(AnyCustom)' in its place, which asks whether the class fits it`), and `!=` becomes
+`not value.class.satisfies_type(AnyCustom)`. Anywhere else it is the error that names the question: `'AnyCustom' is
+a type, not a class, so 'held.class' is never equal to it: ask whether the class fits it with
+'held.class.satisfies_type(AnyCustom)'`.
+
+A `switch` case names a class, so a `type` is not a case: in a switch over a union, `Named:` is `'Named' is a type, so
+it is not a case: a case names a class, and a class is never a type: ask whether the class fits it with 'if
+creature.class.satisfies_type(Named)', which narrows 'creature' to that type inside`. A value held as a `type` has no
+closed set of classes, so it is not switched on at all; its error names the same question (`'switch value' chooses
+among values with no closed set, so no case list is ever whole: switch on an enum's values or a union's members, or
+write the choice as 'if' tests, asking 'if value.class.satisfies_type(...)' for a type it may fit`).
 
 ## An assignment works out its value first
 
