@@ -185,7 +185,8 @@ writes none (`Hero()`) counts as written. A conversion the class lacks (`func He
 
 The program's classes sit inside its root class, so a file of the program is never a reopening of a loaded
 folder's class: `game/monster.spite` is `Game.Monster`, which would hide a loaded `Monster` inside the program,
-so it is refused as a class hiding another, naming both. To replace something a loaded folder declares, put the
+so it is refused as a class hiding another, naming both. A loaded folder reopens a class of the program by
+holding the program's folder: `mods/game/monster.spite` is `Game.Monster`, merged with `game/monster.spite`. To replace something a loaded folder declares, put the
 replacement in a folder loaded after it, as `mods` is above. Only the standard library is shared by every root
 (below); a root's own copy of it is spite_compiler#644.
 

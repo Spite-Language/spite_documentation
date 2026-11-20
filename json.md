@@ -334,7 +334,8 @@ from the new source, since nothing in the bytes says which class they are or wha
 A handshake carries one, so an old client meeting a new server fails with a clear report instead of
 misreading bytes. It belongs to the handshake or the file header, not to every value: a value's bytes stay bare so
 that thousands of them can share one buffer. `writer.schema(): Long` and `reader.schema(): Long` answer a hash of
-the attribute walk the bytes follow: the class's name, then each
+the attribute walk the bytes follow: the class's name as its root names it (`Point` for the program's `Game.Point`,
+so renaming the program keeps its hashes), then each
 attribute's name and type in order, nested classes the same way, and each enum's values in order. The compiler
 works it out and the program holds the constant, so asking costs nothing; a program writes it once at the start of a
 file or a connection and compares it before reading.
