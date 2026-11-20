@@ -211,7 +211,7 @@ func note_a_drop() {
 }
 ```
 ```gdscript title=copy_to_narrow_error/copy_to_narrow_error.spite entry
-var tracker: Tracker? = null
+var tracker: Tracker?
 
 func CopyToNarrowError() {
     tracker = Tracker()
@@ -268,7 +268,7 @@ var name = "goblin"
 ```
 ```gdscript title=call_undoes_proof_error/call_undoes_proof_error.spite entry error
 var console = Console()
-var target: Monster? = null
+var target: Monster?
 
 func CallUndoesProofError() {
     target = Monster()

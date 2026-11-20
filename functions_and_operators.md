@@ -489,7 +489,7 @@ greater true
 Missing the function is a diagnostic that names exactly what to define:
 
 ```gdscript title=operator_missing_error/money.spite
-var cents = 0
+var cents: Integer
 
 func Money(starting_cents: Integer) {
     cents = starting_cents
@@ -717,7 +717,7 @@ way and a reader never wonders whether `get_x()` and `.x` differ:
 | `a.negate()` | `-a` |
 
 ```gdscript title=operator_by_name/money.spite
-var cents = 0
+var cents: Integer
 
 func Money(starting_cents: Integer) {
     cents = starting_cents

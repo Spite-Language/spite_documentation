@@ -552,7 +552,7 @@ more than the element, stop early for another reason, or walk state keep their `
 each element, since no form collects one.
 
 ```gdscript title=template_loop_error/item.spite
-var price = 0
+var price: Integer
 
 func Item(item_price: Integer) {
     price = item_price
@@ -983,7 +983,7 @@ func total_member(member: Spite.AttributeDeclaration): Integer {
 }
 ```
 ```gdscript title=unused_member_template/score.spite
-var points = 0
+var points: Integer
 
 func Score(new_points: Integer) {
     points = new_points

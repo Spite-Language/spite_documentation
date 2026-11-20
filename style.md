@@ -516,7 +516,7 @@ error for the call it is passed to.
 name, however short the line:
 
 ```gdscript title=constructor_argument_error/label.spite
-var text = ""
+var text: String
 
 func Label(starting_text: String) {
     text = starting_text
