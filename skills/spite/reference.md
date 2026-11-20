@@ -668,7 +668,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
 - `value.class == Monster` is a class test (false for `null`), and `if value.class == Monster { }` narrows `value` inside. An `or` of
   class tests of one value (`if value.class == Monster or value.class == Player { }`, through a union or a `type` too) compiles the block
   once per class, each copy narrowed to its class, so a use is refused only where one of them does not fit, in that
-  class's own words; the `else` narrows nothing.
+  class's own words; the `else` narrows nothing. A number (or an enum value) has no header, so its class test is
+  answered from its type while compiling: `count.class == Integer` is `true`, and as an `if` it is a decided condition the compiler removes.
   A `.class` known while compiling of something holding a call (`thing.pop().class == Thing`, `count().class.name`)
   still makes the call once; only the answer folds.
   In a generic class, `value.class == $wanted_type` tests for the class the codegen value is bound to; `.class` against a

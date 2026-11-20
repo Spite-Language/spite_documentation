@@ -322,7 +322,10 @@ func NumberMethods() {
 ```
 
 None of this costs anything at run time: a number is still a plain value (an `Integer` is an `int32_t`), the
-class gives it functions, not a header, and a function the program never calls is not emitted. A cast from one
+class gives it functions, not a header, and a function the program never calls is not emitted. With no header to
+read, a class test on a number answers from its type while compiling: `count.class == Integer` is `true` and
+`count.class == Float` is `false`, and a `count: Integer?` is an `Integer` when it is not null. In an `if` such a test
+is a condition decided while compiling, which the compiler removes, keeping the code it runs. A cast from one
 number type to another is written by assignment, `var half: Float = count`, or by passing the value where the
 other type is expected; it compiles to the one machine conversion, and there is no call form.
 
