@@ -54,7 +54,7 @@ func letter_for(grade: Integer): String {
 
 An `if` that only returns `null` from a function returning a `T?`, or only returns from one returning nothing, is
 a `fallback` spelled the long way, and is an error naming it
-([failure.md](failure.md#an-if-that-only-returns-the-default-is-an-fallback)). In a function returning a number, a
+([failure.md](failure.md#an-if-that-only-returns-what-a-fallback-returns-is-a-fallback)). In a function returning a number, a
 `Boolean`, a text or an object, `if handle == -1 { return false }` is the answer written down, since `fallback` may
 not answer a default there. An `if` with no `else` that ends by returning proves the opposite of its condition
 for the rest of the block, so `if not found { return -1 }` narrows `found`

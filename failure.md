@@ -412,7 +412,7 @@ loops `while running`, `while not found` or on its real exit test.
 An index or a key may not be there, so `names[index]` and `table["key"]` are `T?` and are narrowed like any other
 path. Every `[]` answers this way: a `List`, a `Dictionary`, a `String`, and any
 class of your own, since `a[x]` is only a shortcut for the class's `get_at(x)` and every `get_at` answers a `T?`
-([functions_and_operators.md](functions_and_operators.md#operators)). Writing the call yourself, `names.get_at(0)`, is a
+([functions_and_operators.md](functions_and_operators.md#every-operator-is-a-function)). Writing the call yourself, `names.get_at(0)`, is a
 compile error that names the operator ("'get_at' is what '[]' calls: write 'names[0]'"), so the answer is always read
 as a path and narrowed like one. The
 compiler also understands the usual proofs for the library's collections, so most reads need nothing extra:

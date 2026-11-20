@@ -10,7 +10,7 @@ days), whose real length depends on where it is applied.
 All of it is library code, written in Spite, with nothing running behind it: a program that never names a time
 class carries none of it, and one that only measures with `Clock()` carries only that.
 Each value is an ordinary small object, and arithmetic makes a new one for its result, which lives wherever the
-compiler places it ([memory.md](memory.md#where-a-value-lives-memory)).
+compiler places it ([memory.md](memory.md#memory-belongs-to-the-compiler)).
 
 | Class | What it is | Stored as |
 |---|---|---|
