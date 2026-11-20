@@ -938,7 +938,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   others) and used through the name. `Journal().record(entry)`, `Build().program`, `keep(Console())` and
   `return Console()` are errors (`'Console' is a singleton: bind it once beside the attributes`), and so are a
   binding nothing reads, even in a loaded package, and a binding inside a function (`'Build' is a singleton, bound
-  here as a local`), except in a function added to a value class (`String`, a number, `List`, `Vector`, `Dictionary`, `Buffer`), which
+  here as a local`), except in a function added to a value class (`String`, a number, `List`, `Dictionary`, `Buffer`), which
   binds it as a local `var`, made the first time that line runs. Write no lock for one: work the compiler runs at once never
   shares a singleton one of them writes. Singletons whose attributes make each other, even through an ordinary object
   (`World` binds `Column<Entity>`, which makes an `Entity`, which binds `World`), are an error naming the circle
