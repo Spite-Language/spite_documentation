@@ -132,10 +132,14 @@ game.spite:4: fixed: 'Framework.Framework.Component' names 'Framework' twice, an
 The program's entry class is the program's root: `game/game.spite` is `Game`, and every other class of the program
 is nested in it, `game/ui/ui.spite` is `Game.Ui` and `game/bunda/cu.spite` is `Game.Bunda.Cu`. Nothing is written
 with that prefix: a bare name looks from the inside out, so `Game.Bunda.Cu` writes `String`, `Player` and `Ui`
-plainly. A loaded folder holding its own file (`kal/kal.spite`) is a root of its own, `Kal.Physics`; one without
-(`load "package"` holding `package/engine/`) adds its files and folders at the top, `Engine`
-([packages.md](packages.md)). A file or folder of the program named like a standard-library class reopens it
-(`game/string.spite` is `String`, [below](#reopening-a-class)), since every root reaches one shared library.
+plainly. Every loaded folder is a root class of its own too: `kal/kal.spite` is `Kal` and `kal/physics.spite` is
+`Kal.Physics`, and a loaded folder with no file of its own gets an implied class of its name, as any folder does
+(`load "package"` holding `package/engine/` makes `Package.Engine`), so its classes are reached as `Engine` or
+`Package.Engine` wherever nothing nearer has that name ([packages.md](packages.md)). The standard library's folders
+make no root class: `String` is `String` everywhere. A file of the program stays in the program's root
+(`game/world.spite` is `Game.World`) and never reopens a loaded folder's `World`. A file or folder of the program named
+like a standard-library class reopens it (`game/string.spite` is `String`, [below](#reopening-a-class)), since every
+root reaches one shared library.
 
 ## What a file holds
 
@@ -979,7 +983,9 @@ no spelling silences it ([style.md](style.md#nothing-unused)).
 
 ## Reopening a class
 
-A second file with the same name, in a later loaded root, **reopens** the class instead of colliding with it:
+A second file of the same class, in a later loaded root, **reopens** the class instead of colliding with it (a
+later root holds it under a folder named like the root it reopens, `mods/package/monster.spite` for
+`Package.Monster`):
 its functions and attributes replace the earlier ones of the same name and add the rest. That is how a program
 adds settings to `Environment`, a member template to `List`, a function to `Integer`, and how a mod changes a game
 ([packages.md](packages.md#monkey-patching-mods)). The program's entry class is the one class nothing may

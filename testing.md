@@ -111,7 +111,9 @@ pass TestSetup.Bank.AccountTests.test_starts_from_its_own_setup
 ```
 ### Tests in a loaded package
 
-A package may keep its tests in a folder of their own, `pkg/pkg/tests/` for `Pkg.Tests`. A check program in
+A package may keep its tests in a folder of their own, `pkg/pkg/tests/`: loaded as `../packages/pkg`, that is the
+class `Pkg.Pkg.Tests` (the loaded folder is the root class `Pkg`), written `Pkg.Tests` where nothing nearer has a
+`Pkg`, and its tests print as `Pkg.Pkg.Tests.TextTests.test_...`. A check program in
 another folder loads the package and hands that folder's class to `Test`, with no other line naming its classes:
 
 ```gdscript

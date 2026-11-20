@@ -346,9 +346,14 @@ other build hands out memory as before.
 
 ## Inspect merged classes
 
-`--final-classes=folder` writes the discovered, merged classes as readable `.spite` files, one per class, under
-the folders of the classes it is nested in. It is useful after a `load` or a reopening: the file holds the declarations
-that won, so reopening stops being invisible. What it writes is a program, not a report: running the printed
+`--final-classes=folder` writes the discovered, merged classes as readable `.spite` files, one per class, in the
+project's own folder structure: a class of the program is written where its file sits in the program's folder
+(`game/game.spite` at `game.spite`, `game/ui/button.spite` at `ui/button.spite`, a loaded `game/libs/kit/` at
+`libs/kit/`), a class loaded from outside the program's folder under its root's folder (`load "../kit"` at
+`kit/tools/hammer.spite`), and the standard library's classes at the top (`string.spite`, `spite/class.spite`), where
+the printed program reopens them. A class merged from several files is written once, where its first file of the
+program sits. It is useful after a `load` or a reopening: the file holds the declarations that won, so reopening
+stops being invisible. What it writes is a program, not a report: running the printed
 entry file runs the same program. `Build` is printed with the defaults it
 was declared with (the program's own `build.spite` included), not the values this build folded, so running the
 printed program takes its flags again. A repository loaded at two commits is one library, so each of its classes

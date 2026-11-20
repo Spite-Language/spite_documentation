@@ -99,8 +99,12 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `Framework`, `framework/component.spite` is `Framework.Component` (never `Framework.Framework.Component`, rewritten
   with a `fixed:` line). A folder with no such file is an empty class. The entry class is the program's root:
   `game/game.spite` is `Game`, `game/ui/ui.spite` is `Game.Ui` (written `Ui` inside the program, never `Game.Ui`),
-  and a file named like a library class (`game/string.spite`) reopens it. A loaded folder with its own file
-  (`kal/kal.spite`) is a root `Kal`; one without adds top-level classes. Nesting is naming only (no outer object, no shared attributes). Inside a class,
+  and a file named like a library class (`game/string.spite`) reopens it. Every loaded folder is a root class
+  named after it (`kal/physics.spite` is `Kal.Physics`; a `package/` without `package.spite` gets an implied
+  `Package`), reached through it or by the bare name where nothing nearer has it; the library's folders make none
+  (`String` stays `String`). A program's file stays in its root (`game/world.spite` is `Game.World`, never a
+  reopening of a loaded `World`); a mod reopens another root's class through a folder named like that root
+  (`mods/package/monster.spite` is `Package.Monster`, `mods/game/monster.spite` is `Game.Monster`). Nesting is naming only (no outer object, no shared attributes). Inside a class,
   every class around it lends its names bare: in `framework/button.spite`, `Component` and the enum `Shade` of
   `framework/framework.spite`; lookup goes own declarations, each outer class nearest first, the program, then the
   library's root class `Spite` (`Nothing` lives there and cannot be hidden). A class holds one member per name, so an

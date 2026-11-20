@@ -13,18 +13,19 @@ func Game() {
   with no `load` needed ([programs.md](programs.md)). Its entry class is the program's root, so its classes are
   `Game.Engine`, `Game.Ui`, written without the prefix inside the program
   ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)).
-- A loaded folder holding its own file (`kal/kal.spite`) is a root class too: its classes are `Kal.Physics`, reached
-  through `Kal` or by their own name where nothing nearer has it. A loaded folder without one is **not** a class;
-  folders *inside* it are, and every folder is a class whose own file
-  is the one named like it ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)):
-  `package/engine/renderer.spite` is `Engine.Renderer()`, `package/engine/physics/body.spite` is
-  `Engine.Physics.Body()`, and `package/engine/physics/physics.spite` is the class `Engine.Physics` itself, reopened
-  by another root's `engine/physics/physics.spite` like any class. A folder with no such file is an empty class of
-  its name. A file and a folder of one name side by side, `engine/renderer.spite` beside `engine/renderer/`, would
-  make `Engine.Renderer` two classes in one place, so that is an error that says to move the file into the folder.
-  Every loaded root without its own file merges into the same classes, so a file in one root and a folder in another clash the same way, and so
-  does a folder named like a class of the standard library: `game/color/` is `'Color' is a class of the standard
-  library and also the class of the folder 'game/color': a dotted name means one thing, so rename the folder`.
+- Every loaded folder is a root class too, named after its folder: "root folder is always a namespace, if it has no
+  entry class we create a implied one". `kal/kal.spite` is the class `Kal` and `kal/physics.spite` is `Kal.Physics`;
+  a loaded `package/` with no `package.spite` is an implied class `Package`, as any folder without its own file is
+  ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)). A root's classes are reached through it
+  (`Package.Engine.Renderer()`) or by their own name where nothing nearer has it (`Engine.Renderer()`), and every
+  folder inside is a class whose own file is the one named like it: `package/engine/physics/body.spite` is
+  `Package.Engine.Physics.Body`, and `package/engine/physics/physics.spite` is the class `Package.Engine.Physics`
+  itself. A folder with no such file is an empty class of its name. A file and a folder of one name side by side,
+  `engine/renderer.spite` beside `engine/renderer/`, would make `Engine.Renderer` two classes in one place, so that is
+  an error that says to move the file into the folder, and so is a folder named like a class of the standard
+  library: `game/color/` is `'Color' is a class of the standard library and also the class of the folder
+  'game/color': a dotted name means one thing, so rename the folder`. The standard library's own folders make no
+  root class: its classes are `String` and `Spite.Class` from every root.
 - A `load` works in any file, not only the entry file: every file of the program's folder and of a loaded folder
   has its `load` lines followed, the entry file's first, so a sibling file's `load "tools"` loads `tools/` as a
   package. A folder that some file names in a `load` is a root of its own and is never also a class of the
@@ -65,8 +66,8 @@ func Game() {
 - A name the walk does not find is `unknown type 'Server.Component.Eye'` at the line that writes it, wherever a type is
   written. When dropping the leading parts names a class, or a plain name is the last part of exactly one class, the
   error says which: `unknown type 'Eye': did you mean 'Component.Eye'?`. The usual slip is the folder of the machine
-  or the repository written into the name. Two roots that make a class of the same name at the same level are never
-  an ambiguity error: they are one class, reopened.
+  or the repository written into the name. Two roots that each hold a class of one name (`Package.Monster` and
+  `Mods.Monster`) are two classes, and a bare `Monster` is the first loaded root's.
 - A generic class is found the same way, so it may live in any folder: `Asset.Pack<Asset.Texture>("textures")`
   and, from inside `game/`, `Pack<Rule>("rules")` for `game/pack.spite` both work.
   A generic name that finds nothing is one error, and the lines that
@@ -124,12 +125,12 @@ its path (`Spite.Function`), and a class of an enclosing folder is left as writt
 
 ## Monkey patching (mods)
 
-Every loaded root without a file of its own merges into the same classes. A second such root with the same folder
-structure and file name
-**reopens** the class instead of colliding with it: a later `func`/`var` of the same name replaces the
-earlier one (in load order), and a name not seen before is simply added. A `union`, `type` or `enum` declared
-again replaces the earlier declaration the same way ([below](#reopening-an-enum-replaces-it)). This is how game
-mods work.
+A loaded folder is a root class named after its folder, so a mod reopens a class of another root by holding a
+folder named like that root: `mods/package/monster.spite`, in a `mods/` loaded after `package/`, is the class
+`Package.Monster` again, and it **reopens** it instead of colliding with it. A later `func`/`var` of the same name
+replaces the earlier one (in load order), and a name not seen before is simply added. A `union`, `type` or `enum`
+declared again replaces the earlier declaration the same way ([below](#reopening-an-enum-replaces-it)). This is how
+game mods work.
 
 ```gdscript title=package_demo/package/monster.spite
 func describe(): String {
@@ -143,9 +144,9 @@ func render(): String {
 ```
 
 `mods` is loaded after `package`, so the `describe` below replaces `package/monster.spite`'s own, and `taunt`
-is a name that folder never had. That is the whole of monkey patching.
+is a name that class never had. That is the whole of monkey patching.
 
-```gdscript title=package_demo/mods/monster.spite
+```gdscript title=package_demo/mods/package/monster.spite
 func describe(): String {
     return "a modded monster"
 }
@@ -183,12 +184,14 @@ writes none (`Hero()`) counts as written. A conversion the class lacks (`func He
 ([classes_and_files.md](classes_and_files.md)). Within one file each name is declared once; replacing is what a
 *later* file does.
 
-The program's classes sit inside its root class, so a file of the program is never a reopening of a loaded
-folder's class: `game/monster.spite` is `Game.Monster`, which would hide a loaded `Monster` inside the program,
-so it is refused as a class hiding another, naming both. A loaded folder reopens a class of the program by
-holding the program's folder: `mods/game/monster.spite` is `Game.Monster`, merged with `game/monster.spite`. To replace something a loaded folder declares, put the
-replacement in a folder loaded after it, as `mods` is above. Only the standard library is shared by every root
-(below); a root's own copy of it is spite_compiler#644.
+A file directly in a root is that root's own class and reopens nothing: `mods/monster.spite` is `Mods.Monster`, a
+class of its own beside `Package.Monster`. The program's classes sit inside its root class the same way, so a file
+of the program is never a reopening of a loaded folder's class: `game/world.spite` is `Game.World`, whatever a loaded
+folder holds. A program reopening a loaded package's class is not built yet (spite_compiler#652). A loaded folder
+reopens a class of the program by holding the program's folder: `mods/game/monster.spite` is `Game.Monster`, merged
+with `game/monster.spite`. To replace something a loaded folder declares, put the replacement in a folder loaded
+after it, as `mods` is above. Only the standard library is shared by every root (below); a root's own copy of it is
+spite_compiler#644.
 
 The program's entry class is the one class nothing reopens: a loaded `bundle/potion.spite` in the program
 `potion/` would otherwise become part of the entry class `Potion`, so it is an error naming both files and the two ways out: rename the loaded file,
@@ -247,7 +250,7 @@ func run_phase(phase: Phase) {
     console.print("running", phase)
 }
 ```
-```gdscript title=phase_mod/mods/schedule.spite
+```gdscript title=phase_mod/mods/engine/schedule.spite
 enum Phase {
     'input'
     'update'
@@ -539,14 +542,15 @@ func Minimap() {
 
 What one commit adds, the merged class has; what both declare must be the same in both. A function given two
 bodies, or an attribute given two types, by two commits stops the compile with an error naming the declaration
-and both commits, such as "'Renderer.draw' is declared one way by 6c7dca9 and another by 41c09e2, two commits of
-one repository this program loads as one library (...): pin commits that agree, or declare it in the program's
-own files, which win". Blank lines and comments do not count as a difference.
+and both commits, such as "'Core.Renderer.draw' is declared one way by 6c7dca9 and another by 41c09e2, two commits
+of one repository this program loads as one library (...): pin commits that agree, since the program's own files
+are classes of its own root and cannot replace a loaded package's declaration yet". Blank lines and comments do not
+count as a difference.
 
-The program's own files win: the files of pinned copies are merged before the program's folder and the folders
-it loads without a pin, so a `renderer.spite` of the game's own that declares `draw` settles which `draw` the
-game runs, and the two commits may then disagree on it. A class keeps its plain name, `Renderer`, in messages,
-reflection and `--final-classes`, since there is only one.
+The program cannot settle the disagreement itself: a `renderer.spite` of the game's own is `Game.Renderer`, a class
+of the program's root, not a reopening of `Core.Renderer` (reopening a loaded package's class from the program is
+spite_compiler#652). Both commits load as the one root `Core`, so a class is `Core.Renderer` once in messages,
+reflection and `--final-classes`.
 
 ## Files beside a package's source
 
@@ -568,8 +572,9 @@ program that asks that way carries the paths of its class objects.
 
 Because patching is dangerous to read silently, `--final-classes=folder` writes every class as it ended up, after
 every root is merged and every reopening resolved, as a program that runs the same as the one it was printed from
-([compiler.md](compiler.md#inspect-merged-classes)). Each winning function and attribute is preceded by a `#` comment
-naming the root it came from, so this is the file to read when you are not sure which mod won. The folder holds the
+([compiler.md](compiler.md#inspect-merged-classes)), in the project's own folder structure: `mods/package/monster.spite`
+and `package/monster.spite` are one printed `package/monster.spite`. Each winning function and attribute is preceded
+by a `#` comment naming the root it came from, so this is the file to read when you are not sure which mod won. The folder holds the
 standard library's classes too, platform functions included, and the instances a template made for the names
 a program called (and only those).
 

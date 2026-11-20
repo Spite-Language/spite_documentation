@@ -28,6 +28,7 @@ spite --check                           format and compile: the errors, if any (
 spite --build                           build .spite/build/program.exe without running it
 spite --check --optimization-report=report.md   list what was not optimised (heap objects, lists, copies, overflow checks, text literals still made, loops kept out of bands), each with its line and why, linked relative to the report (absolute when on another drive)
 spite --high-ir                         also write .spite/build/program.high_ir.txt: each function as the compiler holds it; a folded operation reads (6 folded from cut subtract 1), a check it dropped (index add 1, proven to fit)
+spite --final-classes=.spite/final --check   write every class as it ended up, merged, in the project's folder structure (a program class where its file sits, a class loaded from outside under its root's folder, the library's classes at the top)
 spite --player-count=2                  a field the program's build.spite declares (kebab-case)
 ```
 
@@ -65,8 +66,10 @@ class whose own file is the one named like it (`game/engine/renderer/shader.spit
 class, `Engine.Renderer()` makes an empty object). The entry class is the program's root: `game/game.spite` is
 `Game`, and the program's classes are nested in it (`Game.Engine.Renderer`, its `name_with_outer_classes`), written
 without the prefix since a bare name looks from the inside out; a root-level file or folder named like a library class
-or folder (`game/string.spite`, `game/spite/class.spite`) reopens the library's class. A loaded folder with its own
-file (`kal/kal.spite`) is a root `Kal` (`Kal.Physics`); one without adds top-level classes (`Engine`). Nesting is naming only: a nested class holds
+or folder (`game/string.spite`, `game/spite/class.spite`) reopens the library's class. Every loaded folder is a root class
+named after it: `kal/kal.spite` is `Kal` and `kal/physics.spite` `Kal.Physics`, and a loaded `package/` without
+`package.spite` gets an implied plain class `Package`, so `package/engine/renderer.spite` is `Package.Engine.Renderer`,
+written `Engine.Renderer` where nothing nearer has `Engine`; the standard library's folders make no root class. Nesting is naming only: a nested class holds
 no object of its outer class, reads none of its attributes, and privacy is unchanged. Inside a class, every class
 around it lends its names bare: in `framework/button.spite`, `Component` is `Framework.Component` and `Shade` the enum
 `framework/framework.spite` declares. A bare name looks in the class's own `enum`/`union`/`type`, then each outer
@@ -85,20 +88,22 @@ same whole word (`HighBlock`, `HighFunction`, `HighValue`) are an error: move th
 them `Block`, `Function`, `Value` (only the program's own classes count, so `spite/function.spite` reopening
 `Spite.Function` is fine). `load "folder"` inside a function loads another package (it takes literal text: a
 folder path relative to the file, never absolute, or `repository@commit/folder` for a pinned repository; only its last
-folder, a root and no class, must be snake_case); a file at the same dotted path
+folder, the root and its class, must be snake_case); a file at the same dotted path
 reopens the class: same-named functions, attributes and enums replace (an enum declared again is its whole new
-list of values), the rest are added; a replacing attribute keeps its type and a replacing function or constructor its exact signature, parameters (count, order, names, types) and answer, an error at the reopening's line even when nothing uses the class, naming a library class's declaration (`'_place_of' answers a Path where the class first declares it, at spite_standard_library://common/volume.spite:20, and this reopening makes it answer an Integer: a reopening replaces a function's body, never what it answers, so give the new function a name of its own`; a changed parameter is `'hit' takes (damage: Integer) where the class first declares it, and this reopening makes it take (damage: String): a reopening replaces a function's body, never what it takes, so give the new function a name of its own`, and for a constructor `... a reopening replaces a constructor's body, never what it takes, so build the class from another value with a conversion of its own, named 'Hero' with one parameter named 'from'`); a class that writes no constructor has the one the compiler makes, `Hero()`, so a reopening's `func Hero(starting_level: Integer)` changes it (`'Hero' takes nothing where the class first declares it, since its first file writes no constructor and the compiler makes 'Hero()', and this reopening makes it take (starting_level: Integer): ...`) and a written `func Hero()` replaces it; a conversion the class lacks (`func Hero(from: String): Hero?`) is new and may be added; a reopening may not name a local, parameter or attribute like any function of the class. A reopening of a reflection class (`Spite.Class`, `Spite.Function`, the other `Spite` classes describing the program) adds functions but cannot declare one the class has, by its library name or the name read (`get_is_singleton`, `is_singleton`, `name`): `'is_singleton' is a reflection function of Spite.Class, and reflection functions cannot be replaced`. A file of the program is a class of the program's root (`Game.Monster`),
-never a reopening of a loaded folder's `Monster` (it is refused as hiding it); a loaded folder reopens the
-program's class through the program's folder name, `mods/game/monster.spite` for `Game.Monster`: put a replacement in a folder loaded after the one it replaces. Two `load`s of folders one inside the other are an error
+list of values), the rest are added; a replacing attribute keeps its type and a replacing function or constructor its exact signature, parameters (count, order, names, types) and answer, an error at the reopening's line even when nothing uses the class, naming a library class's declaration (`'_place_of' answers a Path where the class first declares it, at spite_standard_library://common/volume.spite:20, and this reopening makes it answer an Integer: a reopening replaces a function's body, never what it answers, so give the new function a name of its own`; a changed parameter is `'hit' takes (damage: Integer) where the class first declares it, and this reopening makes it take (damage: String): a reopening replaces a function's body, never what it takes, so give the new function a name of its own`, and for a constructor `... a reopening replaces a constructor's body, never what it takes, so build the class from another value with a conversion of its own, named 'Hero' with one parameter named 'from'`); a class that writes no constructor has the one the compiler makes, `Hero()`, so a reopening's `func Hero(starting_level: Integer)` changes it (`'Hero' takes nothing where the class first declares it, since its first file writes no constructor and the compiler makes 'Hero()', and this reopening makes it take (starting_level: Integer): ...`) and a written `func Hero()` replaces it; a conversion the class lacks (`func Hero(from: String): Hero?`) is new and may be added; a reopening may not name a local, parameter or attribute like any function of the class. A reopening of a reflection class (`Spite.Class`, `Spite.Function`, the other `Spite` classes describing the program) adds functions but cannot declare one the class has, by its library name or the name read (`get_is_singleton`, `is_singleton`, `name`): `'is_singleton' is a reflection function of Spite.Class, and reflection functions cannot be replaced`. A file of the program is a class of the program's root (`game/world.spite` is `Game.World`),
+never a reopening of a loaded folder's class (that is spite_compiler#652), and a file directly in a loaded root is
+that root's own class (`mods/monster.spite` is `Mods.Monster`); a loaded folder reopens another root's class through
+a folder named like that root, `mods/game/monster.spite` for `Game.Monster` and `mods/package/monster.spite` for
+`Package.Monster`: put a replacement in a folder loaded after the one it replaces. Two `load`s of folders one inside the other are an error
 (load only the outer one). A `load` under an `if` must be decidable from `Build` fields and literals, and a `load`
 inside a `while` or `switch` is an error. A folder some file names in a `load` is a package of its own, never also a
 class of the folder around it. `Build` follows the same order: a loaded package may reopen it in its own `build.spite` and declare
 fields (read and set by flag like the program's), and where it and the program's `build.spite` declare one field the
 package's declaration stays, a flag setting it either way, so a package names its fields after itself
 (`assets_cooked`, never `production`). A repository pinned with
-`load "../engine@6c7dca9/core"` is merged before the program, so the program's own declaration of a name wins over
-it, and two commits of one repository are one library: what both declare must agree, or the compile stops naming
-the declaration and both commits. A package opens the files
+`load "../engine@6c7dca9/core"` is the root class `Core`, and two commits of one repository are that one root: what
+both declare must agree, or the compile stops naming the declaration and both commits (the program's own files cannot
+settle it, being its own root's classes). A package opens the files
 beside its own source through `class.source_files` (or `$item_type.source_files`, or `Recipe.source_files` for a
 class by name), a `List<File>` of every file that declares or reopens the class, and a folder's class's
 `.source_directories` a `List<Directory>` (empty for a file's class): absolute paths on the machine that built it, never a path relative to where
