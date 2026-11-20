@@ -257,7 +257,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `==` always means `equals`. To ask whether two names hold the very same object write `a === b` (`a !== b` for
   not), and only where that is truly meant (a copy is a new object, a back reference points at this very node): it
   pins the object, so the compiler can no longer share a copy with its original. `===` works on objects of one class,
-  on a `type` or `Anything` value and on a union of classes with no narrowing first (`part === wanted` with a `Part`
+  on a `type` value and on a union of classes with no narrowing first (`part === wanted` with a `Part`
   from a list), and a `T?` side needs none (two missing are the same); on a number, `Boolean`, `String` or enum it
   is an error naming `==`, and `a.is_same_instance(b)` written is refused naming `a === b`. A `Dictionary` keyed by an object still keys by identity.
 - Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
