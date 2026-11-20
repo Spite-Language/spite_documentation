@@ -83,7 +83,7 @@ func withdraw(amount: Integer) {
 }
 ```
 ```gdscript title=test_setup/bank/account_tests.spite
-var account = Bank.Account()
+var account = Account()
 
 func AccountTests() {
     account.deposit(100)
@@ -116,7 +116,6 @@ another folder loads the package and hands that namespace to `Test`, with no oth
 
 ```gdscript
 func PkgCheck() {
-    load "../spite_standard_library/windows"
     load "../packages/pkg"
     var tester = Test(Pkg.Tests)
     tester.run()
