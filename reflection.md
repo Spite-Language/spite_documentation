@@ -1231,7 +1231,7 @@ Boolean
 ## Every class in the program
 
 `Spite.Class.instances` is every class of the program, its own folder and every package it loads, wherever the
-package's folder is (`load "../shared"` too), but not the standard library and not a generic class, in the order of their dotted names, because a class is an instance of
+package's folder is (`load "../shared"` too), but not the standard library, in the order of their dotted names, because a class is an instance of
 `Spite.Class`. No code can add a class while the program runs, so the list is a constant: a walk over it,
 `Spite.Class.instances.each(bind)`, is one copy of `bind` per class, in which the class is a type, and a library finds
 the components of an application with no registration line:
@@ -1275,6 +1275,47 @@ func EveryClassOfTheProgram() {
 ```
 ```output
 the program has 2 classes, among them Monster
+```
+
+A generic class is no class until it is given its classes, so the list holds its copies instead: every copy its code
+writes with its classes named, `Custom<Glow>` anywhere in the program or a package it loads, whether that line runs or
+not, and, inside the copy of a generic class, a copy named through its generic names (`Custom<$first_type>` in
+`Pair<Bloom>` is `Custom<Bloom>`). Each copy is a class of its own: its `.name` is the generic class's (`Custom`), its
+`.name_with_namespaces` says which copy (`Custom<Glow>`), and `.generics` answers the classes it was given. A copy
+whose classes are inferred from a constructor's arguments, one a walk makes from its walked class (`Binding<part>()`),
+and one whose generic name sits inside another argument (`Custom<List<$first_type>>`) are not listed, so a walk never
+lists the classes it makes and the list stays finite. Reading the list is what makes the copies it holds: a program
+that never reads it makes none.
+
+```gdscript title=generic_copies_are_classes/custom.spite
+generic $uniforms_type
+
+var key = "custom"
+```
+```gdscript title=generic_copies_are_classes/glow.spite
+var strength: Float = 1.0
+```
+```gdscript title=generic_copies_are_classes/generic_copies_are_classes.spite entry
+var console = Console()
+
+func GenericCopiesAreClasses() {
+    var glow = Custom<Glow>()
+    var strength = Glow().strength
+    console.print(glow.key, strength)
+    Spite.Class.instances.each(show)
+}
+
+func show(part: Spite.Class) {
+    var shown = part.name_with_namespaces
+    var given = part.generics.count()
+    console.print(part.name, shown, given)
+}
+```
+```output
+custom 1
+Custom Custom<Glow> 1
+GenericCopiesAreClasses GenericCopiesAreClasses 0
+Glow Glow 0
 ```
 
 Describing a class makes no object of it: a class object's `.attributes` are its declarations, which need no object,
