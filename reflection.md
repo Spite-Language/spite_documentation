@@ -133,9 +133,10 @@ bound to troll: alive
 
 A function taking attributes says which it takes (D2638): `heal` takes a `Spite.Attribute<Integer>`, so the walk
 calls it for `health` alone and `+ 5` is ordinary arithmetic; `show` takes a `Spite.Attribute<Console.Printable>`, so
-it is called for every attribute whose class has a `to_string()`, with `.value` a `Console.Printable`. The value type
-is a class, a union or a `type`, and a nullable attribute is walked only by a nullable one
-(`Spite.Attribute<Console.Printable?>`). A bare `Spite.Attribute` says nothing of its value and is refused, and a
+it is called for every attribute whose class has a `to_string()`. The walk compiles a copy for each attribute, and
+in each `.value` has that attribute's own class, as a function taking a `type` is compiled for each class that
+reaches it: the body must make sense for each of them. The value type is a class, a union or a `type`, and a nullable
+attribute is walked only by a nullable one (`Spite.Attribute<Console.Printable?>`). A bare `Spite.Attribute` says nothing of its value and is refused, and a
 walk that no attribute fits is an error (`'heal' takes a 'Spite.Attribute<Boolean>', and no attribute of 'Monster'
 holds one, so this walk would call it on none: ...`). A function reading every attribute whatever it holds takes the
 declaration, `Spite.AttributeDeclaration`, which has its `.name`, `.class` and `.index` and no value. Inside a walk
