@@ -525,16 +525,17 @@ func DirectoryTasks() {
     crash target.create()
     var target_exists = target.exists()
     console.print("exists", target_exists)
-    var examples = Directory("examples")
-    var listed = examples.entries()
+    var levels = Directory(".spite/documentation_demo_dir/levels")
+    crash levels.create()
+    var listed = target.entries()
     crash listed
-    var has_hello = listed.filter_directories().map_folder_names().contains("hello")
-    console.print("has hello", has_hello)
+    var has_levels = listed.filter_directories().map_folder_names().contains("levels")
+    console.print("has levels", has_levels)
 }
 ```
 ```output
 exists true
-has hello true
+has levels true
 ```
 
 `entries()` answers a `List<Directory.Entry>?`: `null` when the folder does not exist or cannot be opened, so a
