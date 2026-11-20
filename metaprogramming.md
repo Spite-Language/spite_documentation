@@ -417,7 +417,7 @@ func get_attribute(attribute: Spite.AttributeDeclaration): attribute.class {
 }
 
 func set_name(new_name: String) {
-    name = new_name.upper_case()
+    attributes["name"].value = new_name.upper_case()
 }
 ```
 ```gdscript title=own_accessors/own_accessors.spite entry
@@ -436,7 +436,10 @@ ANN 30
 
 Writing `person.name` goes through `set_name`, while reading it goes through the `get_attribute` template, since no
 exact `get_name` exists. Inside the class, `attributes[attribute].value` is that member of the object the function runs
-on, read or written directly, so the template never calls itself.
+on, read or written directly, so the template never calls itself. The templates answer inside the class too, in
+the constructor included, for every attribute without an exact function
+([functions_and_operators.md](functions_and_operators.md#every-attribute-has-a-setter-and-a-getter)); a template
+that only stores or only answers `attributes[attribute].value`, like these, costs nothing there.
 
 A parameter of the bound types, `Spite.Attribute<Value>` (an attribute bound to one object holding a `Value`: its
 `declaration` and its `value`) or `Spite.Function`, makes no template. It is an ordinary parameter, and the function is an

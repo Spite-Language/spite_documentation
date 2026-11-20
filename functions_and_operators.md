@@ -670,8 +670,8 @@ false true
 
 ## Setter/getter interception
 
-Attribute access also goes through operator-style functions, from outside a class and inside it. `person.age = 1` calls
-`set_age(1)` when the class defines it (an exact function, or a template; see
+Attribute access goes through operator-style functions, from outside a class and inside it, the constructor
+included. `person.age = 1` calls `set_age(1)` (an exact function the class writes, or a template; see
 [metaprogramming.md](metaprogramming.md)); `person.age` (a read) calls `get_age()` the same way. An exact
 function always wins over a template. Compound assignment goes through both: `person.age = person.age + 1`
 reads through `get_age()` and writes through `set_age(...)`.
@@ -694,11 +694,11 @@ func get_attribute(attribute: Spite.AttributeDeclaration): attribute.class {
 }
 
 func set_owner(new_owner: String) {
-    owner = new_owner.upper_case()
+    attributes["owner"].value = new_owner.upper_case()
 }
 
 func get_owner(): String {
-    return owner
+    return attributes["owner"].value
 }
 ```
 `balance` has no exact `set_balance`/`get_balance`, so a template answers reads and writes to it from
@@ -725,15 +725,28 @@ balance 120
 owner BOB
 ```
 
-Inside the class's own functions it is the same: a bare `age = 1` calls `set_age(1)` and a bare `age` calls
-`get_age()` when the class declares them, and so does `other.age` on another object of the class. The attribute is
-the storage behind them, which only they reach (like a C# auto-property): inside `set_age` and `get_age` a bare
-`age` reads and writes the attribute itself. A constructor reaches the storage too, since it sets the starting
-values before anything can watch them and a setter that compares with the value it replaces would find none; a
-default (`var age = 3`) is the storage's starting value. A function the constructor calls is not the constructor,
-so its writes run the setter. Only a function the class declares by that name does this: a template answers
-`receiver.field` from outside only. A bare name that no local and no attribute holds goes through `get_<name>()`
-and `set_<name>(value)` as well.
+### Every attribute has a setter and a getter
+
+Every write of an attribute runs its setter and every read runs its getter, wherever it is written: outside the
+class, inside it, and in the constructor. A bare `age = 1` calls `set_age(1)` and a bare `age` calls `get_age()`, and
+so does `other.age` on another object of the class. An attribute the class writes no `set_age` for has one anyway,
+which the compiler writes while it desugars the class, as if the class held
+
+```spite
+func set_age(value: Integer) {
+    attributes["age"].value = value
+}
+
+func get_age(): Integer {
+    return attributes["age"].value
+}
+```
+
+A template the class declares (`set_attribute`, `get_attribute`) stands in for them where it has no exact function.
+A setter that only stores its parameter and a getter that only answers the storage, the ones the compiler writes and
+any the class writes that way, are compiled as the plain write and read: they cost nothing, keep what a check proved,
+and leave no function behind. A default (`var age = 3`) is the storage's starting value, set before the constructor
+runs, and runs no setter.
 
 ```gdscript title=interception_inside/thermostat.spite
 var changes = 0
@@ -745,7 +758,7 @@ func Thermostat(starting_target: Integer) {
 
 func set_target(value: Integer) {
     changes = changes + 1
-    target = value.clamp(10, 30)
+    attributes["target"].value = value.clamp(10, 30)
 }
 
 func warm_up() {
@@ -763,16 +776,59 @@ func InterceptionInside() {
 }
 ```
 ```output
-25 0
-30 1
+25 1
+30 2
 ```
 
-Every write outside the setter runs it, so a setter that writes another attribute whose setter writes this one
-back is a recursion like any other, reported at run time as a stack overflow. A setter that only stores its
-parameter (`func set_age(value: Integer) { age = value }`) and a getter that only answers the attribute are compiled
-as the plain write and read: they cost nothing and keep what a check proved. A getter may compute and hand back a
-fresh `String` or `List` as safely as it returns a field. An intercepted access is a direct call, which the compiler
+The constructor's `target = starting_target` ran `set_target` too, so a setter that checks or clamps a value
+checks the starting one as well. A setter that reads the value it replaces reads the storage, which before the
+constructor's first write holds the attribute's default; for an attribute with no default that read is refused like
+any read before the constructor gives the value (`the attribute 'target' has no default, so the constructor gives it
+its value, but line 5 runs 'set_target', which uses it, before it has one`), and a default the setter may read is
+never removed as one the constructor replaces.
+
+Every write outside its own setter runs the setter, so a setter that writes another attribute whose setter writes this
+one back is a recursion like any other, reported at run time as a stack overflow. A getter may compute and hand back
+a fresh `String` or `List` as safely as it returns a field. An intercepted access is a direct call, which the compiler
 inlines like any small function.
+
+### The storage behind the accessors
+
+`attributes["age"].value` is the attribute's storage. Writing it is the one write that runs no setter, and reading it
+runs no getter; on another object it is `other.attributes["age"].value`, and in a walk
+`kept.attributes[attribute].value` (see [reflection.md](reflection.md#an-instance-indexed-by-a-declaration)). It
+compiles to the plain write or read of the field.
+
+Inside an attribute's own setter and getter a bare name is refused, written or read, since it would run that same
+accessor again: the setter and the getter reach their attribute only as `attributes["age"].value`, and the compiler
+rewrites a bare `age` there to that (`fixed: 'age' inside 'set_age' would run 'set_age' again: wrote
+'attributes["age"].value', which reaches the storage`). The other attributes are read and written as anywhere else,
+through their own accessors. A setter that compares the new value with the one it replaces reads the storage:
+
+```gdscript title=storage_behind_the_accessors/lamp.spite
+var console = Console()
+var level = 0
+
+func set_level(value: Integer) {
+    if attributes["level"].value != value {
+        console.print("level", attributes["level"].value, "to", value)
+    }
+    attributes["level"].value = value
+}
+```
+```gdscript title=storage_behind_the_accessors/storage_behind_the_accessors.spite entry
+func StorageBehindTheAccessors() {
+    var lamp = Lamp()
+    lamp.level = 3
+    lamp.level = 3
+    lamp.attributes["level"].value = 5
+    lamp.level = 4
+}
+```
+```output
+level 0 to 3
+level 5 to 4
+```
 
 A private attribute's functions are private too: `_open = true` calls `_set_open(true)` and a bare `_open` calls
 `_get_open()`, never `set__open`.
@@ -879,9 +935,10 @@ The rule holds on every class (built in, library or your own), through a `type` 
 member offers the operator), and inside the class itself: `negate()` inside `Duration` is refused, write `-this`.
 Inside a class, a bare `set_turns(3)` is refused the same way (`'set_turns' is what writing 'turns' calls: write
 'turns = 3'`), and so is a bare `get_largest()`, whether or not the class has an attribute of that name, since a bare
-`turns = 3` runs the setter. A private one names its own form: `'_set_open' is what writing '_open' calls: write
-'_open = true'`. The exception is where the bare name reaches the storage instead, in a constructor or in the
-other accessor of the same attribute, or where a local hides it, and for a template's `get_age()` beside an attribute `age`: there the call is the only way to the function.
+`turns = 3` runs the setter everywhere, the constructor included. A private one names its own form: `'_set_open' is
+what writing '_open' calls: write '_open = true'`. The exception is inside the attribute's own setter and getter, where
+the bare name is refused and the call is the only way to the other accessor (`get_turns()` in `set_turns`), and where a
+local hides the attribute.
 `get_attribute`/`set_attribute` called with an attribute that is a value, such as one a walk hands you, are not
 refused either.
 

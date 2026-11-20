@@ -396,6 +396,68 @@ is a `Console.Debuggable`, the library's `type` every class fits, so the program
 `if made.class == Gear` narrows it. It halts, saying why, for the program's entry class and for a class whose
 constructor takes arguments. In a walk over classes each copy knows its class, so `part()` there is that class.
 
+### A name built while compiling
+
+A name in `[]` may be built from holes, `Watched.functions["set_{name}"]`, when every value the holes read is known
+while compiling: text written in the code, or a name read off a constant, such as `attribute.name` in a walk over a
+class's attributes, where each copy knows its attribute ([Known while compiling](#known-while-compiling)). Such a
+lookup is the declaration it names, as if the name were written out: a `var` holding it is known, an `if` on it keeps
+only its branch, and a `Spite.Call` through it is the direct call, its arguments filled by name. This copies a fresh
+object's attributes onto a kept one through their setters, so that whatever a setter does (telling observers, say)
+happens for each:
+
+```gdscript title=copy_through_setters/watched.spite
+var label = ""
+var told = 0
+
+func set_label(value: String) {
+    told = told + 1
+    attributes["label"].value = value
+}
+```
+```gdscript title=copy_through_setters/copy_through_setters.spite entry
+var console = Console()
+
+func CopyThroughSetters() {
+    var kept = Watched()
+    var fresh = Watched()
+    fresh.label = "fresh"
+    copy_attributes(kept, fresh)
+    console.print(kept.label, kept.told)
+}
+
+func copy_attribute(attribute: Spite.AttributeDeclaration, kept: Watched, fresh: Watched) {
+    var name = attribute.name
+    var setter = Watched.functions["set_{name}"]
+    if setter {
+        var call = Spite.Call(setter, kept)
+        call.arguments["value"] = fresh.attributes[attribute].value
+        call.call()
+    } else {
+        kept.attributes[attribute].value = fresh.attributes[attribute].value
+    }
+}
+```
+```output
+fresh 1
+```
+
+The walk makes `copy_label` and `copy_told`; in each, `name` is known, so `setter` is that attribute's setter and
+the copy is the plain call `kept.set_label(fresh.label)`, which the compiler inlines. Since every attribute has a
+setter ([functions_and_operators.md](functions_and_operators.md#every-attribute-has-a-setter-and-a-getter)), the
+lookup finds one for `told` as well, the one the compiler writes, so `if setter` holds in every copy and the `else`
+branch is never compiled: `copy_told` is the plain write `kept.told = fresh.told`. The `else` stays legal, for a
+lookup that finds nothing (`functions["reset_{name}"]` for an attribute with no `reset_` function), where it is the
+branch kept.
+
+A setter or getter the compiler writes has no declaration object while running, so a `var` naming one is only tested
+(`if setter`) and called through (`Spite.Call(setter, kept)`); anything else is refused (`'setter' is 'set_told',
+which the compiler writes for every attribute and keeps no declaration of while running: ...`). A walk over
+`.functions` lists the functions a class writes, as a lookup by a name known only while running does.
+
+A hole that reads a value known only while running leaves the lookup to run time, as above: a `Spite.Call` through
+it fills no arguments.
+
 ## Reaching a reflection object
 
 | Written | Answers |
@@ -1048,9 +1110,10 @@ reflection on it is ordinary code that costs nothing at run time:
   name answer it as a `T?` proven present, so a `crash` on a `var` holding one is already proven and is removed;
   `[n]` is the `T` itself. When there is no such item (an empty list, `[n]` past the end, a name no item has) the
   read stays at run time, so `[n]` past the end halts with its words and the name answers `null`.
-- **A name over a class's `.functions` or `.attributes` is still read at run time.** They are dictionaries, and a
-  declaration lives only in its class's table, so on a class named in the code `Gear.Axle.functions["spun"]` reads
-  that table and answers a `T?` that an `if`, `fallback` or `crash` narrows, and `Gear.Axle.attributes["turns"]`
+- **A name over a class's `.functions` or `.attributes` is still read at run time**, unless it is held in a `var`
+  that only an `if` and a `Spite.Call` read ([A name built while compiling](#a-name-built-while-compiling)). They are
+  dictionaries, and a declaration lives only in its class's table, so on a class named in the code
+  `Gear.Axle.functions["spun"]` reads that table and answers a `T?` that an `if`, `fallback` or `crash` narrows, and `Gear.Axle.attributes["turns"]`
   reads it already proven present, a `T`. What folds is a missing name: one the class has no function of is a
   constant `null`, so `if not Gear.Axle.functions["rolled"]` keeps only its branch, and an attribute name the class
   does not declare is a compile error.

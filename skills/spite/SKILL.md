@@ -104,9 +104,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   changes, with no call, `return`, `fallback` or `crash`, is an error too.
 - Use the operator, never its function: `a + b`, not `a.sum(b)`; `person.age`, not `person.get_age()`; `list[0]`,
   not `list.get_at(0)`.
-- A setter and a getter run inside their class too: a bare `age = 1` calls `set_age(1)`, a bare `age` calls
-  `get_age()`. Only `set_age`, `get_age` and a constructor reach the attribute itself; a private `_open` goes
-  through `_set_open` / `_get_open`.
+- Every attribute has a setter and a getter (the compiler writes plain ones where the class writes none, and compiles
+  them back to the plain field), and every write and read runs them, inside the class and in the constructor too: a
+  bare `age = 1` calls `set_age(1)`, a bare `age` calls `get_age()`. The one way past them is the storage,
+  `attributes["age"].value`, which is also the only way `set_age` and `get_age` reach their attribute (a bare `age`
+  there is refused, and fixed to it). A private `_open` goes through `_set_open` / `_get_open`.
 - Metaprogramming is ordinary code on reflection objects, run while compiling: `Monster.attributes.each(describe)` with
   `describe(attribute: Spite.AttributeDeclaration)`. A function with a parameter named by a word of its own name is a
   template over that kind of member: `Spite.AttributeDeclaration` (read as `monster.attributes[attribute].value`),

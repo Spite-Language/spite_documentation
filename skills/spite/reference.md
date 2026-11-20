@@ -837,7 +837,11 @@ of the standard library or of a repository pinned to a commit is never rewritten
   function's declared type. With a declaration known only while running (`value.class.functions[name]`) the call fills
   no arguments: `call.call()` runs a function taking none on an instance of its class (halting otherwise) and drops its
   answer, and `call.arguments` on it is refused.
-  There is no `call_with`.
+  There is no `call_with`. A name built from holes whose values are known while compiling is a name written in the
+  code: in a walk over attributes, `var setter = Watched.functions["set_{attribute.name}"]`, `if setter` keeps its
+  branch and `Spite.Call(setter, kept)` is the direct `kept.set_label(...)`. Every attribute has a `set_` (the
+  compiler's own where the class writes none), so such an `if` always holds and its `else` is never compiled; a
+  compiler-written one has no run-time declaration, so its `var` is only tested and called through.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
   Spite.AttributeDeclaration>`, an object's answer `Spite.Attribute<Value>` (`.value`, `.declaration`) by a name written in the code, a declaration
   or a walk, and a literal key naming no such attribute is a compile error, on a class and an instance alike; an
@@ -866,7 +870,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
   so keep one generic class with a helper per kind, not one class per kind.
-- Names, classes and counts over known classes fold (`Part.name`, `Part.classes.count()`, `Part.Axle.attributes.count()`, `Part.classes.map_names().contains("X")`, `Part.classes.first()`, `Part.classes[0]`, `Part.classes["X"]`, `namespace.name_with_namespaces.starts_with("Y.")`, `Spite.Namespace.instances.each(check)`), so a `crash` on them is decided. An item that is not there (`Part.classes["Nope"]`, `[n]` past the end) is read at run time. A class object is a fixed object of the executable, so reading one (`Monster`, `value.class`) allocates nothing, unless a `drop()` at exit can reach it or the build keeps everything. A class object an attribute holds folds the same when only its class's defaults give it (`var held: Spite.Class = Monster`, never assigned again: `keeper.held.name`). A name over a class's `.functions` or `.attributes` does not fold: `Part.Axle.functions["spun"]` reads its class's table at run time (a `T?`, narrow it) and `Part.Axle.attributes["turns"]` too (already a `T`); only a missing name folds, a function to `null` (its `if` keeps one branch), an attribute to a compile error.
+- Names, classes and counts over known classes fold (`Part.name`, `Part.classes.count()`, `Part.Axle.attributes.count()`, `Part.classes.map_names().contains("X")`, `Part.classes.first()`, `Part.classes[0]`, `Part.classes["X"]`, `namespace.name_with_namespaces.starts_with("Y.")`, `Spite.Namespace.instances.each(check)`), so a `crash` on them is decided. An item that is not there (`Part.classes["Nope"]`, `[n]` past the end) is read at run time. A class object is a fixed object of the executable, so reading one (`Monster`, `value.class`) allocates nothing, unless a `drop()` at exit can reach it or the build keeps everything. A class object an attribute holds folds the same when only its class's defaults give it (`var held: Spite.Class = Monster`, never assigned again: `keeper.held.name`). A name over a class's `.functions` or `.attributes` does not fold, unless it is in a `var` read only by an `if` and a `Spite.Call`: `Part.Axle.functions["spun"]` reads its class's table at run time (a `T?`, narrow it) and `Part.Axle.attributes["turns"]` too (already a `T`); only a missing name folds, a function to `null` (its `if` keeps one branch), an attribute to a compile error.
 - `fallback`/`crash` on such a condition folds too. A `crash` that folds to false refuses the build
   (`'crash ...' always halts: its condition is decided while compiling and is false`, naming the instance, as
   `Slot<List<String>>`) when the function reaches it every time it runs and the program reaches the function; one
@@ -876,13 +880,17 @@ of the standard library or of a repository pinned to a commit is never rewritten
   it is an error.
 - `person.age = 1` calls `set_age(1)` and `person.age` calls `get_age()` when the class has them, with or without
   an attribute named `age` (`get_id()` and `set_id(value)` over a private `_id` make a checked `.id`). Inside the
-  class it is the same: a bare `age = 1` runs `set_age(1)` and a bare `age` runs `get_age()`, `other.age` too. The
-  attribute is their storage: inside `set_age`/`get_age` and in a constructor a bare `age` reads and writes the
-  attribute itself (a default is its starting value, and a function the constructor calls runs the setter). A setter
-  that only stores its parameter and a getter that only answers the attribute compile to the plain write and read.
-  Two setters that write each other's attribute recurse until the stack overflows. A template (`set_attribute`)
-  answers only from outside. A private attribute's are private: `_open = true` runs `_set_open(true)`, `_open`
-  runs `_get_open()`.
+  class it is the same, the constructor included: a bare `age = 1` runs `set_age(1)` and a bare `age` runs
+  `get_age()`, `other.age` too. Every attribute has both: where the class writes no `set_age`/`get_age` (and no
+  template `set_attribute`/`get_attribute`, which answers inside the class too), the compiler writes
+  `set_age(value) { attributes["age"].value = value }` and `get_age() { return attributes["age"].value }`. A setter
+  that only stores its parameter and a getter that only answers the storage, the compiler's or the class's, compile to
+  the plain write and read. `attributes["age"].value` (`other.attributes["age"].value`) is the storage: the one write
+  that runs no setter, the one read that runs no getter. Inside `set_age`/`get_age` a bare `age` is refused (it would
+  run itself again) and fixed to `attributes["age"].value`; there `get_age()`/`set_age(v)` is how one accessor runs
+  the other, and elsewhere a bare `set_age(v)` is refused (write `age = v`). A default is the storage's starting
+  value and runs no setter. Two setters that write each other's attribute recurse until the stack overflows. A
+  private attribute's are private: `_open = true` runs `_set_open(true)`, `_open` runs `_get_open()`.
 - Operators are functions a class may define: `sum`, `subtract`, `multiply`, `divide`, `remainder`, `equals`,
   `less_than`, `greater_than`, `negate`, `get_at(index)`, `set_at(index, value)`. Without `equals`, a class is
   given one comparing every attribute in declaration order with its own `==` (private ones included, back
