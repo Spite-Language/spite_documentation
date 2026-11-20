@@ -372,8 +372,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   'Printable'`; print `list.join(", ")`, or `console.debug(list)`. Both write a null item of a `List<T?>` (or a null value of a
   `Dictionary<K, V?>` in `to_debug`) as `null`: `[null, 4]`.
 - `Observer<Value>` tells who subscribed: `subscribe(function)` and `unsubscribe(function)` take a
-  `Spite.Function<Value, Nothing>` (subscribing the same function of the same object twice is once; two function
-  values are `==` when they name one function bound to one object), `notify(value)` calls each in the order they
+  `Spite.Function<Value, Nothing>` (subscribing the same function of an equal owner twice is once; two function
+  values are `==` when they name one function bound to equal owners), `notify(value)` calls each in the order they
   subscribed. A watched field holds its own, private and named after it (`var _helmet_observer = Observer<Helmet>()`),
   told after the field changes. `list.subscribe(function)` takes a `Spite.Function<ListChange<T>, Nothing>`: a
   `ListChange<T>` has `kind` (`'appended'`, `'inserted'`, `'set'`, `'removed'`, `'cleared'`, `'rewritten'` for

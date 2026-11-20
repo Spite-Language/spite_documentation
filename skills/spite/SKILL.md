@@ -253,7 +253,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   are equal and `null` never equals a value. Two function values are equal when they are the same function on equal
   owners (`reader.changed == other_reader.changed` asks `reader == other_reader`; another function is never equal),
   so `handlers.index_of(screen.show)`, `contains` and `handlers.remove(screen.show)` find and remove a handler in a
-  `List<Spite.Function<...>>`, generic code too.
+  `List<Spite.Function<...>>`, generic code too; `===` on them asks for the same function on the very same owner.
   `==` always means `equals`. To ask whether two names hold the very same object write `a === b` (`a !== b` for
   not), and only where that is truly meant (a copy is a new object, a back reference points at this very node): it
   pins the object, so the compiler can no longer share a copy with its original. `===` works on objects of one class,

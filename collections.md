@@ -253,8 +253,8 @@ and calls each with the value it is told:
 
 | Member | Notes |
 |---|---|
-| `subscribe(function)` | `function` is a `Spite.Function<Value, Nothing>`; subscribing the same function of the same object again does nothing |
-| `unsubscribe(function)` | the same function of the same object: two function values are `==` when they name one function bound to one object ([functions_and_operators.md](functions_and_operators.md#functions-are-values)); nothing happens when it is not subscribed |
+| `subscribe(function)` | `function` is a `Spite.Function<Value, Nothing>`; subscribing the same function of an equal owner again does nothing |
+| `unsubscribe(function)` | the same function on an equal owner: two function values are `==` when they name one function bound to equal owners ([functions_and_operators.md](functions_and_operators.md#comparing-function-values)); nothing happens when it is not subscribed |
 | `notify(value)` | calls every subscribed function with `value`, in the order they subscribed |
 
 A class that wants to be watched holds one observer per field, private and named after it, and tells it after it

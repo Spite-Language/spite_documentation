@@ -47,8 +47,9 @@ like any call; and the value is also its own reflection, with `.name`, `.argumen
 is expected, never the other way round. `.returns` is exactly the declared answer, a `Spite.Class`, a `Spite.Union` or
 a `Spite.Type`, and the `Nothing` union for a function declared without a return type. A function that is a text's or a number's (`greeting.contains`) is bound to a copy of the value.
 A function value whose answer may be null answers it as null wherever it is held. Two function values are `==`
-when they name the same function bound to the same object, however each was made (`shouter.shout == shouter.shout`
-is true, `shouter.shout == other.shout` false), which is how `Observer.unsubscribe` finds the one to drop
+when they name the same function bound to equal owners, however each was made (`shouter.shout == shouter.shout`
+is true, `shouter.shout == other.shout` only when `shouter == other`;
+[Comparing function values](#comparing-function-values)), which is how `Observer.unsubscribe` finds the one to drop
 ([collections.md](collections.md#observer-tells-who-subscribed)).
 
 ```gdscript title=function_values_doc/shouter.spite
@@ -625,7 +626,9 @@ so a class asked about anywhere is copied as written. `==` asks only the value, 
 `a == b` on two function values answers whether they are the same function bound to equal owners: the same function
 of the same class, and owners equal by the owner's `==` (its own `equals` or the given one, a number or a text by its
 value). Two `reader.changed` taken from one `reader` are equal, `first.changed` and `second.changed` are equal when
-`first == second`, and two different functions are never equal, whatever their owners. `!=` is the opposite. It works
+`first == second`, and two different functions are never equal, whatever their owners. `!=` is the opposite.
+`a === b` on two function values asks for the same function bound to the very same owner object (`first.changed ===
+second.changed` is false for two equal but separate owners); two missing ones are the same. It works
 wherever the function is known only at run time, so `list.index_of(handler)`, `list.contains(handler)` and
 `list.remove(handler)` find an equal function value in a `List<Spite.Function<...>>`, a generic class's list
 included, and a class's given `equals` compares a function value attribute the same way. Comparing keeps nothing alive: it reads both values and their
