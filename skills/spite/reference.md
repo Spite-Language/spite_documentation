@@ -130,7 +130,7 @@ func is_alive(): Boolean {
 - The file name is the class name (`monster.spite` is `Monster`). A file holds declarations only, in this
   order: a `singleton` line, `generic $name` lines, enums, unions, types, variables with a default, variables without one, the constructor, conversions, presets, then
   functions (`a file holds declarations and nothing else` for a statement at file level). A file in
-  the wrong order is put back in order by the compiler (`fixed: ... moved it up, since a file is ordered`), except the library's `Buffer`, `ForeignCallback` and `Spite.*` classes, whose attributes keep their written order because the compiler lays them out as written. Every `var` has a default value (`expected '=' (every variable needs a default value)`). A
+  the wrong order is put back in order by the compiler (`fixed: ... moved it up, since a file is ordered`), except the library's `Buffer`, `ForeignCallback` and `Spite.*` classes, whose attributes keep their written order because the compiler lays them out as written. Every `var` has a default value (`a variable is given its value where it is declared, so write '=' and the value`), except an attribute the constructor gives a value on every path (below). A
   default may only read or write attributes declared above it (directly or through a function of its object, so a
   function a default calls that sets another attribute counts as a write). One reading or writing an attribute
   declared below it in the same file is moved for you (`fixed: '_hundred' was declared below 'tripled', whose
@@ -1241,16 +1241,16 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `Math.sqrt(x)`, `Math.PI` | `'Math' is not a local, an attribute or a function of ...` | `x.square_root()`, `Float.Pi()` |
 | `sqrt(x)`, `sqrtf(x)`, `pow(x, y)` | `this class has no function 'sqrt'` | `x.square_root()`, `x.power(y)` |
 | `M_PI`, `f32::consts::PI`, `FLT_MAX`, `INT_MAX`, `INFINITY`, `NAN` | `'M_PI' is not a local, an attribute or a function of ...` | `Float.Pi()` (`Double.Pi()` for the 64-bit one), `Float.Largest()`, `Integer.Largest()`, `Float.Infinity()`, `Float.NotANumber()` |
-| `angle.pi`, `Float.pi()` | `'pi' is a constant of the class Float, not of a value` | `Float.Pi()` |
+| `angle.pi`, `Float.pi()` | `'Pi' is a preset of the class Float, not of a value: write 'Float.Pi()'` | `Float.Pi()` |
 | `count++`, `count += 1` | `Spite has no '++': write 'count = count + 1'` | `count = count + 1` |
-| `condition ? a : b` | `Spite has no 'condition ? a : b'` | an `if` with an `else`, or a function that returns one or the other |
+| `condition ? a : b` | `'?' is left over after the end of the statement: a statement is one line` | an `if` with an `else`, or a function that returns one or the other |
 | `int`, `Int`, `bool`, `Bool` | `'Int' is spelled 'Integer'`, `'int' abbreviates 'int', which could mean 'integer' or 'internal'` | `Integer`, `Boolean`: no name is abbreviated, the language's own included |
 | `x.to_int()`, `int(text)`, `Integer.parse(text)`, `Integer(text)` | `an Integer has no attribute or function 'to_int'` / `'Integer(text)' calls a conversion by name, and the compiler applies a conversion only where a value meets the class it makes` | `var number: Integer? = text`, then narrow it; `var wide: Float = count` for a number that fits |
 | `LocalDate`, `PlainDate`, `NaiveDate` | `'LocalDate' is spelled 'Date'` | `Date`, `Time`, `DateTime`: a calendar reading with no zone |
 | `let x = 1`, `const x = 1` | `Spite has no 'let': a variable is declared 'var name = value'` | `var value = 1`: every `var` has a default, and there is no `const` |
-| `var total: Integer` | `expected '=' (every variable needs a default value)` | `var total = 0` |
+| `var total: Integer` | `a variable is given its value where it is declared, so write '=' and the value` (a local); for an attribute the constructor never gives a value, `the attribute 'total' has no default, so the constructor gives it its value, but the constructor never gives it one: ...` | `var total = 0`, or an attribute the constructor gives a value on every path |
 | `new Monster()` | `there is no 'new' in Spite` | `Monster()` |
-| `this.name`, `self.name`, `this.helper()` | `a class reads its own attributes by name: write 'count', not 'this.count'` | `name`, `helper()`; `this` only passes the object itself (`registry.append(this)`) |
+| `this.name`, `self.name`, `this.helper()` | `a class reads its own attributes and calls its own functions by name: write 'name', not 'this.name'` | `name`, `helper()`; `this` only passes the object itself (`registry.append(this)`) |
 | `import`, `load("folder")` | `there are no imports`; `'load' is a keyword, not a function` | `load "folder"`, a keyword on its own line inside a function |
 | `elif` | `Spite writes 'else if'` | `else if` |
 | `class Monster { }` | `there is no 'class' keyword: a file is a class` | nothing: the file *is* the class |
@@ -1270,7 +1270,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `var target: Pet` the constructor fills on one side of an `if` only | `the attribute 'target' has no default, so the constructor gives it its value, but the 'if' at line 5 gives it one on one side only: ...` | give it a value on every path, or write a default |
 | `var target: Pet` read in the constructor before it is given | `the attribute 'target' has no default, so the constructor gives it its value, but line 5 reads it before it has one: ...` | give it its value first, or write a default |
 | an `if` with no `else` ending a constructor | `this 'if' is the last thing the constructor does and has no 'else', ... a constructor is setup, not logic: take already resolved values, or write 'crash maybe' when its absence is a bug` | pass the resolved value in, or `crash` |
-| `for item in list` | `Spite only has 'while' loops; there is no 'for'` | `each_<member>()`, `map_`/`filter_<member>()`, or `list.each(function)` with a function of yours; `while index < list.count()` when the body needs more |
+| `for item in list` | `Spite has no 'for': Spite has only the 'while' loop` | `each_<member>()`, `map_`/`filter_<member>()`, or `list.each(function)` with a function of yours; `while index < list.count()` when the body needs more |
 | `break`, `continue` | `Spite has no 'break': a loop stops in its own condition` | the loop's own condition: `while index < count and not found` |
 | `list.add(x)`, `list.pop()` | `List has no method 'add', which does not say where` | `append`/`prepend`, `remove_last()`/`remove_first()` |
 | `Heap<Node>`, `&Node` | `there is no 'Heap<T>'`, `Spite has no '&Type'` | `Node`: every class is a reference already |
@@ -1282,7 +1282,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `new Date()`, `DateTime.Now`, `datetime.now()` | | `clock.now()`, an `Instant`; shown through a zone from `TimeZones()`, never stored as a local reading |
 | `timestamp + 86400000` for tomorrow | *silent*: wrong across a daylight-saving change | `instant.to_date_time_in(zone) + Period(1, 'days')`, then `tomorrow.to_instant_in(zone, 'compatible')` |
 | `text[0].to_string()` | `'text[0]' may be missing, since every '[ ]' answers a 'T?'` | `crash text[0]` first: `text[index]` is the `Rune` of the character at that byte, `null` out of range or inside one |
-| `// comment`, `/* comment */` | `Spite has no '//' or '/* */' comments` | nothing, or `# docs/page.md#section` on its own line outside a function |
+| `// comment`, `/* comment */` | `Spite has no '//': a comment is one line starting with '#' and holding a link to a heading` (`'/* */'` the same) | nothing, or `# docs/page.md#section` on its own line outside a function |
 | `;` at the end of a line | `';' is not something Spite reads` | nothing |
 | `var memory = Memory()`, an allocator | `unknown type 'Memory'` | nothing: the compiler places memory; a container of your own is written over a `List` or a `Buffer` ([memory.md](https://github.com/Spite-Language/spite_documentation/blob/master/memory.md)) |
 | `--repl_port=4000` | `'--repl_port' is written '--repl-port'` | kebab-case flags; the `Build` field behind it stays `repl_port` |
