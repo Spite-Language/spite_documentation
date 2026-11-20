@@ -42,7 +42,7 @@ REPL can look at any of it.
 | `Program` | this program: what it was started with, exit, sleep, environment variables, its own path | [below](#program) |
 | `Clock` | elapsed time for measuring, and the wall clock | [below](#clock) |
 | `Benchmark<T>` | one timed run of a function: what it answered and how long it took | [time.md](time.md#measuring-a-piece-of-work) |
-| `Test` | runs every test function of a namespace, each class built with its constructor as the setup | [testing.md](testing.md) |
+| `Test` | runs every test function of the classes in a folder, each class built with its constructor as the setup | [testing.md](testing.md) |
 | `Instant`, `Duration`, `Date`, `Time`, `DateTime`, `Period`, `TimeZone`, `TimeZones` | exact time, the calendar, time zones as presentation, ISO 8601 text (read with `var read: Instant? = text` and the rest) | [time.md](time.md) |
 | `Environment`, `Build` | run-time and compile-time settings | [programs.md](programs.md) |
 | `Reload` | how many reloads a `--hot-reload` program has swapped in, and which classes they rebuilt | [repl.md](repl.md#knowing-what-a-reload-rebuilt) |
@@ -776,7 +776,7 @@ went away), the line is lost, since the place a failure would be reported is the
 
 `print`, `write` and `error` are ordinary functions of `Console`, taking
 `...values: List<Printable>`, where `Printable` is a `type` that requires `to_string: Spite.Function<String>`. Every number,
-`Boolean`, `String`, enum value, `Spite.Class` and `Spite.Namespace` answers it, and a class of yours
+`Boolean`, `String`, enum value and `Spite.Class` answers it, and a class of yours
 prints once it declares `to_string()`. Passing one that does not is a compile error naming `to_string`; a `List`
 or `Dictionary` has none either, so `console.print(ages)` is "'Dictionary<String, Integer>' does not fit type
 'Printable': it has no function 'to_string'": show it with `debug` or `join` it first.

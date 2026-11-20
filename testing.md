@@ -35,9 +35,9 @@ func test_a_thousand_and_one_is_counted() {
 ## A test program runs `Test`
 
 A project keeps one entry point, and its tests are a program of their own beside it that `load`s the project. The
-tests sit in classes of a namespace (a folder), and the entry runs them with the library's `Test` class:
-`Test(namespace)` takes the namespace and `run()` runs every test in it. A folder's namespace is named alone
-(`Test(Checks)`) or by its dotted path (`Test(Shop.Tools)`, which runs only what is in `Shop.Tools` and below). When
+tests sit in classes of a folder, and the entry runs them with the library's `Test` class:
+`Test(folder)` takes the folder's class, a `Spite.Class`, and `run()` runs every test in it. A folder's class is named
+alone (`Test(Checks)`) or by its dotted path (`Test(Shop.Tools)`, which runs only what is in `Shop.Tools` and below). When
 the tests load a project, the project's own entry class is never constructed, so loading a program to test it does
 not run it.
 
@@ -59,12 +59,12 @@ func TestPackage() {
 }
 ```
 ```output
-pass Checks.TextTests.test_trim_removes_the_spaces_around_text
-pass Checks.TextTests.test_split_keeps_empty_pieces
+pass TestPackage.Checks.TextTests.test_trim_removes_the_spaces_around_text
+pass TestPackage.Checks.TextTests.test_split_keeps_empty_pieces
 2 tests, 2 passed, 0 failed
 ```
 
-`run()` walks the namespace's classes, then every namespace below it, and in each class every function named
+`run()` walks the classes nested in that class, then those nested in them, recursively, and in each class every function named
 `test` or `test_...`, in the order they are declared. The name must be exactly `test` or start with `test_`:
 `testing_is_not_a_test` is not run. Keep tests out of the program's entry class: reflection sees no functions
 there, so a test written in it is never found. Put them in classes of a folder of their own. For each test it **builds the class with its constructor**, so
@@ -105,14 +105,14 @@ func TestSetup() {
 }
 ```
 ```output
-pass Bank.AccountTests.test_withdraws
-pass Bank.AccountTests.test_starts_from_its_own_setup
+pass TestSetup.Bank.AccountTests.test_withdraws
+pass TestSetup.Bank.AccountTests.test_starts_from_its_own_setup
 2 tests, 2 passed, 0 failed
 ```
 ### Tests in a loaded package
 
-A package may keep its tests in a namespace of its own, `pkg/pkg/tests/` for `Pkg.Tests`. A check program in
-another folder loads the package and hands that namespace to `Test`, with no other line naming its classes:
+A package may keep its tests in a folder of their own, `pkg/pkg/tests/` for `Pkg.Tests`. A check program in
+another folder loads the package and hands that folder's class to `Test`, with no other line naming its classes:
 
 ```gdscript
 func PkgCheck() {
@@ -122,14 +122,14 @@ func PkgCheck() {
 }
 ```
 
-Naming the namespace keeps the `load`, every file of the package is read and checked
+Naming the folder's class keeps the `load`, every file of the package is read and checked
 ([packages.md](packages.md#a-loaded-package-is-checked-whole)), and each test is built and run as one of the
 program's own.
 
 ## Each test runs on its own
 
 `run()` runs each test in a run of its own: it starts the same program again with the setting `SPITE_TEST` naming
-one test (`Bank.AccountTests.test_withdraws`), and that run builds the class and calls only that test. So no test
+one test (`TestSetup.Bank.AccountTests.test_withdraws`), and that run builds the class and calls only that test. So no test
 sees what another left behind, and a failing test does not stop the others: a singleton one test changed is fresh in
 the next. Under each test's line comes whatever its run printed, to the output and the error stream alike, trimmed,
 with the empty lines left out, and indented by four spaces. A test takes no arguments: one that declares a parameter
@@ -140,10 +140,10 @@ counts it and the program exits with status 1.
 `test_split_keeps_empty_pieces` by expecting two pieces, and the run says:
 
 ```
-pass Checks.TextTests.test_trim_removes_the_spaces_around_text
-fail Checks.TextTests.test_split_keeps_empty_pieces
-    spite: the program stopped at test_package/checks/text_tests.spite:8 in Checks.TextTests.test_split_keeps_empty_pieces, site 4205b4ca (pieces.count()=3)
-    spite.frame	test_package/checks/text_tests.spite:8	Checks.TextTests	test_split_keeps_empty_pieces
+pass TestPackage.Checks.TextTests.test_trim_removes_the_spaces_around_text
+fail TestPackage.Checks.TextTests.test_split_keeps_empty_pieces
+    spite: the program stopped at test_package/checks/text_tests.spite:8 in TestPackage.Checks.TextTests.test_split_keeps_empty_pieces, site 4205b4ca (pieces.count()=3)
+    spite.frame	test_package/checks/text_tests.spite:8	TestPackage.Checks.TextTests	test_split_keeps_empty_pieces
     spite.frame	test_package/test_package.spite:3	TestPackage	TestPackage
 2 tests, 1 passed, 1 failed
 ```
@@ -153,7 +153,7 @@ of every part of the condition ([what a crash reports](failure.md#what-a-crash-r
 expected-versus-actual prose: the test says `pieces.count() == 2`, the report says `pieces.count()=3`, and the line
 is open in front of you.
 
-**One test alone** is the same program with the setting given: `SPITE_TEST=Checks.TextTests.test_split_keeps_empty_pieces`
+**One test alone** is the same program with the setting given: `SPITE_TEST=TestPackage.Checks.TextTests.test_split_keeps_empty_pieces`
 in the environment runs that test in place, with no report line and no count, so a failure is the bare crash
 report and the status is the test's own. That is the loop for fixing a failure: open the line the report names,
 fix the code or the test, run that test alone until it passes, then run them all, since a fix can break another

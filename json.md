@@ -604,8 +604,8 @@ func write_attribute(attribute: Spite.AttributeDeclaration, shown: $value_type) 
 fresh list in `_members`, calls `shown.attributes.each(write_attribute)` and joins the list. `JsonReader` walks
 the object it is filling the same way, `created.attributes.each(read_attribute)`, with the key it just read in
 `_key`; the attribute whose name matches parses the value into `attribute.value`, and only a key no name matched
-walks again, comparing the camelCase and PascalCase spellings. A class of the `Spite` namespace, a reflection
-object, is not walked (`if $value_type.namespace != Spite`): its attributes are all private, and its own
+walks again, comparing the camelCase and PascalCase spellings. A class nested in `Spite`, a reflection
+object, is not walked (`if $value_type.outer_class != Spite`): its attributes are all private, and its own
 `.attributes` would be the members it describes. `--final-classes` prints the generic class once, as the template, and
 each copy as a `type` listing the signatures it made under `instantiated/` (`json_writer_order.spite`); the copies
 are ordinary typed functions in the program the compiler builds.

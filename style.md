@@ -117,7 +117,7 @@ What the compiler fixes for you, and what it leaves as an error:
   is hoisted to a `fallback` above its `if` when one choice fits. A copy made only to narrow goes and its uses name
   what it copied. Statements after a `return` go.
 - **Unused things with no effect.** An unread local or attribute, or a `load` nothing names, whose value and writes do
-  nothing is removed with every write; one a call makes or writes stays an error. A namespace of the loaded folder
+  nothing is removed with every write; one a call makes or writes stays an error. A class of the loaded folder
   named anywhere (`Test(Pkg.Tests)`) counts as naming it, and so does a name that starts inside it and does not resolve
   ([packages.md](packages.md#a-loaded-package-is-checked-whole)).
 - **Loads.** A `load` of the standard library the program is compiled with is removed, since every program has it
@@ -128,7 +128,11 @@ What the compiler fixes for you, and what it leaves as an error:
 - **Placement.** A declaration out of order is moved with the comment lines above it, a comment in the wrong place
   moves to the top of the file, a `var` that a default above it reads moves above that default
   ([classes_and_files.md](classes_and_files.md#a-default-reads-only-what-is-above-it)), and a `union` or `type` two
-  classes of one root declare alike moves to the entry class of the lowest namespace, with every use rewritten.
+  classes of one root declare alike moves to the class of the lowest folder holding both, with every use rewritten.
+- **Paths.** A path that names a folder and then its own file, `Framework.Framework.Component`, becomes
+  `Framework.Component`, since a folder is its own class ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)),
+  and a path that spells the folder a class is in becomes the plain name
+  ([packages.md](packages.md#a-class-of-its-own-folder-is-named-plainly)).
 
 ## Names
 
@@ -160,7 +164,7 @@ errors, each with the fix:
 - **Never a function's name.** A local, parameter or attribute named like a function of its class is an error,
   since the function's name is already a value ([functions_and_operators.md](functions_and_operators.md#functions-are-values)):
   `var stem = file_stem(path)`, not `var file_stem = file_stem(path)`.
-- **Never a class that hides another.** A class named like a class its code can see from an enclosing namespace
+- **Never a class that hides another.** A class named like a class its code can see from a class around it
   (`Physics.Plugin` beside a root `Plugin`), or like a class of the standard library, is an error naming both
   ([A class name means one class](classes_and_files.md#a-class-name-means-one-class)).
 - **Names say what they do.** The standard library follows the same rule: `append` and `prepend` rather than

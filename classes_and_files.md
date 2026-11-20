@@ -2,8 +2,8 @@
 
 Every `.spite` file is exactly one class, named by PascalCasing the file name: `person.spite` is `Person`,
 `repository_list.spite` is `RepositoryList`. This cannot be changed: there is no `class` keyword and no way to
-put two classes in one file. Every other file of the program is another class, and a folder is a namespace
-([packages.md](packages.md)).
+put two classes in one file. Every other file of the program is another class, and a folder is a class too, the one whose own
+file is named like it ([below](#a-folder-is-a-class), [packages.md](packages.md)).
 
 ## Names
 
@@ -49,7 +49,7 @@ names it, says so, and compiles again:
 The right spelling is the name's `snake_case()` ([standard_library.md](standard_library.md#snake-camel-and-pascal-case)),
 its words in lowercase, joined by one `_`: `ToolHelper`, `toolHelper`, `tool-helper`,
 `tool helper`, `tool.helper`, `tool__helper` and `tool_helper_` are all `tool_helper`. A class name needs nothing,
-since `ToolHelper` names `tool_helper.spite` either way, and only the last folder of a `load` is a namespace, so
+since `ToolHelper` names `tool_helper.spite` either way, and only the last folder of a `load` is read as a root, so
 only that last segment is rewritten. The renames are done together with every other fix of that compile, once
 every class is read, so a compile that stops earlier renames nothing.
 
@@ -69,6 +69,74 @@ or `the folder 'BadFolder' is not named in snake_case: ...`, when the compiler c
 
 The program's own folder, the one being compiled, is never renamed.
 
+## A folder is a class
+
+A folder is a class too, and the file inside it named like the folder is that class's own file:
+`framework/framework.spite` is the class `Framework`, and `framework/component.spite` is `Framework.Component`, a class
+nested in it. A folder with no such file is a plain empty class of its name, made by the compiler, so `Pack.Widgets`
+is a class whether or not `pack/widgets/widgets.spite` exists; constructing it makes an object with nothing in it.
+Nesting is naming only: a nested class holds no object of the class around it, reads none of its attributes, and a
+private name stays private to the class that writes it.
+
+Inside a class, the names of every class around it are reached by their bare name: in `framework/button.spite`,
+`Component` is `Framework.Component`, and `Shade` is the enum `framework/framework.spite` declares. From anywhere else
+they are written through the class, `Framework.Component` and `Framework.Shade`, never through the folder twice.
+
+```gdscript title=folder_class/framework/framework.spite
+enum Shade {
+    'light'
+    'dark'
+}
+```
+```gdscript title=folder_class/framework/component.spite
+var name = "component"
+```
+```gdscript title=folder_class/framework/button.spite
+var shade: Shade = 'light'
+
+func label(): String {
+    var component = Component()
+    return "{component.name} button"
+}
+```
+```gdscript title=folder_class/folder_class.spite entry
+var console = Console()
+
+func FolderClass() {
+    var button = Framework.Button()
+    var label = button.label()
+    var shade: Framework.Shade = 'dark'
+    button.shade = shade
+    console.print(label)
+}
+```
+```output
+component button
+```
+
+A class holds one member of each name: its attributes, functions, enums, unions, types and nested classes share
+one set of names, so an `enum Component` in `framework/framework.spite` beside `framework/component.spite` is an
+error naming both. Case keeps most apart: `Framework.name` is an attribute, `Framework.Name` a class or a type.
+
+The language's own names live in the standard library's root class `Spite`, which every class falls back to after
+its own names and those of the classes around it: `Nothing` is declared there, written plainly anywhere, and a name
+of your own cannot hide it.
+
+A path written the old way, naming a folder and then its own file, is rewritten by the compiler
+([style.md](style.md#the-compiler-fixes-what-has-one-fix)):
+
+```
+game.spite:4: fixed: 'Framework.Framework.Component' names 'Framework' twice, and a folder is its own class: wrote 'Framework.Component'
+```
+
+The program's entry class is the program's root: `game/game.spite` is `Game`, and every other class of the program
+is nested in it, `game/ui/ui.spite` is `Game.Ui` and `game/bunda/cu.spite` is `Game.Bunda.Cu`. Nothing is written
+with that prefix: a bare name looks from the inside out, so `Game.Bunda.Cu` writes `String`, `Player` and `Ui`
+plainly. A loaded folder holding its own file (`kal/kal.spite`) is a root of its own, `Kal.Physics`; one without
+(`load "package"` holding `package/engine/`) adds its files and folders at the top, `Engine`
+([packages.md](packages.md)). A file or folder of the program named like a standard-library class reopens it
+(`game/string.spite` is `String`, [below](#reopening-a-class)), since every root reaches one shared library.
+
 ## What a file holds
 
 A file contains only declarations, in this order:
@@ -80,8 +148,8 @@ A file contains only declarations, in this order:
    everywhere else ([packages.md](packages.md)). An enum always lives inside the class that uses it: a file
    holding nothing but an enum, a union or a type of its own name is an error; a union or a type is declared in
    the class that consumes it, other classes name it through that class (`Shelter.Pet`, [below](#naming-another-classs-union-or-type)),
-   and one that two classes of a namespace declare moves to that namespace's entry class
-   ([packages.md](packages.md)). Other classes give an enum's values by their short form
+   and one that two classes of a folder declare moves to the folder's class
+   ([below](#a-union-or-type-two-classes-declare)). Other classes give an enum's values by their short form
    (`'mage'`) and write `Player.Job` only where a variable must hold one;
 4. `var` declarations: the attributes, each with a default value;
 5. the constructor;
@@ -167,8 +235,8 @@ the type of 'base' is not written, and its value is not one the compiler reads b
 ### Naming another class's union or type
 
 A union or a `type` belongs to the class that declares it, and another class names it through that class, as it
-names an enum: `Shelter.Pet` from a class of the same namespace, `Zoo.Shelter.Pet` from anywhere
-else. Naming it shares the declaration, not a value at run time: each use is still compiled
+names an enum: `Shelter.Pet` from a class of the same folder, `Zoo.Shelter.Pet` from anywhere
+else, and plain `Pet` from a class nested in `Shelter`. Naming it shares the declaration, not a value at run time: each use is still compiled
 for the classes that actually reach it, so a function taking `Shelter.Pet` compiles as one taking a copy declared in
 its own class would.
 
@@ -224,28 +292,24 @@ another class's was an error; that rule is gone, and a copy declared alike is no
 ### A union or type two classes declare
 
 Declare a union or a `type` in the class that takes, holds or switches on it, and leave it there. When two classes
-of one namespace declare the same union, with the same name and the same members (in any order), the compiler
-moves it for you: it goes to the entry class of the namespace, the class named like its folder (`Bunda.Bunda` in
-`bunda/bunda.spite`), it creates that file if the namespace has none, and each class that used the union now names
-it through the entry class, `Bunda.Snack`. Each move is a `fixed:` line, and the entry class writes the plain name.
-A union declared by classes in different folders goes to the lowest namespace that holds every copy, and a class
-outside the namespace names it through the entry class like any other class's, `Bunda.Bunda.Pet`. Only the same name
+of one folder declare the same union, with the same name and the same members (in any order), the compiler
+moves it for you: it goes to the folder's class, its file named like the folder (`bunda/bunda.spite`, the class
+`Bunda`), it creates that file if the folder has none, and every class inside the folder names the union plainly,
+`Snack`, as before. Each move is a `fixed:` line.
+A union declared by classes in different folders goes to the lowest folder that holds every copy, and a class
+outside it names it through that folder's class like any other class's, `Bunda.Pet`. Only the same name
 with the same content counts: the same members under another name are another union, since they may mean another
 thing, and a union with fewer members is a different one too. A `type` moves the same way: two classes of one
-namespace declaring a `type` of one name, with the same fields and functions of the same types (in any order),
-share one in the entry class.
+folder declaring a `type` of one name, with the same fields and functions of the same types (in any order),
+share one in the folder's class.
 
 Nothing moves between the program, a package and the library; each keeps its own. The compiler refuses, with
-every declaring class named, what it cannot move: two different unions of one name landing in one entry class, a
-name that already means a class there (a union `Bunda` repeated inside `bunda/`), an entry class that is generic,
+every declaring class named, what it cannot move: two different unions of one name landing in one class, a
+name that already means a class there (a union `Bunda` repeated inside `bunda/`), a landing class that is generic,
 a copy in files the compiler does not write (the library, a pinned package, or any package loaded by the leading `load`
 lines of the entry function, which count as library: a pair of classes in one of those that repeats a union is told to
-move it by hand), and an entry class whose new file
-would take a name the namespace already reaches. The fix for the refusal is a rename or moving the union by hand.
-Only the entry class writes the plain name; every other class writes the path, a side class of the same namespace
-included:
-`'Pet' is a union of 'Bunda.Bunda', the entry class of this class's namespace, and only that class names it
-plainly: write 'Bunda.Pet'`.
+move it by hand), and a root class whose new file
+would take a name its folder already reaches. The fix for the refusal is a rename or moving the union by hand.
 
 ## Constructors
 
@@ -631,7 +695,7 @@ Call sites never change: `var console = Console()` reads the same whether or not
 the class file is where that is said. `.is_singleton` is answered by `Spite.Class` for every class, from the
 line. Writing a `func is_singleton()` in a class of your own is an error that tells you to write `singleton` as
 the file's first line, and declaring it in a reopening of `Spite.Class` (`spite/class.spite`) is an error too,
-since a reopening cannot replace a reflection function ([packages.md](packages.md#the-spite-namespace-is-reserved)).
+since a reopening cannot replace a reflection function ([packages.md](packages.md#the-spite-class-is-reserved)).
 A later file may reopen a class and add the `singleton` line, and the class is then a singleton everywhere.
 
 A singleton lives until the program ends, and its `drop()` runs then, newest singleton first, so a `drop()` may
@@ -971,27 +1035,27 @@ A class may not hide another class. If `physics/plugin.spite` (`Physics.Plugin`)
 and a reader would have to work out which one each line reaches. So that is an error naming both, asking for a
 clearer name: `the class 'Physics.Plugin' hides the class 'Plugin': inside 'Physics' the name 'Plugin' would mean
 this class, so give one of them a clearer name`. It holds against the classes of a package the program loads, between
-two packages, and against the standard library (`game/tcp/connection.spite` would hide the library's `Tcp.Connection`). Two classes of one name in namespaces side by side, `Physics.Plugin` and `Audio.Plugin`, hide
-nothing, and neither does an `enum`, a `union` or a `type` declared inside a class, which is named through that
+two packages, and against the standard library (`game/tcp/connection.spite` would hide the library's `Tcp.Connection`). Two classes of one name in folders side by side, `Physics.Plugin` and `Audio.Plugin`, hide
+nothing, a folder's class with no file of its own hides nothing, and neither does an `enum`, a `union` or a `type` declared inside a class, which is named through that
 class.
 
 A class of your own named like a library class is an error naming the library's class, since a `Vector3` or a `Color`
 of your own is most likely one the library already has. To add what the library's class lacks, reopen it. A
-library class that is always written with its namespace, `Spite.Function` or `Spite.Call`, cannot be mistaken for
+library class that is always written with its path, `Spite.Function` or `Spite.Call`, cannot be mistaken for
 yours, so a `Function` or a `Call` of your own is fine: the name is refused only where a reader could not tell at
 first glance which class it means.
 
 Names that all start with the same word say the same thing: `HighBlock`, `HighFunction`, `HighValue` are a
-namespace written into each name. Make it a folder instead, `high/block.spite` and the rest, and the classes are
+folder written into each name. Make it a folder instead, `high/block.spite` and the rest, and the classes are
 `High.Block`, `High.Function` and `High.Value` outside it and `Block`, `Function` and `Value` inside it, where a
-reader already knows which namespace they are in. Three or more such names in one folder are an error naming the
+reader already knows which folder they are in. Three or more such names in one folder are an error naming the
 folder to move them into, listing the first three and `(and 9 more)` for the rest. The shared word must be a whole
 word of each name: `Higher` and `Highway` beside `HighBlock` and `HighValue` are not four matches, and two matches
 are allowed. A class named for the word alone, `High`, counts as one of them. Only the program's own classes count: a
 folder that reopens a library folder (`spite/function.spite`, adding to `Spite.Function`) does not count the
-library's `FunctionDeclaration`, and a class reopened there counts once. A class named for its own folder
-(the folder's entry class, `backend/backend.spite` beside `BackendBlock` and `BackendValue`) does not count: its name
-is the namespace itself, not a word repeated in it. And name the namespace for what it holds: `High` alone does not
+library's `FunctionDeclaration`, and a class reopened there counts once. A folder's own file
+(`backend/backend.spite`, the class `Backend`, beside `BackendBlock` and `BackendValue`) does not count: its name
+is the folder itself, not a word repeated in it. And name the folder for what it holds: `High` alone does not
 say high what.
 
 ```gdscript title=own_vector/geometry/vector3.spite
@@ -1006,7 +1070,7 @@ func OwnVector() {
 }
 ```
 ```diagnostic
-the class 'Geometry.Vector3' is named like the standard library's class 'Vector3': use 'Vector3', reopening it to add what it lacks, or give this class a clearer name
+the class 'OwnVector.Geometry.Vector3' is named like the standard library's class 'Vector3': use 'Vector3', reopening it to add what it lacks, or give this class a clearer name
 ```
 
 ---

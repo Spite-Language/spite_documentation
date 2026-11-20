@@ -790,8 +790,8 @@ A `type` or a `union` with no members says nothing of what it holds, so it is re
 
 ### `Nothing`
 
-`Nothing` is the language's own union that stays empty, declared in the library's `Spite` entry class
-(`spite_standard_library/common/spite/spite.spite`) and named plainly everywhere, so no value is ever of it. A
+`Nothing` is the language's own union that stays empty, declared in the library's root class `Spite`
+(`spite_standard_library/common/spite/spite.spite`), which every class falls back to, and named plainly everywhere, so no value is ever of it. A
 function with no answer answers `Nothing` (`Spite.Function<String, Nothing>`, and its declaration's `.returns` is the
 `Nothing` union), and a value declared `Nothing` is refused:
 
@@ -853,14 +853,14 @@ An enum declaration takes no `=` and lists one value per line, with no commas (a
 [below](#numbering-an-enums-values)). A value is written in single
 quotes (single quotes mean an enum value and nothing else), and `'mage'` alone resolves without writing
 `Player.Job`, because the parameter, the annotation, the assignment or the comparison it is used in says which
-enum it belongs to. The enum itself belongs to `Player`: inside it, plain `Job`; in any other class, `Player.Job`,
-never plain `Job`. The path always goes through the class: an enum of the entry class `Game.Game`
-(`game/game.spite`) is `Game.Game.Job` from outside the namespace `Game`, and `Game.Job` there reaches it through
-the namespace, which holds only classes and namespaces, even when a package loaded as `load "game"` makes `Game`
-answer that class. That spelling has one fix, so the compiler rewrites it (`'Game.Job' reaches 'Job' through the
-namespace 'Game', which holds only classes and namespaces; named it through its class, 'Game.Game.Job'`), in the
-program's files and a loaded package's alike. Inside the
-namespace, `Game.Job` stays. Enums, unions, types and number classes take no `<>`: `Phase<Integer>` is an error that says to write
+enum it belongs to. The enum itself belongs to `Player`: inside it and inside every class nested in it, plain `Job`;
+in any other class, `Player.Job`, never plain `Job`. The path always goes through the class that declares it: an enum
+of a folder's class, `Game` for `game/game.spite` in a folder `game/` inside the program, is `Game.Job`, and plain
+`Job` in every class inside `game/`
+([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)). When `game/game.spite` does not declare `Job`
+but `game/player.spite` does, `Game.Job` is an error naming the class that holds it: `'Game.Job' looks for 'Job' in
+the class 'Game', which does not declare it: 'Job' is declared by the class 'Game.Player', so name it through that
+class, 'Game.Player.Job'`. Enums, unions, types and number classes take no `<>`: `Phase<Integer>` is an error that says to write
 `Phase` alone.
 
 An enum is a closed list of values, and `'knight'` is an **enum value literal**: a value the enum does not list
@@ -1010,8 +1010,9 @@ shares a function/attribute of the same shape, it can be called directly on the 
 A union is declared in the class that consumes it, and another class names it through that class (`Shelter.Pet`,
 [classes and files](classes_and_files.md#naming-another-classs-union-or-type)); it does not declare a copy of its own.
 Two classes of a program that declare one name with one content
-have it moved to the entry class of the namespace holding both, the class named like its folder, which the others name
-`Bunda.Pet` (see [packages](packages.md)). Two with other names or members stay apart: a
+have it moved to the class of the folder holding both, its file named like the folder (`bunda/bunda.spite`): every
+class inside the folder names it `Pet`, and a class outside writes `Bunda.Pet` (see
+[classes and files](classes_and_files.md#a-union-or-type-two-classes-declare)). Two with other names or members stay apart: a
 `Shelter.Pet` passes where a `Groomer.Pet` is wanted when every member of it is a member of `Groomer.Pet`, at no cost.
 A caller that only hands a value on passes the member itself (`groomer.groom(cat)`) and declares nothing. Copies
 with the same members are one type inside generics too: a `List<Shelter.Pet>` goes where a `List<Groomer.Pet>` is

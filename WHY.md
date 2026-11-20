@@ -268,7 +268,7 @@ func check_component(component: Spite.Class) {
 }
 ```
 
-`Component.classes.each(check_component)`, called once, walks them all. Add `var items = List<String>()` to
+`Component.nested_classes.each(check_component)`, called once, walks them all. Add `var items = List<String>()` to
 `component/inventory.spite` and the program no longer builds:
 
 ```
@@ -397,7 +397,7 @@ Spite enums and objects come out of it.
 [docs/foreign_libraries.md](foreign_libraries.md#a-binding-speaks-spite)
 
 **How do I test?** A test is a function that `crash`es when a fact is wrong, and a test program beside the project
-runs them with `Test(namespace).run()`, which builds each test class with its constructor as the setup and runs
+runs them with `Test(Folder).run()`, which builds each test class with its constructor as the setup and runs
 every test on its own. There is no framework and no assertion prose: a test stops at its first broken fact, so
 failures never cascade, and the report points at the line and shows the values there, which an AI reads directly. Whatever the compiler can prove is a compile error instead of a test.
 [docs/testing.md](testing.md)

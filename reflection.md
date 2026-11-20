@@ -2,7 +2,7 @@
 
 **Every class is an instance of `Spite.Class`.** A class is not a special thing beside the values of a program: it
 is an ordinary object, made from an ordinary class in `common/spite/`, and writing its name reads that object.
-Every namespace is an instance of `Spite.Namespace`, every function a `Spite.FunctionDeclaration` (a `Spite.Function` once bound to an object), and every
+A folder is a class too, so it is a `Spite.Class` like any other; every function a `Spite.FunctionDeclaration` (a `Spite.Function` once bound to an object), and every
 attribute and argument an instance of `Spite.Attribute` and `Spite.Argument`. Reflection is not a second language
 beside Spite: it is Spite describing itself, with the same lists, the same member templates and the same `[]` the
 moron already uses everywhere else.
@@ -464,18 +464,15 @@ it fills no arguments.
 |---|---|
 | a class name, `Monster`, `Shop.Tools.Hammer` | its `Spite.Class` |
 | a generic class with its codegen values, `List<Float>`, `Shop.Crate<Float>` | the `Spite.Class` of that instance; without them it is an error, since `List` alone is no class yet |
-| a namespace name, `Shop.Tools` | its `Spite.Namespace` |
+| a folder's class, `Shop.Tools` | its `Spite.Class`, whose `nested_classes` are the folder's classes |
 | an enum name, `Phase` | its `Spite.Enum`; `Phase.values` alone is the list of its values, as `Phase`s |
 | `class` inside a function | the class the function answers on |
-| `namespace` inside a function | that class's namespace, or `null` at the root of a program |
 | `$T` in a generic class | the class it was given ([metaprogramming.md](metaprogramming.md#asking-what-a-generic-was-given)) |
 | `value.class` | the class `value` really is, through a `type` or a union too; an enum value's is its `Spite.Enum`, and an object literal's is `Object` |
-| `Spite.Class.instances` | every class of the program |
-| `Spite.Namespace.instances` | every namespace of the program |
+| `Spite.Class.instances` | every class of the program, folders' classes included |
 
-`class` and `namespace` are not keywords: they are members every instance has, so a local of that name takes
-precedence inside its function. A class and a namespace with the same dotted name is a compile error, so a name
-always means one thing.
+`class` is not a keyword: it is a member every instance has, so a local of that name takes precedence inside its
+function. A file and a folder with the same dotted name is a compile error, so a name always means one thing.
 
 A class name given where a `Spite.Class` is wanted (an argument, a `var` declared `Spite.Class`, a `return`) is
 its class object, and `==` between a `Spite.Class` and a class name compares the two objects. Anywhere else a bare
@@ -533,37 +530,38 @@ func remove_component(component_class: Spite.Class) {
 A class name is not a receiver for the class's own functions: there are no static functions, so `Gadget.boost()`
 is an error saying to make a `Gadget()` first ([Functions of `Spite.Class`](#functions-of-spiteclass-and-no-static-functions)).
 
-A class in a folder has a namespace ([packages.md](packages.md)); a class at the root of its program has none.
-`.namespace` is a `Spite.Namespace?`, narrowed before its members are read, and printing a namespace prints its
-dotted name.
+A class in a folder has an outer class, the folder's own ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class));
+the program's entry class, its root, has none, so every other class of the program has one (`Game` for
+`game/ui.spite`, [classes_and_files.md](classes_and_files.md#a-folder-is-a-class)). `.outer_class` is a `Spite.Class?`, narrowed before its members are
+read, and the folder's class lists the classes in it as `.nested_classes`.
 
-```gdscript title=namespace_walk/shop/tools/hammer.spite
+```gdscript title=outer_class_walk/shop/tools/hammer.spite
 func weight(): Integer {
     return 2
 }
 ```
-```gdscript title=namespace_walk/namespace_walk.spite entry
+```gdscript title=outer_class_walk/outer_class_walk.spite entry
 var console = Console()
 
-func NamespaceWalk() {
+func OuterClassWalk() {
     var hammer = Shop.Tools.Hammer()
     describe(hammer)
 }
 
 func describe(hammer: Shop.Tools.Hammer) {
     var described = hammer.class
-    fallback described.namespace.parent
-    console.print(described.name, described.namespace, described.namespace.name)
-    console.print("parent", described.namespace.parent)
+    fallback described.outer_class.outer_class
+    console.print(described.name, described.outer_class.name_with_outer_classes, described.outer_class.name)
+    console.print("outer", described.outer_class.outer_class)
 }
 ```
 ```output
-Hammer Shop.Tools Tools
-parent Shop
+Hammer OuterClassWalk.Shop.Tools Tools
+outer Shop
 ```
 
-One `fallback` proves the whole path it names and every prefix of it, so `described.namespace` is a plain value
-too after `fallback described.namespace.parent` ([failure.md](failure.md#narrowing-a-path)).
+One `fallback` proves the whole path it names and every prefix of it, so `described.outer_class` is a plain value
+too after `fallback described.outer_class.outer_class` ([failure.md](failure.md#narrowing-a-path)).
 
 ## The `Spite` classes
 
@@ -578,8 +576,8 @@ A reflection object is made whole, so almost nothing in it is nullable: an attri
 `.owner`, a function's `.declaration` and `.owner`, a declaration's `.source_file` and the `.owner` of an enum, a union
 or a type are always there. A function that answers nothing `.returns` `Nothing`, the empty union, and an argument or attribute
 whose type is not a class (a function type, a `type`) has `.class` `Nothing`. Only what can really be absent is
-nullable: `Spite.Class.namespace` and `Spite.Namespace.parent`, because the chain of namespaces ends and there is no
-root object, and a bound attribute's `.value`, which is `null` when the instance's field is. A declaration's
+nullable: `Spite.Class.outer_class`, because the chain of classes around a class ends at the top, and a bound
+attribute's `.value`, which is `null` when the instance's field is. A declaration's
 `.returned_literal` exists only for a function whose body is one `return` of a text literal, and reading it of another
 halts, naming it.
 
@@ -597,12 +595,11 @@ program that reads no reflection has none of it, and a class object nothing read
 compiler can answer are answered, has no `_fill_` in the program.
 [optimizations.md](optimizations.md#a-reflection-field-nothing-reads-has-no-slot)
 
-Five fields stay nullable, each because the value can really be absent:
+Four fields stay nullable, each because the value can really be absent:
 
 | Field | Why it can be absent |
 |---|---|
-| `Spite.Class.namespace` | a class at a program's root has no namespace: there is no root object |
-| `Spite.Namespace.parent` | a namespace at the top has no parent, for the same reason |
+| `Spite.Class.outer_class` | a class at a program's root sits in no folder's class |
 | `Spite.Attribute<Value>.value` | the instance's field holds `null` when the attribute is itself nullable |
 | `FunctionDeclaration._returned_literal`, behind `.returned_literal` | only a function whose body is one `return` of a text literal has one; reading it of another halts |
 
@@ -621,8 +618,9 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 
 | Member | Answers | Example |
 |---|---|---|
-| `.name` | the class's own name, a `String`, without its namespaces however the class was reached (`.name_with_namespaces` has them) | `Monster.name` is `Monster`, and `Part.Axle.name` and a walk's `part.name` are `Axle` |
-| `.namespace` | its `Spite.Namespace?`, `null` at a program's root | `Shop.Tools.Hammer.namespace` is `Shop.Tools` |
+| `.name` | the class's own name, a `String`, without its outer classes however the class was reached (`.name_with_outer_classes` has them) | `Monster.name` is `Monster`, and `Part.Axle.name` and a walk's `part.name` are `Axle` |
+| `.outer_class` | the `Spite.Class?` of the folder it sits in, `null` at a program's root | `Shop.Tools.Hammer.outer_class` is `Shop.Tools` |
+| `.nested_classes` | a `List<Spite.Class>`: the classes of its folder, its own file left out, then its folders' classes; empty for a file's class | `Shop.Tools.nested_classes.count()` |
 | `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes["health"]` |
 | `.functions` | a `Dictionary<String, Spite.FunctionDeclaration>` keyed by name, in the order they were made | `Monster.functions["alive"]` |
 | `.enums` | a `Dictionary<String, Spite.Enum>` of the enums it declares, keyed by name, in declaration order | `Player.enums["Job"]` |
@@ -634,6 +632,7 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 | `.is_list`, `.is_dictionary`, `.is_optional`, `.is_enum` | the kind of a type | `$value_type.is_list` |
 | `.generics` | a `Dictionary<String, Spite.Class>`: the class each `generic` line was given, keyed by its name without the `$`, in `generic`-line order; empty for a class that is not generic | `numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer` |
 | `.source_files` | a `List<File>`: every file that declares or reopens the class, in load order | `Monster.source_files.first()` |
+| `.source_directories` | a `List<Directory>`: every folder that makes the class, in load order; empty for a file's class | `Shop.source_directories.first()` |
 | `satisfies_type(...)` | whether it can stand in for a type, decided while compiling, or for a named value's class from the classes listed while compiling ([below](#whether-a-class-satisfies-a-type)) | `Integer.satisfies_type(Number)` is `true` |
 
 `.generics` holds the same names a codegen value reads while compiling, `$list_type.element_type`; a dictionary's are `"key_type"` and `"value_type"`. A literal name on a
@@ -641,7 +640,7 @@ class known while compiling folds and is proven present, and a name the class ha
 error. Inside a walk, a generic argument can name one: `Query<argument.class.generics["element_type"]>()`.
 
 A class has no folder of its own: a reopening may live anywhere a program loads, so `.source_files` is the whole
-list, a namespace's `.source_directories` answers its directories, and a question about a path is asked of those `File`s. One function or attribute is written in one file, which
+list, a folder's class's `.source_directories` answers its directories, and a question about a path is asked of those `File`s. One function or attribute is written in one file, which
 its declaration's `.source_file` answers: a tool that rebuilds what a function's code makes can watch the file that
 code comes from.
 
@@ -711,19 +710,6 @@ form (`'first_shown().class.satisfies_type(...)' asks of a class known only at r
 for the class of a named value: hold the value in a local first and ask 'held.class.satisfies_type(Number)', which
 narrows 'held' to that type inside an 'if'`), and so is an argument that is not a type's name.
 
-### `Spite.Namespace`
-
-| Member | Answers | Example |
-|---|---|---|
-| `.name` | the last segment | `Shop.Tools.name` is `Tools` |
-| `.name_with_namespaces` | the dotted name | `Shop.Tools.name_with_namespaces` is `Shop.Tools` |
-| `.parent` | the namespace above, a `Spite.Namespace?` | `Shop.Tools.parent` is `Shop` |
-| `.classes` | the classes declared directly in it | `Shop.Tools.classes.count()` |
-| `.namespaces` | the namespaces directly below it | `Shop.namespaces` |
-| `.source_directories` | a `List<Directory>`: every directory its classes come from, in load order | `Shop.source_directories.first()` |
-
-There is no root namespace object: a namespace at the top has `null` as its `.parent`.
-
 ### `Spite.Enum`
 
 An enum is a class of its own, and its reflection object is a `Spite.Enum`, not a `Spite.Class`: `Phase` named as a
@@ -732,7 +718,7 @@ value, `phase.class` on one of its values, or the class that declares it asked f
 | Member | Answers | Example |
 |---|---|---|
 | `.name` | the enum's own name | `Phase.name` is `Phase` |
-| `.name_with_namespaces` | its name through the class that declares it | `Phase.name_with_namespaces` is `Game.Phase` |
+| `.name_with_outer_classes` | its name through the class that declares it | `Phase.name_with_outer_classes` is `Game.Phase` |
 | `.owner` | the `Spite.Class` that declares it | `Phase.owner` is `Game` |
 | `.values` | a `Dictionary<String, Spite.EnumValue>` keyed by name, in declaration order | `phase.class.values["update"].number` |
 
@@ -781,7 +767,7 @@ The declaration of one value of an enum.
 
 ### What a class declares
 
-An enum, a union and a `type` belong to the class that declares them, never to a namespace. Another class names one
+An enum, a union and a `type` belong to the class that declares them, and to the classes nested in it. Another class names one
 through its class (`Component.Replication`), and a walk over a class reaches them all through reflection: the class's
 `.enums`, `.unions` and `.types`, each a dictionary of declarations keyed by name like `.attributes`.
 
@@ -814,7 +800,7 @@ func ClassDeclarations() {
     var replication = Component.unions["Replication"]
     crash replication
     var members = replication.members.keys().join(", ")
-    console.print(replication.name_with_namespaces, "holds", members)
+    console.print(replication.name_with_outer_classes, "holds", members)
     var types = Component.types.keys().join(", ")
     console.print("types:", types)
     var component = Component()
@@ -826,7 +812,7 @@ func ClassDeclarations() {
 }
 ```
 ```output
-Component.Replication holds Mirrored, Local
+ClassDeclarations.Component.Replication holds ClassDeclarations.Mirrored, ClassDeclarations.Local
 types: Sized
 Mirrored 3 1
 ```
@@ -836,13 +822,13 @@ Mirrored 3 1
 | Member | Answers | Example |
 |---|---|---|
 | `.name` | its own name | `replication.name` is `Replication` |
-| `.name_with_namespaces` | its name through the class that declares it | `Component.Replication` |
+| `.name_with_outer_classes` | its name through the class that declares it, from the root | `Game.Component.Replication` |
 | `.owner` | the `Spite.Class` that declares it | `replication.owner` is `Component` |
-| `.members` | a union's: a `Dictionary<String, Spite.Class>` of its member classes, keyed by their names with namespaces, in declaration order | `replication.members["Network.State"]` |
+| `.members` | a union's: a `Dictionary<String, Spite.Class>` of its member classes, keyed by their names with outer classes, in declaration order | `replication.members["Network.State"]` |
 
-A `Spite.Type` answers `.name`, `.name_with_namespaces` and `.owner`.
+A `Spite.Type` answers `.name`, `.name_with_outer_classes` and `.owner`.
 
-The language's own empty union is read by its name: `Nothing.members` is empty, its `.name_with_namespaces` is its
+The language's own empty union is read by its name: `Nothing.members` is empty, its `.name_with_outer_classes` is its
 plain name (`Nothing`), and its `.owner` is the library's `Spite` class. There is no union of every class
 ([values_and_types.md](values_and_types.md#every-place-names-what-it-holds)): `Spite.Class.instances` lists the classes
 of the program.
@@ -856,7 +842,7 @@ object, so nothing in it can be called by itself.
 |---|---|---|
 | `.name` | the function's name | `alive.name` is `alive` |
 | `.arguments` | a `List<Spite.Argument>`, in order | `hurt.arguments[0].name` is `amount` |
-| `.returns` | exactly the answer it declares: a `Spite.Class` for a class (`Integer?` too), a `Spite.Union` for a union and for `Nothing` (the empty union, also when none is declared), a `Spite.Type` for a `type`. `.name` and `.name_with_namespaces` are read on any of them, and `declared.returns == Integer` or `== Nothing` compares it | `alive.returns` is `Boolean` |
+| `.returns` | exactly the answer it declares: a `Spite.Class` for a class (`Integer?` too), a `Spite.Union` for a union and for `Nothing` (the empty union, also when none is declared), a `Spite.Type` for a `type`. `.name` and `.name_with_outer_classes` are read on any of them, and `declared.returns == Integer` or `== Nothing` compares it | `alive.returns` is `Boolean` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
 | `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |
@@ -1076,26 +1062,26 @@ templates work over its values:
 
 ```gdscript
 var names = Monster.attributes.map_names()
-var counted = Shop.classes.count_is_singleton()
+var counted = Shop.nested_classes.count_is_singleton()
 var written = update_each.writes.map_names()
 ```
 
 ## Known while compiling
 
-Most reflection is asked of something the compiler can already identify: a class, namespace or enum named in the
-code, `$T`, `class`, `namespace`, and everything read from one of them. Such an object is a **constant**, and
+Most reflection is asked of something the compiler can already identify: a class (a folder's included) or an enum
+named in the code, `$T`, `class`, and everything read from one of them. Such an object is a **constant**, and
 reflection on it is ordinary code that costs nothing at run time:
 
 - **A question folds.** `Monster.is_singleton`, `update.is_resumable` or `argument.is_mutated` is a `true` or a
   `false` in the generated code, and an `if` on it keeps only the branch taken.
 - **`each` over a constant list is unrolled.** `Monster.attributes.each(show)` calls `show` once for `name` and
-  once for `health`; no list is made. A list you write naming only classes or only namespaces is such a list, `[Part, Part.Inner].each(check)`, as long as nothing writes to it. So is a walk over a class's `.enums`, `.unions` or `.types` and over a union's
+  once for `health`; no list is made. A list you write naming only classes is such a list, `[Part, Part.Inner].each(check)`, as long as nothing writes to it. So is a walk over a class's `.enums`, `.unions` or `.types` and over a union's
   `.members`, where each member class is a constant: `Shelter.unions["Pet"].members.each(adopt)` can make one with
   `member()`. A filter or a member template over a constant list is a constant list.
 - **A function handed a constant is compiled once for it.** Inside that copy the parameter is the constant
   itself, so `attribute.class` is a type, `attribute.name` is text known while compiling, and
-  `monster.attributes[attribute].value` is a plain read of the field. That holds for a call with a class or a namespace
-  written as the argument, on this object or another (`window.register_namespace(Theme)`, `made_by(Parts.Wheel)`), and
+  `monster.attributes[attribute].value` is a plain read of the field. That holds for a call with a class
+  written as the argument, on this object or another (`window.register_classes(Theme)`, `made_by(Parts.Wheel)`), and
   for a walked declaration handed on to another function (`describe(attribute, "declared")` inside a walk over
   attributes): the callee gets its own copy for that class's attribute, so `Price.cost` and `Offer.cost` each get
   one, and a walk inside it folds as well.
@@ -1108,10 +1094,10 @@ reflection on it is ordinary code that costs nothing at run time:
   them, and `value.class == part` narrows `value` to that class, so `value.render()` is a call of its function. A class known only at run time is not: a parameter, local or attribute holding a `Spite.Class` written
   where a type is (`List<kind>`, or `func made(kind: Spite.Class): kind`) is `'kind' is not a class known while
   compiling, so it cannot be a type here`.
-- **Asking a constant list is a constant too**: `Part.classes.is_empty()` and `Part.namespaces.is_empty()` fold, as
+- **Asking a constant list is a constant too**: `Part.nested_classes.is_empty()` folds, as
   do `count()`, `filter(...)` over the list and `map_names()`, so an `if` on them keeps one branch and the branch
   not taken is never compiled. `first()`, `last()`, a whole number written in `[]` and a name in `[]`
-  (`Part.classes["Alpha"]`) over a constant list of classes or namespaces are the item itself, and no list is made; `first()`, `last()` and a
+  (`Part.nested_classes["Alpha"]`) over a constant list of classes are the item itself, and no list is made; `first()`, `last()` and a
   name answer it as a `T?` proven present, so a `crash` on a `var` holding one is already proven and is removed;
   `[n]` is the `T` itself. When there is no such item (an empty list, `[n]` past the end, a name no item has) the
   read stays at run time, so `[n]` past the end halts with its words and the name answers `null`.
@@ -1130,13 +1116,13 @@ reflection on it is ordinary code that costs nothing at run time:
   and in a template over functions `phase.returns`, `phase.is_resumable`, `phase.returned_literal`, `phase.reads`
   and `phase.writes` are what `Mover.functions["update_each"]` answers for the function the copy stands for.
 
-```gdscript title=constant_namespaces/part/wheel.spite
+```gdscript title=constant_folders/part/wheel.spite
 var size = 3
 ```
-```gdscript title=constant_namespaces/part/axle.spite
+```gdscript title=constant_folders/part/axle.spite
 var length = 7
 ```
-```gdscript title=constant_namespaces/constant_namespaces.spite entry
+```gdscript title=constant_folders/constant_folders.spite entry
 enum Phase {
     'start'
     'update'
@@ -1145,20 +1131,20 @@ enum Phase {
 
 var console = Console()
 
-func ConstantNamespaces() {
-    var parts = Spite.Namespace.instances.filter(holds_parts)
+func ConstantFolders() {
+    var parts = Spite.Class.instances.filter(holds_parts)
     parts.each(make_every_class)
     var count = Phase.values.count()
     var last = Phase.values.find_by_name('finish')
     console.print(count, "phases, the last is", last)
 }
 
-func holds_parts(namespace: Spite.Namespace): Boolean {
-    return namespace.name == "Part"
+func holds_parts(folder: Spite.Class): Boolean {
+    return folder.name == "Part"
 }
 
-func make_every_class(namespace: Spite.Namespace) {
-    namespace.classes.each(make)
+func make_every_class(folder: Spite.Class) {
+    folder.nested_classes.each(make)
 }
 
 func make(part: Spite.Class) {
@@ -1173,11 +1159,11 @@ Wheel Wheel { size: 3 }
 3 phases, the last is finish
 ```
 
-Every folder named `part` anywhere is found by this filter over every namespace, with nothing registered. The filter
+Every folder named `part` anywhere is found by this filter over every class, with nothing registered. The filter
 runs when the program does, so `make` is compiled once and `part()` makes whichever class it is handed. Walked with
-no filter, `Spite.Namespace.instances.each(make_every_class)` is a copy of `make_every_class` per namespace, and the
-walk inside each folds per class. Walked from a
-namespace the code names, `Part.classes.each(make)`, `make` is compiled once for each class instead
+no filter, `Spite.Class.instances.each(make_every_class)` is a copy of `make_every_class` per class, and the
+walk inside each folds per nested class. Walked from a
+folder's class the code names, `Part.nested_classes.each(make)`, `make` is compiled once for each class instead
 (an error inside a copy names it, as `make_over_Part_Axle`), and `part()` is `Part.Axle()` in one copy and
 `Part.Wheel()` in the other. A copy is not one of the class's `.functions`; the function itself is compiled only
 when something calls it with an object known at run time or takes it as a value.
@@ -1314,8 +1300,8 @@ func bind(part: Spite.Class) {
 ```
 
 The `if` folds in each copy, so a class without `render` leaves an empty copy and `Binding<part>` is made only for the
-classes that have it. Walking a namespace's
-`.classes` the same way is how the library's `Test` class finds the tests of a namespace without being told about them ([testing.md](testing.md)). Memory and threads are not
+classes that have it. Walking a class's
+`.nested_classes` the same way is how the library's `Test` class finds the tests of a folder without being told about them ([testing.md](testing.md)). Memory and threads are not
 reflected: a program cannot ask where a value lives, how many objects exist or which are alive, so nothing it
 could watch ever stands in the way of how the compiler places them.
 
@@ -1349,7 +1335,7 @@ A generic class is no class until it is given its classes, so the list holds its
 writes with its classes named, `Custom<Glow>` anywhere in the program or a package it loads, whether that line runs or
 not, and, inside the copy of a generic class, a copy named through its generic names (`Custom<$first_type>` in
 `Pair<Bloom>` is `Custom<Bloom>`). Each copy is a class of its own: its `.name` is the generic class's (`Custom`), its
-`.name_with_namespaces` says which copy (`Custom<Glow>`), and `.generics` answers the classes it was given. A copy
+`.name_with_outer_classes` says which copy (`Custom<Glow>`), and `.generics` answers the classes it was given. A copy
 whose classes are inferred from a constructor's arguments, one a walk makes from its walked class (`Binding<part>()`),
 and one whose generic name sits inside another argument (`Custom<List<$first_type>>`) are not listed, so a walk never
 lists the classes it makes and the list stays finite. Reading the list is what makes the copies it holds: a program
@@ -1374,7 +1360,7 @@ func GenericCopiesAreClasses() {
 }
 
 func show(part: Spite.Class) {
-    var shown = part.name_with_namespaces
+    var shown = part.name_with_outer_classes
     var given = part.generics.count()
     console.print(part.name, shown, given)
 }
@@ -1413,14 +1399,14 @@ the attribute 'attributes' has a name reflection gives every object: 'value.attr
 
 The same goes for an attribute named `class` or `functions`, and for `get_class`, `get_functions` and the `set_`
 forms of all three: the message names the member the function would be read as, and suggests the name with the
-class's own name in it (`set_table_attributes`). The classes of the `Spite` namespace are exempt, since they are
+class's own name in it (`set_table_attributes`). The classes nested in `Spite` are exempt, since they are
 reflection, and a local variable or a parameter may still use any of these names, since nothing reads it through an
 object.
 
 ## Reflection is read-only
 
 Every member describing the program is a getter with no setter: `common/spite/class.spite` keeps its data in
-private fields (`_name`, `_namespace`, `_attributes`, ...) and answers `get_name()`, `get_namespace()` and the rest,
+private fields (`_name`, `_outer_class`, `_attributes`, ...) and answers `get_name()`, `get_outer_class()` and the rest,
 so `.name` reads through the ordinary getter and writing it is an error. A name starting with `_` is used only
 inside its own class, so the private fields cannot be written from outside either. The one thing reflection
 writes is an instance's own value, through a bound attribute's `.value`, whether the attribute is known while
@@ -1439,7 +1425,7 @@ func ReflectionReadOnly() {
 ```
 
 A reopening of a `Spite` class is inside it, so it may read those fields; that is how a program adds a member
-to every class object at once ([packages.md](packages.md#the-spite-namespace-is-reserved)).
+to every class object at once ([packages.md](packages.md#the-spite-class-is-reserved)).
 
 ## Functions of `Spite.Class`, and no static functions
 
@@ -1451,10 +1437,10 @@ is a constant that names one instance of `Spite.Class`; a class file's functions
 its class object's, so no class answers a class question its own way. Reopening `Spite.Class` is the one way to
 add to what a class object answers, and it adds it for every class in the program. It adds functions and may change a
 default, but it cannot replace a function `Spite.Class` already has: `is_singleton`, `name` and the others stay the
-library's ([packages.md](packages.md#the-spite-namespace-is-reserved)). What it adds shows in `--final-classes`: the
+library's ([packages.md](packages.md#the-spite-class-is-reserved)). What it adds shows in `--final-classes`: the
 class is printed with the function or default you wrote, and a comment above it names the root it came from. The compiler has no warnings, so visible output is the whole
 mitigation.
 
 ---
 
-Next: [Packages, namespaces, and mods](packages.md), how folders become namespaces and how a program loads packages.
+Next: [Packages, folders, and mods](packages.md), how folders become classes and how a program loads packages.

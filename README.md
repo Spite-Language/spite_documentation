@@ -120,7 +120,7 @@ with a link to the next.
     carries the member, member templates, generics, codegen values and compile-time type tests, tree shaking.
 12. [reflection.md](reflection.md): every class an instance of `Spite.Class`, a class against an instance, the
     `Spite` classes and their members, what folds and what is known only at run time.
-13. [packages.md](packages.md): `load`, namespaces, reopening classes (mods), the reserved `Spite` namespace.
+13. [packages.md](packages.md): `load`, folders as classes, reopening classes (mods), the reserved `Spite` class.
 14. [concurrency.md](concurrency.md): what the compiler runs at once, and waiting without `async`/`await`.
 15. [markup.md](markup.md): tags (JSX) as sugar the compiler turns into ordinary statements before it
     resolves a name: what each tag, attribute and child becomes, and what it refuses.
@@ -146,7 +146,7 @@ with a link to the next.
     `--development`, and which build to measure.
 24. [repl.md](repl.md): the REPL, a console of Spite lines run in the running program, the same lines over a
     socket with `spite --connect`, and live reload.
-25. [testing.md](testing.md): a test is a function that crashes; `Test(namespace).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
+25. [testing.md](testing.md): a test is a function that crashes; `Test(Folder).run()` finds and runs them, each on its own, and why crashing tests suit an AI.
 26. [optimizations.md](optimizations.md): everything the compiler optimises without being asked, and what (if
     anything) you could notice.
 27. [proofs.md](proofs.md): every fact the compiler proves while compiling, what each one buys, and when it does

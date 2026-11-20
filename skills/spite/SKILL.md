@@ -95,6 +95,16 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - A file is a class named after the file; a program is a folder whose entry file is named after the folder. A file
   holds declarations only, in a fixed order, and at most 1200 statements (its file content budget: split a concern
   into a file of its own, never cut at the number); every `var` has a default.
+- A folder is a class too, and its file named like it is that class's own file: `framework/framework.spite` is
+  `Framework`, `framework/component.spite` is `Framework.Component` (never `Framework.Framework.Component`, rewritten
+  with a `fixed:` line). A folder with no such file is an empty class. The entry class is the program's root:
+  `game/game.spite` is `Game`, `game/ui/ui.spite` is `Game.Ui` (written `Ui` inside the program, never `Game.Ui`),
+  and a file named like a library class (`game/string.spite`) reopens it. A loaded folder with its own file
+  (`kal/kal.spite`) is a root `Kal`; one without adds top-level classes. Nesting is naming only (no outer object, no shared attributes). Inside a class,
+  every class around it lends its names bare: in `framework/button.spite`, `Component` and the enum `Shade` of
+  `framework/framework.spite`; lookup goes own declarations, each outer class nearest first, the program, then the
+  library's root class `Spite` (`Nothing` lives there and cannot be hidden). A class holds one member per name, so an
+  `enum Component` beside `framework/component.spite` is an error.
 - Full words only: `message`, never `msg`; `Integer`, never `Int`. `snake_case` values and functions, `PascalCase`
   types. No single letters except the axis names `x`, `y`, `z`, `w`.
 - No `for`, `break` or `continue`. Prefer the list templates (`monsters.filter_alive().sum_health()`,
@@ -117,9 +127,10 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `phase_each` of its own; used whole, `phase` is that function's `Spite.FunctionDeclaration` and a member
   parameter its member's declaration, with `.name` the text) or `Spite.Argument` (spread as
   `system.update_each(made_arguments(row))`); the body says which class. A class's `.name` is always its short name
-  and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it. Find classes by walking,
-  never by registering them: `Spite.Class.instances.each(bind)`, `Theme.classes.each(bind)` and
-  `window.register_namespace(Theme)` each make a copy of the walker per class, where the class is a type
+  and `.name_with_outer_classes` the dotted one; `.outer_class` is the folder's class it sits in (`null` at the root),
+  `.nested_classes` a folder class's classes; `.source_files` lists the files that declare it. Find classes by walking,
+  never by registering them: `Spite.Class.instances.each(bind)` (folders' classes included), `Theme.nested_classes.each(bind)` and
+  `window.register_classes(Theme)` each make a copy of the walker per class, where the class is a type
   (`Binding<part>()`, `value.class == part` narrows). An instance's attributes are typed by what they hold,
   `Spite.Attribute<Integer>`, and reached by a name written in the code (`troll.attributes["health"]`, a name the class
   lacks is a compile error), a declaration kept in a `var`, or a walk: `held.attributes.each(set_integers)` with
@@ -268,17 +279,17 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   is an error naming `==`, and `a.is_same_instance(b)` written is refused naming `a === b`. A `Dictionary` keyed by an object still keys by identity.
 - Only a generic class takes `<Type>`: `Phase<Integer>` on an enum, a union, a `type` or a number is an error. The
   entry class is never generic; put what needs `generic` lines in a class it makes.
-- A union or `type` that two classes of a namespace declare alike is moved by the compiler to the entry class (the class
-  named like the folder); the other classes of that namespace write `Bunda.Pet`, a class outside it
-  `Bunda.Bunda.Pet`, and only the entry class writes `Pet`.
+- A union or `type` that two classes of a folder declare alike is moved by the compiler to the folder's class
+  (`bunda/bunda.spite`, created if missing); every class inside the folder writes `Pet`, a class outside `Bunda.Pet`.
 - A union lists classes directly: a `type` or another union as a member is an error at its line. Write the
   inner union's classes into the outer one; for a `type`, list the classes that fit, or take the `type` itself where
   any class that fits will do (a function taking one is copied per class). Every member
   error points at the member's own line, and a union in a generic class nothing makes is checked all the same.
 - Name another class's union or `type` through its class, never bare and never by declaring a copy: `Sibling.Type` in
-  the same namespace, `Namespace.Class.Type` from elsewhere (`func shown(component: Framework.Component)`). It compiles
+  the same folder, `Folder.Class.Type` from elsewhere, bare only inside the declaring class and the classes nested in
+  it (`func shown(component: Framework.Component)`). It compiles
   exactly as a copy declared in your own class would, so a shared `type` serves wherever several classes meet.
-- A class of the file's own namespace is written plain, never through that namespace: inside `sidebar/`,
+- A class of the file's own folder is written plain, never through that folder: inside `sidebar/`,
   `Picker()`, `List<Picker>`, `Picker.Mode`, `<ClassPicker/>`. `Sidebar.Picker` there is rewritten to `Picker` with a
   `fixed:` line, unless the class itself declares a `Picker` (then the path is what tells them apart).
 - The compiler fixes what has one fix, and prints `fixed:` for each: declarations out of order, a local or parameter

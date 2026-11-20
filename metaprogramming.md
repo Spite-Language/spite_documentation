@@ -1,7 +1,7 @@
 # Metaprogramming
 
-There are no macros. **Every class is an instance of `Spite.Class`**, every namespace an instance of
-`Spite.Namespace` and every function a `Spite.FunctionDeclaration`, so "do this for every attribute" is ordinary
+There are no macros. **Every class is an instance of `Spite.Class`**, a folder's class included, and every
+function a `Spite.FunctionDeclaration`, so "do this for every attribute" is ordinary
 code over ordinary objects: `Monster.attributes.each(show)`. The compiler knows those objects while compiling, so
 it runs that code there: a walk is unrolled into one call per attribute, each call compiled for its own attribute
 and typed by it, and nothing is looked up when the program runs.
@@ -73,7 +73,7 @@ walk is `each`, a selection is a filter or a member template, and a member by na
 | To reach | Write |
 |---|---|
 | every attribute of a class | `Monster.attributes.each(show)` |
-| every class of a folder | `Shop.Tools.classes.each(make)`, with `make(part: Spite.Class)` |
+| every class of a folder | `Shop.Tools.nested_classes.each(make)`, with `make(part: Spite.Class)` |
 | every value of an enum | `Phase.values.each(run)`, with `run(phase: Phase)` |
 | one function, if the class has it | `Runner.functions["run_each"]`, a `Spite.FunctionDeclaration?` narrowed by `if` or `fallback` |
 | the same function bound to an instance | `runner.functions["run_each"]`, a `Spite.Function?` |
@@ -81,8 +81,8 @@ walk is `each`, a selection is a filter or a member template, and a member by na
 | the functions whose names end in `_each` | `Runner.functions.filter(walks_each)`, or `Runner.functions.filter_name_ends_with("_each")` to count or to ask |
 | a function's arguments | `function.arguments.each(describe_taken)` |
 | an enum's values, in order | `Phase.values` |
-| every folder named `part`, anywhere | `Spite.Namespace.instances.filter(holds_parts)`, then `namespace.classes` |
-| every class of the program | `Spite.Class.instances` |
+| every folder named `part`, anywhere | `Spite.Class.instances.filter(holds_parts)`, then `folder.nested_classes` |
+| every class of the program | `Spite.Class.instances`, folders' classes included |
 
 A name is selected, never built from text: `[]` takes a name written in the code, and anything else is a filter
 over the names that exist. Each of these is a constant while compiling, so a walk is unrolled and the function it
@@ -260,15 +260,15 @@ A program checks its own shape the same way: names, classes and counts over know
 program's folders that finds a broken one fails the build, and one that finds none costs nothing at run time:
 
 ```gdscript
-func check_a_folder(namespace: Spite.Namespace) {
-    fallback namespace.name_with_namespaces.starts_with("Rules.")
-    var names = namespace.classes.map_names()
+func check_a_folder(folder: Spite.Class) {
+    fallback folder.name_with_outer_classes.starts_with("Game.Rules.")
+    var names = folder.nested_classes.map_names()
     var has_a_validator = names.contains("Validator")
     crash has_a_validator
 }
 ```
 
-with `Spite.Namespace.instances.each(check_a_folder)` where the program starts.
+with `Spite.Class.instances.each(check_a_folder)` where the program starts.
 
 In a generic class, `$T` is a constant too, so a question on it folds for each class the generic is given, and the
 branch it rules out may call what that class does not have:
@@ -590,22 +590,22 @@ name: name it 'streamed_argument' and call 'streamed_arguments'`.
 
 ### Walking a folder or an enum
 
-Walks over the classes of a namespace and the values of an enum are ordinary code on the reflection objects, unrolled
-while compiling. `Shop.Tools.classes.each(make)` makes one copy of `make` for each class of the folder, in which
-`part` is the class itself: a type (`Column<part>()`), a constant for `part.name` (the short name; `part.name_with_namespaces` is the dotted one), and the class object where a value
+Walks over the classes of a folder and the values of an enum are ordinary code on the reflection objects, unrolled
+while compiling. `Shop.Tools.nested_classes.each(make)` makes one copy of `make` for each class of the folder, in which
+`part` is the class itself: a type (`Column<part>()`), a constant for `part.name` (the short name; `part.name_with_outer_classes` is the dotted one), and the class object where a value
 is wanted. `Phase.values.each(run)` calls `run` once for each value. A walker takes one parameter, and state it needs
-goes in attributes. It may be a function of another object, `Shop.Tools.classes.each(registry.add)`: the copies are
-then made in that object's class and called on it. A parameter typed `Spite.Namespace` is an instance of one, so `class.namespace.classes` and
-`Spite.Namespace.instances` are the lists to walk ([reflection.md](reflection.md#known-while-compiling)).
-`Spite.Class.instances.each(bind)` walks every class of the program the same way, one copy per class, and
-`Spite.Namespace.instances.each(walk)` one copy of `walk` per namespace, inside which `namespace.classes.each(bind)` is
-again a copy per class. A namespace or a class written as an argument is a constant too: `window.register_namespace(Theme)`
-with `func register_namespace(namespace: Spite.Namespace) { namespace.classes.each(register) }` makes a copy of
-`register_namespace` for `Theme`, and its walk is a copy of `register` per class of `Theme`. Inside a copy
+goes in attributes. It may be a function of another object, `Shop.Tools.nested_classes.each(registry.add)`: the copies are
+then made in that object's class and called on it. A folder's class is a `Spite.Class` like any other, so
+`class.outer_class.nested_classes` and `Spite.Class.instances` are the lists to walk
+([reflection.md](reflection.md#known-while-compiling)). `Spite.Class.instances.each(bind)` walks every class of the
+program the same way, one copy per class, folders' classes included, and inside a copy `folder.nested_classes.each(bind)`
+is again a copy per nested class. A class written as an argument is a constant too: `window.register_classes(Theme)`
+with `func register_classes(folder: Spite.Class) { folder.nested_classes.each(register) }` makes a copy of
+`register_classes` for `Theme`, and its walk is a copy of `register` per class nested in `Theme`. Inside a copy
 `value.class == part` narrows `value` to the walked class.
 
 In a copy, `part.has_function("name")` and `part.function_waits("name")` are decided for that class, so the branch
-that does not apply is never compiled and may call what the class lacks. A namespace the program has no folder for is
+that does not apply is never compiled and may call what the class lacks. A folder's class the program has no folder for is
 an unknown name, like any other. Inside a copy, a call of a function with a constant argument (a walked attribute or function declaration
 included) is compiled once for that argument, however deep the calls go, so a check split into helper functions decides as one written in a single
 function does. The copies end because each is made once per function and constant, and a constant is only ever read
@@ -1168,4 +1168,4 @@ too: templates are still generated only for the names called, and conditions on 
 
 ---
 
-Next: [Reflection](reflection.md), the `Spite` classes every class, namespace and function is an instance of.
+Next: [Reflection](reflection.md), the `Spite` classes every class and function is an instance of.

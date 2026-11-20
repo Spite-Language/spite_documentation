@@ -16,8 +16,10 @@ default the build writes the executable into `.spite/` in that folder, `.spite/b
 ([compiler.md](compiler.md#where-the-outputs-go)).
 
 Every other `.spite` file in the folder is another class of the program, and every folder inside it is a
-namespace ([packages.md](packages.md)): `game/engine/renderer.spite` is `Engine.Renderer`, and
-`game/engine/physics/physics.spite` is `Engine.Physics.Physics`.
+class too ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)): `game/engine/renderer.spite` is
+`Game.Engine.Renderer`, and `game/engine/physics/physics.spite` is the class `Game.Engine.Physics` itself. The
+entry class `Game` (`game/game.spite`) is the program's root and every class of the program is nested in it, yet
+the program writes `Engine.Renderer` or a bare `Renderer` inside `Engine`: a name is looked up from the inside out.
 
 ## The entry constructor takes no arguments
 

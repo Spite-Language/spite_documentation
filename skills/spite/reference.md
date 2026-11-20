@@ -60,25 +60,38 @@ A flag naming no folder or a folder without `common` and the system's folder is 
 (`load "../spite_standard_library/windows"`, from older programs) is removed with a `fixed:` line, and a `load` of
 another library is an error naming `--standard-library-path=` instead. Errors and crash reports name a library file
 `spite_standard_library://common/list.spite`, the same on every machine. `load` is for the program's own packages, and `game/`'s every sub folder is a
-namespace and nothing else (`game/engine/renderer/shader.spite` is `Engine.Renderer.Shader`, and
-`game/engine/physics/physics.spite` is `Engine.Physics.Physics`: no file is special). A file and a folder of one
+class whose own file is the one named like it (`game/engine/renderer/shader.spite` is `Engine.Renderer.Shader`, and
+`game/engine/physics/physics.spite` is the class `Engine.Physics` itself; a folder with no such file is an empty
+class, `Engine.Renderer()` makes an empty object). The entry class is the program's root: `game/game.spite` is
+`Game`, and the program's classes are nested in it (`Game.Engine.Renderer`, its `name_with_outer_classes`), written
+without the prefix since a bare name looks from the inside out; a root-level file or folder named like a library class
+or folder (`game/string.spite`, `game/spite/class.spite`) reopens the library's class. A loaded folder with its own
+file (`kal/kal.spite`) is a root `Kal` (`Kal.Physics`); one without adds top-level classes (`Engine`). Nesting is naming only: a nested class holds
+no object of its outer class, reads none of its attributes, and privacy is unchanged. Inside a class, every class
+around it lends its names bare: in `framework/button.spite`, `Component` is `Framework.Component` and `Shade` the enum
+`framework/framework.spite` declares. A bare name looks in the class's own `enum`/`union`/`type`, then each outer
+class nearest first (its nested classes and declarations), then the whole program, then the library's root class
+`Spite`, which declares `Nothing` (no name of yours hides it) and holds the reflection classes (`Spite.Class`). A
+class holds one member per name: an `enum`, `union` or `type` named like a class nested in it is an error (`'Framework.Component'
+is both the enum 'Component' this class declares and the class of 'framework/component.spite': ... rename one of
+them`); case keeps attributes and functions apart from classes and types. `Framework.Framework.Component` is
+rewritten to `Framework.Component` with a `fixed:` line. A file and a folder of one
 name side by side (`engine/renderer.spite` beside `engine/renderer/`) is an error, since a dotted name means one
-thing. A class that hides another class visible from an enclosing namespace (`Physics.Plugin` beside a root
-`Plugin`) is an error naming both, and so is a class named like a standard-library class (`Geometry.Vector3` for `Vector3`; a namespaced library
-class such as `Spite.Function` is always written with its namespace, so a `Function` of your own is fine): use the
+thing. A class that hides another class visible from a class around it (`Physics.Plugin` beside a root
+`Plugin`) is an error naming both, and so is a class named like a standard-library class (`Geometry.Vector3` for `Vector3`; a nested library
+class such as `Spite.Function` is always written with its outer class, so a `Function` of your own is fine): use the
 library's class, reopening it to add what it lacks. Three or more classes in one folder whose names start with the
 same whole word (`HighBlock`, `HighFunction`, `HighValue`) are an error: move them into the folder `high/` and name
 them `Block`, `Function`, `Value` (only the program's own classes count, so `spite/function.spite` reopening
 `Spite.Function` is fine). `load "folder"` inside a function loads another package (it takes literal text: a
 folder path relative to the file, never absolute, or `repository@commit/folder` for a pinned repository; only its last
-folder, the namespace, must be snake_case); a file at the same namespace path
+folder, a root and no class, must be snake_case); a file at the same dotted path
 reopens the class: same-named functions, attributes and enums replace (an enum declared again is its whole new
-list of values), the rest are added; a replacing attribute keeps its type and a replacing function or constructor its exact signature, parameters (count, order, names, types) and answer, an error at the reopening's line even when nothing uses the class, naming a library class's declaration (`'_place_of' answers a Path where the class first declares it, at spite_standard_library://common/volume.spite:20, and this reopening makes it answer an Integer: a reopening replaces a function's body, never what it answers, so give the new function a name of its own`; a changed parameter is `'hit' takes (damage: Integer) where the class first declares it, and this reopening makes it take (damage: String): a reopening replaces a function's body, never what it takes, so give the new function a name of its own`, and for a constructor `... a reopening replaces a constructor's body, never what it takes, so build the class from another value with a conversion of its own, named 'Hero' with one parameter named 'from'`); a class that writes no constructor has the one the compiler makes, `Hero()`, so a reopening's `func Hero(starting_level: Integer)` changes it (`'Hero' takes nothing where the class first declares it, since its first file writes no constructor and the compiler makes 'Hero()', and this reopening makes it take (starting_level: Integer): ...`) and a written `func Hero()` replaces it; a conversion the class lacks (`func Hero(from: String): Hero?`) is new and may be added; a reopening may not name a local, parameter or attribute like any function of the class. A reopening of a reflection class (`Spite.Class`, `Spite.Function`, `Spite.Namespace`, the other `Spite` classes describing the program) adds functions but cannot declare one the class has, by its library name or the name read (`get_is_singleton`, `is_singleton`, `name`): `'is_singleton' is a reflection function of Spite.Class, and reflection functions cannot be replaced`. A file in the program's own folder that reopens a class a loaded folder
-declares loses wherever both declare a name, the constructor included, since loaded folders merge later: put a
-replacement in a folder loaded after the one it replaces. Two `load`s of folders one inside the other are an error
+list of values), the rest are added; a replacing attribute keeps its type and a replacing function or constructor its exact signature, parameters (count, order, names, types) and answer, an error at the reopening's line even when nothing uses the class, naming a library class's declaration (`'_place_of' answers a Path where the class first declares it, at spite_standard_library://common/volume.spite:20, and this reopening makes it answer an Integer: a reopening replaces a function's body, never what it answers, so give the new function a name of its own`; a changed parameter is `'hit' takes (damage: Integer) where the class first declares it, and this reopening makes it take (damage: String): a reopening replaces a function's body, never what it takes, so give the new function a name of its own`, and for a constructor `... a reopening replaces a constructor's body, never what it takes, so build the class from another value with a conversion of its own, named 'Hero' with one parameter named 'from'`); a class that writes no constructor has the one the compiler makes, `Hero()`, so a reopening's `func Hero(starting_level: Integer)` changes it (`'Hero' takes nothing where the class first declares it, since its first file writes no constructor and the compiler makes 'Hero()', and this reopening makes it take (starting_level: Integer): ...`) and a written `func Hero()` replaces it; a conversion the class lacks (`func Hero(from: String): Hero?`) is new and may be added; a reopening may not name a local, parameter or attribute like any function of the class. A reopening of a reflection class (`Spite.Class`, `Spite.Function`, the other `Spite` classes describing the program) adds functions but cannot declare one the class has, by its library name or the name read (`get_is_singleton`, `is_singleton`, `name`): `'is_singleton' is a reflection function of Spite.Class, and reflection functions cannot be replaced`. A file of the program is a class of the program's root (`Game.Monster`),
+never a reopening of a loaded folder's `Monster` (it is refused as hiding it): put a replacement in a folder loaded after the one it replaces. Two `load`s of folders one inside the other are an error
 (load only the outer one). A `load` under an `if` must be decidable from `Build` fields and literals, and a `load`
 inside a `while` or `switch` is an error. A folder some file names in a `load` is a package of its own, never also a
-namespace. `Build` follows the same order: a loaded package may reopen it in its own `build.spite` and declare
+class of the folder around it. `Build` follows the same order: a loaded package may reopen it in its own `build.spite` and declare
 fields (read and set by flag like the program's), and where it and the program's `build.spite` declare one field the
 package's declaration stays, a flag setting it either way, so a package names its fields after itself
 (`assets_cooked`, never `production`). A repository pinned with
@@ -86,8 +99,8 @@ package's declaration stays, a flag setting it either way, so a package names it
 it, and two commits of one repository are one library: what both declare must agree, or the compile stops naming
 the declaration and both commits. A package opens the files
 beside its own source through `class.source_files` (or `$item_type.source_files`, or `Recipe.source_files` for a
-class by name), a `List<File>` of every file that declares or reopens the class, and a namespace's
-`.source_directories` a `List<Directory>`: absolute paths on the machine that built it, never a path relative to where
+class by name), a `List<File>` of every file that declares or reopens the class, and a folder's class's
+`.source_directories` a `List<Directory>` (empty for a file's class): absolute paths on the machine that built it, never a path relative to where
 the program runs.
 `preload "assets"` is written like `load` (literal text on its own line, relative to the file, under an `if` only on
 `Build` fields) and carries a folder's whole tree, or one file (`preload "assets/logo.png"`), local or pinned in git
@@ -240,15 +253,15 @@ A mistake with exactly one fix is not an error: the compiler writes the fix into
 `path:line: fixed: ...` and compiles the fixed file, so read the file back before editing it again. Each `fixed:`
 line is a change it made: two fixes in one statement are both made. It fixes:
 
-- declarations out of the file's order, and a union or `type` that two classes of a namespace declare alike (moved to
-  the namespace's entry class, see Values);
-- `Game.Job` written outside the namespace `Game` for an enum of its entry class `Game.Game`
-  (becomes `Game.Game.Job`);
-- a class of the file's own namespace written through it, anywhere a name is written (a construction, a type, a
+- declarations out of the file's order, and a union or `type` that two classes of a folder declare alike (moved to
+  the folder's class, see Values);
+- a path naming a folder and then its own file: `Framework.Framework.Component` becomes `Framework.Component` (`'...'
+  names 'Framework' twice, and a folder is its own class: wrote 'Framework.Component'`);
+- a class of the file's own folder written through it, anywhere a name is written (a construction, a type, a
   generic argument, a member read, a tag): inside `sidebar/`, `Sidebar.Picker()` becomes `Picker()`,
   `Sidebar.Picker.Mode` becomes `Picker.Mode` and `<Sidebar.ClassPicker/>` becomes `<ClassPicker/>`; the path stays
   when the class declares that plain name itself, for a standard-library class (`Spite.Function`) and for a class of
-  an enclosing namespace;
+  a folder around it (`Game.Picker` inside `game/sidebar/`);
 - a local or parameter name with one right spelling (camelCase, a doubled `_`, an abbreviation with one expansion, a
   read `_name`), and a keyword one letter off at the start of a line (`retrun`);
 - a local or attribute nothing reads whose value and every write do nothing, and statements after a `return`;
@@ -521,11 +534,11 @@ of the standard library or of a repository pinned to a commit is never rewritten
   (`'admin' = 99`; the next unnumbered value counts on, the first from 0; two values with one number are an
   error), only where a C library, a file format or the network fixes the numbers.
 - A union is declared in the class that consumes it. One name and content declared by two classes of a root is moved
-  by the compiler to the entry class of the lowest namespace holding both (the class named like its folder, its file
-  created if missing), and every use is rewritten: `Bunda.Pet` in a class of that namespace or below, plain `Pet` only in
-  the entry class. Any other class names a union or `type` through the class that declares it: `Sibling.Pet` in the
-  same namespace, `Namespace.Class.Pet` from anywhere else (an entry class's from outside its namespace:
-  `Bunda.Bunda.Pet`, since `Bunda.Pet` reaches it only from within); written bare outside its class it is an error naming that
+  by the compiler to the class of the lowest folder holding both (`bunda/bunda.spite`, the class `Bunda`, its file
+  created if missing), and every use is rewritten: plain `Pet` in every class inside that folder, `Bunda.Pet` outside
+  it. Any other class names a union or `type` through the class that declares it: `Sibling.Pet` in the
+  same folder, `Folder.Class.Pet` from anywhere else; bare only in the declaring class and the classes nested in it;
+  written bare elsewhere it is an error naming that
   path (`'Pet' is declared by the class 'Shelter' and belongs to it: outside that class, name it through the class,
   'Shelter.Pet'`); it compiles exactly as a copy declared in the class would. (This replaced "declare your own copy": a class no
   longer copies another class's union or type to use it.) A union value fits another
@@ -567,7 +580,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   program`). For any object write the `type` of what the code uses: every class (numbers, enums, function values)
   answers `to_debug()`, so `type Shown { to_debug: Spite.Function<String> }` takes any object and says so; a function
   taking it is still compiled per class, and a `List<Shown>` keeps each item's class.
-- `Nothing` is the language's own empty union, declared in the library's `Spite` entry class and named plainly: the
+- `Nothing` is the language's own empty union, declared in the library's root class `Spite` (which
+  every class falls back to last, so no name of yours hides it) and named plainly: the
   answer of a function with no answer. `var held: Nothing` is an error (`'held' is declared 'Nothing', ...`). Any
   other empty `type` or `union` is refused: `'type Held' lists no members, so it says nothing of what its values are:
   list the functions and attributes they are used through, or name their class, or a union of their classes` and
@@ -759,12 +773,13 @@ of the standard library or of a repository pinned to a commit is never rewritten
   to it and the call returns normally; only a fault no library takes is reported
   ([failure.md](https://github.com/Spite-Language/spite_documentation/blob/master/failure.md#a-fault-a-foreign-library-catches-itself)).
 - A test is a function named `test` or `test_...` that takes nothing and crashes when wrong, in a class of a
-  namespace of its own (the entry class's functions are not found). A test program loads the project and runs
-  `var tester = Test(Checks)` then `tester.run()`: each class is built with its constructor (the setup) and each test
+  folder of its own (the entry class's functions are not found). A test program loads the project and runs
+  `var tester = Test(Checks)` (a `Spite.Class`, the folder's; it runs the classes nested in it, then those nested in
+  them, recursively) then `tester.run()`: each class is built with its constructor (the setup) and each test
   runs in a run of its own, printing `pass`/`fail` per test and a count, exiting 1 when any fails; `SPITE_TEST=<Class>.<test>`
   runs one ([testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)).
-  A package keeps its own tests in a namespace of its own (`pkg/pkg/tests/`); a check program in another folder
-  runs them with `Test(Pkg.Tests)` alone: naming a namespace keeps its `load`, and every file of a loaded package
+  A package keeps its own tests in a folder of its own (`pkg/pkg/tests/`); a check program in another folder
+  runs them with `Test(Pkg.Tests)` alone: naming a folder's class keeps its `load`, and every file of a loaded package
   (not the standard library) is checked on every build, reached or not.
 
 ## Metaprogramming
@@ -821,12 +836,14 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `streamed_row(argument: Spite.Argument, ...)` is refused, naming `streamed_argument` to write. Another name with the hole
   word is filled: in the copy for `update_all`, `system.phase_each(...)` calls `update_each`, refused when the class has none, and refused as naming two functions when the class also has a `phase_each` of its own (rename it or the parameter). `Spite.Attribute` and `Spite.Function` (bound to an object, with
   `declaration`, `value`, `owner`) make no template. A folder or an enum is walked as plain code, unrolled while
-  compiling: `Shop.classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
+  compiling: `Shop.nested_classes.each(make)` with `make(part: Spite.Class)`, `Phase.values.each(run)` with `run(phase: Phase)`.
   So are `Spite.Class.instances.each(bind)` (one copy per class of the program, so a library finds an application's
-  components with `if part.has_function("render") { Binding<part>() }` and no registration line, wherever it is reached, a test's helper included; a run-time `Spite.Call` of such a walker halts) and
-  `Spite.Namespace.instances.each(walk)` (a copy per namespace; `namespace.classes.each(bind)` inside folds per class).
-  A class or namespace written as an argument makes the callee's copy for it, on any object:
-  `window.register_namespace(Theme)` folds the walk inside. In a copy, `part` is a type, `part()` makes one, and
+  components with `if part.has_function("render") { Binding<part>() }` and no registration line, wherever it is reached, a test's helper included; a run-time `Spite.Call` of such a walker halts;
+  folders' classes are listed too, so `folder.nested_classes.each(bind)` inside a copy folds per nested class).
+  A walk written with a folder class's dotted name, `System.nested_classes.each(walker)`, also walks every other
+  folder class whose dotted name ends in `.System`.
+  A class written as an argument makes the callee's copy for it, on any object:
+  `window.register_classes(Theme)` folds the walk inside. In a copy, `part` is a type, `part()` makes one, and
   `value.class == part` narrows `value` (`value.render()`). A walked declaration handed to another function,
   `describe(attribute, "x")`, makes that function's copy for it. A filter over such a list runs at run time.
   A `Spite.Class` known only at run time, called with no arguments (`part()`, an attribute `kind()`, `thing.class()`,
@@ -863,7 +880,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`
   (the `File` a function or an attribute is written in); `Loader.is_stateful`,
   `Vector3<Float>.is_fixed_size` (a generic class is named with its codegen values), `Monster.is_singleton`. `.returns` is exactly the declared answer: a `Spite.Class` (`Integer?` too), a `Spite.Union` (a union, and `Nothing`, the
-  empty union, for a function that answers nothing, never `null`) or a `Spite.Type`; read `.name` on any, compare with `== Integer` or `== Nothing`; only `.namespace`, `.parent` and a bound attribute's `.value` can be `null`. A reflection field the program never reads costs nothing: it has no slot and is not built, so reading more of a class is what pays; a write to it still runs a call or a making that does something. A class's `.generics` is a
+  empty union, for a function that answers nothing, never `null`) or a `Spite.Type`; read `.name` on any, compare with `== Integer` or `== Nothing`; only `.outer_class` and a bound attribute's `.value` can be `null`. A reflection field the program never reads costs nothing: it has no slot and is not built, so reading more of a class is what pays; a write to it still runs a call or a making that does something. A class's `.generics` is a
   `Dictionary<String, Spite.Class>` of its `generic` lines by name without the `$`
   (`numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer`); there is no `.element_type` on a class. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
 - In a generic class, `if $value_type == List { }` (also `Dictionary`, `Null` for any `T?`, `Enum` for any enum,
@@ -871,7 +888,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
   so keep one generic class with a helper per kind, not one class per kind.
-- Names, classes and counts over known classes fold (`Part.name`, `Part.classes.count()`, `Part.Axle.attributes.count()`, `Part.classes.map_names().contains("X")`, `Part.classes.first()`, `Part.classes[0]`, `Part.classes["X"]`, `namespace.name_with_namespaces.starts_with("Y.")`, `Spite.Namespace.instances.each(check)`), so a `crash` on them is decided. An item that is not there (`Part.classes["Nope"]`, `[n]` past the end) is read at run time. A class object is a fixed object of the executable, so reading one (`Monster`, `value.class`) allocates nothing, unless a `drop()` at exit can reach it or the build keeps everything. A class object an attribute holds folds the same when only its class's defaults give it (`var held: Spite.Class = Monster`, never assigned again: `keeper.held.name`). A name over a class's `.functions` or `.attributes` does not fold, unless it is in a `var` read only by an `if` and a `Spite.Call`: `Part.Axle.functions["spun"]` reads its class's table at run time (a `T?`, narrow it) and `Part.Axle.attributes["turns"]` too (already a `T`); only a missing name folds, a function to `null` (its `if` keeps one branch), an attribute to a compile error.
+- Names, classes and counts over known classes fold (`Part.name`, `Part.nested_classes.count()`, `Part.Axle.attributes.count()`, `Part.nested_classes.map_names().contains("X")`, `Part.nested_classes.first()`, `Part.nested_classes[0]`, `Part.nested_classes["X"]`, `folder.name_with_outer_classes.starts_with("Y.")`, `Part.Axle.outer_class`, `Spite.Class.instances.each(check)`), so a `crash` on them is decided. An item that is not there (`Part.nested_classes["Nope"]`, `[n]` past the end) is read at run time. A class object is a fixed object of the executable, so reading one (`Monster`, `value.class`) allocates nothing, unless a `drop()` at exit can reach it or the build keeps everything. A class object an attribute holds folds the same when only its class's defaults give it (`var held: Spite.Class = Monster`, never assigned again: `keeper.held.name`). A name over a class's `.functions` or `.attributes` does not fold, unless it is in a `var` read only by an `if` and a `Spite.Call`: `Part.Axle.functions["spun"]` reads its class's table at run time (a `T?`, narrow it) and `Part.Axle.attributes["turns"]` too (already a `T`); only a missing name folds, a function to `null` (its `if` keeps one branch), an attribute to a compile error.
 - `fallback`/`crash` on such a condition folds too. A `crash` that folds to false refuses the build
   (`'crash ...' always halts: its condition is decided while compiling and is false`, naming the instance, as
   `Slot<List<String>>`) when the function reaches it every time it runs and the program reaches the function; one
@@ -933,8 +950,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
   only classes that fit that `type` (a function value never fits; a `T?` fits when its `T` does and the `type` needs
   only `to_string()` or `to_debug()`, which null answers as `null`, so `Shelf<String?>` prints a null item as `null`); any other is an error where the class is
   named, not inside the generic. An enum, a `union` or a `type` is named outside its class through that class
-  (`Player.Job`, `Shelter.Pet`, `generic $item_type: Console.Printable`), never bare. From outside a namespace an entry class's enum is
-  named through that class too, `Game.Game.Job` (`game/game.spite`), never `Game.Job` (rewritten, in a loaded package's files too). One value per `generic` line, at the top of the file
+  (`Player.Job`, `Shelter.Pet`, `generic $item_type: Console.Printable`), never bare outside the declaring class and
+  the classes nested in it. An enum of a folder's class (`game/game.spite` in a folder `game/` inside the program) is
+  `Game.Job` outside, plain `Job` inside `game/`; `Game.Job` when only `game/player.spite` declares `Job` is an error
+  naming `Game.Player.Job`. One value per `generic` line, at the top of the file
   after any `singleton` line: `generic $a, $b`, a `generics` list and a `generic` line inside a function are errors.
 - Settings: reopen `Environment` in the program's `environment.spite` with one `var` per setting and a literal
   default (`var serve = false`), then bind `var environment = Environment()` and read `environment.serve`. The
@@ -953,10 +972,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `build.target_operating_system` are `Build` fields too; `target_operating_system`, `operating_system` and `program` cannot be declared in a program's or a package's `build.spite` (the target is the flag's, the others the compiler's). A package's own `build.spite` adds fields the same way. A flag is kebab-case (`--debug-memory`) and sets the
   snake_case field; an unknown flag is an error. A `Build` default may be arithmetic on literals or another field
   (`var attempts: Integer = retries`); the compiler's own options take only a literal. There is no `format` option: every compile formats.
-- Reflection: `value.class` (a `Spite.Class`: `.name` (always the short name, however the class was reached; `.name_with_namespaces` is the dotted one), `.namespace` (a `Spite.Namespace?`; narrow it before
-  reading its members: `fallback value.class.namespace` narrows the path itself and its prefixes for the rest of
-  the block; its members are `.name_with_namespaces`, `.parent`, `.classes`,
-  `.namespaces`), `.functions` (empty for the entry class, which is never made twice), and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
+- Reflection: `value.class` (a `Spite.Class`: `.name` (always the short name, however the class was reached; `.name_with_outer_classes` is the dotted one, on `Spite.Enum`, `Spite.Union` and `Spite.Type` too), `.outer_class` (a `Spite.Class?`, the folder's class it sits in, `null` at a program's root; narrow it before
+  reading its members: `fallback value.class.outer_class.outer_class` narrows the path itself and its prefixes for the rest of
+  the block), `.nested_classes` (a `List<Spite.Class>`: the folder's files' classes, its own file left out, then its
+  sub-folders' classes; empty for a file's class), `.source_directories`, `.functions` (empty for the entry class, which is never made twice), and `.enums`, `.unions` (each with `.members`) and `.types`, all keyed by name),
   `value.attributes`
   (`.name`, `.class`, `.value`: the value itself, a value the compiler fills with the classes that reach it, whose text is `.value.to_string()`; narrowed by `if found.value.class == Integer`, it is that number, and its `to_string()` answers the number's own; `attribute.value = given`,
   which is `set_value(given)`, writes the owner's field even when the object is only held through a `type`, by the assignment
@@ -973,7 +992,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   that is neither nullable nor a number; a program built with a prompt or hot reload); a value written into an attribute read only at run time joins the classes the compiler fills there, so printing it needs `to_string` only of the classes written there; private attributes are neither listed nor written), `value.functions` (`.name`, `.declaration` with its `.arguments` and `.returns`, `call_function()` for
   functions that take nothing, a returned value dropped; on one that takes arguments it halts), a function named without calling it (`shouter.shout`, a
   `Spite.Function<String, String>` bound to `shouter`, called as `change(text)`; a nullable one held in an attribute is narrowed through its path like any value: `fallback button.on_press` then `button.on_press()`), and
-  `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's; a generic class as each copy its code writes with named classes, `Custom<Glow>` reached or not and `Custom<$T>` inside another copy, with `.name` `Custom`, `.name_with_namespaces` `Custom<Glow>` and `.generics` its classes; not an inferred copy nor one a walk makes), keyed by name (`Nothing.members` is empty). `class`, bare inside a class's function, is the class
+  `Spite.Class.instances` (every class of the program and the packages it loads, from beside its folder too, not the standard library's; a generic class as each copy its code writes with named classes, `Custom<Glow>` reached or not and `Custom<$T>` inside another copy, with `.name` `Custom`, `.name_with_outer_classes` `Custom<Glow>` and `.generics` its classes; not an inferred copy nor one a walk makes), keyed by name (`Nothing.members` is empty). `class`, bare inside a class's function, is the class
   of the instance it answers on, and a class name reads its own class object: `Monster.name` is `"Monster"`.
   A bound `Spite.Function` answers only `.name`, `.owner`, `.declaration` and `call_function()`: ask `.arguments`,
   `.returns`, `.reads` and the rest of `function.declaration` (`a Spite.Function has no 'returns' of its own`). A function value is a `Spite.Function` and fits any `type` whose members it has (`Shown`): read only at
@@ -1103,7 +1122,7 @@ a `Tcp.Connection` and a `BinaryReader` take and answer a `Buffer`.
 `read_as_buffer()`, on a `File`, a `Tcp.Connection`, a `WebSocket.Message`, a datagram, an HTTP body and a `Process`'s
 output, so nothing that carries bytes forces them through a `String`.
 `Udp.Server()` opens on a known port with `open_locally(port)`, `open_everywhere(port)`, or `open_at(address, port)`, and `Udp.Client()` on a port the system picks with `open()`; both send one `Buffer` datagram per `send_to(address, port, buffer)` and receive one `Udp.Datagram?` per `receive()` (`read_as_string()`, `read_as_buffer()`, `sender_address: IpAddress`, `sender_port`); `Http.Server` (`next_request(): Http.Request?`, `respond(request, response)`) and `Http.Client` (`send(address, port, request): Http.Response?`) speak HTTP/1.1 and keep connections alive on their own; a body is bytes, `read_body_as_string(): String?`, `read_body_as_buffer()`, `write_body_string(text)`, `write_body_buffer(buffer)`.
-WebSocket (RFC 6455, `ws`) is a namespace: a server is `var sockets = WebSocket.Server(http)` over the program's own
+WebSocket (RFC 6455, `ws`) is a folder's class: a server is `var sockets = WebSocket.Server(http)` over the program's own
 `Http.Server`, like an Express app; in the program's HTTP loop, `if sockets.asks_to_upgrade(request)` then
 `sockets.accept(request): WebSocket.Connection?` (`null` after it refused a malformed upgrade itself), and every other
 request is answered with `http.respond`. A client is `WebSocket.Client()` with `connect(address, port, request): Boolean`.

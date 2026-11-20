@@ -1,6 +1,6 @@
-# Packages, namespaces, and mods
+# Packages, folders, and mods
 
-There are no imports. Everything lives in one global namespace, populated by loading folders:
+There are no imports. Every class is named by the folders it sits in, and a program brings in more by loading folders:
 
 ```gdscript
 func Game() {
@@ -9,24 +9,28 @@ func Game() {
 }
 ```
 
-- The program's own folder is a root like any loaded one: every folder inside it is a namespace, recursively,
-  with no `load` needed ([programs.md](programs.md)).
-- The loaded folder itself does **not** appear in the namespace; folders *inside* it do, and every folder is
-  only a namespace: `package/engine/renderer.spite` is `Engine.Renderer()`, and
-  `package/engine/physics/body.spite` is `Engine.Physics.Body()`. No file is special: a file named like its
-  folder is an ordinary class inside it, so `package/engine/physics/physics.spite` is `Engine.Physics.Physics()`,
-  reopened by another root's `engine/physics/physics.spite` like any class. A file and a folder of one name side
-  by side, `engine/renderer.spite` beside `engine/renderer/`, would make `Engine.Renderer` both a class and a
-  namespace, so that is an error. Every root merges into the same namespaces, so a file in one root and a folder in
-  another clash the same way, and so does a folder named like a class of the standard library: `game/color/` is
-  `'Color' is a class of the standard library and also the namespace of the folder 'game/color': a dotted name
-  means one thing, so rename the folder`.
+- The program's own folder is a root like any loaded one: every folder inside it is a class, recursively,
+  with no `load` needed ([programs.md](programs.md)). Its entry class is the program's root, so its classes are
+  `Game.Engine`, `Game.Ui`, written without the prefix inside the program
+  ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)).
+- A loaded folder holding its own file (`kal/kal.spite`) is a root class too: its classes are `Kal.Physics`, reached
+  through `Kal` or by their own name where nothing nearer has it. A loaded folder without one is **not** a class;
+  folders *inside* it are, and every folder is a class whose own file
+  is the one named like it ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)):
+  `package/engine/renderer.spite` is `Engine.Renderer()`, `package/engine/physics/body.spite` is
+  `Engine.Physics.Body()`, and `package/engine/physics/physics.spite` is the class `Engine.Physics` itself, reopened
+  by another root's `engine/physics/physics.spite` like any class. A folder with no such file is an empty class of
+  its name. A file and a folder of one name side by side, `engine/renderer.spite` beside `engine/renderer/`, would
+  make `Engine.Renderer` two classes in one place, so that is an error that says to move the file into the folder.
+  Every loaded root without its own file merges into the same classes, so a file in one root and a folder in another clash the same way, and so
+  does a folder named like a class of the standard library: `game/color/` is `'Color' is a class of the standard
+  library and also the class of the folder 'game/color': a dotted name means one thing, so rename the folder`.
 - A `load` works in any file, not only the entry file: every file of the program's folder and of a loaded folder
   has its `load` lines followed, the entry file's first, so a sibling file's `load "tools"` loads `tools/` as a
-  package. A folder that some file names in a `load` is a root of its own and is never also a namespace of the
+  package. A folder that some file names in a `load` is a root of its own and is never also a class of the
   folder around it: a `kitchen/` whose file loads `"garnish/pepper"` gets `kitchen/garnish/pepper/` as a package,
   not as `Garnish.Pepper`, so its `topping.spite` is `Topping` and `Garnish.Pepper.Topping` is an unknown type. That holds even for a `load` under an `if` the build decides the other way, which leaves
-  the folder neither a package nor a namespace.
+  the folder neither a package nor a class.
 - `load` takes literal text on its own line: a folder's path relative to the file it is written in, or, with an
   `@` in it, a repository pinned to a commit ([below](#loading-a-repository-pinned-to-a-commit)). A variable or
   expression there is an error, so the compiler always knows every bundle statically. `load ""` names no folder and is an error. A `load` may sit under an `if` on a `Build` field the compiler already knows.
@@ -40,22 +44,24 @@ func Game() {
   `kit__x`, `kit_` and `2kit` are not. The rule covers the program's folder and every folder inside it that holds
   a `.spite` file, however deep, and the same inside a loaded folder: a folder of notes or images with none, `Notes
   And Things/`, is never read. Of the folders a `load` names, only the last
-  one becomes a namespace, so only it is held to the rule: `load "../../Old Tools/render_vulkan"` is fine, and
+  one is read as a root, so only it is held to the rule: `load "../../Old Tools/render_vulkan"` is fine, and
   `load "../../plugins/RenderVulkan"` is refused for `RenderVulkan` at the line that writes it, before the
   folder is looked for. `.` and `..` are not folder names, so the last folder is the last one that is neither.
 - Resolving a bare `Name` from inside a class tries, in order: what that class declares (its `enum`, `union`
-  and `type`), its folder, each parent folder, then the whole program. A dotted `Component.Requested` is looked up the same way, and so is
+  and `type`), then each class around it from the nearest out (the classes nested in it and what it declares), then
+  the whole program, then the root class `Spite` ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)).
+  A dotted `Component.Requested` is looked up level by level the same way, as a whole path, and so is
   every name wherever it is written: a constructor call, a parameter, a return type, an attribute or local
   annotation, a generic argument (`Remove<Component.Requested>`), a `type` or `union` member, a `==` class test
   and an enum inside a class (`Component.Requested.Size`), so from `window/system/` the name reaches
   `window/component/requested.spite` without writing `Window.`.
-  A class's folder is where the walk starts, so `click_test/click_test.spite` (`ClickTest.ClickTest`) reaches
+  A folder's class is where its own walk starts, so `click_test/click_test.spite` (the class `ClickTest`) reaches
   `click_test/system/verify.spite` as `System.Verify()`.
-- A namespace holds classes and namespaces, nothing else. An `enum`, a `union` and a `type` belong to the class
-  that declares them, like its attributes and functions: plain `Job` inside `player.spite`, and `Player.Job` (or
-  `Game.Player.Job` from outside `game/`) everywhere else. A plain `Job` in another class is an error naming
-  `Player.Job` (when two classes declare a `Job`, it names both and the name to write for each), and so is
-  `Game.Job`, which looks for it in the namespace `Game` instead of its class.
+- An `enum`, a `union` and a `type` belong to the class that declares them, like its attributes and functions:
+  plain `Job` inside `player.spite` and inside every class nested in it, and `Player.Job` (or `Game.Player.Job`
+  from outside `game/`) everywhere else. A plain `Job` in another class is an error naming `Player.Job` (when two
+  classes declare a `Job`, it names both and the name to write for each), and so is `Game.Job` when `game/game.spite`
+  does not declare it, which looks for it in the class `Game` instead of the class that holds it.
 - A name the walk does not find is `unknown type 'Server.Component.Eye'` at the line that writes it, wherever a type is
   written. When dropping the leading parts names a class, or a plain name is the last part of exactly one class, the
   error says which: `unknown type 'Eye': did you mean 'Component.Eye'?`. The usual slip is the folder of the machine
@@ -86,38 +92,40 @@ mine
 ```
 
 - From outside its class, an enum, a union or a `type` is named through its owner: `Player.Job`, `Shelter.Pet` from a
-  class of the same namespace, `Game.Shelter.Pet` from anywhere else; the plain name alone is the owner's
-  ([classes_and_files.md](classes_and_files.md#naming-another-classs-union-or-type)). The entry class of a namespace,
-  the class named like its folder (`bunda/bunda.spite`), holds what the namespace shares: every class of that
-  namespace or below names it `Bunda.Pet`, and a class outside it writes the whole path, `Bunda.Bunda.Pet`. Only the entry class itself writes the plain `Pet`. Two classes that declare one
-  name with one content have it moved there by the compiler, which creates the file when the namespace has none; a
-  class outside the namespace that declared a copy too has all of them moved up to the namespace holding both. A class
+  class of the same folder, `Game.Shelter.Pet` from anywhere else; the plain name alone is the owner's and its
+  nested classes' ([classes_and_files.md](classes_and_files.md#naming-another-classs-union-or-type)). A folder's
+  class, its file named like it (`bunda/bunda.spite`), holds what the folder shares: every class inside the folder
+  names it plainly, `Pet`, and a class outside writes `Bunda.Pet`. Two classes that declare one
+  name with one content have it moved there by the compiler, which creates the file when the folder has none; a
+  class outside the folder that declared a copy too has all of them moved up to the folder holding both. A class
   used to declare its own copy instead of naming another class's union or type; that is no longer needed. Two declarations that stay apart, a library's and a
   program's `type Buildable`, are one type when their members are the same, so a `List<Buildable>` of one goes where
   the other's is wanted.
 
-## A class of its own namespace is named plainly
+## A class of its own folder is named plainly
 
-Inside a namespace, its own classes are written without it: `sidebar/editor.spite` makes `Picker()` for
-`sidebar/picker.spite`, never `Sidebar.Picker()`. A path that spells the namespace the class is in is rewritten to
+Inside a folder, its own classes are written without it: `sidebar/editor.spite` makes `Picker()` for
+`sidebar/picker.spite`, never `Sidebar.Picker()`. A path that spells the folder the class is in is rewritten to
 the plain name with a `fixed:` line, wherever it is written: a construction, a type, a generic argument
 (`List<Picker>`), a union member, a member read (`Sidebar.Picker.Mode` becomes `Picker.Mode`) and a tag
 (`<Sidebar.ClassPicker/>` becomes `<ClassPicker/>`, [markup.md](markup.md#what-a-tag-becomes)). The whole path of
-the namespace goes the same way: `Game.Sidebar.Picker` inside `game/sidebar/` is `Picker`, and
+the folder goes the same way: `Game.Sidebar.Picker` inside `game/sidebar/` is `Picker`, and
 `Sidebar.Parts.Badge` is `Parts.Badge`.
 
 ```
-sidebar/editor.spite:2: fixed: 'Sidebar.Picker' is written inside the namespace 'Sidebar', where 'Picker' already names it; wrote 'Picker' (in Editor)
+sidebar/editor.spite:2: fixed: 'Sidebar.Picker' is written inside the class 'Sidebar', where 'Picker' already names it; wrote 'Picker' (in Editor)
 ```
 
 The path stays where the plain name would mean something else: a name the class declares itself (an `enum`, a
 `union`, a `type`, an attribute or a function, a preset `Picker()` included). A class of the standard library keeps
-its namespace (`Spite.Function`), and a class of an enclosing namespace is left as written (`Game.Picker` inside
-`game/sidebar/`).
+its path (`Spite.Function`), and a class of an enclosing folder is left as written (`Game.Picker` inside
+`game/sidebar/`). A path that names a folder and then its own file, `Sidebar.Sidebar.Mode`, is rewritten to
+`Sidebar.Mode` ([classes_and_files.md](classes_and_files.md#a-folder-is-a-class)).
 
 ## Monkey patching (mods)
 
-Every loaded root merges into the same namespaces. A second root with the same folder structure and file name
+Every loaded root without a file of its own merges into the same classes. A second such root with the same folder
+structure and file name
 **reopens** the class instead of colliding with it: a later `func`/`var` of the same name replaces the
 earlier one (in load order), and a name not seen before is simply added. A `union`, `type` or `enum` declared
 again replaces the earlier declaration the same way ([below](#reopening-an-enum-replaces-it)). This is how game
@@ -175,13 +183,11 @@ writes none (`Hero()`) counts as written. A conversion the class lacks (`func He
 ([classes_and_files.md](classes_and_files.md)). Within one file each name is declared once; replacing is what a
 *later* file does.
 
-The program's own folder is merged first and the folders it loads come after it, so "later" means a loaded
-folder, not the program. A file in the program root that reopens a class a loaded folder declares keeps every
-name the loaded folder does not have (an added attribute or function works), but where both declare the same
-name, the constructor included, the loaded folder's version is the one that stays. To replace something a
-loaded folder declares, put the replacement in a folder loaded after it, as `mods` is above. A repository pinned to a commit
-([below](#loading-a-repository-pinned-to-a-commit)) is merged before the program instead, so where the program's
-own files and a pinned copy declare the same name, the program's declaration stays.
+The program's classes sit inside its root class, so a file of the program is never a reopening of a loaded
+folder's class: `game/monster.spite` is `Game.Monster`, which would hide a loaded `Monster` inside the program,
+so it is refused as a class hiding another, naming both. To replace something a loaded folder declares, put the
+replacement in a folder loaded after it, as `mods` is above. Only the standard library is shared by every root
+(below); a root's own copy of it is spite_compiler#644.
 
 The program's entry class is the one class nothing reopens: a loaded `bundle/potion.spite` in the program
 `potion/` would otherwise become part of the entry class `Potion`, so it is an error naming both files and the two ways out: rename the loaded file,
@@ -267,17 +273,18 @@ declaration is the whole truth about an enum, so a reader never has to add up se
 Since the values are walked while compiling, a new one costs nothing at run time beyond what walking it
 generates.
 
-## The `Spite` namespace is reserved
+## The `Spite` class is reserved
 
-`Spite` is the root namespace for reflection (`Spite.Class`, `Spite.Attribute`; see
+`Spite` is the standard library's root class: every class falls back to it for the language's own names
+(`Nothing`), and the reflection classes are nested in it (`Spite.Class`, `Spite.Attribute`; see
 [metaprogramming.md](metaprogramming.md)). A `spite/` folder of your own **reopens** those classes, which is
 how a package is tried out before it is upstreamed. Inside the class, a reopening reads the private fields
-(`_name`, `_namespace`) that the read-only `name` and `namespace` answer from outside:
+(`_name`, `_outer_class`) that the read-only `name` and `outer_class` answer from outside:
 
 ```gdscript title=reopen_spite_class/spite/class.spite
 func dotted_name(): String {
-    if _namespace {
-        return "{_namespace.name_with_namespaces}.{_name}"
+    if _outer_class {
+        return "{_outer_class.name_with_outer_classes}.{_name}"
     }
     return _name
 }
@@ -295,7 +302,7 @@ Console
 ```
 
 Every class object in the program answers `dotted_name()` from then on, because there is one `Spite.Class` and
-that folder reopened it. A reopening of a reflection class (`Spite.Class`, `Spite.Function`, `Spite.Namespace` and
+that folder reopened it. A reopening of a reflection class (`Spite.Class`, `Spite.Function` and
 the other `Spite` classes that describe the program) adds functions of its own, but it cannot declare one the class
 already has, whether by the name the library declares (`get_is_singleton`) or by the name a program reads
 (`is_singleton`, `name`):
@@ -316,8 +323,8 @@ func ReopenedReflectionFunction() {
 'is_singleton' is a reflection function of Spite.Class, and reflection functions cannot be replaced: a reopening may add functions of its own, so give this one a name the reflection class does not have
 ```
 
-A *new* class under `Spite` is a diagnostic instead: that namespace holds the
-standard library's own classes, and a class of your own belongs in a namespace of your own. `load "spite"` is
+A *new* class under `Spite` is a diagnostic instead: that class holds the
+standard library's own classes, and a class of your own belongs in a folder of your own. `load "spite"` is
 a diagnostic too:
 
 ```gdscript title=spite_namespace_error/spite_namespace_error.spite entry error
@@ -326,10 +333,10 @@ func SpiteNamespaceError() {
 }
 ```
 ```diagnostic
-'spite' is reserved for the built-in Spite namespace
+'spite' is reserved for the built-in Spite class
 ```
 
-`Spite.Internal` is the one namespace of the standard library that a program may not name at all: it holds the
+`Spite.Internal` is the one class of the standard library that a program may not name at all: it holds the
 machinery under the library (raw memory, threads, locks), and the library offers plain forms instead, such as
 `Buffer` and `BinaryReader` for bytes. The compiler's own classes, `Spite.Fault`, `Spite.Asserts`,
 `Spite.CopyTable`, `Spite.Prompt`, `Spite.PromptPath` and `Spite.Settings`, are refused the same way (the library's
@@ -382,7 +389,7 @@ the build decides. The `if` itself stays in the program, where `Build` folds it 
 first package is loaded, so a package cannot add a field that decides a `load`.
 
 Two `load`s whose folders lie one inside the other would read the same files twice, so the later one is an error
-that says to load only the outer folder, whose subfolders are already its namespaces. Loading one folder again by
+that says to load only the outer folder, whose subfolders are already its classes. Loading one folder again by
 another path, as two packages that both load a third do, loads it once.
 
 A package that wants something only the program knows, the folder its assets live in, calls a function the
@@ -396,7 +403,7 @@ reaches it or not, so a mistake in a function nothing calls, or in a file of the
 names, is an error. The standard library is the exception: it is read as far as the program uses it.
 
 A `load` nothing in the program names is removed with a `fixed:` line ([style.md](style.md#the-compiler-fixes-what-has-one-fix)).
-Naming a class of the package, an enum through its class, or one of its namespaces (`Test(Pkg.Tests)`) is a use,
+Naming a class of the package, an enum through its class, or one of its folders (`Test(Pkg.Tests)`) is a use,
 and so is a name that starts inside the package and does not resolve (`Pkg.Missing`): the load stays and the
 error names that name.
 
@@ -513,8 +520,7 @@ gadget x3
 
 ### Two versions of one repository
 
-Two pins of one repository at different commits are one library: every commit's files reopen the same namespaces
-and classes, merged the way a [reopening](#monkey-patching-mods) is. A game that pins `engine@6c7dca9` and a
+Two pins of one repository at different commits are one library: every commit's files reopen the same classes, merged the way a [reopening](#monkey-patching-mods) is. A game that pins `engine@6c7dca9` and a
 plugin that pins `engine@41c09e2` share one engine, so the physics the plugin runs moves the same bodies the game
 draws. A plugin never needs bumping in step with the engine as long as the commits agree.
 
@@ -547,7 +553,7 @@ A package does not know where the program that loads it lives, so a relative pat
 sky.spv")`) is read from the folder the program runs in, not from the package. A class asks where it
 comes from instead: `class.source_files` inside it, `Recipe.source_files` for a class by name, and
 `$item_type.source_files` for a generic's class answer a `List<File>`, every file that declares or reopens the class
-in load order, and a namespace's `source_directories` answers a `List<Directory>` the same way
+in load order, and a folder's class answers `source_directories`, a `List<Directory>`, the same way
 ([reflection.md](reflection.md#the-spite-classes)). The paths are absolute, worked out while compiling, so a plugin
 finds the files beside it wherever it is loaded from and whatever folder the program runs in.
 

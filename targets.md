@@ -18,7 +18,7 @@ without a whole-program transform that bloats the binary.
 
 ## Other environments
 
-The same mechanism is how Spite reaches anything that is not C. Nothing here is new machinery: it is [Packages, namespaces and loading](packages.md)'s
+The same mechanism is how Spite reaches anything that is not C. Nothing here is new machinery: it is [Packages, folders, and mods](packages.md)'s
 loading and reopening, plus a `Build` field folded while compiling.
 
 - **The target is a `Build` field**, set by a `--target=native|web` flag and folded as a constant like every
@@ -28,7 +28,7 @@ loading and reopening, plus a `Build` field folded while compiling.
   `platform_native/console.spite` reopen the same `Console`; the entry constructor does
   `if build.target == "web" { load "platform_web" } else { load "platform_native" }`, and the compiler folds the
   condition and loads only the taken branch, so the loser is never compiled at all. This is the game-mod mechanism
-  from [Packages, namespaces and loading](packages.md) aimed at
+  from [Packages, folders, and mods](packages.md) aimed at
   platforms, and it is how operating systems are chosen: `load "library/{build.target_operating_system}"`
   and a `load` under an `if` on a `Build` field are both folded while compiling
   ([foreign_libraries.md](foreign_libraries.md#each-operating-system-reopens-what-it-changes)).
@@ -78,7 +78,7 @@ func format_name(first_name: String, last_name: String): String { }
   edge runtime) fails to compile everywhere that has to change, instead of silently taking a default branch.
 - **The body is never emitted into the client bundle.** Only the generated call stub is, so a secret, a
   connection string, or a server-only helper reachable from that body is removed by the per-bundle tree shaking
-  [Packages, namespaces and loading](packages.md) already does. This is the property that makes the split safe rather than merely convenient, and it
+  [Packages, folders, and mods](packages.md) already does. This is the property that makes the split safe rather than merely convenient, and it
   costs nothing extra here.
 - Routes are generated deterministically from the class and function name, and what crosses is already in the
   language: a `type` shape ([Types](values_and_types.md#inline-types-and-duck-typing)). It travels in [the wire format](#the-wire-format)

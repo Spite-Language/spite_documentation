@@ -105,7 +105,7 @@ What you can observe: nothing but the time, and a branch that could not be built
 ### Walks over classes, values and members are unrolled
 
 A walk whose list is known while compiling is no loop in the program: the compiler writes one call per element.
-`Namespace.classes.each(walker)` makes one copy of `walker` for each class of the folder, in which the parameter is
+`Folder.nested_classes.each(walker)` makes one copy of `walker` for each class of the folder, in which the parameter is
 that class (so `Runner<system>()` and `system.name` are constants). `Enum.values.each(walker)` calls `walker` once per
 value, with the value as a constant. A template's plural (`fill_attributes(row)`) is one call of the template's copy
 for each member it ranges over, and a walk over a function's `arguments` is unrolled when its walker needs the item
@@ -114,7 +114,7 @@ and a walker nobody walks is not compiled.
 
 ```spite
 func Schedule() {
-    System.classes.each(add_system)
+    System.nested_classes.each(add_system)
 }
 
 func add_system(system: Spite.Class) {
@@ -124,7 +124,7 @@ func add_system(system: Spite.Class) {
 ```
 
 What you can observe: the calls come in the order of the folder's files and of the enum's values, exactly the order
-the walk at run time would take. It applies when the namespace or the enum is named directly and the walker is a
+the walk at run time would take. It applies when the folder's class or the enum is named directly and the walker is a
 function of the same class; a list of classes reached at run time is walked as an ordinary list of reflection
 objects.
 
@@ -621,7 +621,7 @@ changes something, still runs where the write was, and what it answered is let g
 
 ### A read of what a class object holds is its answer
 
-`Monster.is_singleton`, `Monster.namespace.name`, or `described.name` on a `var described: Spite.Class = Monster`
+`Monster.is_singleton`, `Part.Axle.outer_class`, or `described.name` on a `var described: Spite.Class = Monster`
 never assigned again, is the constant the class object would hold: the compiler proves, at each build, that nothing
 changes that field once the object is made, and reads it from what it would be made with. No object is made or
 tested for it, and once nothing else reads the class object it is never made, and its making is not compiled into

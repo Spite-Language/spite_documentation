@@ -45,9 +45,9 @@ Markup by ordinary calls still works: a library may keep constructors with argum
 
 - A tag naming a class, `<View>` or a dotted `<Theme.Window>`, makes an object with no arguments:
   `var view_3 = View()`. A class whose constructor takes parameters is the ordinary error of a call missing its
-  arguments, at the tag's line. A tag names its class the way code does: inside `sidebar/`, a class of that namespace
+  arguments, at the tag's line. A tag names its class the way code does: inside `sidebar/`, a class of that folder
   is `<ClassPicker/>`, and `<Sidebar.ClassPicker/>` is rewritten to it with a `fixed:` line
-  ([packages.md](packages.md#a-class-of-its-own-namespace-is-named-plainly)); a class of another namespace keeps
+  ([packages.md](packages.md#a-class-of-its-own-folder-is-named-plainly)); a class of another folder keeps
   its path, `<Theme.Panel>`.
 - An attribute is an assignment, so it goes through `set_<name>` when the class declares one, exactly as
   `view.padding = 24` does. `name="text"` assigns the text (with every conversion a text literal has, such as a

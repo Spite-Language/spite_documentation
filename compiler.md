@@ -328,7 +328,7 @@ the executable is exactly the one the reached functions make: a class only they 
 fill or the order objects are numbered in never reaches it. The rules a function is built against refuse in every
 function; the proofs that need the whole program (that a value is present, that an attribute is read) prove the
 reached functions. An inspectable build keeps the unreached functions in the executable instead. A function that takes
-a reflection object a walk or a constant argument hands it (a `Spite.Class`, a `Spite.Namespace`, a declaration) is
+a reflection object a walk or a constant argument hands it (a `Spite.Class`, a folder's included, or a declaration) is
 checked in the copies made for what it is handed, never on its own.
 
 ## Counting memory: `--debug-memory`
@@ -347,7 +347,7 @@ other build hands out memory as before.
 ## Inspect merged classes
 
 `--final-classes=folder` writes the discovered, merged classes as readable `.spite` files, one per class, under
-the namespace folders it belongs to. It is useful after a `load` or a reopening: the file holds the declarations
+the folders of the classes it is nested in. It is useful after a `load` or a reopening: the file holds the declarations
 that won, so reopening stops being invisible. What it writes is a program, not a report: running the printed
 entry file runs the same program. `Build` is printed with the defaults it
 was declared with (the program's own `build.spite` included), not the values this build folded, so running the
