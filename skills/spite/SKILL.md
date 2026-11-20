@@ -118,12 +118,17 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   and `.name_with_namespaces` the dotted one; `.source_files` lists the files that declare it. Find classes by walking,
   never by registering them: `Spite.Class.instances.each(bind)`, `Theme.classes.each(bind)` and
   `window.register_namespace(Theme)` each make a copy of the walker per class, where the class is a type
-  (`Binding<part>()`, `value.class == part` narrows). On an object known only at run time (`held: Shown`, an item of a `List<Shown>`),
-  `held.attributes` hands bound `Spite.Attribute`s whose `.value` is read and written: `destination.value =
-  attribute.value` copies a field by the assignment rules it desugars to, judged at that line with the assignment's
-  words (the held value has no range: a decimal or wider number into a plain whole-number field is refused, into a
-  `T?` field it is `null` when it does not fit; a value that may be null into a plain field is refused, or 0 for a
-  number), and a class reaching the value that no attribute the write can reach takes is a compile error at that line.
+  (`Binding<part>()`, `value.class == part` narrows). An instance's attributes are typed by what they hold,
+  `Spite.Attribute<Integer>`, and reached by a name written in the code (`troll.attributes["health"]`, a name the class
+  lacks is a compile error), a declaration kept in a `var`, or a walk: `held.attributes.each(set_integers)` with
+  `set_integers(attribute: Spite.Attribute<Integer>)` reaches only the `Integer` attributes (a class, a union or a
+  `type` such as `Console.Printable` names which; a nullable attribute needs a nullable one; a walk nothing fits is an
+  error), and a function reading every attribute whatever it holds takes `Spite.AttributeDeclaration`. A bare
+  `Spite.Attribute` is refused, and so is listing an instance's attributes as a value (`var attributes =
+  held.attributes`, `.values()`, `.keys()`, a run-time name): walk them, and take names from the class
+  (`Monster.attributes.keys()`). `.value = x` writes through the attribute's own class only; `.owner` exists only in a
+  walk. `Spite.Call` of a declaration known only while running fills no arguments, and `part()` of a class known only
+  while running answers a `Console.Debuggable`.
 - No exceptions and no error values. Absence is a `T?` the caller must narrow (`if`, `fallback`, `crash`, `switch`).
   `null` only goes where a `T?` is wanted: given to any type without `?` (assigned, passed, appended, answered or
   declared) it is a compile error, never a silent `0`, `""`, first enum value or default object.
@@ -212,19 +217,16 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   writing it is an error naming the place (`'Anything' is not a type: say what the parameter 'held' holds, ...`); a
   `type` or union with no members is an error too (only `Nothing` is empty). For "any object" write a `type` of what
   you use: every class answers `to_debug()`, so `type Shown { to_debug: Spite.Function<String> }` takes any object,
-  numbers too, and a component is a `Component`. `Spite.Class.instances` lists the program's classes. A value reflection
-  reads at run time (`attribute.value`, a run-time `call()`) is a union the compiler fills with what reaches it, so
-  printing a `Spite.Attribute`'s `.value` asks `to_string()` only of what the attributes held, and a hole on it, like
-  `value.to_string()`, needs each class reaching it to have its own (`'Crate' does not fit type 'Printable': it has no
-  function 'to_string'`); one holding none shows `null`. `troll.attributes[declaration]` is troll's `Spite.Attribute`
+  numbers too, and a component is a `Component`. `Spite.Class.instances` lists the program's classes. The language's own
+  classes name what they hold too (no type only the compiler fills): `Spite.Attribute<Value>.value` is a `Value`, and a
+  hole or `to_string()` on a value of a `type` needs each class reaching it to have its own (`'Crate' does not fit type
+  'Printable': it has no function 'to_string'`); one holding none shows `null`. `troll.attributes[declaration]` is troll's `Spite.Attribute<...>`
   everywhere, in a walk or a template too: read and write the field through `.value`
   (`copy.attributes[attribute].value = price.attributes[attribute].value`); any other declaration as the key, in a
   walk too, must be of troll's own class and kept in a `var` given once, and `troll.attributes[health].value` read
-  straight off it is troll's `health` with its own type (an `Integer` adds and prints), as is `.value` off a proven
-  literal name (`crash troll.attributes["health"]` first; unproven, `+` or a call on that `.value` is refused as
-  "may be missing ... narrow it first") and off a `Spite.Attribute` kept in a `var` given once from
-  either (`var bound = troll.attributes[health]`, the field as it was then); one assigned again or handed in holds
-  what any attribute reaching it holds. Inside its own class it is bare,
+  straight off it is troll's `health` with its own type (an `Integer` adds and prints), as is `.value` off a literal
+  name and off a `Spite.Attribute` kept in a `var` given once from either (`var bound = troll.attributes[health]`, the
+  field as it was then). Inside its own class it is bare,
   `attributes[declaration]`, as for its own attributes (`this.attributes` is refused). `troll[attribute]` is `troll.get_at(attribute)` there too, refused on a class without `get_at`.
 - A function taking a `union` or a `type`, or a generic of one (`List<Shown>`, `List<Named>`), is compiled once per
   argument type a call hands it, and each copy is checked as if written for that type: `shown(healths)` with a

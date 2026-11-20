@@ -272,20 +272,16 @@ shape can ask of it, and `.class` read through the shape names the value's real 
 value is only shown, walked or kept, the `type` says so: every class answers `to_debug()`, so
 `type Shown { to_debug: Spite.Function<String> }` takes any object, numbers included.
 
-A value reflection reads where the compiler cannot name its class while compiling (`Spite.Attribute.value` read
-through a run-time name, a run-time `call()`'s answer, `part()` of a class known only at run time) is a union the
-compiler fills, which no program writes: each such place holds only the classes that reach it, and what a use asks
-is asked only of those classes. A `Spite.Attribute` keeps its object in `.owner` and the field in `.value`, so
-`console.print(found.value)` prints when only numbers and text reach `.value`, though the class `.owner` holds has no
-`to_string()`, and `console.print(found.owner)` is refused for that class: "'Gauge' does not fit type 'Printable': it
-has no function 'to_string'". Calling `to_string()` on such a value, or showing it in a hole, goes through the
-compiler's `type Printable` ([values_and_types.md](values_and_types.md#a-hole-shows-a-value-through-its-own-to_string)):
-every class that reaches it needs its own, and nothing stands in for a missing one.
+A value reflection reads has a type the program names too: `Spite.Attribute<Value>.value` is a `Value`, which a
+function taking attributes names ([reflection.md](reflection.md#a-class-and-an-instance-of-it)). Calling `to_string()`
+on a value typed by a `type`, or showing it in a hole, goes through the compiler's `type Printable`
+([values_and_types.md](values_and_types.md#a-hole-shows-a-value-through-its-own-to_string)): every class that reaches
+it needs its own, and nothing stands in for a missing one.
 
 A `T?` fits a `type` unnarrowed only when null can answer everything the `type` asks, which is `to_string()` and
-`to_debug()`: both answer `null` for it. So `console.print(found.value)` and `console.debug(found.value)` show `null`
-when the attribute holds none, and so does a hole `"{found.value}"`, or one on a `T?` of a `type` that asks for
-`to_string()` (`var held: Shown? = null`, `"[{thing.held}]"` shows `[null]`), while `found.value.to_string()` needs it
+`to_debug()`: both answer `null` for it. So `console.print(found.value)` and `console.debug(found.value)` with a
+`found: Spite.Attribute<Console.Printable?>` show `null` when the attribute holds none, and so does a hole
+`"{found.value}"`, or one on a `T?` of a `type` that asks for `to_string()` (`var held: Shown? = null`, `"[{thing.held}]"` shows `[null]`), while `found.value.to_string()` needs it
 narrowed first. Any other `type` needs the value narrowed first, or proven present
 ([proofs.md](proofs.md#a-value-proven-present-is-a-t)): `var singer: Singer = maybe_rock` with a `Rock?` is "this value may be null (it is a
 Rock?), but a Singer is needed: narrow it first with 'if value { }', 'fallback value' or 'crash value'".

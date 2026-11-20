@@ -96,7 +96,8 @@ steps, never halfway through one. Once the constructor has returned, a line runs
 - **`var` and `func` stay.** `var strongest = monsters[1]` keeps `strongest` for every line after it, and
   `func healthy(): Integer { ... }` declares a function the next lines can call. Declaring the same name again
   replaces it. A `var` keeps a number, a `Boolean`, text, an enum value or an object of a class (a `List` and a
-  `Dictionary` included); a value of a `union`, a `type` or a function lives only in its own line.
+  `Dictionary` included), each in a slot the compiler keeps for its name and its class; a value of a `union`, a `type`
+  or a function lives only in its own line.
 - **A line that opens a block continues** on the next one, under a `...> ` prompt, until its braces close:
 
 ```text

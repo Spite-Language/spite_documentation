@@ -356,8 +356,9 @@ The rest of the rules for which class a body means are few:
 - A nullable parameter (`Monster?`) is walked as nothing: the template answers no name.
 - A class reads its own members as `attributes[attribute].value`; `this.attributes[attribute]` is refused, as `this.name` is
   anywhere in a class.
-- Writing the class on the parameter, `attribute: Spite.AttributeDeclaration<Monster>` or `Spite.Attribute<Monster>`,
-  is an error saying to read the declaration on a value of `Monster` instead.
+- Writing the class on the parameter, `attribute: Spite.AttributeDeclaration<Monster>`, is an error saying to read the
+  declaration on a value of `Monster` instead; `Spite.Attribute<Integer>` names the value an attribute holds, not its
+  class.
 - A walk or a template sees private attributes (`_count`), and reads and writes them through the walked attribute;
   naming `_count` outside its class is still the private-name error.
 - Reading `label.attributes[attribute].value` counts as using that attribute. `attribute.name` and `attribute.class` only describe
@@ -437,8 +438,8 @@ Writing `person.name` goes through `set_name`, while reading it goes through the
 exact `get_name` exists. Inside the class, `attributes[attribute].value` is that member of the object the function runs
 on, read or written directly, so the template never calls itself.
 
-A parameter of the bound types, `Spite.Attribute` (an attribute bound to one object: its `declaration`, its `value`
-and its `owner`) or `Spite.Function`, makes no template. It is an ordinary parameter, and the function is an
+A parameter of the bound types, `Spite.Attribute<Value>` (an attribute bound to one object holding a `Value`: its
+`declaration` and its `value`) or `Spite.Function`, makes no template. It is an ordinary parameter, and the function is an
 ordinary function that a walk over an instance's members calls, or a caller hands a value to. A template is written
 over the declaration, with the object as a parameter of its own.
 

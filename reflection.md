@@ -72,8 +72,8 @@ receiver says which one is meant: `Monster` is the class, `troll` an instance.
 
 | | The class, `Monster` | An instance, `troll` |
 |---|---|---|
-| `.attributes` | information: a `Spite.AttributeDeclaration` for each attribute, with its `.name`, `.class`, `.index`, and no value | data: a `Spite.Attribute` **bound to `troll`**, with everything the declaration has plus `.value`, read and written, typed as the attribute, and `.owner`, which is `troll` |
-| `.functions` | information: a `Spite.FunctionDeclaration` for each function, with its `.name`, `.arguments`, `.returns` and the class that declares it | a `Spite.Function` bound to `troll`: its `.name` and `.declaration`, which answers everything else the function is, plus `.owner`, which is `troll`, and `call_function()` |
+| `.attributes` | information: a `Spite.AttributeDeclaration` for each attribute, with its `.name`, `.class`, `.index`, and no value | data: a `Spite.Attribute<Integer>` **bound to `troll`** for an `Integer` attribute, with everything the declaration has plus `.value`, read and written, typed as the attribute; reached by a name written in the code, a declaration or a walk |
+| `.functions` | information: a `Spite.FunctionDeclaration` for each function, with its `.name`, `.arguments`, `.returns` and the class that declares it | a `Spite.Function` bound to `troll`: its `.name` and `.declaration`, which answers everything else the function is, and `call_function()` |
 | `.class` | `Spite.Class`, the class every class is an instance of | `Monster`, so `troll.class == Monster` |
 | What a read costs | nothing: it is known while compiling and folds | a read or write of `troll`'s own field, typed, the same as `troll.health` |
 
@@ -113,14 +113,12 @@ func describe(attribute: Spite.AttributeDeclaration) {
     console.print("declared", attribute.index, attribute.name, attribute.class)
 }
 
-func show(attribute: Spite.Attribute) {
+func show(attribute: Spite.Attribute<Console.Printable>) {
     console.print("troll's", attribute.name, "=", attribute.value)
 }
 
-func heal(attribute: Spite.Attribute) {
-    if attribute.class == Integer {
-        attribute.value = attribute.value + 5
-    }
+func heal(attribute: Spite.Attribute<Integer>) {
+    attribute.value = attribute.value + 5
 }
 ```
 ```output
@@ -133,9 +131,19 @@ troll's class: Monster
 bound to troll: alive
 ```
 
-In `heal`, `attribute.value` is an `Integer` in the copy compiled for `health`, so `+ 5` is ordinary arithmetic, and
-the copy compiled for `name` has no `if` body at all. A declaration has no value to read, so `.value` on one of
-`Monster.attributes` is an error that names the instance form:
+A function taking attributes says which it takes (D2638): `heal` takes a `Spite.Attribute<Integer>`, so the walk
+calls it for `health` alone and `+ 5` is ordinary arithmetic; `show` takes a `Spite.Attribute<Console.Printable>`, so
+it is called for every attribute whose class has a `to_string()`, with `.value` a `Console.Printable`. The value type
+is a class, a union or a `type`, and a nullable attribute is walked only by a nullable one
+(`Spite.Attribute<Console.Printable?>`). A bare `Spite.Attribute` says nothing of its value and is refused, and a
+walk that no attribute fits is an error (`'heal' takes a 'Spite.Attribute<Boolean>', and no attribute of 'Monster'
+holds one, so this walk would call it on none: ...`). A function reading every attribute whatever it holds takes the
+declaration, `Spite.AttributeDeclaration`, which has its `.name`, `.class` and `.index` and no value. Inside a walk
+`attribute.owner` is the walked object; elsewhere a `Spite.Attribute` has no `.owner`, since the object whose
+`.attributes` was read is it.
+
+A declaration has no value to read, so `.value` on one of `Monster.attributes` is an error that names the instance
+form:
 
 ```gdscript title=declaration_value/monster.spite
 var health = 10
@@ -192,24 +200,22 @@ a Spite.AttributeDeclaration has no attribute or function 'upper_case'
 ### An instance indexed by a declaration
 
 A declaration still reaches one instance's attribute: `troll.attributes[health]`, with `health` a declaration of
-`Monster`, always answers troll's `Spite.Attribute` for it, never the field, so read `.value` for the field. The
+`Monster`, always answers troll's `Spite.Attribute<Integer>` for it, never the field, so read `.value` for the field. The
 declaration must be one of the instance's own class. The compiler checks that when the declaration is kept in a
 `var` that is never assigned again (`var health = Monster.attributes["health"]`), and another class's declaration
 is an error naming both classes. A declaration it cannot tie to a class, such as a
-parameter or a `var` assigned again, is refused: index by its name instead, `troll.attributes[attribute.name]`,
-which answers a `Spite.Attribute?`.
+parameter or a `var` assigned again, is refused, and so is a name known only while running: walk the attributes
+instead. In a walk the walked declaration's name is known, so `world.attributes[attribute.name]` there is `world`'s
+attribute of that name.
 
 Since such a declaration is tied to one attribute, `.value` read straight off the index has that attribute's own
 type and compiles to a plain read of the field: `troll.attributes[health].value` is troll's `health`, an `Integer`, so
-it prints and adds as one, whatever other classes' attributes hold. A literal name of an attribute troll's class
-declares means the same once the index is proven present: after `crash troll.attributes["health"]`,
-`troll.attributes["health"].value` is that `Integer` too (see [An attribute kept in a var](#an-attribute-kept-in-a-var)
-for one kept first). Before it is proven, an operator or a call on that `.value` (`troll.attributes["health"].value + 1`)
-is refused for the index, like a print of it: "'troll.attributes["health"]' may be missing, since every '[ ]'
-answers a 'T?' (this one is a Spite.Attribute?), so 'value' cannot be read from it yet: narrow it first with ...".
+it prints and adds as one. A literal name of an attribute troll's class declares means the same:
+`troll.attributes["health"].value` is that `Integer` too, and a name it does not declare is an error while compiling
+(see [An attribute kept in a var](#an-attribute-kept-in-a-var) for one kept first).
 
 A class indexes its own instance the same way, bare, as it reads its own attributes: inside `Monster`,
-`attributes[health]` is this monster's `Spite.Attribute`, under the same checks (`attributes[health]` with a `Rat`
+`attributes[health]` is this monster's `Spite.Attribute<Integer>`, under the same checks (`attributes[health]` with a `Rat`
 declaration inside `Monster` is "'health' is a declaration of Rat, and 'attributes[health]' indexes this Monster: an
 instance is indexed only by a declaration of its own class"), and `attributes.each(f)` walks them.
 `this.attributes` is refused like any `this.name`.
@@ -248,11 +254,11 @@ func IndexedByADeclaration() {
     var troll = Monster()
     var health = Monster.attributes["health"]
     var bound = troll.attributes[health]
-    console.print(bound.name, bound.value, bound.owner.class)
+    console.print(bound.name, bound.value, bound.declaration.index)
 }
 ```
 ```output
-health 10 Monster
+health 10 1
 ```
 
 With a class `Rat` that declares a `health` of its own:
@@ -268,12 +274,9 @@ var bound = rat.attributes[health]
 ### An attribute kept in a var
 
 A `Spite.Attribute` kept in a `var` given once from such an index, `var bound = troll.attributes[health]` or
-`var bound = troll.attributes["health"]` with a name troll's class declares, keeps which attribute it is: `bound.value`
-has that attribute's own type, the field as it was when `bound` was made, as a `Spite.Attribute` holds it. A literal
-name answers a `Spite.Attribute?`, so prove `bound` present first (`crash bound`). A `var` assigned again, one given
-any other value, or a `Spite.Attribute` handed in as a parameter is any attribute, and its `.value` is an
-value [the compiler fills](functions_and_operators.md#plain-values-where-a-type-is-wanted) with what every
-attribute that reaches a `Spite.Attribute` holds.
+`var bound = troll.attributes["health"]`, is a `Spite.Attribute<Integer>` for an `Integer` attribute: `bound.value`
+has that attribute's own type, the field as it was when `bound` was made. A name the instance's class does not
+declare is an error while compiling, naming the class, so the answer is never `null`.
 
 ```gdscript title=kept_attribute/shelf.spite
 var box: Box? = null
@@ -296,7 +299,6 @@ func KeptAttribute() {
     var more = bound.value + troll.health
     console.print(bound.value, more)
     var box = shelf.attributes["box"]
-    crash box
     if box.value {
         console.print("a box")
     } else {
@@ -313,9 +315,8 @@ no box
 
 `Whisper.attributes["to"]` is the declaration of `Whisper`'s attribute `to`, a value a program can keep and hand
 on, so a library can take the attribute it works through (`Audience.Linked(Whisper.attributes["to"])`). The key is
-checked while compiling: a class named in the code that declares no attribute of that name is an error naming the
-class, so renaming the attribute without the places that name it does not build. A key on an instance's
-`.attributes` is not checked, and answers `null` when the name is missing.
+checked while compiling, on a class and on an instance alike: one its class does not declare is an error naming the
+class, so renaming the attribute without the places that name it does not build.
 
 ```gdscript title=named_attribute/whisper.spite
 var from = 1
@@ -331,14 +332,13 @@ func NamedAttribute() {
     var whisper = Whisper()
     whisper.text = "psst"
     var bound = whisper.attributes["text"]
-    crash bound
     var declaration = bound.declaration
-    console.print(declaration.name, bound.owner.class)
+    console.print(declaration.name, bound.value)
 }
 ```
 ```output
 to 1 Integer
-text Whisper
+text psst
 ```
 
 ### A call, built before it runs
@@ -353,39 +353,47 @@ call.arguments["velocity"] = velocity
 call.call()
 ```
 
-Nothing runs until `call.call()`. `system` must be a `MoveSystem`, or the line is a compile error. This is the only
-way to build a call; a bound function, `system.functions["run_each"]`, is for passing the function as a value and
-calling it. When the function is named in the code (`MoveSystem.functions["run_each"]`, or a `var` holding it that is
-never assigned again), the whole thing is the plain call `system.run_each(position, velocity)`, with no object made.
+Nothing runs until `call.call()`. The declaration is one named in the code (`MoveSystem.functions["run_each"]`, or a
+`var` holding it that is never assigned again), so the compiler makes a class for its arguments with one typed field
+per parameter: `call.arguments["position"]` is that field, and the whole thing is the plain call
+`system.run_each(position, velocity)`, with no object made. `system` must be a `MoveSystem`, or the line is a
+compile error. A declaration known only while running (`value.class.functions[name]`) has no class of arguments the
+program can name, so such a call fills none: `call.call()` runs a function that takes no arguments on the instance,
+after checking the instance is of the class that declares it (it halts otherwise, and halts for a function that takes
+arguments), and drops what it answers. Filling an argument of it is refused:
+
+```gdscript title=call_known_at_run_time/monster.spite
+var health = 10
+
+func hurt(amount: Integer) {
+    health = health - amount
+}
+```
+```gdscript title=call_known_at_run_time/call_known_at_run_time.spite entry error
+func CallKnownAtRunTime() {
+    var troll = Monster()
+    var name = "hurt"
+    var call = Spite.Call(troll.class.functions[name], troll)
+    call.arguments["amount"] = 3
+    call.call()
+}
+```
+```diagnostic
+this call runs a declaration known only while running, so it fills no arguments: such a call runs a function that takes none, and a function that takes arguments is called through a declaration named in the code, as 'Spite.Call(Monster.functions["hurt"], troll)'
+```
+
 An argument left unfilled is a compile error at `call.call()` (`'call' leaves the argument 'velocity' of 'hurt'
 unfilled`); so is filling one twice (`'call.arguments["amount"]' is already set`), naming one the function does not
 have (`'hurt' has no argument 'speed', so 'call.arguments["speed"]' fills nothing`), and using the call as a value,
 since it is only the direct call (`'call' is a call known while compiling ... has no object to pass on`). An instance of
-another class than the one declaring the function is a compile error too. A call built from a function known only at
-run time is a real object, and `call()` halts, naming what it found, when the instance is not of the class that
-declares the function, or when an argument is missing, of another type than the parameter's (a number, a `String`,
-an enum, an object, a nullable one, a `type` or a union), `null` for a parameter that is not nullable, or one the
-function does not have (the first extra key
-in the order they were filled, and the names it does take, or "it takes no arguments"). A parameter typed by a `type`
-holds the classes the program writes into `call.arguments`, numbers and enums included (`said: Shown` takes `3`,
-`2.5` and `'blue'`), and only those: a class nothing passes is never asked to fit how the function uses the
-parameter. A function that uses a
-parameter as a type (`Binding<part>()`) exists only as the copies a walk makes, so a call of it known only at run time
-halts naming that argument, and nothing else about it is built for run time: such a walk folds wherever it is
-reached, below a test function too. `call.call()` answers what
-the function answers: typed from the declaration when the function is named in the code (`var worth = call.call()` is
-an `Integer` for `func worth(): Integer`), and a value the compiler fills with what the function can answer when the call is known only at run time, the value itself
-(a number keeps its class) or `null` for a function that answers nothing; that one answer may be left unused, so
-`call.call()` on a line of its own runs a function that answers nothing. A function value it answers comes back as
-a `Spite.Function`, as any function value does where a `type` is wanted. `call.arguments` holds a value or `null`
-under each name, so `call.arguments["count"] = null` fills the argument with `null`: a nullable
-parameter (`count: Integer?`, `badge: Badge?`, `word: String?`) takes it, and `count: Integer` halts that it is not
-an Integer. A parameter that takes a function value is given the function bound to its object,
-`call.arguments["change"] = doubler.functions["doubled"]`, and `call()` halts when its signature is another. Calling a class known only at run time
-makes an object of it, of the classes the compiler can make there, wherever the class object is held: `part()` with `part: Spite.Class`, an
-attribute `kind()`, or a member read, `thing.class()` or `argument.class()`. It halts, saying why, for the program's
-entry class (made once when the program starts) and for a class whose constructor takes arguments: write the
-class's name where the compiler can see it to make one of those.
+another class than the one declaring the function is a compile error too. `call.call()` answers what the function
+answers, typed from the declaration (`var worth = call.call()` is an `Integer` for `func worth(): Integer`).
+
+Calling a class known only while running makes an object of it, of the classes the compiler can make there, wherever
+the class object is held: `part()` with `part: Spite.Class`, an attribute `kind()`, or `thing.class()`. What it answers
+is a `Console.Debuggable`, the library's `type` every class fits, so the program says what it uses it through, and
+`if made.class == Gear` narrows it. It halts, saying why, for the program's entry class and for a class whose
+constructor takes arguments. In a walk over classes each copy knows its class, so `part()` there is that class.
 
 ## Reaching a reflection object
 
@@ -532,9 +540,8 @@ Five fields stay nullable, each because the value can really be absent:
 |---|---|
 | `Spite.Class.namespace` | a class at a program's root has no namespace: there is no root object |
 | `Spite.Namespace.parent` | a namespace at the top has no parent, for the same reason |
-| `Spite.Attribute.value` | the instance's field holds `null` when the attribute is itself nullable |
+| `Spite.Attribute<Value>.value` | the instance's field holds `null` when the attribute is itself nullable |
 | `FunctionDeclaration._returned_literal`, behind `.returned_literal` | only a function whose body is one `return` of a text literal has one; reading it of another halts |
-| `FunctionDeclaration._called_on`, behind `Spite.Call` | a declaration runs on an instance only where the compiler writes the wrapper that takes the instance, which it does for a class of the program that can be made; the entry class, a singleton, a class the compiler stores itself and a library class have none, and `call()` on one of those halts. The wrapper is bound to no object, since it is handed its instance: describing a class makes no object of it, so its `drop()` runs only on objects its constructor built |
 
 A class's `.functions` lists the functions it declares and the template instances generated for it, once compiling
 ends and in the order they were made, so it does not depend on the order classes were compiled in. A constructor is
@@ -611,16 +618,16 @@ var speed = 2.5
 ```
 ```gdscript title=walk_numbers/walk_numbers.spite entry
 var console = Console()
+var monster = Monster()
 
 func WalkNumbers() {
-    var monster = Monster()
     monster.attributes.each(double)
     console.print(monster.name, monster.health, monster.speed)
 }
 
-func double(attribute: Spite.Attribute) {
+func double(attribute: Spite.AttributeDeclaration) {
     if attribute.class.satisfies_type(Number) {
-        attribute.value = attribute.value * 2
+        monster.attributes[attribute].value = monster.attributes[attribute].value * 2
     }
 }
 ```
@@ -797,7 +804,6 @@ An object's `.functions` is a `Dictionary<String, Spite.Function>`: each functio
 | Member | Answers | Example |
 |---|---|---|
 | `.declaration` | its `Spite.FunctionDeclaration`, which answers `.arguments`, `.returns`, `.is_resumable`, `.returned_literal`, `.reads`, `.writes` and `.source_file` | `troll.functions["alive"].declaration.returns` |
-| `.owner` | the object it is bound to | `troll.functions["alive"].owner` is `troll` |
 | `.name` | its name | `troll.functions["hurt"].name` is `hurt` |
 | `call_function()` | calls it on its owner when it takes no arguments, dropping what it answers; on one that takes arguments it halts | `troll.functions["roar"].call_function()` |
 
@@ -814,16 +820,18 @@ A function value is an instance of `Spite.Function`, so it fits any `type` whose
 function above. Read from a place that only holds it at run time, such as an attribute
 `var on_press: Spite.Function<Nothing>? = null` walked through `fresh.attributes` with `fresh: Shown`, it is the
 same `Spite.Function` as if it were named there: the compiler knows every function the program takes as a value, finds
-the one held by its signature and its address, and answers its declaration and its owner. A function's name is its
+the one held by its signature and its address, and answers its declaration. `.owner` is answered on a function value
+named in the code (`shout.owner`), where its class is known; a `Spite.Function` listed by `.functions` has none, since
+the object whose `.functions` was read is it. A function's name is its
 declaration's, so `.name` is never empty. A `null` there stays `null`.
 
 ### `Spite.Call`
 
 | Member | Answers | Example |
 |---|---|---|
-| `Spite.Call(declaration, instance)` | a call of a `Spite.FunctionDeclaration` on an instance of its class, nothing run yet | `Spite.Call(MoveSystem.functions["run_each"], system)` |
-| `.arguments` | its arguments by name, each a value or `null`, written once before the call runs; `null` fills a nullable parameter | `call.arguments["position"] = position` |
-| `call()` | runs it, answering what the function answers: its own type when the function is named in the code, a value the compiler fills with what it can answer when known only at run time (`null` when it answers nothing) | `var shown = call.call()` |
+| `Spite.Call(declaration, instance)` | a call of a `Spite.FunctionDeclaration` named in the code on an instance of its class, nothing run yet; a declaration known only while running is refused | `Spite.Call(MoveSystem.functions["run_each"], system)` |
+| `.arguments` | its arguments by name, each a typed field of the class the compiler makes for the declaration, written once before the call runs; `null` fills a nullable parameter | `call.arguments["position"] = position` |
+| `call()` | runs it, answering what the function answers, typed from the declaration | `var shown = call.call()` |
 
 ### `Spite.Argument`
 
@@ -843,9 +851,9 @@ declaration's, so `.name` is never empty. A `null` there stays `null`.
 | `.class` | its declared class | `attribute.class` is `Integer` |
 | `.index` | its place in declaration order, 0 for the first | `Monster.attributes["health"].index` is `1` |
 | `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
-| `.owner` | on a bound attribute: the object it belongs to | `troll.attributes["health"].owner` is `troll` |
+| `.owner` | inside a walk over an instance: the walked object | `attribute.owner` |
 | `.source_file` | on a declaration: the `File` it is written in | `Monster.attributes["health"].source_file` |
-| `.value` | on an instance's attribute only: that instance's value, read and written (`set_value(value)`, also known only at run time) | `troll.attributes["health"].value` |
+| `.value` | on an instance's attribute only: that instance's value, typed by `Spite.Attribute<Value>`, read and written (`set_value(value)`, through the attribute's own class) | `troll.attributes["health"].value` |
 
 `.name` is the name as it is written. Another spelling of it is the `String`'s own:
 `attribute.name.camel_case()` is `buyPrice` and `attribute.name.pascal_case()` is `BuyPrice`
@@ -853,11 +861,12 @@ declaration's, so `.name` is never empty. A `null` there stays `null`.
 the call is worked out while compiling.
 
 A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index` and `.source_file`, never
-a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's holds `Spite.Attribute`s bound to it: those members, read through the
-declaration, plus `.value` and `.owner`. What a walk hands its function is decided by the parameter's type: over
-an instance, `troll.attributes.each(describe)` hands a `Spite.Attribute` parameter troll's bound attribute and a
-`Spite.AttributeDeclaration` parameter the declaration, as `Monster.attributes.each(describe)` would. A class has no
-values to bind, so `Monster.attributes.each(describe)` with `describe(attribute: Spite.Attribute)` is `'describe'
+a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's are `Spite.Attribute<Value>`s bound to it, `Value` being what the attribute holds: those members, read
+through the declaration, plus `.value`. What a walk hands its function is decided by the parameter's type: over
+an instance, `troll.attributes.each(describe)` hands a `Spite.Attribute<Integer>` parameter each of troll's attributes
+that holds an `Integer`, and a `Spite.AttributeDeclaration` parameter every declaration, as
+`Monster.attributes.each(describe)` would. A class has no values to bind, so `Monster.attributes.each(describe)` with
+`describe(attribute: Spite.Attribute<Integer>)` is `'describe'
 takes a 'Spite.Attribute', an attribute bound to an instance, and 'health' here is a declaration of 'Monster', which
 has no value: declare the parameter 'Spite.AttributeDeclaration', or walk an instance's attributes`.
 
@@ -1105,157 +1114,95 @@ when something calls it with an object known at run time or takes it as a value.
 ## Known only at run time
 
 A value typed by a `type` or a union whose class is not known in its copy, a reflection object kept in an attribute
-and read later, and everything typed at the REPL prompt are only known at run time. Reflection still answers them, from tables the program builds only
-for the classes such a read can reach, and there `attribute.value` is a value the compiler fills with what the attributes hold: the value itself (a number
-keeps its class, held with its class's tag, and text is boxed), `null` only when the attribute holds `null`. Its text is `.value.to_string()`,
-and narrowed by its class (`if found.value.class == Boolean`), `.value` is that number itself: `found.value.to_string()`
-answers what the `Boolean`'s own `to_string()` answers.
+and read later, and everything typed at the REPL prompt are only known at run time. Reflection still answers their
+declarations, from tables the program builds only for the classes such a read can reach: `.class`, `.name`,
+`.functions` and the declarations of `.attributes`. What it does not answer is a value whose type no program could
+write ([every place names what it holds](values_and_types.md#every-place-names-what-it-holds)): an instance's
+attributes are reached by a name written in the code, a declaration kept in a `var` or a walk, each with its own
+type, and listing them as a value is refused, since which attribute each item is would be known only while running:
 
-```gdscript title=attribute_objects/health.spite
-var amount = 10
+```gdscript title=attribute_listing/gadget.spite
+var power = 3
+var label = "lamp"
 ```
-```gdscript title=attribute_objects/player.spite
-var health = Health()
-var speed = 3
-var target: Health? = null
-```
-```gdscript title=attribute_objects/attribute_objects.spite entry
-type Component {
-    to_debug: Spite.Function<String>
-}
-
+```gdscript title=attribute_listing/attribute_listing.spite entry error
 var console = Console()
-var components = List<Component>()
 
-func AttributeObjects() {
-    var player = Player()
-    add_every_attribute(player)
-    components.each(show_component)
-}
-
-func show_component(component: Component) {
-    var described: String = component.class
-    if component.class == Health {
-        described = "Health {component.amount}"
-    }
-    console.print(described)
-}
-
-func add_every_attribute(bundle: Component) {
-    var attributes = bundle.attributes
-    attributes.each(add_value)
-}
-
-func add_value(attribute: Spite.Attribute) {
-    fallback attribute.value
-    components.append(attribute.value)
+func AttributeListing() {
+    var gadget = Gadget()
+    var attributes = gadget.attributes
+    console.print(attributes.count())
 }
 ```
-```output
-Health 10
-Integer
+```diagnostic
+'gadget.attributes' lists an instance's attributes as a value, so which attribute each item is would be known only while running, and its value would have no one type: walk them, 'gadget.attributes.each(visit)' with 'visit' taking the 'Spite.Attribute<...>' it reads, index one by a name written in the code, 'gadget.attributes["health"]', or by a declaration kept in a 'var', and list their names through the class, as 'Monster.attributes.keys()'
 ```
 
-Such an attribute is written as well as read: `attribute.value = given` is `attribute.set_value(given)`, which writes
-the owner's field, so a program can copy every attribute of one object onto another it only holds through a `type`.
-It is the assignment it desugars to, with no rule of its own, judged at the write's line with the assignment's words:
-the value meets the attribute's class exactly as in `owner.field = given` on its own line (an `Integer` into a `Float`
-attribute, into a `String` attribute any class with its own `to_string()` and an enum, by its name, a function value
-into a function attribute of the same type, `null` into a nullable one). The value read from an attribute keeps its class
-but not its range, so a number that may not fit is narrowed as an assignment narrows a number nothing bounds
-([values_and_types.md](values_and_types.md#a-number-that-may-not-fit-is-narrowed)): a `Float` or a `Long` written
-into an `Integer?` attribute is `null` when it does not fit, and into a plain `Integer` it is refused, a written `2.5`
-or `3` too, with `this value is a Float, which may not fit in an Integer: write 'var converted: Integer? = value' on
-its own line, ...`. A value that may be null (a `String?`, an `attribute.value`) into an attribute that is not nullable is
-refused as `thing.label = maybe` is (`this value may be null (it is a String?), but a String is needed: narrow it first
-...`), and so is a conversion that answers `Feet?` into a plain `Feet` attribute, while a number that may be null is
-0 when it is null, as `thing.count = maybe` is
-([values_and_types.md](values_and_types.md#a-number-that-may-be-null-is-zeroed-on-its-own-line)). `null` written
-into an attribute that is not nullable is `'null' is given where an Integer is needed, ...`. Counts and back
-references are kept as an assignment keeps them, and a private attribute is neither listed nor written, as it is not
-read.
+Walk them instead, one function for each kind of value it reads, and the names come from the class:
 
-The compiler decides the cast while compiling. It knows the classes that reach `given` (a `type` parameter is copied for
-each class that reaches it) and the attributes the write can reach: the one `.attributes["whole"]` names, written in the
-write or in the local it reads, through a listing kept in a local (`var attributes = held.attributes`, then
-`attributes["whole"]`) or by a declaration's name (`held.attributes[declaration.name]`), the ones a list written in
-place names (`var chosen = [held.attributes["whole"], held.attributes["label"]]`, then `chosen[index]`), or else every
-attribute the program lists at run time. A local listing or list is followed only while it is read by `[ ]` and never
-changed. A class no conversion of the attribute's class takes is an error at the write's line, naming the class and the
-attribute: `set_value() gives 'Meter.whole' a Gadget, which is not an Integer and which no conversion of Integer
-takes, so it cannot be cast the way an assignment would cast it`. A write that can reach several attributes writes one
-known only while running, so it is judged against all of them: it is refused when none takes a class reaching it as an
-assignment would (listing what each holds), or `null` where none is nullable, and the program stops at run time on
-the pairing the compiler cannot see: a class one of them takes written into one that does not (`spite: set_value()
-gives 'Meter.whole' a value that is not an Integer and that no conversion of Integer takes, so it cannot be cast the
-way an assignment would cast it`, a `Float` into a plain `Integer` too), and a value that is `null` into an attribute
-that is neither nullable nor a number. So does any value written in a program built with a prompt or hot
-reload, whose typed code is compiled after its writers.
-
-```gdscript title=attribute_copies/button.spite
-var label = "none"
-var clicks = 0
+```gdscript title=attribute_kinds/gadget.spite
+var power = 3
+var label = "lamp"
 var ratio = 1.5
 ```
-```gdscript title=attribute_copies/attribute_copies.spite entry
+```gdscript title=attribute_kinds/attribute_kinds.spite entry
 var console = Console()
 
-func AttributeCopies() {
-    var source = Button()
-    source.label = "go"
-    source.clicks = 3
-    var target = Button()
-    copy_every_attribute(source, target)
-    console.print(target.label, target.clicks, target.ratio)
-    var ratio = target.attributes["ratio"]
-    crash ratio
-    ratio.value = 2
-    console.print(target.ratio)
+func AttributeKinds() {
+    var gadget = Gadget()
+    gadget.attributes.each(double_whole)
+    gadget.attributes.each(shout_text)
+    gadget.attributes.each(show)
+    var names = Gadget.attributes.keys()
+    console.print(names.join(", "))
 }
 
-func copy_every_attribute(source: Button, target: Button) {
-    var from = source.attributes.values()
-    var into = target.attributes
-    var index = 0
-    while index < from.count() {
-        var attribute = from[index]
-        var destination = into[attribute.name]
-        crash destination
-        destination.value = attribute.value
-        index = index + 1
-    }
+func double_whole(attribute: Spite.Attribute<Integer>) {
+    attribute.value = attribute.value * 2
+}
+
+func shout_text(attribute: Spite.Attribute<String>) {
+    attribute.value = attribute.value.upper_case()
+}
+
+func show(attribute: Spite.Attribute<Console.Printable>) {
+    console.print(attribute.name, attribute.value)
 }
 ```
 ```output
-go 3 1.5
-2
+power 6
+label LAMP
+ratio 1.5
+power, label, ratio
 ```
 
-A function that takes any object names what it uses, `component: Component` with a `type Component` of it
-([values_and_types.md](values_and_types.md#every-place-names-what-it-holds)). What needs a constant says so while compiling: a function whose result is typed by its
-reflection parameter cannot be handed an object known only at run time.
+`attribute.value = given` is the assignment it desugars to, judged at the write's line with the assignment's words:
+inside a walk it writes the walked field, whatever `Value` the function names. A `Spite.Attribute` handed on or kept
+is written through the attribute's own class; through a union or a `type` (`Spite.Attribute<Console.Printable>`) its
+value is read, not written: `a 'Spite.Attribute<Console.Printable>' is read through 'Console.Printable', which
+several classes fit, so its value is not written through it: write the attribute through a 'Spite.Attribute' of its
+own class, as 'Spite.Attribute<Integer>' for an Integer attribute`.
+
+What needs a constant says so while compiling: a function whose result is typed by its reflection parameter cannot be
+handed an object known only at run time.
 
 ```gdscript title=run_time_type/gadget.spite
 var power = 3
 ```
 ```gdscript title=run_time_type/run_time_type.spite entry error
-type Shown {
-    to_debug: Spite.Function<String>
-}
-
 var console = Console()
 
 func RunTimeType() {
-    var gadget = Gadget()
-    var shown: Shown = gadget
-    var attributes = shown.attributes
-    var first = attributes.values().first()
+    var power = Gadget.attributes["power"]
+    var kept = List<Spite.AttributeDeclaration>()
+    kept.append(power)
+    var first = kept.first()
     crash first
     var made = fresh(first)
     console.print(made)
 }
 
-func fresh(attribute: Spite.Attribute): attribute.class {
+func fresh(attribute: Spite.AttributeDeclaration): attribute.class {
     return attribute.class()
 }
 ```
@@ -1267,9 +1214,8 @@ One function body serves both: called with a constant it is typed and unrolled, 
 live object it takes the run-time path. A `--repl`, `--repl-port` or `--development` build keeps the tables for
 every class, so the prompt can ask anything the program can. Outside those builds the tables hold only what some code
 reads: a run-time function's `.reads` and `.writes` come from a table of the functions the program makes an object
-for, a standard library function, a function value taken through a `type` and every function of a `--hot-reload`
-build are not in it and asking them halts, and so does `.returned_literal` of a function whose body is not one
-`return` of a text literal.
+for, a standard library function and every function of a `--hot-reload` build are not in it and asking them halts,
+and so does `.returned_literal` of a function whose body is not one `return` of a text literal.
 
 ```gdscript
 > Monster.attributes.map_names()

@@ -266,7 +266,7 @@ is the text itself, so in each copy of this walk `attribute.name.pascal_case()` 
 costs ([reflection.md](reflection.md#spiteattribute)):
 
 ```spite
-func describe(attribute: Spite.Attribute) {
+func describe(attribute: Spite.Attribute<Console.Printable>) {
     var label = attribute.name.pascal_case()
     console.print("{label}: {attribute.value}")
 }

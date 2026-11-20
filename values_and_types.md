@@ -768,6 +768,13 @@ and a list of a `type` keeps each item's class beside it. Where a value is only 
 that: `type Shown { to_debug: Spite.Function<String> }` takes any object, since every class answers `to_debug()`,
 and says so. `Spite.Class.instances` lists the classes of the program.
 
+The language's own classes name what they hold the same way (D2637): nothing is filled by the compiler with types
+no program could write. A `Spite.Attribute<Integer>` holds an `Integer` attribute's value, and a function taking
+attributes names the value it takes, a class, a union or a `type` ([reflection.md](reflection.md#a-class-and-an-instance-of-it)); an
+instance's attributes listed as a value are refused, since their values would have no one type, an object made from a
+class known only while running is a `Console.Debuggable`, and a `Spite.Call` of a declaration known only while running
+fills no arguments ([reflection.md](reflection.md#known-only-at-run-time)).
+
 A `type` or a `union` with no members says nothing of what it holds, so it is refused too:
 
 ```diagnostic

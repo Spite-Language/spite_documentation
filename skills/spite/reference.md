@@ -573,11 +573,12 @@ of the standard library or of a repository pinned to a commit is never rewritten
   list the functions and attributes they are used through, or name their class, or a union of their classes` and
   `'union Hollow' lists no members, so no value of it can exist: list the classes it holds; only the language's own
   'Nothing' is declared empty`.
-- The library's reflection reads a value known only at run time (`attribute.value`, `.owner`, a run-time `call()`
-  answer, `call.arguments` values, `part()` of a run-time class) as a union the compiler fills with the classes that
-  reach it, which no program writes. Printing or a hole on it goes through the compiler's `type Printable {
-  to_string: Spite.Function<String> }`: `console.print(attribute.value)` prints when only numbers and text reach it,
-  a null one shows `null`, and a class without `to_string` is refused (`'Crate' does not fit type 'Printable': it has
+- The library's reflection names what it holds too (no union only the compiler fills): `attribute.value` of a
+  `Spite.Attribute<Value>` is a `Value`, and what would answer a value of no nameable type is refused (an instance's
+  attributes listed as a value, arguments of a `Spite.Call` of a run-time declaration; `part()` of a run-time class
+  answers a `Console.Debuggable`). Printing or a
+  hole on a value of a `type` goes through the compiler's `type Printable { to_string: Spite.Function<String> }`: a
+  null one shows `null`, and a class without `to_string` is refused (`'Crate' does not fit type 'Printable': it has
   no function 'to_string'`).
 - A function of your program whose parameter is a `union`, a `type` or a generic holding one is
   compiled once per argument type each call hands it (a `Cat` for `named: Named`, a `List<Health>` for
@@ -759,8 +760,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
 ## Metaprogramming
 
 - Every class is an instance of `Spite.Class`. A class's members are declarations (`Spite.FunctionDeclaration`,
-  `Spite.AttributeDeclaration`, no value); an instance's are bound (`Spite.Function`, `Spite.Attribute` with
-  `.value` and `.owner`). Members are ordinary lists, so "for every attribute" is a walk:
+  `Spite.AttributeDeclaration`, no value); an instance's are bound (`Spite.Function`, and `Spite.Attribute<Value>` with a typed
+  `.value`, `.owner` only in a walk). Members are ordinary lists, so "for every attribute" is a walk:
   `Monster.attributes.each(describe)` with `func describe(attribute: Spite.AttributeDeclaration)`, unrolled while compiling into
   one call per attribute, each copy typed by its attribute (a function of another object handed a constant,
   `helper.describe(attribute)`, is compiled once for it too, however deep the calls go). A member by name is `[]` and answers a `T?`
@@ -819,29 +820,30 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `value.class == part` narrows `value` (`value.render()`). A walked declaration handed to another function,
   `describe(attribute, "x")`, makes that function's copy for it. A filter over such a list runs at run time.
   A `Spite.Class` known only at run time, called with no arguments (`part()`, an attribute `kind()`, `thing.class()`,
-  `argument.class()`), makes an object of it, a value the compiler fills with the classes it can make there.
-- A call built before it runs: `var call = Spite.Call(MoveSystem.functions["run_each"], system)` (a declaration and
-  an instance of its class, the only way to build one), `call.arguments["position"] = value`, `call.call()`; known
-  while compiling it is the direct call. Known only at run time, `call()` halts on an argument missing, of another
-  type, or not taken; `call.arguments["count"] = null` is a filled argument, taken by `count: Integer?` and halting
-  for `count: Integer`. A parameter typed by a `type` holds what the program writes into `call.arguments`,
-  numbers and enums included (`said: Shown` takes `3` and `'blue'`), and no other class: a class never passed is
-  never asked to fit how the function uses it. `call.call()` answers the function's answer: its declared type when known while compiling,
-  a value the compiler fills with what it can answer when known only at run time (`null` for a function that answers nothing), which alone of all answers
-  may be dropped (`call.call()` on its own line).
+  `argument.class()`), makes an object of it, a `Console.Debuggable` (the type every class fits); a walk over classes
+  makes the walked class itself.
+- A call built before it runs: `var call = Spite.Call(MoveSystem.functions["run_each"], system)` (a declaration named
+  in the code and an instance of its class, the only way to build one), `call.arguments["position"] = value`, a typed
+  field of the class the compiler makes for that declaration, then `call.call()`: the direct call, answering the
+  function's declared type. With a declaration known only while running (`value.class.functions[name]`) the call fills
+  no arguments: `call.call()` runs a function taking none on an instance of its class (halting otherwise) and drops its
+  answer, and `call.arguments` on it is refused.
   There is no `call_with`.
 - `Whisper.attributes["to"]` names an attribute as a value: a class's `.attributes` is a `Dictionary<String,
-  Spite.AttributeDeclaration>`, an object's a `Dictionary<String, Spite.Attribute>` (`.value`, `.declaration`,
-  `.owner`), and a literal key on a class named in the code that declares no such attribute is a compile error.
-  `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute`: read `.value` for the field, which straight off the index has the field's own type (`troll.attributes[health].value` is an `Integer`, a plain read of `troll.health`), as does `.value` off a literal name the class declares once the index is proven (`crash troll.attributes["health"]`; before that, an operator or a call on that `.value` is refused like a print of it, "'troll.attributes["health"]' may be missing ... so 'value' cannot be read from it yet: narrow it first"), and off a `Spite.Attribute` kept in a `var` given once from either (`var bound = troll.attributes[health]`, the field as it was when kept); one assigned again or handed in holds `.value` as a value the compiler fills with what every attribute reaching it holds. Another class's
-  declaration is a compile error naming both classes, and one the compiler cannot tie to a class is refused: write
-  `troll.attributes[declaration.name]` (a `Spite.Attribute?`). Inside its own class an instance is indexed bare,
+  Spite.AttributeDeclaration>`, an object's answer `Spite.Attribute<Value>` (`.value`, `.declaration`) by a name written in the code, a declaration
+  or a walk, and a literal key naming no such attribute is a compile error, on a class and an instance alike; an
+  object's attributes listed as a value (`var attributes = held.attributes`, `.keys()`, a run-time name) are refused.
+  `troll.attributes[health]` with a declaration (`var health = Monster.attributes["health"]`, never reassigned) always answers troll's `Spite.Attribute<Integer>`: read `.value` for the field, which has the field's own type (`troll.attributes[health].value` is an `Integer`, a plain read of `troll.health`), as does `.value` off a literal name the class declares and off a `Spite.Attribute` kept in a `var` given once from either (`var bound = troll.attributes[health]`, the field as it was when kept). Another class's
+  declaration is a compile error naming both classes, and one the compiler cannot tie to a class is refused, as is a
+  run-time name: walk the attributes instead. Inside its own class an instance is indexed bare,
   `attributes[health]` (never `this.attributes[...]`), under the same checks. A walk or a template means the same:
   `x.attributes[attribute]` is x's `Spite.Attribute`, and `x.attributes[attribute].value` reads and writes the
   field (`copy.attributes[attribute].value = price.attributes[attribute].value`), compiled as a plain read or write of
   it; only the walked declaration does that, and any other key in the copy is indexed as anywhere else; `copy.attributes[attribute] = ...` is a compile error, since an instance's attributes are never replaced. A walk
-  hands its function what the parameter is typed: `troll.attributes.each(f)` gives a `Spite.Attribute` parameter the
-  bound attribute and a `Spite.AttributeDeclaration` one the declaration, as `Monster.attributes.each(f)` does.
+  hands its function what the parameter is typed: `troll.attributes.each(f)` gives a `Spite.Attribute<Integer>` parameter
+  each bound attribute holding an `Integer` (a union or a `type` names several; none fitting is an error), and a
+  `Spite.AttributeDeclaration` one every declaration, as `Monster.attributes.each(f)` does. A bare `Spite.Attribute` is
+  refused: no function takes an attribute of any value (D2638).
 - Questions are get-only attributes, folded on a constant: `Loader.functions["load_each"]` (narrow it), then
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
   `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`

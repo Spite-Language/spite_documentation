@@ -585,18 +585,18 @@ All four are ordinary Spite, and reading them is the best way to learn the two m
   branch that fits `T` is compiled.
 - A class is written by walking the value's attributes with `each`
   ([reflection.md](reflection.md#a-class-and-an-instance-of-it)). The walk is unrolled while compiling into one
-  call per attribute, and each call is compiled for its attribute, so `attribute.value` has the attribute's own
-  type and the two questions on the attribute fold away:
+  call per attribute, and each call is compiled for its attribute, so `shown.attributes[attribute].value` has the
+  attribute's own type and the two questions on the attribute fold away. It takes the declaration, since it writes
+  every attribute whatever it holds:
 
 ```gdscript
-func write_attribute(attribute: Spite.Attribute) {
-    if not attribute.name.starts_with("_") and not attribute.class.is_singleton {
-        var attribute_json = JsonWriter<attribute.class>()
-        attribute_json.path = "{$value_type.name}.{attribute.name}"
-        var attribute_text = attribute_json.write(attribute.value)
-        crash _members
-        _members.append("\"{attribute.name}\":{attribute_text}")
-    }
+func write_attribute(attribute: Spite.AttributeDeclaration, shown: $value_type) {
+    fallback not attribute.name.starts_with("_") and not attribute.class.is_singleton
+    var attribute_json = JsonWriter<attribute.class>()
+    attribute_json.path = "{$value_type.name}.{attribute.name}"
+    var attribute_text = attribute_json.write(shown.attributes[attribute].value)
+    crash _members
+    _members.append("\"{attribute.name}\":{attribute_text}")
 }
 ```
 
