@@ -157,7 +157,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - `while given and turns < 2` narrows `given` in the body like an `if`, and each pass tests it again, so the body may
   write it. An `or` narrows nothing inside, except an `or` of class tests of one value: `if value.class == String or
   value.class == Integer { }` compiles the block once per class, each copy narrowed to its class, and a use is refused
-  only where one of them does not fit (`a Holder cannot be used where an Integer is needed: ...`). `if amount > 100 or
+  only where one of them does not fit (`a Holder cannot be used where an Integer is needed: ...`). Against a `type`,
+  `if value.class == AnyCustom { value.key }` asks whether the class fits it and narrows a value held as a `type` or a
+  union to that type; a `switch` over a `type` value takes types as cases and ends with its own type (`Component:`). `if amount > 100 or
   amount < 0 { return 1 }` proves both sides below it.
 - A number that may be null is narrowed before arithmetic, a comparison, an argument or a `return`, whatever its width; only `==` and `!=` take it as it is, and `var zeroed: Integer = pair` on its own line is 0 when `pair` is null.
 - A comparison is a call on its left side (`a == b` is `a.equals(b)`, `a < b` is `a.less_than(b)`), so the right side goes into the left's type like any argument: write the wider number on the left, `total > count` with a `Long` `total`, `color_type == buffer[0]` with an `Integer` `color_type` (a `Byte?`; a missing byte equals no number). The other order is swapped by the compiler with a `fixed:` line when the swapped form fits, and refused naming both fixes (narrow by hand on its own line, or swap the sides) where it cannot rewrite the line. Where neither order fits (an `UnsignedInteger` or `UnsignedLong` beside a signed number) it is the assignment's error: narrow one side first. Arithmetic also wants the wider operand first.

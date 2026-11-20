@@ -10,7 +10,7 @@ switch enemy {
 }
 ```
 
-That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum or a `Boolean`), plus
+That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum, a `Boolean` or a value of a `type`), plus
 `fallback` and `crash` ([failure.md](failure.md)). There is no
 `for`, no `break` or `continue`, no ternary `? :`, and no `do`. Before reaching for a loop at all, check whether a
 [member template](collections.md#member-templates-loops-you-do-not-write) already says it:
@@ -550,10 +550,11 @@ against `$wanted_type` bound to `Health`, or a union that does not hold the boun
 while compiling, and it is never the "never true" error, since another binding may make it true. The same goes
 for any class test inside a generic class: one that can never be true for one instantiation (`held.class == Health` in
 a `Box<Label>`) folds to `false` and its branch is removed from that copy, while outside a generic it stays the
-error. A value's `.class` is always one class, so testing it against a union or a `type`, written out or bound to
+error. A value's `.class` is always one class, so testing it against a union, written out or bound to
 the codegen value, is an error rather than a test that is never true (`'$wanted_type' is a type here, bound to
 'Pet', a union, so it cannot be used as a value: 'item.class' is always one class, so the test could never be
-true: test for one of the classes it holds`). The rules for class tests are with
+true: test for one of the classes it holds, or for a 'type' they fit`). Testing it against a `type` asks whether the
+class fits that type ([below](#a-value-narrowed-by-a-type-it-may-fit)). The rules for class tests are with
 [unions](values_and_types.md#unions).
 
 ```gdscript title=codegen_class_test_doc/find.spite
@@ -633,6 +634,103 @@ this switch only asks what 'creature' is: write 'return creature.class == Fish'
 
 A `_:` is refused anyway (above); for a switch shaped like this one, this error comes first, since it names the
 shorter form.
+
+## A value narrowed by a type it may fit
+
+`value.class == Named`, where `Named` is a `type`, asks whether the value's class fits `Named`
+([what fits a type](values_and_types.md#what-fits-a-type)), the way `$item_type == Named` does inside a generic class.
+It is how a value held as one `type` or as a union is narrowed to another `type` it may fit: inside
+`if value.class == Named { }` the value reads as a `Named` (`value.name`), and the `else` narrows nothing. A
+union none of whose members fits the `type` is refused, since the answer could only be `false`: `'creature' is a
+'Creature', which holds only Cat, Fish, and none of them fits the type 'Named', so it never fits it: test for a type
+one of them fits`.
+
+Nothing is searched while running. A function taking the `type` is copied per argument type, so in each copy the
+class is known and the test folds to `true` or `false`, the dead branch removed, as for any class test in a copy; a
+generic class's copies (`Custom<Glow>`, `Custom<Shine>`) are classes like any other and each answers for itself. A
+value whose class is known only while running (an item of a `List<Component>`) compares its class with the classes
+that reach that place and fit, a list the compiler fills while compiling.
+
+```gdscript title=type_test_doc/custom.spite
+generic $uniforms_type
+
+var key = "custom"
+var uniforms = $uniforms_type()
+
+func render(): TypeTestDoc.Component? {
+    return this
+}
+
+func strength(): Float {
+    return uniforms.strength
+}
+```
+```gdscript title=type_test_doc/glow.spite
+var strength: Float = 1.5
+```
+```gdscript title=type_test_doc/plain.spite
+var shown = "plain"
+
+func render(): TypeTestDoc.Component? {
+    return null
+}
+```
+```gdscript title=type_test_doc/type_test_doc.spite entry
+type Component {
+    render: Spite.Function<Component?>
+}
+
+type AnyCustom {
+    key: String
+    strength: Spite.Function<Float>
+}
+
+var console = Console()
+
+func TypeTestDoc() {
+    var glow = Custom<Glow>()
+    var plain = Plain()
+    var components = List<Component>()
+    components.append(glow)
+    components.append(plain)
+    var index = 0
+    while index < components.count() {
+        var component = components[index]
+        var key = key_of(component)
+        var shown = shown_of(component)
+        console.print(key, shown)
+        index = index + 1
+    }
+    console.print(plain.shown)
+}
+
+func key_of(value: Component): String {
+    if value.class == AnyCustom {
+        return value.key
+    }
+    return "none"
+}
+
+func shown_of(value: Component): String {
+    switch value {
+        AnyCustom: return "strength {value.strength()}"
+        Component: return "other"
+    }
+}
+```
+```output
+custom strength 1.5
+none other
+plain
+```
+
+A `switch` over a value of a `type` takes types and classes as its cases, tried in order, each narrowing the value
+like the `if`. More classes may fit a `type` than a switch can list, so its last case is the subject's own `type`
+(`Component:` above), for every value no case before it takes, and a switch without it is `this switch over 'value'
+has no case for every Component: more classes may fit the type 'Component' than a switch can list, so its last case
+is 'Component:', for every value no case before it takes`. In a switch over a union, a `type` as a case covers every
+member that fits it, so `Named: return creature.name` beside `Fish: return "fish"` covers a `Cat`, a `Dog` and a
+`Fish`.
 
 ## An assignment works out its value first
 

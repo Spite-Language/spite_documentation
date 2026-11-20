@@ -638,9 +638,11 @@ troll 20 5
 
 The copy of `double` compiled for `name` has no `if` and no multiplication; the copies for `health` and `speed` are
 the multiplication alone. Asked of a class known only at run time, `value.class` of a value reflection reads, it is an error
-that says so (`'held.class.satisfies_type(...)' is answered while compiling, and 'held.class' is a class known only
-at run time: ask it of a class named in the code or walked from one`), and so is an argument that is not a type's
-name.
+that names the test that works on a value, `if held.class == Number`, which narrows it
+([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)): `'held.class.satisfies_type(...)' is
+answered while compiling, and 'held.class' is a class known only at run time: to test whether the value fits
+'Number', write 'if held.class == Number', which narrows it to that type inside`. An argument that is not a type's
+name is an error too.
 
 ### `Spite.Namespace`
 
