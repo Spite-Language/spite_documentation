@@ -64,9 +64,12 @@ the operation, the type, the operands and the line:
 
 ```gdscript
 func scaled(amount: Integer, factor: Integer): Integer {
-    return amount * factor          # scaled(2000000000, 2)
+    return amount * factor
 }
 ```
+
+Called as `scaled(_two_billion, 2)`, it halts:
+
 ```
 spite: 'amount * factor' does not fit in an Integer (2000000000 * 2), at game/game.spite:17 in Game.scaled
 ```
