@@ -33,6 +33,7 @@ REPL can look at any of it.
 | `Integer`, `Long`, `Float`, `Double`, `Boolean`, ... | numbers, as classes, with their maths (`square_root()`, `sine()`, `Float.Pi()`, ...) | [values_and_types.md](values_and_types.md#numbers-are-classes), [maths](values_and_types.md#maths-functions) |
 | `Nothing`, `Anything` | the language's two empty unions, declared in the library's `Spite` class: `Nothing` holds no value (what a function that answers nothing returns), and `Anything` is filled by the compiler with the classes that reach each place | [functions_and_operators.md](functions_and_operators.md) |
 | `List<T>`, `Dictionary<Key, Value>` | containers, and the member templates | [collections.md](collections.md) |
+| `Observer<Value>`, `ListChange<T>`, `DictionaryChange<Key, Value>` | telling readers that something changed, and what a list or a dictionary changed | [collections.md](collections.md#observer-tells-who-subscribed) |
 | `Console` | the terminal: print, read a line | [below](#console) |
 | `File`, `Directory` | files and folders | [below](#read-and-write-a-file) |
 | `Volume` | the files the program preloaded into its executable, read through `File` and `Directory` | [programs.md](programs.md#preloaded-files) |

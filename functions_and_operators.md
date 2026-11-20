@@ -46,7 +46,10 @@ like any call; and the value is also its own reflection, with `.name`, `.argumen
 `.returns` (the last), `.declaration` and `.owner`, the instance it runs on. A typed value goes where a plain `Spite.Function`
 is expected, never the other way round. `.returns` is exactly the declared answer, a `Spite.Class`, a `Spite.Union` or
 a `Spite.Type`, and the `Nothing` union for a function declared without a return type. A function that is a text's or a number's (`greeting.contains`) is bound to a copy of the value.
-A function value whose answer may be null answers it as null wherever it is held.
+A function value whose answer may be null answers it as null wherever it is held. Two function values are `==`
+when they name the same function bound to the same object, however each was made (`shouter.shout == shouter.shout`
+is true, `shouter.shout == other.shout` false), which is how `Observer.unsubscribe` finds the one to drop
+([collections.md](collections.md#observer-tells-who-subscribed)).
 
 ```gdscript title=function_values_doc/shouter.spite
 func shout(text: String): String {

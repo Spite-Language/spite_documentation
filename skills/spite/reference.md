@@ -371,6 +371,15 @@ of the standard library or of a repository pinned to a commit is never rewritten
   (`var scores: Dictionary<String, Integer> = {}`), `Dictionary<Key, Value>()` elsewhere. A list or a dictionary is not printable: `console.print(list)` is `'List<Integer>' does not fit type
   'Printable'`; print `list.join(", ")`, or `console.debug(list)`. Both write a null item of a `List<T?>` (or a null value of a
   `Dictionary<K, V?>` in `to_debug`) as `null`: `[null, 4]`.
+- `Observer<Value>` tells who subscribed: `subscribe(function)` and `unsubscribe(function)` take a
+  `Spite.Function<Value, Nothing>` (subscribing the same function of the same object twice is once; two function
+  values are `==` when they name one function bound to one object), `notify(value)` calls each in the order they
+  subscribed. A watched field holds its own, private and named after it (`var _helmet_observer = Observer<Helmet>()`),
+  told after the field changes. `list.subscribe(function)` takes a `Spite.Function<ListChange<T>, Nothing>`: a
+  `ListChange<T>` has `kind` (`'appended'`, `'inserted'`, `'set'`, `'removed'`, `'cleared'`, `'rewritten'` for
+  `reverse`/`truncate`/`remove_where`), `index` and `item` (`T?`); a dictionary's is a `DictionaryChange<Key, Value>`
+  (`'added'`, `'set'`, `'removed'`, `'cleared'`, with `key` and `value`). An observer type no code subscribes to costs
+  nothing: its `notify` calls and its field are left out, so never guard a `notify` by hand.
 - A chain of templates, `teams.filter_active().map_leads().sum_age()`, runs as one loop with no list in between.
 - To remove many elements, never call `remove_at` or `remove_swapping` in a loop: `creatures.remove_where_dead()`
   or `numbers.remove_where(is_odd)` removes every one the test is true for in one pass and keeps the rest in

@@ -276,6 +276,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   an error. A loaded package's files are fixed the same way; it never rewrites the standard library or a repository
   pinned to a commit. A check or `if` it would remove because of a narrowing
   stays when a later call or loop pass takes that narrowing back: the compile fails on that instead.
+- To tell readers that something changed, hold an `Observer<Value>`: one per watched field, private and named after
+  it (`_helmet_observer`), told with `notify(value)` after the field changes; readers `subscribe` one of their
+  functions. A `List` or a `Dictionary` tells its own changes (`names.subscribe(rows.changed)`, a `ListChange<T>`
+  with `kind`, `index` and `item`). Never keep your own list of function values for this, and never guard a `notify`:
+  an observer type nothing subscribes to is left out by the compiler, field and calls.
 
 ## Installing this skill in a project
 

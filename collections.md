@@ -246,6 +246,153 @@ never share a schema.
 The key and value types are what the program means, not how it is stored: the compiler keeps a dictionary however
 is fastest, as long as every lookup answers the same ([write it plainly](write_it_plainly.md#a-class-is-what-you-mean-not-how-it-is-stored)).
 
+## Observer tells who subscribed
+
+`Observer<Value>` is how one object tells others that something changed. It holds the functions subscribed to it
+and calls each with the value it is told:
+
+| Member | Notes |
+|---|---|
+| `subscribe(function)` | `function` is a `Spite.Function<Value, Nothing>`; subscribing the same function of the same object again does nothing |
+| `unsubscribe(function)` | the same function of the same object: two function values are `==` when they name one function bound to one object ([functions_and_operators.md](functions_and_operators.md#functions-are-values)); nothing happens when it is not subscribed |
+| `notify(value)` | calls every subscribed function with `value`, in the order they subscribed |
+
+A class that wants to be watched holds one observer per field, private and named after it, and tells it after it
+changes the field. A reader subscribes one of its own functions:
+
+```gdscript title=observer_doc/thermostat.spite
+var _degrees = 20
+var _degrees_observer = Observer<Integer>()
+
+func watch_degrees(reader: Spite.Function<Integer, Nothing>) {
+    _degrees_observer.subscribe(reader)
+}
+
+func set_degrees(new_degrees: Integer) {
+    fallback new_degrees != _degrees
+    _degrees = new_degrees
+    _degrees_observer.notify(new_degrees)
+}
+```
+```gdscript title=observer_doc/display.spite
+var console = Console()
+
+func show(degrees: Integer) {
+    console.print("now", degrees)
+}
+```
+```gdscript title=observer_doc/observer_doc.spite entry
+func ObserverDoc() {
+    var thermostat = Thermostat()
+    var display = Display()
+    thermostat.watch_degrees(display.show)
+    thermostat.set_degrees(21)
+    thermostat.set_degrees(21)
+    thermostat.set_degrees(18)
+}
+```
+```output
+now 21
+now 18
+```
+
+A function subscribed while the observer is telling is called from the next `notify` on, and one unsubscribed while
+it is telling is not called again, even by the `notify` under way. `notify` runs every function on the thread that
+calls it, before it returns. A `copy()` or `deep_copy()` of an observer (and so a `deep_copy()` of a class holding one) starts with
+nobody subscribed. A function handed to `subscribe` does not keep its object alive: once the object is freed,
+`notify` skips it, so a reader may hold what it observes ([memory.md](memory.md#cycles-are-freed)).
+
+An observer nothing subscribes to costs nothing: when no reached code calls `subscribe` on an `Observer<Value>`, every
+`notify` on it is left out with the value made only for it, and a field holding one has no slot
+([optimizations.md](optimizations.md#an-observer-nothing-subscribes-to-is-never-told)). That holds for every program
+written this way, by hand or generated.
+
+### A list tells its changes
+
+A `List<T>` tells an `Observer<ListChange<T>>` of every change, so a reader keeping one row per item updates only the
+row that changed. `subscribe(function)` and `unsubscribe(function)` take a `Spite.Function<ListChange<T>, Nothing>`.
+A `ListChange<T>` holds `kind`, `index` and `item` (a `T?`):
+
+| `kind` | Told by | `index` and `item` |
+|---|---|---|
+| `'appended'` | `append` | the new item and its place |
+| `'inserted'` | `insert`, `prepend` | the new item and its place |
+| `'set'` | `list[index] = value`, `swap` (once per place), `remove_swapping` (the moved item) | the place and its new item |
+| `'removed'` | `remove_at`, `remove_first`, `remove_last`, `remove_swapping` | the place the item had; the item, except after `remove_swapping` |
+| `'cleared'` | `clear` | `0`, no item |
+| `'rewritten'` | `reverse`, `truncate`, `remove_where`, `remove_where_<member>` | the first place that may have changed, no item: read the list again |
+
+Each change is told once the list holds it, after the call that made it.
+
+```gdscript title=list_changes_doc/rows.spite
+var console = Console()
+
+func changed(change: ListChange<String>) {
+    if change.item {
+        console.print(change.kind, change.index, change.item)
+    } else {
+        console.print(change.kind, change.index)
+    }
+}
+```
+```gdscript title=list_changes_doc/list_changes_doc.spite entry
+func ListChangesDoc() {
+    var names = ["ada", "grace"]
+    var rows = Rows()
+    names.subscribe(rows.changed)
+    names.append("alan")
+    names[0] = "barbara"
+    names.remove_at(1)
+    names.clear()
+}
+```
+```output
+appended 2 alan
+set 0 barbara
+removed 1 grace
+cleared 0
+```
+
+A list type nothing subscribes to carries no observer: `List<Integer>` with no `subscribe` on any `List<Integer>` is
+the same code and the same memory as a list that never had one. It is decided per list type, so one subscription
+to a `List<Integer>` makes every `List<Integer>` tell its changes.
+
+### A dictionary tells its changes
+
+A `Dictionary<Key, Value>` tells an `Observer<DictionaryChange<Key, Value>>` the same way, with `kind`, `key` (a
+`Key?`) and `value` (a `Value?`): `'added'` for a new key and `'set'` for a key it had (`dictionary[key] = value`, with
+both), `'removed'` (`remove_at`, with the key, and only when the key was there) and `'cleared'` (`clear`, with
+neither).
+
+```gdscript title=dictionary_changes_doc/ledger.spite
+var console = Console()
+
+func changed(change: DictionaryChange<String, Integer>) {
+    if change.key {
+        console.print(change.kind, change.key)
+    } else {
+        console.print(change.kind)
+    }
+}
+```
+```gdscript title=dictionary_changes_doc/dictionary_changes_doc.spite entry
+func DictionaryChangesDoc() {
+    var stock = Dictionary<String, Integer>()
+    var ledger = Ledger()
+    stock.subscribe(ledger.changed)
+    stock["apples"] = 3
+    stock["apples"] = 5
+    stock.remove_at("apples")
+    stock.clear()
+}
+```
+```output
+added apples
+set apples
+removed apples
+cleared
+```
+
 ## One list
 
 `List<T>` is the only list: there is no `Vector` and no `Items` to choose between. You say what you keep, and

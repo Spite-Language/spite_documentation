@@ -62,6 +62,15 @@ function, a shape filler) reaches the executable either
 ([compiler.md](compiler.md#every-function-is-checked)). An inspectable build keeps everything, so live reload has every function
 to swap and the REPL can reach every class ([compiler.md](compiler.md#development-builds-and-tree-shaking)).
 
+### An observer nothing subscribes to is never told
+
+When no reached code calls `subscribe` on an `Observer<Value>` type, nothing can be subscribed to an observer of that
+type, so every `notify` and `unsubscribe` on one is left out, with the value made only to be told (a list's
+`ListChange`, the item it read for it), and a field holding the observer has no slot. A `List<Integer>` no code
+subscribes to is the list it was before lists told their changes: the same code, the same layout and the same
+`--debug-memory` counts ([collections.md](collections.md#a-list-tells-its-changes)). It is decided per observer type: one
+`subscribe` on any `List<Integer>` keeps the telling in every `List<Integer>`. An inspectable build keeps every observer.
+
 ### Concurrency machinery only where it is used
 
 The scheduler, the state machines, the thread pool and the table that bounds calls in a row are written for a

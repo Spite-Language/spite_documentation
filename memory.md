@@ -743,6 +743,11 @@ that fits the `type` and never holds the child keeps the attribute counted. Keep
 that one is freed however the children are used. There is no `Weak<T>` to write, and naming one is an unknown-type
 error.
 
+A reader that subscribes one of its functions to what it holds (`names.subscribe(changed)` in a `Row` that keeps
+`names`) closes a cycle through the observer, and that one is freed too: a function value handed to `subscribe` or
+`unsubscribe`, directly or through a function that only hands it on, holds its object without a count, and once that
+object is freed `notify` skips it ([collections.md](collections.md#observer-tells-who-subscribed)).
+
 ### Two objects linked both ways through one attribute
 
 `first.partner = second` beside `second.partner = first` links two objects through one attribute, so neither side
