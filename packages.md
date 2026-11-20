@@ -493,15 +493,15 @@ package fetched from a URL names the repositories it loads by URL, since a path 
 nothing on yours. An ordinary `load` in a fetched package is read from where its copy lies, not from where the file sits in
 its repository, so it reaches nothing of the author's machine (the folder is not there, an error); pin the other repository instead. **Two pins of one repository** at different commits are one library ([below](#two-versions-of-one-repository)).
 
-This program loads a folder of the language's own repository as it was at a commit. The documentation's programs
-are written out into `.spite/docs/<name>/` of that repository and compiled from there, so `../../..` is the
-repository itself:
+This program loads a folder of the language's specification repository, spite_spec, as it was at a commit. The
+documentation's programs are written out into `.spite/docs/<name>/` of that repository and compiled from there, so
+`../../..` is the repository itself:
 
 ```gdscript title=pinned_widgets/pinned_widgets.spite entry
 var console = Console()
 
 func PinnedWidgets() {
-    load "../../..@6cb29ccf/conformance/stage2/namespaces_load/package"
+    load "../../..@26e6476/tests/namespaces_load/package"
     var widget = Widgets.Widget("gadget", 3)
     var description = widget.describe()
     console.print(description)
