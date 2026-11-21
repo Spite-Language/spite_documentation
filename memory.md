@@ -745,8 +745,15 @@ error.
 
 A reader that subscribes one of its functions to what it holds (`names.subscribe(changed)` in a `Row` that keeps
 `names`) closes a cycle through the observer, and that one is freed too: a function value handed to `subscribe` or
-`unsubscribe`, directly or through a function that only hands it on, holds its object without a count, and once that
-object is freed `notify` skips it ([collections.md](collections.md#observer-tells-who-subscribed)).
+`unsubscribe` holds its object without a count when it is made there (`names.subscribe(changed)`, directly or through a
+function that only hands it on), when it is first held in a local that is only handed so (`var act = changed`, then
+`names.subscribe(act)`), and when it is read from an attribute whose default names the class's own function
+(`var act: Spite.Function<ListChange<String>, Nothing> = changed`, below) and handed to `subscribe` or `unsubscribe` of
+a `List`, a `Dictionary` or an `Observer` the class holds in an attribute or gets as a parameter. Once that object is
+freed, `notify` skips it and the observer lets go of its link at its next `notify`, `subscribe` or `unsubscribe`
+([collections.md](collections.md#observer-tells-who-subscribed)). Any other held value keeps its count (one a
+function stored in an attribute, one read from a list, a local also used for something else), so such a cycle leaks
+until one side unsubscribes, and `--debug-memory` names it.
 
 ### Two objects linked both ways through one attribute
 

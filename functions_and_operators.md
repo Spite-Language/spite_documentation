@@ -126,8 +126,9 @@ An attribute may hold a function value (`var on_press: Spite.Function<Nothing>? 
 one is narrowed through its path like any other value before it is called: `fallback button.on_press`, then
 `button.on_press()`, and a local that only copied it is rewritten to that form. One whose
 default names its own class's function (`var act: Spite.Function<Nothing> = rest`) is bound to the object itself.
-When the program only calls it (`holder.act()`, `act.call_function()`), narrows it or clears it (`act = null`), it
-holds the object without a count, so the object is freed when its last other holder goes and the value goes with
+When the program only calls it (`holder.act()`, `act.call_function()`), narrows it, clears it (`act = null`) or
+hands it to `subscribe` or `unsubscribe` of a `List`, `Dictionary` or `Observer` the class holds
+([memory.md](memory.md#cycles-are-freed)), it holds the object without a count, so the object is freed when its last other holder goes and the value goes with
 it. A call through it holds the object for the call, so a call that lets go of the object's last other holder still
 runs on a live object, freed when the call returns. `copy()` and `deep_copy()` bind the copy's value to the copy. Read
 for anything else (stored, passed, returned), it keeps its count, and the cycle leaks like any other until one side

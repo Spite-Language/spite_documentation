@@ -300,7 +300,9 @@ A function subscribed while the observer is telling is called from the next `not
 it is telling is not called again, even by the `notify` under way. `notify` runs every function on the thread that
 calls it, before it returns. A `copy()` or `deep_copy()` of an observer (and so a `deep_copy()` of a class holding one) starts with
 nobody subscribed. A function handed to `subscribe` does not keep its object alive: once the object is freed,
-`notify` skips it, so a reader may hold what it observes ([memory.md](memory.md#cycles-are-freed)).
+`notify` skips it and the observer lets go of its link at its next `notify`, `subscribe` or `unsubscribe`, so a
+reader may hold what it observes ([memory.md](memory.md#cycles-are-freed) says which forms are held that way).
+`subscribe` makes one link and nothing else, however many it already holds.
 
 An observer nothing subscribes to costs nothing: when no reached code calls `subscribe` on an `Observer<Value>`, every
 `notify` on it is left out with the value made only for it, and a field holding one has no slot
