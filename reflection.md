@@ -633,7 +633,7 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 | `.generics` | a `Dictionary<String, Spite.Class>`: the class each `generic` line was given, keyed by its name without the `$`, in `generic`-line order; empty for a class that is not generic | `numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer` |
 | `.source_files` | a `List<File>`: every file that declares or reopens the class, in load order | `Monster.source_files.first()` |
 | `.source_directories` | a `List<Directory>`: every folder that makes the class, in load order; empty for a file's class | `Shop.source_directories.first()` |
-| `satisfies_type(...)` | whether it can stand in for a type, decided while compiling, or for a named value's class from the classes listed while compiling ([below](#whether-a-class-satisfies-a-type)) | `Integer.satisfies_type(Number)` is `true` |
+| `satisfies_type(...)` | whether it can stand in for a type, decided while compiling, or for a named value's class from the classes listed while compiling ([below](#whether-a-class-satisfies-a-type)); a class is never compared with a type, so `$item_type == Named` is written `$item_type.satisfies_type(Named)` | `Integer.satisfies_type(Number)` is `true` |
 
 `.generics` holds the same names a codegen value reads while compiling, `$list_type.element_type`; a dictionary's are `"key_type"` and `"value_type"`. A literal name on a
 class known while compiling folds and is proven present, and a name the class has no `generic` line for is a compile
@@ -669,8 +669,8 @@ The rule is the one the compiler checks every fit with ([values_and_types.md](va
 numbers included: `Integer.satisfies_type(Textual)` is `true`, as `var shown: Textual = 5` compiles, and an enum
 satisfies a `type` that asks only for `to_string`.
 
-The answer is decided while compiling, so it costs nothing at run time: asked of a class named in the code, `$T`, or
-a walk's `attribute.class`, it is a `true` or a `false`, and an `if` on it keeps only the branch taken. That is how a
+The answer is decided while compiling, so it costs nothing at run time: asked of a class named in the code, `$T`
+(also `$T.element_type`, and a `T?` or an enum it is bound to), or a walk's `attribute.class`, it is a `true` or a `false`, and an `if` on it keeps only the branch taken. That is how a
 walk branches on numbers:
 
 ```gdscript title=walk_numbers/monster.spite
@@ -709,6 +709,70 @@ naming it. The class of anything else known only at run time, such as a call's a
 form (`'first_shown().class.satisfies_type(...)' asks of a class known only at run time, which is answered
 for the class of a named value: hold the value in a local first and ask 'held.class.satisfies_type(Number)', which
 narrows 'held' to that type inside an 'if'`), and so is an argument that is not a type's name.
+
+### Whether a union satisfies a type
+
+`Pet.satisfies_type(Named)` asks the same of a union: it is `true` when every class the union may hold satisfies
+the type, each by the rule above, and `false` when one of them does not. The argument is written as for a class, and
+the answer is decided while compiling. It is asked of a union named in the code (`Pet`, or `Shop.Pet` through the
+class that declares it), of one read with a written name (`Shop.unions["Pet"]`), and of a codegen value bound to a
+union (`$item_type` in a `Box<Pet>`); a `Spite.Union` known only at run time, such as a walk's parameter, is an
+error that names these forms.
+
+```gdscript title=union_fits/cat.spite
+var name = "tom"
+```
+```gdscript title=union_fits/dog.spite
+var name = "rex"
+```
+```gdscript title=union_fits/rock.spite
+var weight = 3
+
+func to_string(): String {
+    return "rock {weight}"
+}
+```
+```gdscript title=union_fits/union_fits.spite entry
+union Pet {
+    Cat
+    Dog
+}
+
+union Found {
+    Cat
+    Rock
+}
+
+type Named {
+    name: String
+}
+
+var console = Console()
+
+func UnionFits() {
+    var pets_named = Pet.satisfies_type(Named)
+    var found_named = Found.satisfies_type(Named)
+    console.print(pets_named, found_named)
+    var cat = Cat()
+    var pet: Pet = cat
+    var pet_fits = pet.class.satisfies_type(Named)
+    console.print(pet_fits, pet.name)
+}
+```
+```output
+true false
+true tom
+```
+
+The union's answer is also what a value held as that union is asked: `pet.class.satisfies_type(Named)` is `true`
+for every `Pet`, so it folds to `true` with no test while running, and an `if` on it is always true, which the
+compiler removes, keeping its body (`fixed: 'if pet.class.satisfies_type(Named)' was decided while compiling and
+was always true here, ...`). Nothing needs narrowing there: a value held as a union whose every class has the type's
+members reads them already (`pet.name`) and goes wherever the type is wanted, since a union fits a type when each of
+its classes does ([values_and_types.md](values_and_types.md#what-fits-a-type)). So the question about the union
+itself, which names no value, narrows nothing. For a `Found`, whose `Rock` has no `name`, the value's question
+compares the class with the members that fit while running and narrows the value inside the `if`
+([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)).
 
 ### `Spite.Enum`
 
@@ -825,6 +889,7 @@ Mirrored 3 1
 | `.name_with_outer_classes` | its name through the class that declares it, from the root | `Game.Component.Replication` |
 | `.owner` | the `Spite.Class` that declares it | `replication.owner` is `Component` |
 | `.members` | a union's: a `Dictionary<String, Spite.Class>` of its member classes, keyed by their names with outer classes, in declaration order | `replication.members["Network.State"]` |
+| `satisfies_type(...)` | a union's: whether every class it may hold satisfies a type, decided while compiling ([above](#whether-a-union-satisfies-a-type)) | `Pet.satisfies_type(Named)` |
 
 A `Spite.Type` answers `.name`, `.name_with_outer_classes` and `.owner`.
 

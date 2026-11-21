@@ -1167,8 +1167,9 @@ fit and the error names the attribute.
 
 One rule decides whether a class fits a `type`, wherever the compiler asks: a value given where the `type` is
 wanted, a class's attribute or function checked against a member's type, a generic's constraint
-(`generic $item_type: Named`), `$item_type == Named`, `kind.satisfies_type(Named)`
-([reflection.md](reflection.md#whether-a-class-satisfies-a-type)) and `value.class.satisfies_type(Named)`
+(`generic $item_type: Named`), `$item_type.satisfies_type(Named)` and `kind.satisfies_type(Named)`
+([reflection.md](reflection.md#whether-a-class-satisfies-a-type)), `Pet.satisfies_type(Named)` for a union, true when each of its classes fits
+([reflection.md](reflection.md#whether-a-union-satisfies-a-type)), and `value.class.satisfies_type(Named)`
 ([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)). As long as the contract matches, it fits: a class
 fits when it has each member the `type` writes, in its form and typed as the `type` says. An attribute member needs
 an attribute; a function member needs a function with as many parameters, each of the type asked, answering the

@@ -922,13 +922,22 @@ check is the compiler's, and the class made is the one an unconstrained line wou
 
 ### Asking what a generic was given
 
-When a codegen value is a type, `if $value_type == String { }` asks which type it is. The answer is known when
+When a codegen value is a type, `if $value_type == String { }` asks which class it is. The answer is known when
 the class is made, so only the branch taken is compiled, and each branch may use what only that type has. Besides
-naming a type exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Enum` (any enum),
-and a `type` name asks whether the type fits it, by the rule every fit uses, so `$value_type == Named` and
-`$value_type.satisfies_type(Named)` always agree ([values_and_types.md](values_and_types.md#what-fits-a-type)).
+naming a class exactly, four names ask for a kind: `List`, `Dictionary`, `Null` (any `T?`) and `Enum` (any enum).
+A class is never compared with a `type` or a union: whether the class given fits one is asked with
+`$value_type.satisfies_type(Named)`, by the rule every fit uses ([values_and_types.md](values_and_types.md#what-fits-a-type)),
+and for a union name it is true for any of its members. `$value_type == Named` is rewritten to that question with a
+`fixed:` line where it is a condition, a `return`'s or a local's value (`'$value_type == Named' compares a class with
+a type, which no class equals: wrote '$value_type.satisfies_type(Named)' in its place, which asks whether the class
+fits it`), `!=` to its `not`, and refused anywhere else (`'Named' is a type, not a class, so '$value_type' is never
+equal to it: ask whether the class fits it with '$value_type.satisfies_type(Named)'`); the same holds for
+`$list_type.element_type == Named` and a walk's `attribute.class == Named`. A class compared with a codegen value
+stays a comparison (`value.class == $item_type`, `$value_type == $other_type`). Bound to a union, the codegen value
+asks the union's question: `$value_type.satisfies_type(Named)` is true when every class the union may hold fits
+([reflection.md](reflection.md#whether-a-union-satisfies-a-type)).
 `$value_type.is_number` asks whether it is one of the library's number classes, `Tiny` to `Double`;
-`$value_type.satisfies_type(Number)` also takes a program's own number class. A union name is true for any of its members. Such a test always folds, in a `--development` build too,
+`$value_type.satisfies_type(Number)` also takes a program's own number class. Such a test always folds, in a `--development` build too,
 because the branch it rules out would not compile.
 
 What the branch ruled out is not compiled at all, and neither is what only it reaches. Below, `Field<Integer>`

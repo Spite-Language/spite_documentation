@@ -565,7 +565,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
 - A `type` declares a shape (`label: String` and `render: Spite.Function<Integer, String>`, one per line, with `Spite.Function<Nothing>` for no answer and never a call form `render(Integer): String`, which the compiler rewrites; a function of the class or an attribute holding such a function meets it, and `item.render(12)` calls either; a required function
   naming the *types* it takes and never the names) and accepts any class, or
   object literal `{ label: "x" }`, with those attributes and functions, typed as the `type` says. One rule decides
-  every fit (a value given, a member's type, a `generic` constraint, `$T == Named`, `satisfies_type`): if the
+  every fit (a value given, a member's type, a `generic` constraint, `satisfies_type`): if the
   contract matches it fits, numbers included (`Integer` fits `type Textual { to_string: Spite.Function<String> }`),
   an enum fits a `type` asking only `to_string`, a union fits when each class does. To admit only some classes write
   a `union`, not a `type`. A `T?` fits a `type` that asks only for
@@ -890,7 +890,14 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `Dictionary<String, Spite.Class>` of its `generic` lines by name without the `$`
   (`numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer`); there is no `.element_type` on a class. [reflection.md](https://github.com/Spite-Language/spite_documentation/blob/master/reflection.md)
 - In a generic class, `if $value_type == List { }` (also `Dictionary`, `Null` for any `T?`, `Enum` for any enum,
-  or an exact type) is decided while compiling, and `$value_type.element_type` names what the type holds. It is
+  or an exact class) is decided while compiling, and `$value_type.element_type` names what the type holds. Against a
+  `type` or a union ask instead: `if $value_type.satisfies_type(Named) { }` (`$value_type == Named`, and a walk's
+  `attribute.class == Named`, are rewritten to it with a `fixed:` line, or refused where no rewrite fits); a class
+  compared with a codegen value stays `==` (`value.class == $item_type`). A union answers too:
+  `Pet.satisfies_type(Named)`, `Shop.unions["Pet"].satisfies_type(Named)` and `$value_type.satisfies_type(Named)`
+  bound to `Pet` are true when every class of the union fits, folded while compiling; a `Spite.Union` known only at
+  run time (a walk's parameter) is refused. A value held as such a union reads the type's members already
+  (`pet.name`), and `pet.class.satisfies_type(Named)` folds to `true`. It is
   tested the same way (`else if $value_type.element_type == Float`) in any branch of a chain. Only
   what the taken branch reaches is compiled (helper functions, and the code after a chain whose branch returns),
   so keep one generic class with a helper per kind, not one class per kind.

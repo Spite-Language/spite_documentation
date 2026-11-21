@@ -180,7 +180,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   only where one of them does not fit (`a Holder cannot be used where an Integer is needed: ...`). A class is never
   compared with a type: `if value.class.satisfies_type(AnyCustom) { value.key }` asks whether the class fits it and
   narrows a value held as a `type` or a union to that type (`value.class == AnyCustom` is rewritten to it or refused,
-  and a `switch` case is never a type). `if amount > 100 or
+  and a `switch` case is never a type); in a generic, `$item_type.satisfies_type(Named)`, never `$item_type == Named`,
+  and `Pet.satisfies_type(Named)` is true when every class of the union `Pet` fits. `if amount > 100 or
   amount < 0 { return 1 }` proves both sides below it.
 - A number that may be null is narrowed before arithmetic, a comparison, an argument or a `return`, whatever its width; only `==` and `!=` take it as it is, and `var zeroed: Integer = pair` on its own line is 0 when `pair` is null.
 - A comparison is a call on its left side (`a == b` is `a.equals(b)`, `a < b` is `a.less_than(b)`), so the right side goes into the left's type like any argument: write the wider number on the left, `total > count` with a `Long` `total`, `color_type == buffer[0]` with an `Integer` `color_type` (a `Byte?`; a missing byte equals no number). The other order is swapped by the compiler with a `fixed:` line when the swapped form fits, and refused naming both fixes (narrow by hand on its own line, or swap the sides) where it cannot rewrite the line. Where neither order fits (an `UnsignedInteger` or `UnsignedLong` beside a signed number) it is the assignment's error: narrow one side first. Arithmetic also wants the wider operand first.
