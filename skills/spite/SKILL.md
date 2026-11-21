@@ -131,7 +131,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `phase_each` of its own; used whole, `phase` is that function's `Spite.FunctionDeclaration` and a member
   parameter its member's declaration, with `.name` the text) or `Spite.Argument` (spread as
   `system.update_each(made_arguments(row))`); the body says which class. A class's `.name` is always its short name
-  and `.name_with_outer_classes` the dotted one; `.outer_class` is the folder's class it sits in (`null` at the root),
+  (a generic copy's with its classes, `Custom<Glow>`, which is also its key in `Spite.Class.instances`; the bare
+  generic `Custom` is no class there) and `.name_with_outer_classes` the dotted one; `.outer_class` is the folder's class it sits in (`null` at the root),
   `.nested_classes` a folder class's classes; `.source_files` lists the files that declare it. Find classes by walking,
   never by registering them: `Spite.Class.instances.each(bind)` (folders' classes included), `Theme.nested_classes.each(bind)` and
   `window.register_classes(Theme)` each make a copy of the walker per class, where the class is a type

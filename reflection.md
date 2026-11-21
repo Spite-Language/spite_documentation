@@ -393,8 +393,8 @@ answers, typed from the declaration (`var worth = call.call()` is an `Integer` f
 Calling a class known only while running makes an object of it, of the classes the compiler can make there, wherever
 the class object is held: `part()` with `part: Spite.Class`, an attribute `kind()`, or `thing.class()`. What it answers
 is a `Console.Debuggable`, the library's `type` every class fits, so the program says what it uses it through, and
-`if made.class == Gear` narrows it. It halts, saying why, for the program's entry class and for a class whose
-constructor takes arguments. In a walk over classes each copy knows its class, so `part()` there is that class.
+`if made.class == Gear` narrows it. A copy of a generic class `Spite.Class.instances` lists (`Custom<Glow>`) is made
+the same way. It halts, saying why, for the program's entry class and for a class whose constructor takes arguments. In a walk over classes each copy knows its class, so `part()` there is that class.
 
 ### A name built while compiling
 
@@ -618,7 +618,7 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 
 | Member | Answers | Example |
 |---|---|---|
-| `.name` | the class's own name, a `String`, without its outer classes however the class was reached (`.name_with_outer_classes` has them) | `Monster.name` is `Monster`, and `Part.Axle.name` and a walk's `part.name` are `Axle` |
+| `.name` | the class's own name, a `String`, without its outer classes however the class was reached (`.name_with_outer_classes` has them); a copy of a generic class keeps the classes it was given, each without its outer classes | `Monster.name` is `Monster`, `Part.Axle.name` and a walk's `part.name` are `Axle`, and `Custom<Part.Glow>.name` is `Custom<Glow>` |
 | `.outer_class` | the `Spite.Class?` of the folder it sits in, `null` at a program's root | `Shop.Tools.Hammer.outer_class` is `Shop.Tools` |
 | `.nested_classes` | a `List<Spite.Class>`: the classes of its folder, its own file left out, then its folders' classes; empty for a file's class | `Shop.Tools.nested_classes.count()` |
 | `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes["health"]` |
@@ -1399,8 +1399,12 @@ the program has 2 classes, among them Monster
 A generic class is no class until it is given its classes, so the list holds its copies instead: every copy its code
 writes with its classes named, `Custom<Glow>` anywhere in the program or a package it loads, whether that line runs or
 not, and, inside the copy of a generic class, a copy named through its generic names (`Custom<$first_type>` in
-`Pair<Bloom>` is `Custom<Bloom>`). Each copy is a class of its own: its `.name` is the generic class's (`Custom`), its
-`.name_with_outer_classes` says which copy (`Custom<Glow>`), and `.generics` answers the classes it was given. A copy
+`Pair<Bloom>` is `Custom<Bloom>`). Each copy is a class of its own, listed under its own name with its classes:
+its `.name` is `Custom<Glow>`, so `Spite.Class.instances["Custom<Glow>"]` finds it, its `.name_with_outer_classes`
+has the outer classes too, and `.generics` answers the classes it was given. The generic class itself is not listed,
+so `Spite.Class.instances["Custom"]` is `null`, and holding it as a class, `var held: Spite.Class = Custom`, is the
+error that it takes its classes (`'Custom' takes 1 codegen value(s)`). A listed copy is made at run time like any other
+class: `found()` makes a `Custom<Glow>`. A copy
 whose classes are inferred from a constructor's arguments, one a walk makes from its walked class (`Binding<part>()`),
 and one whose generic name sits inside another argument (`Custom<List<$first_type>>`) are not listed, so a walk never
 lists the classes it makes and the list stays finite. Reading the list is what makes the copies it holds: a program
@@ -1432,9 +1436,9 @@ func show(part: Spite.Class) {
 ```
 ```output
 custom 1
-Custom Custom<Glow> 1
 GenericCopiesAreClasses GenericCopiesAreClasses 0
-Glow Glow 0
+Custom<Glow> GenericCopiesAreClasses.Custom<GenericCopiesAreClasses.Glow> 1
+Glow GenericCopiesAreClasses.Glow 0
 ```
 
 Describing a class makes no object of it: a class object's `.attributes` are its declarations, which need no object,
