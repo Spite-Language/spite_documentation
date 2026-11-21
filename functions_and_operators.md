@@ -557,7 +557,8 @@ object, not two equal ones, and `a !== b` is its opposite, the way `!=` is the o
 - on two objects of one class (`first === kept`); a class on one side and another class on the other is an error,
   since they are never the same object: `'===' asks whether two names hold the very same object, and a 'Crate' is
   never the same object as a 'Box'`;
-- on a value typed by a `type` or `Anything`, and on a value of a union whose every member is a class, beside any
+- on a value typed by a `type`, on a function value (the same function on the very same owner), and on a value of
+  a union whose every member is a class, beside any
   value it may hold: `part === wanted` with a `Part` from a `List<Part>`, `held === apple` with a `Fruit`, with no
   `if part.class == Label` first;
 - on a `T?` side: two missing values are the same, a missing one is never the same as an object, so a list read

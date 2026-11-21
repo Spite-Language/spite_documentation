@@ -152,6 +152,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   A call earlier in the same statement counts too (`clear_count(rack) + rack.item.number` is refused; read first),
   and a `then` never undoes its `else`. A `[]` proof also falls to a shrink through a local or parameter that may be
   the same list (`var alias = items`, `alias.clear()`) and to a count kept in a `var` before a shrinking call.
+  A call through a function value reaches only the functions that can flow into it, and a function value handed to a
+  function that only calls it counts as called where it is handed: `apply(this.listener)` undoes a proof the listener
+  may change, so a read of it past that line is refused until you prove it again.
 - Only a path with no call in it narrows: `if thing.pop().held` proves nothing about a second `thing.pop().held`
   (it calls again); write `var held = thing.pop().held` and narrow `held`. A getter path (`thing.reading`, running
   `get_reading()`) narrows while the getter only reads; if it may write anything, a second read after the check is an
