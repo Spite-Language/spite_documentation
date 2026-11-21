@@ -701,14 +701,17 @@ of the standard library or of a repository pinned to a commit is never rewritten
   A `.class` known while compiling of something holding a call (`thing.pop().class == Thing`, `count().class.name`)
   still makes the call once; only the answer folds.
   In a generic class, `value.class == $wanted_type` tests for the class the codegen value is bound to; `.class` against a
-  union or a `type` (written out or bound to `$wanted_type`) is an error, since a class is never a type.
+  union or a `type` (written out or bound to `$wanted_type`) is never `==`, since a class is never a type: where some
+  copy binds `$wanted_type` to one, `item.class == $wanted_type` is rewritten to
+  `item.class.satisfies_type($wanted_type)` (which a class binding answers the same as `==`).
 - A class is not a type, so it is never compared with one: `value.class.satisfies_type(Named)` asks whether the class
   fits `Named`, and a value held as a `type` or a union (`value: Component`) is narrowed by it, so inside
   `if value.class.satisfies_type(AnyCustom) { }` it reads as that type (`value.key`); the `else` narrows nothing. Each
   copy of the function (one per argument class, a generic class's copies included) folds it; a value known only at run
   time compares its class with the fitting classes that reach it. A union none of whose members fits is an error.
   `value.class == AnyCustom` (or `!=`) is rewritten to it with a `fixed:` line in an `if`, `while`, `fallback`,
-  `return` or local's value, and refused naming it elsewhere. A `switch` case is a class, never a type (`'Named' is a
+  `return` or local's value, and refused naming it elsewhere, in generic classes and walks too, and also in code no
+  copy builds (a branch every copy rules out, an uncalled function taking a `type`, a generic class nothing makes). A `switch` case is a class, never a type (`'Named' is a
   type, so it is not a case: ...`), and a value of a `type`, `?` or not (`Component?`), is not switched on: write `if` tests. Ask it of a named
   value: `first_shown().class.satisfies_type(...)` is refused, so hold the answer in a local first.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an

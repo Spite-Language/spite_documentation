@@ -933,7 +933,11 @@ a type, which no class equals: wrote '$value_type.satisfies_type(Named)' in its 
 fits it`), `!=` to its `not`, and refused anywhere else (`'Named' is a type, not a class, so '$value_type' is never
 equal to it: ask whether the class fits it with '$value_type.satisfies_type(Named)'`); the same holds for
 `$list_type.element_type == Named` and a walk's `attribute.class == Named`. A class compared with a codegen value
-stays a comparison (`value.class == $item_type`, `$value_type == $other_type`). Bound to a union, the codegen value
+stays a comparison (`value.class == $item_type`, `$value_type == $other_type`) while every copy binds it to a class;
+where a copy binds it to a `type` or a union it is rewritten the same way
+([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)), which the class copies answer as `==` did.
+A walk's `attribute.class` of an attribute that may be `null` is that `T?`, so it satisfies a `type` only as a `T?`
+would fit it: `attribute.class.satisfies_type(Number)` is `false` for an `Integer?`. Bound to a union, the codegen value
 asks the union's question: `$value_type.satisfies_type(Named)` is true when every class the union may hold fits
 ([reflection.md](reflection.md#whether-a-union-satisfies-a-type)).
 `$value_type.is_number` asks whether it is one of the library's number classes, `Tiny` to `Double`;

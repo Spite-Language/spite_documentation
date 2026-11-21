@@ -551,9 +551,10 @@ while compiling, and it is never the "never true" error, since another binding m
 for any class test inside a generic class: one that can never be true for one instantiation (`held.class == Health` in
 a `Box<Label>`) folds to `false` and its branch is removed from that copy, while outside a generic it stays the
 error. A value's `.class` is always one class, and a union or a `type` is not a class, so comparing the two, written
-out or bound to the codegen value, is an error rather than a test that is never true (`'$wanted_type' is a type here,
-bound to 'Pet', a union, not a class, so 'item.class' is never equal to it: test for one of the classes it holds, or
-ask whether the class is one of them with 'item.class.satisfies_type($wanted_type)'`). Whether the class fits a
+out or bound to the codegen value, is never a test that is never true: where the question fits (below) it is
+rewritten to `item.class.satisfies_type($wanted_type)` with a `fixed:` line, and elsewhere it is the error
+(`'$wanted_type' is a type here, bound to 'Pet', a union, not a class, so 'item.class' is never equal to it: test for
+one of the classes it holds, or ask whether the class is one of them with 'item.class.satisfies_type($wanted_type)'`). Whether the class fits a
 `type` is asked, not compared ([below](#a-value-narrowed-by-a-type-it-may-fit)). The rules for class tests are with
 [unions](values_and_types.md#unions).
 
@@ -731,7 +732,10 @@ plain
 'value.class.satisfies_type(AnyCustom)' in its place, which asks whether the class fits it`), and `!=` becomes
 `not value.class.satisfies_type(AnyCustom)`. Anywhere else it is the error that names the question: `'AnyCustom' is
 a type, not a class, so 'held.class' is never equal to it: ask whether the class fits it with
-'held.class.satisfies_type(AnyCustom)'`.
+'held.class.satisfies_type(AnyCustom)'`. The same goes inside a generic class and a walk, and for `item.class ==
+$wanted_type` where a copy binds `$wanted_type` to a `type` or a union: the copy that binds it to one writes
+`item.class.satisfies_type($wanted_type)` in its place. A copy that binds it to a class answers the question the
+same way it answered `==`, so one copy binding a type is enough for the rewrite.
 
 A `switch` case names a class, so a `type` is not a case: in a switch over a union, `Named:` is `'Named' is a type, so
 it is not a case: a case names a class, and a class is never a type: ask whether the class fits it with 'if
@@ -740,6 +744,16 @@ or not (`Component?` too), has no closed set of classes, so it is not switched o
 question (`'switch value' chooses among values with no closed set, so no case list is ever whole: switch on an enum's
 values or a union's members, or write the choice as 'if' tests, asking 'if value.class.satisfies_type(...)' for a
 type it may fit`).
+
+### A comparison no copy builds
+
+What no copy builds (a branch every copy's test rules out, a function nothing calls that takes a `type`, a generic
+class nothing makes) is not compiled, but a class compared with a `type` or a union in it is still refused, and
+fixed the same way: once every reached function is built, the compiler reads the program's own files for such a
+comparison, writes the question in its place where it would in built code, with the same `fixed:` line, and
+refuses it with the same error anywhere else. A name written there is looked up in the class that holds it;
+`item.class == $wanted_type` is rewritten when some copy of the class binds `$wanted_type` to a `type` or a union,
+and left alone when none does.
 
 ## An assignment works out its value first
 

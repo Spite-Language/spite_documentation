@@ -1073,7 +1073,10 @@ member, with no `_:` for the rest, so a member added later is an error at every 
 a one-line case. `enemy.class == Monster` asks which member a value is
 ([control_flow.md](control_flow.md#switch-over-a-union)), and `enemy.class.satisfies_type(Named)`, with `Named` a
 `type`, whether it is a member that fits `Named`, narrowing it to that type inside the `if`
-([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)); a class is never compared with a type. `Monster?` is exactly this kind of union: `Monster` and
+([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)); a class is never compared with a type:
+`enemy.class == Named` (`!=` too) is rewritten to that question with a `fixed:` line, in generic code, walks, a
+codegen value bound to a type and code no copy builds alike, or refused where no rewrite fits
+([control_flow.md](control_flow.md#a-comparison-no-copy-builds)). `Monster?` is exactly this kind of union: `Monster` and
 `Null`, the class whose only value is `null`. So a `Monster?` fits an `Enemy?` with nothing to narrow, in a
 `return`, an assignment and an argument alike: `Monster` fits `Enemy`, and `null` fits the `?`. It fits a plain
 `Enemy` only once narrowed.

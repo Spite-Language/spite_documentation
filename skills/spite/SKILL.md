@@ -181,6 +181,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   only where one of them does not fit (`a Holder cannot be used where an Integer is needed: ...`). A class is never
   compared with a type: `if value.class.satisfies_type(AnyCustom) { value.key }` asks whether the class fits it and
   narrows a value held as a `type` or a union to that type (`value.class == AnyCustom` is rewritten to it or refused,
+  in generic code, walks and code no copy builds too, and `item.class == $wanted_type` where a copy binds it to a type,
   a `switch` case is never a type, and a value of a `type`, `Component?` too, is not switched on); in a generic, `$item_type.satisfies_type(Named)`, never `$item_type == Named`,
   and `Pet.satisfies_type(Named)` is true when every class of the union `Pet` fits. `if amount > 100 or
   amount < 0 { return 1 }` proves both sides below it.
