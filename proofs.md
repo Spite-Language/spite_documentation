@@ -73,15 +73,25 @@ accepted or refused whatever the optimisation settings.
   (`crash Store<$item>().values[index]`) still narrows, since the proven read tests what it finds. Keep the result in a `var`
   and narrow the `var`.
 
-```spite title=proofs/narrowing.spite entry
-func Narrowing(): Integer {
+```gdscript title=narrowing/narrowing.spite entry
+var console = Console()
+
+func Narrowing() {
     var names = ["ada", "grace"]
+    var length = first_length(names)
+    console.print(length)
+}
+
+func first_length(names: List<String>): Integer {
     var first = names[0]
     if first {
         return first.length()
     }
     return 0
 }
+```
+```output
+3
 ```
 
 See [Nothing fails silently](failure.md#nothing-fails-silently).
@@ -252,8 +262,10 @@ See [Switch over values](control_flow.md#switch-over-values).
   every '[ ]' answers a 'T?' ...: ..., or prove the count first, 'crash list.count() > 2'`. A `Dictionary` read is
   proven only by checking that key.
 
-```spite title=proofs/proven_read.spite entry
-func Proven(): Integer {
+```gdscript title=proven_read/proven_read.spite entry
+var console = Console()
+
+func ProvenRead() {
     var values = [4, 8, 15]
     var total = 0
     var index = 0
@@ -261,8 +273,11 @@ func Proven(): Integer {
         total = total + values[index]
         index = index + 1
     }
-    return total
+    console.print(total)
 }
+```
+```output
+27
 ```
 
 ### A proven read halts outside its list
@@ -346,17 +361,23 @@ leaves `size` at most `limit`); a total assigned once per pass holds at most as 
 - **Falls back**: the check stays. See
   [a range proves arithmetic fits](#a-range-proves-arithmetic-fits).
 
-```spite title=proofs/range.spite entry
-func Ranged(): Long {
-    var values = [2000000000, 2000000000, 2000000000]
+```gdscript title=ranged/ranged.spite entry
+var console = Console()
+var _two_billion = 2000000000
+
+func Ranged() {
+    var values = [_two_billion, _two_billion, _two_billion]
     var sum: Long = 0
     var index = 0
     while index < values.count() {
         sum = sum + values[index]
         index = index + 1
     }
-    return sum
+    console.print(sum)
 }
+```
+```output
+6000000000
 ```
 
 ### A range proves a decimal fits

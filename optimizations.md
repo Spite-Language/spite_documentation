@@ -308,10 +308,12 @@ function hands it the count: an object the caller just made goes in as it is and
 the place that keeps it does not count it again.
 
 ```spite
+var _item_count = 50000
+
 func one_round(round: Integer): Integer {
     var items = List<Item>()
     var index = 0
-    while index < 50000 {
+    while index < _item_count {
         var owner = Owner((index + round) % 90)
         var item = Item(index % 1000, owner)
         items.append(item)
@@ -1137,9 +1139,11 @@ written. The copy is kept only when knowing the
 closure made a call direct or decided a test.
 
 ```spite
+var _rounds = 200
+
 func turn_all(points: List<Point>) {
     var round = 0
-    while round < 200 {
+    while round < _rounds {
         points.each(turn)
         round = round + 1
     }

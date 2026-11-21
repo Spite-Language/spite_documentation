@@ -526,16 +526,17 @@ func DirectoryTasks() {
     crash target.create()
     var target_exists = target.exists()
     console.print("exists", target_exists)
-    var examples = Directory("examples")
-    var listed = examples.entries()
+    var levels = Directory(".spite/documentation_demo_dir/levels")
+    crash levels.create()
+    var listed = target.entries()
     crash listed
-    var has_hello = listed.filter_directories().map_folder_names().contains("hello")
-    console.print("has hello", has_hello)
+    var has_levels = listed.filter_directories().map_folder_names().contains("levels")
+    console.print("has levels", has_levels)
 }
 ```
 ```output
 exists true
-has hello true
+has levels true
 ```
 
 `entries()` answers a `List<Directory.Entry>?`: `null` when the folder does not exist or cannot be opened, so a
@@ -927,7 +928,7 @@ slept
 Each system reads its own clock, in its own folder of the library (`QueryPerformanceCounter`,
 `GetSystemTimeAsFileTime` on Windows, `clock_gettime` with `CLOCK_MONOTONIC` and
 `CLOCK_REALTIME`), through `DynamicLibrary`. The operating system writes a reading into a slot in the calling function's frame
-([memory.md](memory.md#where-a-value-lives-memory)),
+([memory.md](memory.md#memory-belongs-to-the-compiler)),
 and Windows' counter frequency, fixed at boot, is read once when `Clock()` is first made. A reading is a `Duration`,
 two `Long`s, exact to the nanosecond on every system; the resolution is the hardware's (100 ns for Windows' usual
 10 MHz counter, 1 ns on Linux and macOS). `clock.elapsed() - started` is the time since `started`, and

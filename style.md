@@ -516,7 +516,7 @@ error for the call it is passed to.
 name, however short the line:
 
 ```gdscript title=constructor_argument_error/label.spite
-var text = ""
+var text: String
 
 func Label(starting_text: String) {
     text = starting_text
@@ -599,7 +599,7 @@ page:
 
 | Written | Is an error naming | Page |
 |---|---|---|
-| `if not ready { return }`, `if names.is_empty() { return null }` | `fallback ready`, `fallback not names.is_empty()` | [failure.md](failure.md#an-if-that-only-returns-the-default-is-an-fallback) |
+| `if not ready { return }`, `if names.is_empty() { return null }` | `fallback ready`, `fallback not names.is_empty()` | [failure.md](failure.md#an-if-that-only-returns-what-a-fallback-returns-is-a-fallback) |
 | a last `if value { ... }` with no `else` | `fallback value` | [failure.md](failure.md#the-last-if-of-a-function) |
 | `var watcher = tracker` then `fallback watcher` | `fallback tracker` | [failure.md](failure.md#narrowing-a-path) |
 | `fallback tracker` on a value that cannot be null | removing it | [failure.md](failure.md#narrowing-a-path) |
