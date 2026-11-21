@@ -1332,7 +1332,7 @@ to rediscover. The rows marked *silent* compile, and do something you did not me
 | `var total: Integer` | `a variable is given its value where it is declared, so write '=' and the value` (a local); for an attribute the constructor never gives a value, `the attribute 'total' has no default, so the constructor gives it its value, but the constructor never gives it one: ...` | `var total = 0`, or an attribute the constructor gives a value on every path |
 | `new Monster()` | `there is no 'new' in Spite` | `Monster()` |
 | `this.name`, `self.name`, `this.helper()` | `a class reads its own attributes and calls its own functions by name: write 'name', not 'this.name'` | `name`, `helper()`; `this` only passes the object itself (`registry.append(this)`) |
-| `import`, `load("folder")` | `there are no imports`; `'load' is a keyword, not a function` | `load "folder"`, a keyword on its own line inside a function |
+| `import`, `require`, `load("folder")` | `there are no imports`; `'load' is a keyword, not a function` | `load "folder"`, a keyword on its own line inside a function; `import "folder"` or `require "folder"` alone on a line inside a function is rewritten to it (`fixed:`) |
 | `elif` | `Spite writes 'else if'` | `else if` |
 | `class Monster { }` | `there is no 'class' keyword: a file is a class` | nothing: the file *is* the class |
 | `func greet(name: String = "world")` | `a parameter is declared 'name: Type', and found '='` | a second function, or an attribute holding the value |

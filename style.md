@@ -121,7 +121,9 @@ What the compiler fixes for you, and what it leaves as an error:
   named anywhere (`Test(Pkg.Tests)`) counts as naming it, and so does a name that starts inside it and does not resolve
   ([packages.md](packages.md#a-loaded-package-is-checked-whole)).
 - **Loads.** A `load` of the standard library the program is compiled with is removed, since every program has it
-  ([programs.md](programs.md#the-standard-library-needs-no-load)).
+  ([programs.md](programs.md#the-standard-library-needs-no-load)). An `import "folder"` or `require "folder"` on a
+  line of its own inside a function becomes `load "folder"`; anywhere else, and `import folder` with no quotes, it
+  stays the error `there are no imports`.
 - **Names.** A local or parameter with one right spelling is renamed, and a keyword one letter off is corrected. A
   file or folder of the program with one right spelling is renamed on the disk, with every `load` that names it
   ([classes_and_files.md](classes_and_files.md#a-misnamed-file-or-folder-is-renamed)).

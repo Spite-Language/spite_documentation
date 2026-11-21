@@ -1,6 +1,8 @@
 # Packages, folders, and mods
 
-There are no imports. Every class is named by the folders it sits in, and a program brings in more by loading folders:
+There are no imports. Every class is named by the folders it sits in, and a program brings in more by loading folders
+(an `import "folder"` or `require "folder"` on its own line inside a function is rewritten to `load "folder"` with a
+`fixed:` line):
 
 ```gdscript
 func Game() {
