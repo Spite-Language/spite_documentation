@@ -744,16 +744,19 @@ that one is freed however the children are used. There is no `Weak<T>` to write,
 error.
 
 A reader that subscribes one of its functions to what it holds (`names.subscribe(changed)` in a `Row` that keeps
-`names`) closes a cycle through the observer, and that one is freed too: a function value handed to `subscribe` or
-`unsubscribe` holds its object without a count when it is made there (`names.subscribe(changed)`, directly or through a
-function that only hands it on), when it is first held in a local that is only handed so (`var act = changed`, then
-`names.subscribe(act)`), and when it is read from an attribute whose default names the class's own function
-(`var act: Spite.Function<ListChange<String>, Nothing> = changed`, below) and handed to `subscribe` or `unsubscribe` of
-a `List`, a `Dictionary` or an `Observer` the class holds in an attribute or gets as a parameter. Once that object is
-freed, `notify` skips it and the observer lets go of its link at its next `notify`, `subscribe` or `unsubscribe`
-([collections.md](collections.md#observer-tells-who-subscribed)). Any other held value keeps its count (one a
-function stored in an attribute, one read from a list, a local also used for something else), so such a cycle leaks
-until one side unsubscribes, and `--debug-memory` names it.
+`names`) closes a cycle through the observer, and that one is always freed: an observer holds every subscribed
+function value without a count on its object, however the value reached `subscribe` (made there, held in a local or
+an attribute, read from a list, kept or answered by another function). Once that object is freed, `notify` skips it
+and the observer lets go of its link at its next `notify`, when a `subscribe` or `unsubscribe` meets it, or at the
+walk a `subscribe` makes whenever the links have doubled ([collections.md](collections.md#observer-tells-who-subscribed)).
+A reader that also keeps its own function value closes a second cycle without the observer, and that one is freed
+when the value is stored into one of the reader's own attributes, by any of its functions (`act = given` in
+`keep(given)`, called as `keep(changed)`), or appended to a `List` the reader holds (`acts.append(changed)`), as long
+as the program never lets it out: every mention of the attribute is a call through it, a narrowing, a store, a `null`
+store or a hand-off to `subscribe`/`unsubscribe`, and every mention of the list is `append`, `insert`, `count`,
+`is_empty`, `clear`, an item called directly or an item kept in a local used only that way; and the compiler makes no
+`copy()` of the class. Any other such value keeps its count (one stored in another object, one read for anything
+else, one a resumable function holds), so its cycle leaks until one side lets go, and `--debug-memory` names it.
 
 ### Two objects linked both ways through one attribute
 

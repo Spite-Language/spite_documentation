@@ -399,12 +399,14 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `reverse`/`truncate`/`remove_where`), `index` and `item` (`T?`); a dictionary's is a `DictionaryChange<Key, Value>`
   (`'added'`, `'set'`, `'removed'`, `'cleared'`, with `key` and `value`). An observer type no code subscribes to costs
   nothing: its `notify` calls and its field are left out, so never guard a `notify` by hand. A subscribed function
-  does not keep its object alive (a `Row` may hold the list it subscribed to), and the link of a freed reader goes at
-  the observer's next `notify`, `subscribe` or `unsubscribe`, when the value is made where it is handed
-  (`names.subscribe(changed)`), held in a local only handed so (`var act = changed`), or an attribute whose default
-  names the class's own function (`var act: Spite.Function<ListChange<String>, Nothing> = changed`) handed to a
-  `List`, `Dictionary` or `Observer` the class holds or gets as a parameter; any other held value (stored by a
-  function, read from a list) keeps its count and such a cycle leaks, so subscribe the function by name.
+  never keeps its object alive, however it reached `subscribe` (a `Row` may hold the list it subscribed to); the link
+  of a freed reader goes at the next `notify`, when a `subscribe`/`unsubscribe` meets it, or at the walk a `subscribe`
+  makes whenever the links doubled. `subscribe` and `unsubscribe` cost the same on average however many are
+  subscribed (an equal one is found by a hash, not by comparing with every link). A reader that also keeps its own
+  function value (`act = given` in `keep(given)` called as `keep(changed)`, or `acts.append(changed)` into a list it
+  holds) is freed while the program only calls, narrows, stores, clears or subscribes that attribute (for the list:
+  `append`/`insert`/`count`/`is_empty`/`clear`, items called directly or kept in a local used only so) and never
+  copies the class; any other use keeps the count and leaks, so subscribe the function by name.
 - A chain of templates, `teams.filter_active().map_leads().sum_age()`, runs as one loop with no list in between.
 - To remove many elements, never call `remove_at` or `remove_swapping` in a loop: `creatures.remove_where_dead()`
   or `numbers.remove_where(is_odd)` removes every one the test is true for in one pass and keeps the rest in

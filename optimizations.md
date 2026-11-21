@@ -71,6 +71,16 @@ subscribes to is the list it was before lists told their changes: the same code,
 `--debug-memory` counts ([collections.md](collections.md#a-list-tells-its-changes)). It is decided per observer type: one
 `subscribe` on any `List<Integer>` keeps the telling in every `List<Integer>`. An inspectable build keeps every observer.
 
+### An observer finds an equal subscriber by its hash
+
+`subscribe` keeps an equal function bound to an equal owner once, and `unsubscribe` finds it, without comparing with
+every subscriber: each link keeps a hash the compiler writes for the function value (which function it is, and the
+owner's whole-number attributes and its texts' lengths when the owner's class uses the given `equals`), and the links
+also form a tree by that hash, so a lookup compares only the few links on one path. An unsubscribed link is a hole
+until the holes outnumber the links, so `subscribe` and `unsubscribe` take the same time on average however many
+functions the observer holds; `notify` still calls them in the order they subscribed. Owners that hash alike (an
+owner with its own `equals`, or two that differ only in other attributes) share a path and are compared one by one.
+
 ### Concurrency machinery only where it is used
 
 The scheduler, the state machines, the thread pool and the table that bounds calls in a row are written for a
