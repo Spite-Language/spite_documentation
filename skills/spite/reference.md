@@ -405,8 +405,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   subscribed (an equal one is found by a hash, not by comparing with every link). A reader that also keeps its own
   function value (`act = given` in `keep(given)` called as `keep(changed)`, or `acts.append(changed)` into a list it
   holds) is freed while the program only calls, narrows, stores, clears or subscribes that attribute (for the list:
-  `append`/`insert`/`count`/`is_empty`/`clear`, items called directly or kept in a local used only so) and never
-  copies the class; any other use keeps the count and leaks, so subscribe the function by name.
+  `append`/`insert`/`count`/`is_empty`/`clear`, items called directly or kept in a local only narrowed and
+  subscribed) and never copies the class; any other use keeps the count and leaks, so subscribe the function by name.
 - A chain of templates, `teams.filter_active().map_leads().sum_age()`, runs as one loop with no list in between.
 - To remove many elements, never call `remove_at` or `remove_swapping` in a loop: `creatures.remove_where_dead()`
   or `numbers.remove_where(is_odd)` removes every one the test is true for in one pass and keeps the rest in

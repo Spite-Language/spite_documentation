@@ -754,7 +754,7 @@ when the value is stored into one of the reader's own attributes, by any of its 
 `keep(given)`, called as `keep(changed)`), or appended to a `List` the reader holds (`acts.append(changed)`), as long
 as the program never lets it out: every mention of the attribute is a call through it, a narrowing, a store, a `null`
 store or a hand-off to `subscribe`/`unsubscribe`, and every mention of the list is `append`, `insert`, `count`,
-`is_empty`, `clear`, an item called directly or an item kept in a local used only that way; and the compiler makes no
+`is_empty`, `clear`, an item called directly or an item kept in a local that is only narrowed and handed to `subscribe`; and the compiler makes no
 `copy()` of the class. Any other such value keeps its count (one stored in another object, one read for anything
 else, one a resumable function holds), so its cycle leaks until one side lets go, and `--debug-memory` names it.
 
