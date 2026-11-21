@@ -735,10 +735,11 @@ a type, not a class, so 'held.class' is never equal to it: ask whether the class
 
 A `switch` case names a class, so a `type` is not a case: in a switch over a union, `Named:` is `'Named' is a type, so
 it is not a case: a case names a class, and a class is never a type: ask whether the class fits it with 'if
-creature.class.satisfies_type(Named)', which narrows 'creature' to that type inside`. A value held as a `type` has no
-closed set of classes, so it is not switched on at all; its error names the same question (`'switch value' chooses
-among values with no closed set, so no case list is ever whole: switch on an enum's values or a union's members, or
-write the choice as 'if' tests, asking 'if value.class.satisfies_type(...)' for a type it may fit`).
+creature.class.satisfies_type(Named)', which narrows 'creature' to that type inside`. A value held as a `type`, `?`
+or not (`Component?` too), has no closed set of classes, so it is not switched on at all; its error names the same
+question (`'switch value' chooses among values with no closed set, so no case list is ever whole: switch on an enum's
+values or a union's members, or write the choice as 'if' tests, asking 'if value.class.satisfies_type(...)' for a
+type it may fit`).
 
 ## An assignment works out its value first
 

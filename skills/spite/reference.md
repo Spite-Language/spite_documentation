@@ -701,7 +701,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   time compares its class with the fitting classes that reach it. A union none of whose members fits is an error.
   `value.class == AnyCustom` (or `!=`) is rewritten to it with a `fixed:` line in an `if`, `while`, `fallback`,
   `return` or local's value, and refused naming it elsewhere. A `switch` case is a class, never a type (`'Named' is a
-  type, so it is not a case: ...`), and a value of a `type` is not switched on: write `if` tests. Ask it of a named
+  type, so it is not a case: ...`), and a value of a `type`, `?` or not (`Component?`), is not switched on: write `if` tests. Ask it of a named
   value: `first_shown().class.satisfies_type(...)` is refused, so hold the answer in a local first.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every
