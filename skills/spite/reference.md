@@ -562,8 +562,11 @@ of the standard library or of a repository pinned to a commit is never rewritten
 - A `type` or a `union` makes no object: `Tag("favourite")` is an error (`'Tag' is a type, so it makes no object: ...`). Make an object of a class that fits it.
 - `union Enemy { Player Monster }`, written one member per line: `switch enemy { Player: ... Monster: { ... } }`
   must cover every member and narrows `enemy` inside each case; a function or attribute every member has can be
-  used on the union directly. Every member is a class of objects: `String`, a number, `Boolean` or `List<Integer>` is
-  refused as a member, so wrap it in a class of your own that keeps it in an attribute. A `type` is never a member
+  used on the union directly. Every member is a class of objects: `String`, a number or `Boolean` is
+  refused as a member, so wrap it in a class of your own that keeps it in an attribute. A class written with its
+  codegen values (`Bunda<Cu>`, `List<Integer>`) is a class of its own and a member like any other: `switch` cases name
+  it with its values (`Bunda<Cu>: ...`), tell `Bunda<Cu>` from `Bunda<Glow>`, narrow to that copy and need a case
+  each. A `type` is never a member
   either, refused at its line (`'Named' cannot be a member of union 'Placed': a union lists classes, and 'Named' is a
   type, a shape a class fits; ...`): list the classes that fit, or take the `type` itself where any class that fits
   will do, since a function taking one is copied for each class (D2504). A union lists classes directly: another union

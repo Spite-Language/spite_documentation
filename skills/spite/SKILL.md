@@ -288,7 +288,9 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   entry class is never generic; put what needs `generic` lines in a class it makes.
 - A union or `type` that two classes of a folder declare alike is moved by the compiler to the folder's class
   (`bunda/bunda.spite`, created if missing); every class inside the folder writes `Pet`, a class outside `Bunda.Pet`.
-- A union lists classes directly: a `type` or another union as a member is an error at its line. Write the
+- A union lists classes directly: a `type` or another union as a member is an error at its line; a class written
+  with its codegen values (`Bunda<Cu>`, `List<Integer>`) is a class of its own and a member like any other, and a
+  `switch` names each copy with its values (`Bunda<Cu>:` and `Bunda<Glow>:` are two cases). Write the
   inner union's classes into the outer one; for a `type`, list the classes that fit, or take the `type` itself where
   any class that fits will do (a function taking one is copied per class). Every member
   error points at the member's own line, and a union in a generic class nothing makes is checked all the same.

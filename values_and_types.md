@@ -1081,8 +1081,63 @@ codegen value bound to a type and code no copy builds alike, or refused where no
 `return`, an assignment and an argument alike: `Monster` fits `Enemy`, and `null` fits the `?`. It fits a plain
 `Enemy` only once narrowed.
 
-A union holds objects whose class a `switch` can test, so `String`, a number class, `Boolean` and a generic class
-such as `List<Integer>` are refused as members: make a class of your own that keeps the value in an attribute.
+A union holds objects whose class a `switch` can test, so `String`, a number class and `Boolean` are refused as
+members: make a class of your own that keeps the value in an attribute. A class written with its codegen values
+(`Bunda<Cu>`, `List<Integer>`) is no generic left open but a class of its own, made with those values, so it is a member
+like any other: a `switch` names it with its values, tells two copies of one generic apart, narrows the value to
+that copy, and wants a case for each.
+
+```gdscript title=union_copies/bunda.spite
+generic $filling
+
+var filling = $filling()
+```
+```gdscript title=union_copies/cu.spite
+var size = 1
+```
+```gdscript title=union_copies/glow.spite
+var shine = 7
+```
+```gdscript title=union_copies/union_copies.spite entry
+union Butt {
+    Bunda<Cu>
+    Bunda<Glow>
+    List<Integer>
+}
+
+var console = Console()
+
+func UnionCopies() {
+    var held = List<Butt>()
+    var plain = Bunda<Cu>()
+    held.append(plain)
+    var bright = Bunda<Glow>()
+    held.append(bright)
+    var numbers = List<Integer>()
+    numbers.append(4)
+    held.append(numbers)
+    held.each(show)
+}
+
+func show(value: Butt) {
+    switch value {
+        Bunda<Cu>: console.print("a cu of size", value.filling.size)
+        Bunda<Glow>: console.print("a glow of shine", value.filling.shine)
+        List<Integer>: show_numbers(value)
+    }
+}
+
+func show_numbers(numbers: List<Integer>) {
+    var count = numbers.count()
+    console.print("numbers", count)
+}
+```
+```output
+a cu of size 1
+a glow of shine 7
+numbers 1
+```
+
 Every mistake in a member, a name that is no class included, is reported at the member's own line, and every union
 is checked where it is written, inside a generic class that nothing makes too.
 

@@ -269,7 +269,9 @@ leaves too, a `T?` switch with its `Null:` first or last included: it may end a 
 for that case, and one with a case that does not leave still reaches the function's end. A member is its whole
 class, never its last name: a union holding `First.Item` and `Second.Item` needs a case for each, and a switch naming
 only `First.Item` is `this switch over 'Held' has no case for Second.Item`, the member named by as much of its path
-as tells it from the others. A case is one statement:
+as tells it from the others. A member written with its codegen values is its own class too: a union holding
+`Bunda<Cu>` and `Bunda<Glow>` has a case for each, named with its values, and leaving one out is `... has no case for
+Bunda<Glow>` ([values_and_types.md](values_and_types.md#unions)). A case is one statement:
 when a member needs more than that, the case calls a function named for what it does, so a switch reads as a list of what happens to each member.
 
 ```gdscript title=switch_cases/cat.spite
