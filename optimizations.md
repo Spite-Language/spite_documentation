@@ -75,7 +75,8 @@ subscribes to is the list it was before lists told their changes: the same code,
 
 `subscribe` keeps an equal function bound to an equal owner once, and `unsubscribe` finds it, without comparing with
 every subscriber: each link keeps a hash the compiler writes for the function value (which function it is, and the
-owner's whole-number attributes and its texts' lengths when the owner's class uses the given `equals`), and the links
+owner's whole-number attributes that only its constructors set, when the owner's class uses the given `equals`, so a
+reader that changed is still found), and the links
 also form a tree by that hash, so a lookup compares only the few links on one path. An unsubscribed link is a hole
 until the holes outnumber the links, so `subscribe` and `unsubscribe` take the same time on average however many
 functions the observer holds; `notify` still calls them in the order they subscribed. Owners that hash alike (an
