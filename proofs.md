@@ -709,7 +709,7 @@ none has a fallback beyond the error it gives.
 
 Not proven anywhere, so write the check or accept the run-time report: how deep recursion goes (a stack overflow is
 a [native fault report](failure.md#what-a-native-fault-reports)); unreachable code after a `return`; a reference
-cycle the compiler cannot read a back reference in, which leaks ([memory.md: Cycles are freed](memory.md#cycles-are-freed)); and two threads writing one number attribute of an instance they share.
+cycle in a program that runs work on threads, which keeps its counts ([memory.md: Cycles are freed](memory.md#cycles-are-freed)); and two threads writing one number attribute of an instance they share.
 
 ---
 

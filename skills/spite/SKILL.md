@@ -211,14 +211,16 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   plain `var parent: Parent` frees only when no child outlives its parent: made by it (`Child(name, this)`), kept only
   in its list, used only while the parent is held by `this`, a parameter or an outer-block local never assigned again;
   never returned, stored elsewhere, copied or handed to a function value, and neither class's `drop()` reads the list
-  or `parent`. Anything else leaks. Two objects made side by side and linked to each other directly are freed when
+  or `parent`. Every other cycle is freed too, with nothing written or cleared: the compiler marks where a cycle can be
+  closed and frees it at the drop point that lets it go, all its `drop()`s before any of its memory (a program that runs
+  work on threads keeps such counts for now). Two objects made side by side and linked to each other directly are freed when
   neither leaves that function, through one `partner` attribute both ways too (the compiler clears the slot that
   closed the cycle as the names go, so that `drop()` sees `null`), and so is a pair where one is reached through an
   attribute of an object the function made (`last.first`) and the other is held by an outer-block `var`, even when
   another function links them, as long as nothing the function made leaves it and that function is called nowhere
   else (the one reached through the attribute points back); when one leaves it, another function called from
   elsewhere too links them, or a function that calls itself links the pair the other way one attribute deeper, the
-  pair leaks until one side is cleared. A function that calls itself one attribute deeper each call (`pair_down(link.next, second)`) links a pair
+  pair is freed by that count instead. A function that calls itself one attribute deeper each call (`pair_down(link.next, second)`) links a pair
   like any other function. An attribute whose default names its own function (`var act:
   Spite.Function<Nothing> = rest`) is freed with its object when it is only called, narrowed or set to `null`;
   `copy()` binds the copy's value to the copy. Freeing takes no stack per level: a structure a million levels deep

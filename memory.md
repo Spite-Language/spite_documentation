@@ -650,9 +650,11 @@ whether it can be freed. Only a structure deep through what function values hold
 ## Cycles are freed
 
 Two objects that hold each other, directly or through several hops, would keep each other's count above zero. You never
-write a special reference for that: a parent that owns its children and a child that knows its parent are plain
-references, and the compiler decides which reference of the cycle holds no count, from how the program links its
-objects. A child's `parent` is the usual case: the parent makes the child with `Child(child_name, this)`, the
+write a special reference for that, nothing is refused for it, and every cycle a program writes is freed: a parent
+that owns its children and a child that knows its parent are plain references, and the compiler picks, place by
+place, the cheapest way that frees the cycle. Where it reads from how the program links its objects which reference
+of the cycle can hold no count, the cycle is freed exactly where its owner goes; every other cycle is freed by a count
+that knows the cycle ([below](#every-other-cycle-is-freed-by-a-count-that-knows-it)). A child's `parent` is the usual case: the parent makes the child with `Child(child_name, this)`, the
 constructor stores the parent in `parent`, and the parent stores the child in `children`, so the compiler reads
 `parent` as the back reference and the cycle is freed with its owner.
 
@@ -712,9 +714,7 @@ object go: after `child.parent.leave()` drops the last other holder of the paren
 that leans on the earlier `crash child.parent` stops the program with `'Child.parent' was proven present, but its
 object was freed since, and a back reference holds no count: prove it again after the call that lets it go`. A call
 on the back reference itself, `child.parent.leave()`, always runs on a live object, which is freed when the call
-returns. Everything above is freed when `visit` returns, which is what `--debug-memory`, below, checks: a cycle the
-program links in a way the compiler cannot read keeps its counts and shows up there as leaked objects by class. Then
-clear the `T?` field that closes the loop when you are done with it. The compiler picks the back reference of a cycle
+returns. Everything above is freed when `visit` returns, which is what `--debug-memory`, below, checks. The compiler picks the back reference of a cycle
 from how the code links its objects: one function that sets `child.parent = owner` and stores the child in the
 owner's list (or in one of its attributes, or in a dictionary) is the link, and so is a pair of functions that
 together do both, however many calls deep and through however many attributes
@@ -730,8 +730,8 @@ constructor made) and the other is held by a `var` of the function's outer block
 function it calls (`pair_down(head, second, 2)`), when nothing the function makes leaves it and every call of the
 linking function is one such: the object reached through the attribute points back, so a `drop()` that runs as the
 names go may read its back attribute as `null`. Two such objects linked through one
-attribute both ways are freed the same way, below. Some cycles keep their counts and leak, since nothing proves
-which side outlives the other: such a pair where one of them leaves its function (`return answer`), a pair linked
+attribute both ways are freed the same way, below. Some cycles keep their counts, since nothing proves which side
+outlives the other, and the count that knows the cycle frees them: such a pair where one of them leaves its function (`return answer`), a pair linked
 both ways through one attribute by another function (`first.join(second)` beside `second.join(first)`), a pair
 reached through attributes on both sides, or whose linking function is also called elsewhere, a pair a
 function that calls itself may link the other way one attribute deeper (the deeper calls closing a link the
@@ -739,8 +739,7 @@ program also makes the other way round), and a back attribute that cannot be nul
 ([below](#a-parent-that-cannot-be-null)). A back attribute may hold a union or a `type`
 (`var holder: Holder? = null` with `union Holder { Drive Shelf }`) when every class it may hold links back that way:
 each class of the union, or for a `type` each class of the program that declares all of its members, so one class
-that fits the `type` and never holds the child keeps the attribute counted. Keep the back attribute nullable (`T?`):
-that one is freed however the children are used. There is no `Weak<T>` to write, and naming one is an unknown-type
+that fits the `type` and never holds the child keeps the attribute counted. There is no `Weak<T>` to write, and naming one is an unknown-type
 error.
 
 A reader that subscribes one of its functions to what it holds (`names.subscribe(changed)` in a `Row` that keeps
@@ -756,7 +755,7 @@ as the program never lets it out: every mention of the attribute is a call throu
 store or a hand-off to `subscribe`/`unsubscribe`, and every mention of the list is `append`, `insert`, `count`,
 `is_empty`, `clear`, an item called directly or an item kept in a local that is only narrowed and handed to `subscribe`; and the compiler makes no
 `copy()` of the class. Any other such value keeps its count (one stored in another object, one read for anything
-else, one a resumable function holds), so its cycle leaks until one side lets go, and `--debug-memory` names it.
+else), and its cycle is freed by the count that knows it.
 
 ### Two objects linked both ways through one attribute
 
@@ -808,7 +807,8 @@ the pair is gone
 ```
 
 A pair linked by calls of another function, made in two blocks, held under a second name, or one of whose objects
-leaves its function keeps its counts and leaks, which `--debug-memory` names; clear one side when you are done.
+leaves its function keeps its counts, and the count that knows the cycle frees it
+([below](#every-other-cycle-is-freed-by-a-count-that-knows-it)).
 
 ### A parent that cannot be null
 
@@ -886,24 +886,87 @@ linus is freed
 the family is gone
 ```
 
-Anything else keeps the counts, and every family of those classes leaks, which `--debug-memory` names: a child
+Anything else keeps the counts, and the count that knows the cycle frees the family
+([below](#every-other-cycle-is-freed-by-a-count-that-knows-it)): a child
 returned, stored in an attribute or in a list of its own, bound in or handed to a function value, or carried as a
 union or a `type`; the list kept in a local or copied; a child that adds itself to its parent's list; a `copy()` or
 `deep_copy()` of either class; a `drop()` of either class that reads the parent's list or the back attribute, or calls
 a function of its own class. One such use anywhere in the program keeps the attribute counted everywhere, and no child
-is ever freed while something still reads it. When you need any of those, write `var parent: Parent?`.
+is ever freed while something still reads it.
+
+### Every other cycle is freed by a count that knows it
+
+A cycle the compiler does not read as one of the forms above is still freed, and nothing is written for it. The
+compiler finds while compiling every store that can close a cycle (an attribute or a list slot of an object whose
+class can, through the classes it holds, hold an object of its own kind), and only the objects those stores write into
+count in a way that knows the cycle. Where a function lets go of a local that may be part of such a cycle (the drop
+point), the compiler checks the cycles those objects are in, and frees every one that nothing outside it holds any
+more: first each of their `drop()`s runs, while all of them are still there to read, then their memory goes. Checking
+costs about as much as what it walks, so a small cycle is freed at the drop point that let it go, and a large structure
+is checked once for every time its size in objects has been let go; the end of the program frees whatever is left.
+Objects that can never be in a cycle pay nothing.
+
+```gdscript title=joined_pair_doc/person.spite
+var console = Console()
+var partner: Person? = null
+var name: String
+
+func Person(new_name: String) {
+    name = new_name
+}
+
+func join(other: Person) {
+    partner = other
+}
+
+func drop() {
+    if partner {
+        console.print(name, "is freed, still with", partner.name)
+    } else {
+        console.print(name, "is freed alone")
+    }
+}
+```
+```gdscript title=joined_pair_doc/joined_pair_doc.spite entry
+var console = Console()
+
+func JoinedPairDoc() {
+    pair_up()
+    console.print("the pair is gone")
+}
+
+func pair_up() {
+    var first = Person("ann")
+    var second = Person("bob")
+    first.join(second)
+    second.join(first)
+    console.print(first.name, "and", second.name, "are partners")
+}
+```
+```output
+ann and bob are partners
+bob is freed, still with ann
+ann is freed, still with bob
+the pair is gone
+```
+
+The same holds for a function value an object keeps that is bound to another object which holds it back
+(`box.act = row.changed` beside `row.box = box`), a list item set by index (`acts[0] = changed`), a function value read
+for anything else, a class the compiler copies, a ring of a hundred thousand links, and a child that adds itself to
+its parent's list. A program that runs work at once on threads does not free such cycles yet: they keep their counts
+until one side lets go, and `--debug-memory` names them.
 
 ## `--debug-memory`
 
 `spite --debug-memory` builds with an allocation table and prints `allocations: N frees: N` right before
 the program exits. A mismatch means something leaked; when the two do not balance, it also prints a
 **leaked-object summary by class name**, naming which classes' instances are still alive, which is what makes a
-leaked cycle visible instead of an unexplained count. Every program on these pages is run this way, and must
+leaked object visible instead of an unexplained count. Every program on these pages is run this way, and must
 balance. It also fills every byte it hands out that nobody has written yet with the same pattern, so a program that
 reads memory it never wrote fails the same way on every run and in every environment, instead of reading whatever
 the heap held. The table exists only in a `--debug-memory` build, so the other builds carry none of it. The summary looks like this for
-two people who join each other through one `partner` attribute in a function of their class (`first.join(second)`
-beside `second.join(first)`), a cycle the compiler does not read:
+two people who join each other through one `partner` attribute (`first.join(second)` beside `second.join(first)`) in
+a program that runs work at once on threads, whose cycles are not freed yet:
 
 ```
 spite: --debug-memory: 2 allocation(s) leaked

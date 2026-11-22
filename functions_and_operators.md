@@ -131,8 +131,8 @@ hands it to `subscribe` or `unsubscribe` of a `List`, `Dictionary` or `Observer`
 ([memory.md](memory.md#cycles-are-freed)), it holds the object without a count, so the object is freed when its last other holder goes and the value goes with
 it. A call through it holds the object for the call, so a call that lets go of the object's last other holder still
 runs on a live object, freed when the call returns. `copy()` and `deep_copy()` bind the copy's value to the copy. Read
-for anything else (stored, passed, returned), it keeps its count, and the cycle leaks like any other until one side
-is cleared (see [memory.md](memory.md#cycles-are-freed)).
+for anything else (stored, passed, returned), it keeps its count, and the cycle is freed like any other by the count
+that knows it (see [memory.md](memory.md#every-other-cycle-is-freed-by-a-count-that-knows-it)).
 
 ```gdscript title=own_function_default_doc/holder.spite
 var console = Console()

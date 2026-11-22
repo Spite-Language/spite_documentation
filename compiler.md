@@ -335,7 +335,7 @@ checked in the copies made for what it is handed, never on its own.
 
 `--debug-memory` builds the program with a table of live allocations and prints `allocations: N frees: N` when it ends.
 The two numbers differ only when something leaked, and then the report names the classes whose instances are
-still alive, which is how a leaked cycle shows up ([memory.md](memory.md#cycles-are-freed)). The table costs a
+still alive, which is how a cycle a program with threads keeps shows up ([memory.md](memory.md#cycles-are-freed)). The table costs a
 lookup on every allocation and free, and exists only in a `--debug-memory` build: any other build
 keeps no table.
 
