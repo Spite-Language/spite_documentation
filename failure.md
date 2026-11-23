@@ -946,15 +946,15 @@ func announce() {
 Aria
 ```
 
-A narrowing `if` with an `else`, or one that is not the function's last statement, is ordinary code.
+A narrowing `if` with an `else`, or one that is not the function's last statement, is ordinary code, and so is the
+last `if` of a constructor, which takes no `fallback`: the compiler leaves it as it is.
 
 ### `fallback` is not allowed in a constructor
 
 A constructor is setup, not logic. If something can be invalid inside one, logic has been put where only setup
 belongs, and the caller would receive an object with every field at its default that it cannot tell from a
-properly built one. So `fallback` in a constructor is an error, and so is an `if` that only leaves it, or an `if`
-with no `else` that ends it (which a function would turn into a `fallback`); the message names `crash` for when
-absence there is a bug:
+properly built one. So `fallback` in a constructor is an error, and so is an `if` that only leaves it; the message
+names `crash` for when absence there is a bug:
 
 ```gdscript title=constructor_assert_error/constructor_assert_error.spite entry error
 var console = Console()

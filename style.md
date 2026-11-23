@@ -113,7 +113,7 @@ What the compiler fixes for you, and what it leaves as an error:
   on what was narrowed, and a later proof may still take that back (a call between the check and a read, a loop's
   next pass): when one does, the compile fails with those lines as you wrote them.
 - **Shapes with one short form.** A last `if` that only checks a value becomes `fallback` (except in a constructor,
-  where it is an error), an `if` that only returns the default becomes `fallback`, and an `else if` that only returns
+  which takes no `fallback`, where it stays as it is), an `if` that only returns the default becomes `fallback`, and an `else if` that only returns
   is hoisted to a `fallback` above its `if` when one choice fits. A copy made only to narrow goes and its uses name
   what it copied. Statements after a `return` go.
 - **Unused things with no effect.** An unread local or attribute, or a `load` nothing names, whose value and writes do

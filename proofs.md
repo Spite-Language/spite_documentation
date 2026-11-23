@@ -233,7 +233,8 @@ See [Nothing fails silently](failure.md#nothing-fails-silently).
 - **Rule**: a `fallback` returns what the function's answer type builds with no arguments: nothing, `null`, an empty
   collection, `0`, `false`, `""`, or the object of a class made with no arguments. It is refused where the answer
   type has no such value (an enum, a class made with arguments, a singleton) and in a constructor. An `if` that only
-  returns that value, or a last `if` with no `else` that only checks presence, is refused naming the `fallback`.
+  returns that value, or a last `if` with no `else` that only checks presence, is refused naming the `fallback`,
+  except the last `if` of a constructor, which takes no `fallback` and stays as it is.
 - **Falls back**: refused: `'fallback' returns what the answer type builds with no arguments, and a ... has none`.
   Answer a `T?`, or use `crash`.
 
