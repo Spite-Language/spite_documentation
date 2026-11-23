@@ -676,7 +676,12 @@ func Holder(start: Integer) {
 `Holder(start)` makes neither the default list nor the default text. It applies to an attribute the constructor
 assigns in its own body outside any `if` or loop before any statement that reads it or passes `this` on, when the
 default is quiet: a constant, a text, or an object whose making assigns only its own attributes and whose class has
-no `drop()`. What you can observe: fewer allocations.
+no `drop()`. A making that does more is quiet too when the compiler can run it to its end while compiling, on what it
+makes itself: `var layout = Layout(no_program)` beside `var no_program = ProgramModel()` loops over the program's
+classes, writes its own dictionaries and holds a `crash`, but the program it is handed was just made empty, so every
+loop stops at once and the `crash` is never reached. The run gives up, and the default is made, at a condition it
+cannot decide, a write or call on anything it did not make, a `crash` it reaches, output, a foreign call or a
+singleton called. What you can observe: fewer allocations.
 
 ### A default replaced right after its making is never made
 
