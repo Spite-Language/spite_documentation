@@ -945,16 +945,16 @@ func pair_up() {
 ```
 ```output
 ann and bob are partners
-bob is freed, still with ann
 ann is freed, still with bob
+bob is freed, still with ann
 the pair is gone
 ```
 
 The same holds for a function value an object keeps that is bound to another object which holds it back
 (`box.act = row.changed` beside `row.box = box`), a list item set by index (`acts[0] = changed`), a function value read
 for anything else, a class the compiler copies, a ring of a hundred thousand links, and a child that adds itself to
-its parent's list. A program that runs work at once on threads does not free such cycles yet: they keep their counts
-until one side lets go, and `--debug-memory` names them.
+its parent's list. In a program that runs work at once on threads, such a cycle keeps its counts until one side lets go,
+and `--debug-memory` names it.
 
 ## `--debug-memory`
 
@@ -966,7 +966,7 @@ balance. It also fills every byte it hands out that nobody has written yet with 
 reads memory it never wrote fails the same way on every run and in every environment, instead of reading whatever
 the heap held. The table exists only in a `--debug-memory` build, so the other builds carry none of it. The summary looks like this for
 two people who join each other through one `partner` attribute (`first.join(second)` beside `second.join(first)`) in
-a program that runs work at once on threads, whose cycles are not freed yet:
+a program that runs work at once on threads, where such a cycle keeps its counts:
 
 ```
 spite: --debug-memory: 2 allocation(s) leaked

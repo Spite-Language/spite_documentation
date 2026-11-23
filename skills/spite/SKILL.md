@@ -212,8 +212,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   in its list, used only while the parent is held by `this`, a parameter or an outer-block local never assigned again;
   never returned, stored elsewhere, copied or handed to a function value, and neither class's `drop()` reads the list
   or `parent`. Every other cycle is freed too, with nothing written or cleared: the compiler marks where a cycle can be
-  closed and frees it at the drop point that lets it go, all its `drop()`s before any of its memory (a program that runs
-  work on threads keeps such counts for now). Two objects made side by side and linked to each other directly are freed when
+  closed and frees it at the drop point that lets it go, all its `drop()`s before any of its memory (in a program that
+  runs work on threads such a cycle keeps its counts). Two objects made side by side and linked to each other directly are freed when
   neither leaves that function, through one `partner` attribute both ways too (the compiler clears the slot that
   closed the cycle as the names go, so that `drop()` sees `null`), and so is a pair where one is reached through an
   attribute of an object the function made (`last.first`) and the other is held by an outer-block `var`, even when
