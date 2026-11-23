@@ -225,13 +225,14 @@ func record() {
 }
 ```
 
-That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`. A copy read after a call or a write through another object that may change `tracker` is another thing, since it keeps the value the call may take away: it stays as written. So does a local holding what a call answers, `var held = thing.pop().held`, or what a getter that may write something answers, `var reading = thing.reading`: naming the source again would call again.
+That compiles, with `fixed: 'watcher' only copied 'tracker' so it could be narrowed; narrowed 'tracker' itself and used it directly`. A copy read after a call or a write through another object that may change `tracker` is another thing, since it keeps the value the call may take away: it stays as written. A call handed `tracker`'s holder, anything on the copied path, as an argument or the receiver (`clean(bunda)` or `bunda.clean()` after `var cu = bunda.cu`), counts as one that may change it in every program, whatever this one makes the call reach, so that copy stays too; a call handed only the copy (`clean(cu)`) is followed as usual. So does a local holding what a call answers, `var held = thing.pop().held`, or what a getter that may write something answers, `var reading = thing.reading`: naming the source again would call again.
 
 A check on something that cannot be null proves nothing: `fallback tracker` written twice, or a `fallback` on a
 plain `Tracker`. On a line of its own the compiler removes it and names the check that already proved it ("fixed:
 'tracker' was already narrowed by 'fallback tracker' on line 8; removed this check"), whatever the type, text and
 numbers included. An `if` on it becomes the code it runs, "fixed: 'number' was already narrowed by 'if number' on line 18; removed
 the 'if' and kept the code it runs". In a `while` condition it is an error with the same words, ending in "remove this check".
+A check after a call handed anything on its path (`fallback bunda.cu` again after `clean(bunda)`) is a new proof and stays, in every program.
 
 ### A call may undo a proof
 

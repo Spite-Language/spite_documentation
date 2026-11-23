@@ -657,7 +657,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `T` or `Null`, still a null pointer or flag in memory). `null` is never compared against: `value == null` is an error.
   `value.class == Null` works but is rewritten (`fixed:`) to `if not value` in an `if` or `while`; write that form. Two `T?` values compare without narrowing, and two missing ones are equal.
   Narrow the name or the path itself (`fallback target`, `fallback target.weapon`), never a local copied from it,
-  which is an error. Only a path with no call in it narrows: after `if thing.pop().held`, a second `thing.pop().held`
+  which is an error (rewritten with a `fixed:` line in a program's own file). A local read past a call handed anything on
+  the copied path, as an argument or the receiver (`clean(bunda)` or `bunda.clean()` after `var cu = bunda.cu`), keeps a
+  value and stays as written in every program, whatever the call reaches; a call handed only the local (`clean(cu)`) is
+  followed like any call. Only a path with no call in it narrows: after `if thing.pop().held`, a second `thing.pop().held`
   calls again and is still a `T?`, so write `var held = thing.pop().held` and narrow `held` (a local holding a call's
   answer is not a copy). A getter path (`thing.reading`) narrows while `get_reading` only reads, until a call or a
   write may assign what it reads; a getter that may write anything is refused on its second read
