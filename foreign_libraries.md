@@ -262,7 +262,8 @@ func drop() {
 This holds when the callback is made from a function of the object itself (`report` or `this.report`) and kept
 only in its attributes, directly or through the local it was made in, and nothing reads it but `.address` and
 `.context`. A `ForeignCallback` the program also hands anywhere else (a list, another object, a return) keeps its
-owner alive as before, and `--debug-memory` shows the two as leaked until one lets go. An attribute holding a
+owner alive with a count as before, and the two are a cycle like any other, freed once nothing else holds them
+([memory.md](memory.md#every-other-cycle-is-freed-by-a-count-that-knows-it)). An attribute holding a
 `ForeignCallback` counts as read, since
 keeping it is what it is for. After one is dropped, a late call from C stops the program with a message naming the
 function and the line that made the `ForeignCallback`, so the owner's `drop()` must still tell C to stop first: the

@@ -953,8 +953,10 @@ the pair is gone
 The same holds for a function value an object keeps that is bound to another object which holds it back
 (`box.act = row.changed` beside `row.box = box`), a list item set by index (`acts[0] = changed`), a function value read
 for anything else, a class the compiler copies, a ring of a hundred thousand links, and a child that adds itself to
-its parent's list. In a program that runs work at once on threads, such a cycle keeps its counts until one side lets go,
-and `--debug-memory` names it.
+its parent's list. A program that runs work at once on threads frees them the same way: the check runs where no
+other thread runs the program's code, so a cycle a band of a loop leaves behind, or one a waiting call lets go, is
+freed at the next drop point of the program's own thread, and at the end at the latest. A function C calls from a
+thread of its own (a `ForeignCallback`) waits at its start while a check walks, which takes as long as what it walks.
 
 ## `--debug-memory`
 
@@ -964,9 +966,9 @@ the program exits. A mismatch means something leaked; when the two do not balanc
 leaked object visible instead of an unexplained count. Every program on these pages is run this way, and must
 balance. It also fills every byte it hands out that nobody has written yet with the same pattern, so a program that
 reads memory it never wrote fails the same way on every run and in every environment, instead of reading whatever
-the heap held. The table exists only in a `--debug-memory` build, so the other builds carry none of it. The summary looks like this for
-two people who join each other through one `partner` attribute (`first.join(second)` beside `second.join(first)`) in
-a program that runs work at once on threads, where such a cycle keeps its counts:
+the heap held. The table exists only in a `--debug-memory` build, so the other builds carry none of it. Since every cycle
+is freed, a program written in Spite balances; the summary is there for a fault of the compiler or of the standard
+library, and looks like this when two `Person` objects are still alive at the end:
 
 ```
 spite: --debug-memory: 2 allocation(s) leaked
