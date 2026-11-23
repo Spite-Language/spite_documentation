@@ -1497,6 +1497,10 @@ one everywhere but around that call, so a loop whose rare path grows a buffer ke
 registers on the path it takes every time and stores them only on the way into the call. A crash report reads each
 number from wherever it lives.
 
+Values whose lives do not overlap share a slot in the frame, so a frame holds only as many slots as values are
+live at once, not one per value the function ever made: a function that inlined much and calls itself deep needs
+little stack. What you can observe: less stack, so a recursion that ran out of it may now finish.
+
 ### A decimal lives in a decimal register
 
 A `Float` or `Double` value of a function that does not wait lives in one of the processor's decimal registers when
