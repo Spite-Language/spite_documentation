@@ -821,6 +821,33 @@ whose holes are texts, `Integer`s or `Long`s, in a program where the literals ab
 interpolation on the left of `==` needs a name, `this` or a literal on the right. What you can observe: fewer
 allocations under `--debug-memory` for an interpolation longer than 47 bytes, and the time; the answer is the same.
 
+### A text that only ever holds literals is compared by its address
+
+Every distinct literal is laid out once in the program's data (see above), so its address is its number: two such
+texts are equal exactly when they are the same object. Where the compiler proves that both sides of `==` or `!=`
+only ever hold literals, the comparison is one compare of two addresses instead of a walk over the bytes. It follows
+a text through names, parameters every caller hands such a text, answers, attributes, the items of a list and the
+values of a dictionary, so a site recorded in a list and compared with the next one is written plainly:
+
+```spite
+var seen = List<String>()
+
+func noted(site: String): Boolean {
+    var last = seen.last()
+    if last == site {
+        return false
+    }
+    seen.append(site)
+    return true
+}
+```
+
+When every caller hands `noted` a literal, `last == site` compares two addresses. Wherever the text itself is
+read (printed, joined, measured, sliced or handed to code that takes any `String`) it is the literal, as before. A
+text that may hold anything else (a join, a slice, a text read from a file, a `String()`, a text that went through
+a union, a function value, a shape or a foreign call) is compared byte by byte. It applies where the literals live in
+the program's data. What you can observe: the time; the answer is the same.
+
 ### Bytes are copied in one block
 
 The library's text and bytes functions (`slice`, `sum`, `replace`, `split`, `trim`, `upper_case`, `to_buffer`,
