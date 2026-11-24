@@ -679,9 +679,11 @@ default is quiet: a constant, a text, or an object whose making assigns only its
 no `drop()`. A making that does more is quiet too when the compiler can run it to its end while compiling, on what it
 makes itself: `var layout = Layout(no_program)` beside `var no_program = ProgramModel()` loops over the program's
 classes, writes its own dictionaries and holds a `crash`, but the program it is handed was just made empty, so every
-loop stops at once and the `crash` is never reached. The run gives up, and the default is made, at a condition it
-cannot decide, a write or call on anything it did not make, a `crash` it reaches, output, a foreign call or a
-singleton called. What you can observe: fewer allocations.
+loop stops at once and the `crash` is never reached. The run follows the standard library's own code for lists,
+dictionaries, texts and buffers as it follows yours, so a class of your own that keeps its items in a `Buffer` is
+followed the same way; it knows a text literal's length and bytes. The run gives up, and the default is made, at a
+condition it cannot decide, a write or call on anything it did not make, a write into a text literal, a `crash` it
+reaches, output, a foreign call, a wait or a singleton called. What you can observe: fewer allocations.
 
 ### A default replaced right after its making is never made
 
