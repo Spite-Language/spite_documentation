@@ -884,6 +884,15 @@ one key. What you can observe: the time, one allocation for the table once it ho
 and `to_debug()` answering in insertion order as always. A read written twice (`if counts[word] { total = total +
 counts[word] }`) still looks the key up twice.
 
+### A dictionary whose keys are only ever literals hashes their addresses
+
+When every key any dictionary of one `Dictionary<String, V>` of the program is ever set or asked with is a literal
+(through names, parameters, attributes, list items and dictionary values, as for the comparison above), that
+dictionary type hashes a key by its address with one multiply and compares two keys by their addresses, instead
+of walking their bytes. One key from anywhere else (a join, a text read from a file) keeps the whole type hashing
+bytes. The order is the order the keys were first set, as always, so `keys()`, `values()`, `each` and `to_debug()`
+answer the same. What you can observe: the time.
+
 ## Arithmetic and checks
 
 Every whole-number `+`, `-` and `*` halts when its answer does not fit its type, every read of a list halts outside
