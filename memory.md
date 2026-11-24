@@ -904,7 +904,7 @@ point), the compiler checks the cycles those objects are in, and frees every one
 more: first each of their `drop()`s runs, while all of them are still there to read, then their memory goes. Checking
 costs about as much as what it walks, so a small cycle is freed at the drop point that let it go, while a program
 that holds a large structure of such objects checks it ever more rarely as it grows, and at the latest once those
-objects have doubled, so what waits to be freed is never more than what lives; the end of the program frees whatever
+objects have grown fourfold, so what waits to be freed is at most three times what lives; the end of the program frees whatever
 is left.
 Objects that can never be in a cycle pay nothing, and neither does a store into an object nothing else holds yet:
 a tree a function builds by making a node and appending its children before it hands the node on, a list a
