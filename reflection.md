@@ -910,8 +910,8 @@ object, so nothing in it can be called by itself.
 | `.returns` | exactly the answer it declares: a `Spite.Class` for a class (`Integer?` too), a `Spite.Union` for a union and for `Nothing` (the empty union, also when none is declared), a `Spite.Type` for a `type`. `.name` and `.name_with_outer_classes` are read on any of them, and `declared.returns == Integer` or `== Nothing` compares it | `alive.returns` is `Boolean` |
 | `.is_resumable` | it can reach a wait (a sleep, a file or socket read), so it is also compiled as a state machine that can pause there and be resumed ([concurrency.md](concurrency.md)) | `load_each.is_resumable` |
 | `.returned_literal` | the text literal it returns | `greeting.returned_literal` is `grr` |
-| `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code reads, in declaration order | `update_each.reads.map_names()` |
-| `.writes` | a `List<Spite.AttributeDeclaration>`: every attribute of its class its code writes | `update_each.writes.count()` |
+| `.reads` | a `List<Spite.AttributeDeclaration>`: every attribute its code reads, of its own class and of the others it reaches through calls ([below](#what-a-function-reads-and-writes)) | `update_each.reads.map_names()` |
+| `.writes` | a `List<Spite.AttributeDeclaration>`: every attribute its code writes, the same way | `update_each.writes.count()` |
 | `.source_file` | the `File` it is written in: the reopening's file for a function a reopening declares | `alive.source_file.path` |
 | `.hole`, `.index` | in a template over functions: the text that stands in the function's name for the template's word, and its place | `phase.hole` is `update` |
 
@@ -993,11 +993,12 @@ has no value: declare the parameter 'Spite.AttributeDeclaration', or walk an ins
 
 ### What a function reads and writes
 
-`function.reads` and `function.writes` answer the attributes of its class that its code reads and writes, as
-`Spite.AttributeDeclaration`s in declaration order. Both follow every call to a function of the same class, however
-deep, so `remember()` below writes `trail` for `update_each`. Calling a function on an attribute
-(`trail.append(position)`) reads it, and writes it when that function changes the object it is called on. What a
-function does with an argument is the argument's own `.is_mutated`.
+`function.reads` and `function.writes` answer the attributes that its code reads and writes, as
+`Spite.AttributeDeclaration`s: those of its own class first, in declaration order, then those of every other class
+of the program and its packages, class by class in the order of their names, each in declaration order. Both follow
+every call however deep, on any object, so `remember()` below writes `trail` for `update_each`. Calling a function
+on an attribute (`trail.append(position)`) reads it, and writes it when that function changes the object it is
+called on. What a function does with an argument is the argument's own `.is_mutated`.
 
 ```gdscript title=access_report/movement.spite
 var position = 0
@@ -1039,6 +1040,76 @@ reads speed
 reads trail
 writes: position, trail
 2
+```
+
+A call into another class adds what that function reads and writes, on whatever object it runs: `render` below reads
+`name` and `health` of `Character` through `character.describe()`, and `hit` writes `health` and `log` through
+`character.hurt(1)` (and `character`, the attribute it called a changing function on). Through a `type`, a call
+reaches every class that fills it, and a function handed to a call (`items.each(describe)`) counts as called there.
+The standard library's own attributes are never listed, and a call through a function value kept in an attribute
+or a list is not followed.
+
+```gdscript title=reads_across/character.spite
+var name = "Hero"
+var health = 10
+var armor = 2
+var log = List<String>()
+
+func describe(): String {
+    return "{name} ({health})"
+}
+
+func hurt(amount: Integer) {
+    health = health - amount
+    log.append("hurt")
+}
+```
+```gdscript title=reads_across/nameplate.spite
+var character = Character()
+var color = "white"
+
+func render(): String {
+    var described = character.describe()
+    return "{described} in {color}"
+}
+
+func hit() {
+    character.hurt(1)
+}
+```
+```gdscript title=reads_across/reads_across.spite entry
+var console = Console()
+
+func ReadsAcross() {
+    var render = Nameplate.functions["render"]
+    crash render
+    render.reads.each(describe_read)
+    var hit = Nameplate.functions["hit"]
+    crash hit
+    hit.writes.each(describe_write)
+    var plate = Nameplate()
+    plate.hit()
+    var rendered = plate.render()
+    console.print(rendered, plate.character.armor)
+}
+
+func describe_read(attribute: Spite.AttributeDeclaration) {
+    console.print("reads", attribute.name, attribute.class)
+}
+
+func describe_write(attribute: Spite.AttributeDeclaration) {
+    console.print("writes", attribute.name)
+}
+```
+```output
+reads character Character
+reads color String
+reads name String
+reads health Integer
+writes character
+writes health
+writes log
+Hero (9) in white 2
 ```
 
 A function known only at run time answers the same lists: one kept in a list and read later, a function value

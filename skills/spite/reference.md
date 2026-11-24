@@ -900,7 +900,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   refused: no function takes an attribute of any value (D2638).
 - Questions are get-only attributes, folded on a constant: `Loader.functions["load_each"]` (narrow it), then
   `.is_resumable` (it can reach a wait), `.arguments[1].is_mutated` (it changes what argument 1 is given),
-  `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s of its class it reads and writes), `.source_file`
+  `.arguments.count()`, `.reads` and `.writes` (the `Spite.AttributeDeclaration`s it reads and writes, through every call however deep: its own class's first in declaration order, then other program classes' by class name; `render.reads` of `Nameplate` names `Character.health` read in `character.describe()`; a function handed to a call counts as called; no standard library attributes, and a call through a function value kept in an attribute or a list is not followed), `.source_file`
   (the `File` a function or an attribute is written in); `Loader.is_stateful`,
   `Vector3<Float>.is_fixed_size` (a generic class is named with its codegen values), `Monster.is_singleton`. `.returns` is exactly the declared answer: a `Spite.Class` (`Integer?` too), a `Spite.Union` (a union, and `Nothing`, the
   empty union, for a function that answers nothing, never `null`) or a `Spite.Type`; read `.name` on any, compare with `== Integer` or `== Nothing`; only `.outer_class` and a bound attribute's `.value` can be `null`. A reflection field the program never reads costs nothing: it has no slot and is not built, so reading more of a class is what pays; a write to it still runs a call or a making that does something. A class's `.generics` is a

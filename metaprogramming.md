@@ -209,8 +209,8 @@ machine that pauses there; the compiler asks it to start such a call in a frame 
 so the frame goes on while it waits ([concurrency.md](concurrency.md#a-wait-in-a-frame-does-not-hold-the-frame)). `is_mutated` follows every call, however deep:
 `into.append(path)` changes the list passed as `into`, and nothing changes `path`.
 
-The attributes of its class a function reads and writes are two lists of declarations, following every call it
-makes to its own class:
+The attributes a function reads and writes are two lists of declarations, following every call it makes, into its
+own class and into others ([reflection.md](reflection.md#what-a-function-reads-and-writes)):
 
 ```gdscript
 var update = Movement.functions["update_each"]
