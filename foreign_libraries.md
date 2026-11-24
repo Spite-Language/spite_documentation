@@ -55,8 +55,9 @@ func length_of(text: String): Integer {
 - **The body is that one call**, returned when there is an answer. The library is the class's attribute; in the
   standard library, which may bind a singleton as a local, a declaration that opens its library for itself
   (`var kernel = DynamicLibrary("kernel32.dll", 'identity', "")`) binds it on the line before the call.
-- **What crosses is checked at the declaration**, once: a parameter that cannot [cross](#what-crosses), a struct
-  whose size differs from the header's, an answer declared for a function the header declares `void`.
+- **What crosses is checked where the declaration is called**: a parameter that cannot [cross](#what-crosses), a
+  struct whose size differs from the header's, an answer read from a function the header declares `void`. A
+  declaration nothing calls is not compiled, like any function.
 - **A call to a declaration is the foreign call itself.** It is compiled where it is written, with the caller's
   arguments cast to the declaration's parameters, so it costs no Spite call, C's writes come back into the
   caller's own list, buffer or `type`, a function value handed over is the caller's, and a
