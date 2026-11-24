@@ -906,7 +906,10 @@ costs about as much as what it walks, so a small cycle is freed at the drop poin
 that holds a large structure of such objects checks it ever more rarely as it grows, and at the latest once those
 objects have doubled, so what waits to be freed is never more than what lives; the end of the program frees whatever
 is left.
-Objects that can never be in a cycle pay nothing.
+Objects that can never be in a cycle pay nothing, and neither does a store into an object nothing else holds yet:
+a tree a function builds by making a node and appending its children before it hands the node on, a list a
+function fills before it returns it, or one handed down to helpers that only fill it, can close no cycle, since no
+object reaches what is being filled, so the compiler marks nothing there.
 
 ```gdscript title=joined_pair_doc/person.spite
 var console = Console()
