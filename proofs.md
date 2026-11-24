@@ -206,7 +206,7 @@ See [Nothing fails silently](failure.md#nothing-fails-silently).
 
 - **Proves**: one name per value.
 - **Rule**: a `var` that holds a bare name or path of a `T?`, is never assigned again, whose source is not assigned
-  in the function, and that is then narrowed, is refused: narrow the source itself. A local read past a call that may write its source keeps a value and is left alone, and a call handed anything on the source's path (`clean(bunda)` or `bunda.clean()` after `var cu = bunda.cu`) counts as one that may, in every program that loads the file; a call handed only the local is followed as usual. and so does one holding a call's answer (`var held = thing.pop().held`), or a getter's that may write something (`var reading = thing.reading`), since naming the source again calls again. A snapshot taken before its
+  in the function, and that is then narrowed, is refused: narrow the source itself. A local read past a call that may write its source keeps a value and is left alone, and a call handed anything on the source's path (`clean(bunda)` or `bunda.clean()` after `var cu = bunda.cu`) counts as one that may, in every program that loads the file; a call handed only the local, or only `this` (an own `clean()`), is followed as usual. and so does one holding a call's answer (`var held = thing.pop().held`), or a getter's that may write something (`var reading = thing.reading`), since naming the source again calls again. A snapshot taken before its
   source changes is allowed.
 - **Falls back**: narrow the original name.
 

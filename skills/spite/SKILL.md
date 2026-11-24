@@ -174,7 +174,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Narrow a path itself, never a local copied from it: `var cu = bunda.cu` then `fallback cu` is rewritten to
   `fallback bunda.cu` unless something may change `bunda.cu` before a read of `cu`. A call handed anything on the
   path (`clean(bunda)`, `bunda.clean()`) always counts as one that may, so that copy stays, and so does a second
-  `fallback bunda.cu` after it; `clean(cu)` is followed like any call.
+  `fallback bunda.cu` after it; `clean(cu)`, and an own `clean()` after copying an own attribute (`this` is not
+  counted), are followed like any call.
 - Only a path with no call in it narrows: `if thing.pop().held` proves nothing about a second `thing.pop().held`
   (it calls again); write `var held = thing.pop().held` and narrow `held`. A getter path (`thing.reading`, running
   `get_reading()`) narrows while the getter only reads; if it may write anything, a second read after the check is an
