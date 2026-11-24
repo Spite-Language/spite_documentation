@@ -387,7 +387,7 @@ systems and the web are planned. [docs/targets.md](targets.md)
 **How do I install it and run hello world?** Spite needs no C toolchain: the compiler is a program written in Spite
 that writes the executable itself. [docs/getting_started.md](getting_started.md)
 
-**Can it call C, and can C call it?** Yes and yes: `DynamicLibrary` calls any exported function as a member, with
+**Can it call C, and can C call it?** Yes and yes: `DynamicLibrary` opens a library and each exported function it uses is declared once as a plain Spite function, with
 no binding file, and `ForeignCallback` hands C a Spite function to call back. The same goes for C++, Rust, Zig and
 Go libraries, through the C ABI they export. [docs/foreign_libraries.md](foreign_libraries.md)
 

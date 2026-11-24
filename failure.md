@@ -1082,8 +1082,8 @@ crash  file.write_string(text)     # a lost write is a bug: halt here, with the 
 An answer that is not a `Boolean` or a `T?` is kept, passed, returned or compared: `var score_count = scores.count()` is a
 name that must then be read. A function that answers nothing is untouched, and a constructor is covered by
 its own rule (a made object is kept and used). The rule holds for your functions as much as the library's, and for
-a function value you call. A call into a foreign library is the one exception: a `DynamicLibrary` function declares
-no answer, so the compiler cannot tell whether it answers.
+a function value you call, and for a foreign function's [declaration](foreign_libraries.md#declaring-a-foreign-function):
+a C answer the program never reads is declared as no answer.
 
 A walk drops answers the same way: `speeds.each_described()` runs `described` on every item and keeps nothing, so
 when `described` answers a value the line is an error, "'speeds.each_described()' runs 'described', which answers a

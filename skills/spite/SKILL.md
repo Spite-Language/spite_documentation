@@ -78,8 +78,15 @@ rather than rewriting it in Spite; rewrite only what is small or what the progra
 can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn` in a `cdylib`, Zig through
 `export fn`, Go through `//export` in a `c-shared` build.
 
-- Open it once beside the attributes: `var library = DynamicLibrary("libpack.so", 'identity', "")`, and call its
-  functions as members (`library.pack_block(...)`; `_as_long`, `_as_double`, `_as_text` for wider results).
+- Open it once beside the attributes: `var library = DynamicLibrary("libpack.so", 'identity', "")`, and declare
+  each function it uses once, as a function whose whole body calls it with its own parameters in order:
+  `func _pack_block(packer: Long, input: Buffer, count: Integer): Integer { return library.pack_block(packer, input,
+  count) }` (one statement per line in real code). The parameters and answer are C's (`Long` for a 64-bit integer
+  or a pointer, `Double`, `String` for a `const char*`, no answer for `void`); call `_pack_block(...)`, never
+  `library.pack_block(...)`, which is a compile error anywhere but its declaration.
+- Name a declaration by one rule: the symbol in snake_case, without a Windows `W`/`A` suffix, the library's prefix
+  (`vk`) or a leading `get`, abbreviations written out (`GetCurrentDirectoryW` is `current_directory`); a `_` in
+  front keeps it private to the binding.
 - Wrap it in a class of its own, and let nothing else touch the `DynamicLibrary`. Only Spite shapes come out: full
   word snake_case names, a Spite enum for each status (map each C number with an `if` per number, then a bare
   `crash`, so a number it does not list halts at the boundary), `T?` instead of a null handle or a not-found code,

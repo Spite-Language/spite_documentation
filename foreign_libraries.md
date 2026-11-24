@@ -1,10 +1,11 @@
 # Foreign libraries and operating systems
 
 A native library is a class, not a keyword. `DynamicLibrary(file, naming, header)` opens a `.dll`, `.so` or
-`.dylib`, and every function it exports is called as if it were a member: there is no `extern` declaration, no
+`.dylib`, and each function of it a program uses is **declared** once, in the class that holds the library: a
+function whose whole body calls the foreign function with its own parameters. There is no `extern` keyword, no
 binding file and no generated shim. The standard library reaches the operating system this way: `File`,
-`Directory`, `Process`, `Console` and the rest are Spite over the operating system's own libraries, reached through `DynamicLibrary`, so
-what a program can do with it, the library already does.
+`Directory`, `Process`, `Console` and the rest are Spite over the operating system's own libraries, reached through
+declarations, so what a program can do with it, the library already does.
 
 ## Calling a function
 
@@ -13,8 +14,12 @@ var console = Console()
 var c_runtime = DynamicLibrary("ucrtbase.dll", 'identity', "")
 
 func ForeignCall() {
-    var text_length = c_runtime.strlen("spite")
+    var text_length = length_of("spite")
     console.print(text_length)
+}
+
+func length_of(text: String): Integer {
+    return c_runtime.strlen(text)
 }
 ```
 ```output
@@ -25,6 +30,67 @@ func ForeignCall() {
 other ([classes_and_files.md](classes_and_files.md#singletons)); a program for several systems names each
 system's file in a class that each system's folder reopens, as the standard library does
 ([below](#each-operating-system-reopens-what-it-changes)).
+
+## Declaring a foreign function
+
+Mortaro: "lets force wrappers to always properly declare the external usages so a moron can follow where things
+come from". Every foreign function a program uses has one declaration, and it is the only place its C name is
+written:
+
+```gdscript
+func length_of(text: String): Integer {
+    return c_runtime.strlen(text)
+}
+```
+
+- **The function's name is the Spite name** the rest of the program calls; the member it calls on the library is
+  the exported symbol (read through the library's [naming rule](#naming-rules)).
+- **Its parameters are C's parameters**, in C's order, as the Spite types that [cross](#what-crosses), and the body
+  hands them over unchanged: every argument is one of its parameters, in order. A value the program always passes
+  the same is still a parameter, given by the caller.
+- **Its answer is C's answer.** `Long` or `UnsignedLong` reads a 64-bit integer or a pointer, `Double` and `Float`
+  a decimal, `String` a `const char*` copied into a `String`, any other type C's `int`, cast to it the ordinary way,
+  and no answer a `void` function, or one whose answer the program never reads: like any function's, a declared
+  answer [must be used](failure.md#an-answer-is-used).
+- **The body is that one call**, returned when there is an answer. The library is the class's attribute; in the
+  standard library, which may bind a singleton as a local, a declaration that opens its library for itself
+  (`var kernel = DynamicLibrary("kernel32.dll", 'identity', "")`) binds it on the line before the call.
+- **What crosses is checked at the declaration**, once: a parameter that cannot [cross](#what-crosses), a struct
+  whose size differs from the header's, an answer declared for a function the header declares `void`.
+- **A call to a declaration is the foreign call itself.** It is compiled where it is written, with the caller's
+  arguments cast to the declaration's parameters, so it costs no Spite call, C's writes come back into the
+  caller's own list, buffer or `type`, a function value handed over is the caller's, and a
+  [fault report](failure.md#what-a-native-fault-reports) names the calling line. Taken as a function value, a
+  declaration is an ordinary function.
+
+A foreign function called anywhere else is an error, which writes the declaration to add:
+
+```text
+error: 'c_runtime.strlen' is a foreign function called outside its declaration: declare it once, in the class that holds 'c_runtime', as a function whose whole body calls it with its own parameters, like 'func strlen(text: String): Integer { return c_runtime.strlen(text) }' with C's parameters and answer, and call 'strlen(...)' here
+```
+
+So following any call to where it leaves Spite takes one step: the declaration names the library, the symbol and
+every type that crosses.
+
+### Spite names for foreign functions
+
+Outside its declaration, a foreign function is known by its Spite name. Mortaro: "externally we should always use
+things with proper naming". The name the compiler proposes is worked out from the symbol by one rule, and a person
+writing a declaration follows the same one:
+
+1. The symbol is split into words at its capitals and underscores, in snake_case: `GetCurrentDirectoryW` is
+   `get_current_directory_w`.
+2. A Windows text function's last `W` or `A` goes, since the declaration says which text it takes:
+   `get_current_directory`.
+3. The library's common prefix goes (`vk`, `VK_`, `Vk` for Vulkan), and so does a leading `get`, which Spite
+   keeps for accessors: `current_directory`.
+4. A word the [style](style.md#names) table knows as an abbreviation is written in full: `strlen` stays one word,
+   `SetCursorPos` is `set_cursor_position`.
+
+Where the rule leaves an abbreviation the style rules refuse (`strlen`), the declaration is named by hand
+(`length_of`), and the error says which word to write out.
+
+## Opening a library
 
 - **The arguments are literals**, because the compiler reads them while compiling. The file is named exactly as
   it is on disk, extension included: a name without one is an error.
@@ -71,7 +137,7 @@ that Win32 spells out in full (`count`, `buffer`, `window`, `size`, the second t
 |---|---|---|
 | every number type, `Boolean` | the same C type: a number already is one, and see the widths below | none |
 | `String`, as an argument | `const char*` | none: every `String` buffer already ends in a zero |
-| `String`, as a result (`_as_text`) | `const char*` | one copy; Spite never frees a buffer C owns |
+| `String`, as a declared answer | `const char*` | one copy; Spite never frees a buffer C owns |
 | an enum value | its integer | none |
 | `List<T>` of numbers | its element array, by address; C's writes come back into the list | none |
 | `Buffer` | its bytes, by address; C's writes come back into the buffer | none |
@@ -79,9 +145,9 @@ that Win32 spells out in full (`count`, `buffer`, `window`, `size`, the second t
 | a function value, as an argument | a C function pointer for that call ([callbacks](#calling-back-into-spite)) | a thread-local store |
 | a class instance | never: its layout is the compiler's business | |
 
-A call returns an `Integer`, and the ordinary right-to-left cast takes it from there. A result that is wider or not an
-integer is asked for by suffix: `strlen_as_long(...)` for a 64-bit integer or a pointer, `half_of_as_double(...)`
-for a `double`, and `greeting_as_text()` for a `const char*` copied into a `String`. An address is a
+What a call answers is what its [declaration](#declaring-a-foreign-function) answers: `: Long` for a 64-bit integer
+or a pointer, `: Double` for a `double`, `: String` for a `const char*` copied into a `String`, and any narrower type
+for C's `int`, which the ordinary right-to-left cast takes from there. An address is a
 `Long`: a number of 64 bits that C gives and takes back; Spite has no pointer type and no way to read or write the
 memory an address names. What C should fill in is handed over as a `List` of numbers, a `Buffer`, a `String` or a
 number-only `type`, whose own memory C writes and whose values come back; an address C returns is kept as a
@@ -152,12 +218,16 @@ var numbers = DynamicLibrary("numbers.dll", 'identity', "")
 var scale = 3
 
 func MappedByC() {
-    var total = numbers.sum_mapped(4, scaled)
+    var total = sum_mapped(4, scaled)
     console.print(total)
 }
 
 func scaled(value: Integer): Integer {
     return value * scale
+}
+
+func sum_mapped(count: Integer, mapping: Spite.Function<Integer, Integer>): Integer {
+    return numbers.sum_mapped(count, mapping)
 }
 ```
 
@@ -209,7 +279,11 @@ func handle_message(window: Long, message: UnsignedInteger, word: UnsignedLong, 
     if found {
         return found.handle_message(message, word, long_word)
     }
-    return user32.DefWindowProcW_as_long(window, message, word, long_word)
+    return default_window_procedure(window, message, word, long_word)
+}
+
+func default_window_procedure(window: Long, message: UnsignedInteger, word: UnsignedLong, long_word: Long): Long {
+    return user32.DefWindowProcW(window, message, word, long_word)
 }
 ```
 
@@ -221,7 +295,8 @@ first is alive stops the program, since both would be the same C function.
 **A table of functions is filled by C.** A COM-style interface such as XAudio2's `IXAudio2VoiceCallback` is an
 object whose first word points at a table of functions. Spite cannot write memory at an address, so the table is
 built on the C side: the library exports a function that takes the `.address` of each `ForeignCallback` in the
-interface's order (`mixer.set_voice_started(started.address)`) and keeps them in its own table. The functions are
+interface's order (`set_voice_started(started.address)`, declared over `mixer.set_voice_started`) and keeps them in
+its own table. The functions are
 `'no_context'` functions of one singleton, which tells the voices apart by the object C passes back as a `Long`.
 
 **Threads.** XAudio2 calls from its own thread, so a function handed over with `ForeignCallback` may run on a
@@ -247,7 +322,7 @@ var _messenger: ForeignCallback? = null
 func Device() {
     var reporting = ForeignCallback(report, 'context_last')
     _messenger = reporting
-    vulkan.listen(reporting.address, reporting.context)
+    listen(reporting.address, reporting.context)
 }
 
 func report(severity: Integer, data: Long): Boolean {
@@ -255,6 +330,14 @@ func report(severity: Integer, data: Long): Boolean {
 }
 
 func drop() {
+    stop_listening()
+}
+
+func listen(reporter: Long, context: Long) {
+    vulkan.listen(reporter, context)
+}
+
+func stop_listening() {
     vulkan.stop_listening()
 }
 ```
@@ -311,17 +394,23 @@ var kernel = DynamicLibrary("kernel32.dll", 'identity', "")
 func working_directory(): String? {
     var size = 1024
     var room = Buffer(size * 2)
-    var length = kernel.GetCurrentDirectoryW(size, room)
+    var length = _current_directory(size, room)
     while length >= size {
         size = length
         room = Buffer(size * 2)
-        length = kernel.GetCurrentDirectoryW(size, room)
+        length = _current_directory(size, room)
     }
     fallback length > 0
     room.take_written(length * 2)
     return room._read_wide_string_at(0, length)
 }
+
+func _current_directory(size: Integer, room: Buffer): Integer {
+    return kernel.GetCurrentDirectoryW(size, room)
+}
 ```
+
+The standard library's own declarations start with `_`, so they add nothing to what a program can call.
 
 while `common`'s `Program` keeps what every system calls the same way (`exit` through the C runtime). Today only the
 Windows folder holds code: the executable is always Windows x64, and `linux` and `mac` only load `common`.
@@ -357,14 +446,18 @@ pub extern "C" fn sum_of(values: *const i32, count: i64) -> i64 {
 }
 ```
 
-is called from Spite exactly as a C function is, its name already snake_case:
+is declared and called from Spite exactly as a C function is, its name already snake_case:
 
 ```gdscript
 var measure = DynamicLibrary("libmeasure.so", 'identity', "")
 
 func total(values: List<Integer>): Long {
-    var values_count = values.count()
-    return measure.sum_of_as_long(values, values_count)
+    var values_count: Long = values.count()
+    return sum_of(values, values_count)
+}
+
+func sum_of(values: List<Integer>, count: Long): Long {
+    return measure.sum_of(values, count)
 }
 ```
 
@@ -384,7 +477,8 @@ convention is allowed to pass the binding. It also keeps the program free of any
 library is later written in Spite, the binding is the only thing that changes.
 
 - **Spite names.** The functions the rest of the program calls are full words in snake_case (`open_database`, not
-  `db_open_v2`), whatever the library calls them.
+  `db_open_v2`), whatever the library calls them; the C name appears only in the
+  [declaration](#declaring-a-foreign-function), which a binding keeps private with a leading `_`.
 - **A status is a Spite enum.** A C function that answers a C enum (or a status code) answers, through the binding,
   an enum the binding writes in Spite, with Spite names, each value given its C number with `=` (`'busy' = 5`,
   [values_and_types.md](values_and_types.md#numbering-an-enums-values)). A number the enum does
@@ -394,7 +488,7 @@ library is later written in Spite, the binding is the only thing that changes.
   a `0` the caller has to know to compare with.
 - **A handle is an object.** The binding's class holds the handle, and its `drop()` gives it back to the library, so
   the library's memory is released when the last reference goes, like every other object's.
-- **Text is a `String`**, read with `_as_text`, never an address the caller has to read.
+- **Text is a `String`**, declared as the answer, never an address the caller has to read.
 
 A binding for a library that compresses blocks, whose C side answers `0` for success, `1` when the output is too
 small and `2` when the input is corrupt:
@@ -410,14 +504,14 @@ var library = DynamicLibrary("libpack.so", 'identity', "")
 var handle: Long = 0
 
 func Packer(level: Integer) {
-    handle = library.pack_create_as_long(level)
+    handle = _create(level)
     crash handle != 0
 }
 
 func pack(input: Buffer, output: Buffer): Packing {
     var input_count = input.count()
     var output_count = output.count()
-    var code = library.pack_block(handle, input, input_count, output, output_count)
+    var code = _pack_block(handle, input, input_count, output, output_count)
     return packing_of(code)
 }
 
@@ -435,7 +529,19 @@ func packing_of(code: Integer): Packing {
 }
 
 func drop() {
-    library.pack_destroy(handle)
+    _destroy(handle)
+}
+
+func _create(level: Integer): Long {
+    return library.pack_create(level)
+}
+
+func _pack_block(packer: Long, input: Buffer, input_count: Integer, output: Buffer, output_count: Integer): Integer {
+    return library.pack_block(packer, input, input_count, output, output_count)
+}
+
+func _destroy(packer: Long) {
+    library.pack_destroy(packer)
 }
 ```
 
