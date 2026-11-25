@@ -92,7 +92,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - Memory C writes into is a room: a `type` with one `DynamicLibrary.WideText`, `DynamicLibrary.Text` or
   `DynamicLibrary.Bytes` field, declared in the arguments as `DynamicLibrary.Room("room", PathRoom, sizing)`, the
   sizing a `DynamicLibrary.Sizing` (`'answer_is_the_size_needed'`, `'doubled_until_it_fits'`,
-  `'asked_with_no_room_first'`, `'answer_is_what_arrived'`, `'fixed_size'` for a `type` of numbers). Fill neither the room nor its size (except the size for
+  `'asked_with_no_room_first'`, `'answer_is_what_arrived'`, `'fixed_size'` for a `type` of numbers). The argument
+  carrying its size is `DynamicLibrary.RoomSize("size", Integer)` in place of its `Argument` (none for `'fixed_size'`). Fill neither the room nor its size (except the `RoomSize` for
   `'answer_is_what_arrived'`): `call()` answers the room filled (`room.text.to_string()`, `room.bytes.to_buffer()`)
   or `null` when C failed. Never `Buffer(size)` or `take_written`: a `Buffer` is `Buffer()`.
 - Wrap it in a class of its own, and let nothing else touch the `DynamicLibrary`. Only Spite shapes come out: full

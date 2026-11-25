@@ -45,7 +45,8 @@ the way a Spite function is described and called:
 | `DynamicLibrary` | an opened library, with the `functions` it declares | `Spite.Class` and its `functions` |
 | `DynamicLibrary.FunctionDeclaration(symbol, arguments, returns)` | one export: its C symbol, its arguments and its answer | `Spite.FunctionDeclaration` |
 | `DynamicLibrary.Argument(name, class)` | one argument: a Spite name and its type | `Spite.Argument` |
-| `DynamicLibrary.Room(name, class, sizing)` | an argument C writes into, and how C sizes it ([rooms](#rooms)); the arguments list holds `DynamicLibrary.FunctionDeclaration.Passed`, either kind | `Spite.Argument` |
+| `DynamicLibrary.Room(name, class, sizing)` | an argument C writes into, and how C sizes it ([rooms](#rooms)); the arguments list holds `DynamicLibrary.FunctionDeclaration.Passed`, any of the three kinds | `Spite.Argument` |
+| `DynamicLibrary.RoomSize(name, class)` | the argument that carries a room's size ([rooms](#rooms)) | `Spite.Argument` |
 | `DynamicLibrary.Call(declaration)` | a call assembled from a declaration, its `arguments` filled by name, run by `call()` | `Spite.Call` |
 
 - **The key is the Spite name** the program uses (`"length_of"`); the C symbol (`"strlen"`) is written once, in
@@ -117,7 +118,7 @@ var kernel = DynamicLibrary(
     {
         "current_directory": DynamicLibrary.FunctionDeclaration(
             "GetCurrentDirectoryW",
-            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Room("room", PathRoom, 'answer_is_the_size_needed')],
+            [DynamicLibrary.RoomSize("size", Integer), DynamicLibrary.Room("room", PathRoom, 'answer_is_the_size_needed')],
             Integer,
         ),
     },
@@ -131,10 +132,11 @@ func working_directory(): String? {
 }
 ```
 
-The program fills neither the room nor its size: the compiler makes the room, passes its size and its address,
-makes it bigger and calls again when C says it was too small, and reads back what C wrote. The size is the first
-whole-number argument whose name says a size (`size`, `count`, `length` or `capacity` in it) after the room, then
-before it; with none so named, the first whole-number argument after the room, or the last one before it. `call()` answers the room filled, or `null` when C
+The argument C reads the room's size from is declared as a `DynamicLibrary.RoomSize(name, class)` in place of its
+`DynamicLibrary.Argument`, a whole number; the first `RoomSize` goes with the first `Room`. A room that needs a size
+and has no `RoomSize` is refused with the words to write, and so is a `RoomSize` without a `Room`; a `'fixed_size'`
+room has none. The program fills neither the room nor its size: the compiler makes the room, passes its size and its
+address, makes it bigger and calls again when C says it was too small, and reads back what C wrote. `call()` answers the room filled, or `null` when C
 answered that it failed (an answer of `0`, or below `0` for `'answer_is_what_arrived'`); a declaration that answers
 `Nothing` never fails.
 
@@ -143,7 +145,7 @@ answered that it failed (an answer of `0`, or below `0` for `'answer_is_what_arr
 | `'answer_is_the_size_needed'` | what it wrote, or the size it needs when the room is short | calls again at the size needed |
 | `'doubled_until_it_fits'` | what it wrote, the whole room when the room is short | doubles the room and calls again |
 | `'asked_with_no_room_first'` | asked with an empty room, the size it needs | asks first, then calls with that room |
-| `'answer_is_what_arrived'` | how much arrived; the program fills the size | calls once |
+| `'answer_is_what_arrived'` | how much arrived; the program fills the `RoomSize` | calls once |
 | `'fixed_size'` | nothing about size; the room is a `type` of numbers | calls once with the room zeroed |
 
 A `Buffer` is made with `Buffer()`, and how much room it keeps is the compiler's: `Buffer(size)` and
@@ -501,7 +503,7 @@ var kernel = DynamicLibrary(
     {
         "current_directory": DynamicLibrary.FunctionDeclaration(
             "GetCurrentDirectoryW",
-            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Room("room", PathRoom, 'answer_is_the_size_needed')],
+            [DynamicLibrary.RoomSize("size", Integer), DynamicLibrary.Room("room", PathRoom, 'answer_is_the_size_needed')],
             Integer,
         ),
     },
