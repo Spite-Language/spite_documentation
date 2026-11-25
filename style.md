@@ -368,10 +368,11 @@ A link may also be absolute, to a markdown file of a Spite repository on GitHub:
 func Game() {
 ```
 
-The compiler looks for a folder named after the repository (`spite_documentation` here) beside the file's folder
-or beside any folder above it, the nearest first, and checks the path after `/blob/master/` there, file and heading,
-as it checks a relative link. Where no such folder is found the link is not checked, so a file read anywhere
-compiles. Any other absolute link is an error.
+The compiler looks for the folder the linked page sits in, under a folder named after the repository
+(`spite_documentation` here, `spite_standard_library/docs` for `.../spite_standard_library/blob/master/docs/memory.md`),
+beside the file's folder or beside any folder above it, the nearest first, and checks the page there, file and
+heading, as it checks a relative link. Where no such folder is found the link is not checked, so a file read anywhere
+compiles, a library copied without its markdown too. Any other absolute link is an error.
 
 The standard library's files follow these rules too, and link only this way: a relative link in one is an error, so
 its links hold wherever the library is read, from a folder checked out alone or from inside the compiler, and are
