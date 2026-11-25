@@ -836,7 +836,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   only at run time (`value.class` of an `attribute.value`) it is a compile error. A number's, `Boolean`'s or `String`'s `.attributes` is empty.
   The walked attribute is an object of its declared class, not text: its members fold, and used whole it is that
   class's object (`Monster.attributes["health"]`, or the instance's `Spite.Attribute`), so a hole or a `String`
-  parameter shows its name, a copy or a list keeps it, `.attributes`/`.functions` list its own, `attribute == "health"`
+  parameter shows its name, a copy or a list keeps it, `.attributes`/`.functions` list its own, `"health" == attribute`
   compares its name, and `attribute[0]`, `+`, `<` or `attribute.upper_case()` is that class's
   error (`a Spite.AttributeDeclaration has no attribute or function 'upper_case'`), so write
   `attribute.name.upper_case()`. A template's attribute parameter and an attribute handed on to another function
