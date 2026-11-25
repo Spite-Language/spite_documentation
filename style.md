@@ -28,6 +28,9 @@ that only formats: `--check` formats and checks without building ([compiler.md](
 - Every line ends with `\n` alone. A line written with `\r\n` or a lone `\r` is read as one line break, and the
   file is written back with `\n` and a `fixed:` line. Each Spite repository's `.gitattributes` holds
   `* text=auto eol=lf`, so a Windows checkout has `\n` too.
+- A UTF-8 byte order mark (the bytes EF BB BF, which some Windows editors and PowerShell's `Set-Content -Encoding utf8`
+  write) at the very start of a file is read past and removed, with a `fixed:` line. One anywhere else is an error:
+  `a byte order mark (U+FEFF) is not something Spite reads here: ...`.
 - K&R braces: `func name() {`, `} else {`, `} else if other {`. An empty body is `{ }`, and an empty `else` is
   dropped. An `else` holding nothing but an `if` with no `else` of its own is joined into the chain:
   `} else { if other { ... } }` becomes `} else if other { ... }`.

@@ -5,7 +5,8 @@ never warns: it errors or it is fine. A file that does not read or parse lists e
 `path:line: error: message` (its spelling first; once it spells right, every syntax mistake, one for each broken
 statement or declaration); the other errors come as `path:line: error: message (in Class.function)`. A later stage
 waits for the earlier one to be clean, so fix the list and compile again. Every compile first rewrites your files into the one
-style (`formatted path` is printed), so what you read back may differ from what you wrote. Where a mistake has
+style (`formatted path` is printed), so what you read back may differ from what you wrote (a UTF-8 byte order mark at the
+very start of a file is removed with a `fixed:` line; one anywhere else is an error). Where a mistake has
 exactly one fix the compiler makes it and prints `fixed: ...`; the list is under
 [the compiler fixes](#the-compiler-fixes-what-has-one-fix).
 The [documentation](https://github.com/Spite-Language/spite_documentation/blob/master/README.md) has a page for
