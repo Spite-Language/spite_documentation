@@ -207,7 +207,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   when declared; a whole list is `children={list}`); a lowercase tag calls `render_<tag>` with its attributes as the
   parameters, by name (`<weapon grade={1}/>` is `render_weapon(1)`), and takes no children. A tag names a class as
   code does: `<ClassPicker/>` inside `sidebar/`, never `<Sidebar.ClassPicker/>` (rewritten with a `fixed:` line). See the markup section of [reference.md](reference.md).
-- A comment is one line outside functions and nothing but a link to a markdown heading. Function bodies hold no
+- A comment is one line outside functions and nothing but a link to a markdown heading, relative or
+  `https://github.com/Spite-Language/<repository>/blob/master/<page>.md#<anchor>`. Function bodies hold no
   blank lines: name the part and call it.
 - Every object is a reference counted by the compiler. Two objects that hold each other (a parent and its
   children) are plain references: the compiler finds the back reference and frees the cycle. Keep the back

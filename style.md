@@ -361,10 +361,24 @@ knowledge, write the section and link to it; if it warns against a change, a tes
 harder than prose. A line inside a function that seems to need explaining becomes a named function instead:
 a name, unlike a comment, is visible to reflection, `--final-classes` and every tool.
 
-These rules are the program's own. A file of the standard library or of a pinned repository, the files the compiler
-never rewrites, has its comments dropped when it is read (D1933), and a loaded package's file keeps them, so a fix
-written into it keeps them too, but no comment rule looks at either and their links are not checked: a library
-checked out alone, or loaded pinned with `@`, compiles without the markdown it links beside it.
+A link may also be absolute, to a markdown file of a Spite repository on GitHub:
+
+```gdscript
+# https://github.com/Spite-Language/spite_documentation/blob/master/style.md#comments-are-links
+func Game() {
+```
+
+The compiler looks for a folder named after the repository (`spite_documentation` here) beside the file's folder
+or beside any folder above it, the nearest first, and checks the path after `/blob/master/` there, file and heading,
+as it checks a relative link. Where no such folder is found the link is not checked, so a file read anywhere
+compiles. Any other absolute link is an error.
+
+The standard library's files follow these rules too, and link only this way: a relative link in one is an error, so
+its links hold wherever the library is read, from a folder checked out alone or from inside the compiler, and are
+checked wherever `spite_documentation` sits beside it. A file of a pinned repository has its comments dropped when it
+is read (D1933), and a loaded package's file keeps them, so a fix written into it keeps them too, but no comment rule
+looks at either and their links are not checked: a package loaded pinned with `@` compiles without the markdown it
+links beside it.
 
 The one other link is the one `--final-classes` writes: in the folder it prints, each attribute and function is
 marked with a comment linking the `.spite` file that supplied it (`# ../../game/hero.spite`), with no anchor, so
