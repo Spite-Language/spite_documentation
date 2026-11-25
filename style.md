@@ -325,7 +325,10 @@ class's or `String`'s storage, and `Build` and `Environment` settings.
 its own name and typed `Spite.AttributeDeclaration`, `Spite.FunctionDeclaration` or `Spite.Argument`
 (`save_attribute(attribute: Spite.AttributeDeclaration)`), whose signature is the template's
 ([metaprogramming.md](metaprogramming.md)). A two-parameter `set_age` follows the
-ordinary rule. Every other unread parameter is `the parameter 'amount' is never
+ordinary rule. A function that replaces another by reopening its class keeps the parameters of the one it replaces
+([classes_and_files.md](classes_and_files.md#reopening-a-class)), so the `_` is its one fix: the compiler writes it,
+`fixed: the parameter 'damage' was never read, and 'hit' replaces the function of the class it reopens, so it keeps
+its parameters; renamed it '_damage'`. Every other unread parameter is `the parameter 'amount' is never
 read: remove it, or name it '_amount' if the signature needs it`.
 
 **The check waits for the rest.** The unread-attribute check runs only when the program has no other error, so a

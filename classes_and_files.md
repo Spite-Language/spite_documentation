@@ -1000,7 +1000,8 @@ give the new attribute a name of its own`). A function replaced this way keeps w
 reason: the class's other functions call it expecting the first answer (`func level(): Integer`, then
 `func level(): String`, is `'level' answers an Integer where the class first declares it, and this reopening makes
 it answer a String: a reopening replaces a function's body, never what it answers, so give the new function a name
-of its own`), and what it takes: the same parameters, in the same order, with the same names and types
+of its own`), and what it takes: the same parameters, in the same order, with the same names and types (a leading
+`_`, which only says the body ignores the parameter, does not count, and an unread one is renamed `_damage` for you)
 (`func hit(damage: Integer): Integer`, then `func hit(damage: String): Integer`, is `'hit' takes (damage: Integer)
 where the class first declares it, and this reopening makes it take (damage: String): a reopening replaces a
 function's body, never what it takes, so give the new function a name of its own`). A replaced constructor keeps its

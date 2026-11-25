@@ -972,7 +972,8 @@ func half_of(value: Float): Float {
 A class that wants to accept several kinds of value takes a `type` or a union and says so in one signature.
 A parameter that is never read is an error, as every unused name is: remove it, or name it `_name` when the
 signature needs it. An operator function's, a template's or a setter's parameter needs neither, since its
-signature is dictated from outside ([style.md](style.md#nothing-unused)).
+signature is dictated from outside, and one of a function that replaces another by reopening its class is renamed
+`_name` for you, since that function keeps its parameters ([style.md](style.md#nothing-unused)).
 
 ## Functions the compiler calls by name
 
