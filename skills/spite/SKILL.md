@@ -78,15 +78,17 @@ rather than rewriting it in Spite; rewrite only what is small or what the progra
 can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn` in a `cdylib`, Zig through
 `export fn`, Go through `//export` in a `c-shared` build.
 
-- Open it once beside the attributes: `var library = DynamicLibrary("libpack.so", 'identity', "")`, and declare
-  each function it uses once, as a function whose whole body calls it with its own parameters in order:
-  `func _pack_block(packer: Long, input: Buffer, count: Integer): Integer { return library.pack_block(packer, input,
-  count) }` (one statement per line in real code). The parameters and answer are C's (`Long` for a 64-bit integer
-  or a pointer, `Double`, `String` for a `const char*`, no answer for `void`); call `_pack_block(...)`, never
-  `library.pack_block(...)`, which is a compile error anywhere but its declaration.
-- Name a declaration by one rule: the symbol in snake_case, without a Windows `W`/`A` suffix, the library's prefix
-  (`vk`) or a leading `get`, abbreviations written out (`GetCurrentDirectoryW` is `current_directory`); a `_` in
-  front keeps it private to the binding.
+- Open it once beside the attributes, declaring by hand every function the program calls:
+  `var library = DynamicLibrary("libpack.so", "", {"pack_block": DynamicLibrary.FunctionDeclaration("pack_block",
+  [DynamicLibrary.Argument("packer", Long), DynamicLibrary.Argument("input", Buffer)], Integer)})` (header `""`
+  when none). The key is the Spite name, the first argument the C symbol, then C's arguments (name and Spite type)
+  and its answer (`Long` for 64-bit or a pointer, `Double`, `String` for a `const char*`, `Nothing` for `void` or
+  an unread answer).
+- Call it like a `Spite.Call`: `var call = DynamicLibrary.Call(library.functions["pack_block"])`, then
+  `call.arguments["packer"] = packer` for every argument, then `var code = call.call()`. `library.pack_block(...)`
+  by its C name is a compile error whose words write the entry.
+- Name the key by one rule: the symbol in snake_case, without a Windows `W`/`A` suffix, the library's prefix
+  (`vk`) or a leading `get`, abbreviations written out (`GetCurrentDirectoryW` is `current_directory`).
 - Wrap it in a class of its own, and let nothing else touch the `DynamicLibrary`. Only Spite shapes come out: full
   word snake_case names, a Spite enum for each status (map each C number with an `if` per number, then a bare
   `crash`, so a number it does not list halts at the boundary), `T?` instead of a null handle or a not-found code,

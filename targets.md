@@ -105,7 +105,7 @@ checked. It is compile time only: `targets()` is never called by the running pro
 
 `Html` is the web counterpart of `DynamicLibrary`: a singleton whose
 `missing_function` and `missing_attribute` resolve against the browser. `Html.Node` wraps one node handle (an index
-into a table on the JavaScript side, freed by `drop()`). Names convert with the `'camel_case'` naming rule:
+into a table on the JavaScript side, freed by `drop()`). Names convert to camel case:
 `document.create_element("div")` is `createElement`, `node.text_content = "Hello"` is `textContent`,
 `root.append_child(node)` is `appendChild`. A call is a method and a read or write is a property, the same split
 foreign libraries use for functions and constants. `Html` is the low level layer the markup builder compiles down

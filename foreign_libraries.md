@@ -1,25 +1,28 @@
 # Foreign libraries and operating systems
 
-A native library is a class, not a keyword. `DynamicLibrary(file, naming, header)` opens a `.dll`, `.so` or
-`.dylib`, and each function of it a program uses is **declared** once, in the class that holds the library: a
-function whose whole body calls the foreign function with its own parameters. There is no `extern` keyword, no
-binding file and no generated shim. The standard library reaches the operating system this way: `File`,
-`Directory`, `Process`, `Console` and the rest are Spite over the operating system's own libraries, reached through
-declarations, so what a program can do with it, the library already does.
+A native library is a class, not a keyword. `DynamicLibrary(file, header, functions)` opens a `.dll`, `.so` or
+`.dylib`, and `functions` declares, by hand, every function of it the program calls: a dictionary from each Spite
+name to a `DynamicLibrary.FunctionDeclaration`, written where the library is bound. A call is assembled from a
+declaration and run, as a [`Spite.Call`](reflection.md#a-call-built-before-it-runs) is. There is no `extern`
+keyword, no binding file and no generated shim. The standard library reaches the operating system this way:
+`File`, `Directory`, `Process`, `Console` and the rest are Spite over the operating system's own libraries, so
+what a program can do with it, the library already does.
 
 ## Calling a function
 
 ```gdscript title=foreign_call/foreign_call.spite entry system=windows
 var console = Console()
-var c_runtime = DynamicLibrary("ucrtbase.dll", 'identity', "")
+var c_runtime = DynamicLibrary(
+    "ucrtbase.dll",
+    "",
+    {"length_of": DynamicLibrary.FunctionDeclaration("strlen", [DynamicLibrary.Argument("text", String)], Integer)},
+)
 
 func ForeignCall() {
-    var text_length = length_of("spite")
+    var call = DynamicLibrary.Call(c_runtime.functions["length_of"])
+    call.arguments["text"] = "spite"
+    var text_length = call.call()
     console.print(text_length)
-}
-
-func length_of(text: String): Integer {
-    return c_runtime.strlen(text)
 }
 ```
 ```output
@@ -34,40 +37,32 @@ system's file in a class that each system's folder reopens, as the standard libr
 ## Declaring a foreign function
 
 Mortaro: "lets force wrappers to always properly declare the external usages so a moron can follow where things
-come from". Every foreign function a program uses has one declaration, and it is the only place its C name is
-written:
+come from". The `DynamicLibrary` namespace mirrors the `Spite` one, so a foreign function is declared and called
+the way a Spite function is described and called:
 
-```gdscript
-func length_of(text: String): Integer {
-    return c_runtime.strlen(text)
-}
-```
+| Class | What it is | Mirrors |
+|---|---|---|
+| `DynamicLibrary` | an opened library, with the `functions` it declares | `Spite.Class` and its `functions` |
+| `DynamicLibrary.FunctionDeclaration(symbol, arguments, returns)` | one export: its C symbol, its arguments and its answer | `Spite.FunctionDeclaration` |
+| `DynamicLibrary.Argument(name, class)` | one argument: a Spite name and its type | `Spite.Argument` |
+| `DynamicLibrary.Call(declaration)` | a call assembled from a declaration, its `arguments` filled by name, run by `call()` | `Spite.Call` |
 
-- **The function's name is the Spite name** the rest of the program calls; the member it calls on the library is
-  the exported symbol (read through the library's [naming rule](#naming-rules)).
-- **Its parameters are C's parameters**, in C's order, as the Spite types that [cross](#what-crosses), and the body
-  hands them over unchanged: every argument is one of its parameters, in order. A value the program always passes
-  the same is still a parameter, given by the caller.
-- **Its answer is C's answer.** `Long` or `UnsignedLong` reads a 64-bit integer or a pointer, `Double` and `Float`
-  a decimal, `String` a `const char*` copied into a `String`, any other type C's `int`, cast to it the ordinary way,
-  and no answer a `void` function, or one whose answer the program never reads: like any function's, a declared
-  answer [must be used](failure.md#an-answer-is-used).
-- **The body is that one call**, returned when there is an answer. The library is the class's attribute; in the
-  standard library, which may bind a singleton as a local, a declaration that opens its library for itself
-  (`var kernel = DynamicLibrary("kernel32.dll", 'identity', "")`) binds it on the line before the call.
-- **What crosses is checked where the declaration is called**: a parameter that cannot [cross](#what-crosses), a
-  struct whose size differs from the header's, an answer read from a function the header declares `void`. A
-  declaration nothing calls is not compiled, like any function.
-- **A call to a declaration is the foreign call itself.** It is compiled where it is written, with the caller's
-  arguments cast to the declaration's parameters, so it costs no Spite call, C's writes come back into the
-  caller's own list, buffer or `type`, a function value handed over is the caller's, and a
-  [fault report](failure.md#what-a-native-fault-reports) names the calling line. Taken as a function value, a
-  declaration is an ordinary function.
+- **The key is the Spite name** the program uses (`"length_of"`); the C symbol (`"strlen"`) is written once, in
+  its declaration, and nowhere else.
+- **The arguments are C's**, in C's order, each a name and one of the Spite types that [cross](#what-crosses).
+  One C function called with two kinds of argument (a buffer in one place, a null `Long` in another) is declared
+  twice, under two names.
+- **The answer is C's.** `Long` or `UnsignedLong` reads a 64-bit integer or a pointer, `Double` and `Float` a
+  decimal, `String` a `const char*` copied into a `String`, any other type C's `int`, cast to it the ordinary way,
+  and `Nothing` a `void` function, or one whose answer the program never reads: an answer
+  [must be used](failure.md#an-answer-is-used).
+- **The compiler reads the declarations while compiling.** They never change, so the dictionary is never made
+  when the program runs and each call is one direct C call: no lookup, no marshalling.
 
-A foreign function called anywhere else is an error, which writes the declaration to add:
+A foreign function called by its C name is an error, which writes the entry to add:
 
 ```text
-error: 'c_runtime.strlen' is a foreign function called outside its declaration: declare it once, in the class that holds 'c_runtime', as a function whose whole body calls it with its own parameters, like 'func strlen(text: String): Integer { return c_runtime.strlen(text) }' with C's parameters and answer, and call 'strlen(...)' here
+error: 'c_runtime.strlen' calls a foreign function by its C name, and a foreign function is called only through its declaration: add '"strlen": DynamicLibrary.FunctionDeclaration("strlen", [DynamicLibrary.Argument("text", String)], Integer)' to the functions written where 'c_runtime' is declared, with C's arguments and answer, and call it with 'var call = DynamicLibrary.Call(c_runtime.functions["strlen"])', 'call.arguments["text"] = ...', 'call.call()'
 ```
 
 So following any call to where it leaves Spite takes one step: the declaration names the library, the symbol and
@@ -75,13 +70,29 @@ every type that crosses.
 
 ## Calling a declared function
 
-(rewritten below)
+`DynamicLibrary.Call(library.functions["name"])` names a declaration the compiler can read, and each
+`call.arguments["argument"] = value` fills one argument, cast to its declared type; `call.call()` runs it and
+answers what the declaration answers. Every argument is filled once before the call runs, as for a `Spite.Call`.
+What crosses is checked at the call: an argument that cannot [cross](#what-crosses), a struct whose size differs
+from the header's, an answer read from a function the header declares `void`. A [fault report](failure.md#what-a-native-fault-reports)
+names the line of `call.call()`.
+
+A class usually hides its calls behind functions with Spite names of its own, so the rest of the program never
+sees the library:
+
+```gdscript
+func current_directory(size: Integer, room: Buffer): Integer {
+    var call = DynamicLibrary.Call(kernel.functions["current_directory"])
+    call.arguments["size"] = size
+    call.arguments["room"] = room
+    return call.call()
+}
+```
 
 ### Spite names for foreign functions
 
-Outside its declaration, a foreign function is known by its Spite name. Mortaro: "externally we should always use
-things with proper naming". The name the compiler proposes is worked out from the symbol by one rule, and a person
-writing a declaration follows the same one:
+Mortaro: "externally we should always use things with proper naming". A declaration's key is worked out from the
+symbol by one rule, the same the error uses for the key it proposes:
 
 1. The symbol is split into words at its capitals and underscores, in snake_case: `GetCurrentDirectoryW` is
    `get_current_directory_w`.
@@ -89,21 +100,21 @@ writing a declaration follows the same one:
    `get_current_directory`.
 3. The library's common prefix goes (`vk`, `VK_`, `Vk` for Vulkan), and so does a leading `get`, which Spite
    keeps for accessors: `current_directory`.
-4. A word the [style](style.md#names) table knows as an abbreviation is written in full: `strlen` stays one word,
-   `SetCursorPos` is `set_cursor_position`.
+4. A word the [style](style.md#names) table knows as an abbreviation is written in full: `SetCursorPos` is
+   `set_cursor_position`.
 
-Where the rule leaves an abbreviation the style rules refuse (`strlen`), the declaration is named by hand
-(`length_of`), and the error says which word to write out.
+Where the rule leaves C's own abbreviation (`strlen`, Vulkan's `Cmd`), the key is named by hand (`length_of`,
+`record_draw`).
 
 ## Opening a library
 
 - **The arguments are literals**, because the compiler reads them while compiling. The file is named exactly as
   it is on disk, extension included: a name without one is an error.
-- **One instance per file, naming rule and header.** `DynamicLibrary` follows the rule every singleton does
+- **One instance per file and header.** `DynamicLibrary` follows the rule every singleton does
   ([classes_and_files.md](classes_and_files.md#one-instance-per-argument-values)): a singleton constructed
   with different argument values is a different instance. Every class asking for
-  `DynamicLibrary("ucrtbase.dll", 'identity', "")` shares one library and one table of symbols; the same file
-  asked for with a header, or another file, is a second instance with its own table. It is not a special case.
+  `DynamicLibrary("ucrtbase.dll", "", ...)` shares one library and one table of symbols, whatever functions each
+  declares; the same file asked for with a header, or another file, is a second instance with its own table.
 - **Only what is called is bound.** The symbols a program calls are looked up once, when the library opens, so
   every later call is one indirect call. A symbol named only by code the program never reaches is not looked up
   at all ([optimizations.md](optimizations.md#tree-shaking)), except in an inspectable build
@@ -118,23 +129,6 @@ Where the rule leaves an abbreviation the style rules refuse (`strlen`), the dec
 That is the whole run-time cost: opening each library once, on first use, one lookup per called symbol, and one
 indirect call per call, with arguments passed as they are ([what crosses](#what-crosses)). There is no marshalling
 layer, and a symbol no surviving code calls costs nothing.
-
-## Naming rules
-
-Spite's own names are snake_case and never abbreviated, and C's are neither, so the second argument says how a
-Spite name becomes the C one:
-
-| Rule | `set_cursor_position` becomes | For |
-|---|---|---|
-| `'identity'` | `set_cursor_position` | C libraries named in snake_case, or a name written exactly as C spells it |
-| `'windows'` | `SetCursorPos` | Win32: abbreviated by the linter's own table read backwards, then PascalCased |
-| `'camel_case'` | `setCursorPosition` | libraries named in camelCase |
-
-With `'identity'` a name may be written exactly as C spells it, as in `kernel.GetFileAttributesA(path)`, which is
-what the standard library does where Win32's own abbreviations follow no rule. The words of the linter's table
-that Win32 spells out in full (`count`, `buffer`, `window`, `size`, the second table in
-[Style](style.md#names)) are not read backwards, so
-`set_cursor_position` is still `SetCursorPos` but `get_tick_count` stays `GetTickCount`.
 
 ## What crosses
 
@@ -219,20 +213,32 @@ program writes a trampoline, and there is no new syntax.
 A function value given as an argument of a foreign call is a C function pointer for that call:
 
 ```gdscript
-var numbers = DynamicLibrary("numbers.dll", 'identity', "")
+var numbers = DynamicLibrary(
+    "numbers.dll",
+    "",
+    {
+        "sum_mapped": DynamicLibrary.FunctionDeclaration(
+            "sum_mapped",
+            [
+                DynamicLibrary.Argument("count", Integer),
+                DynamicLibrary.Argument("mapping", Spite.Function<Integer, Integer>),
+            ],
+            Integer,
+        ),
+    },
+)
 var scale = 3
 
 func MappedByC() {
-    var total = sum_mapped(4, scaled)
+    var call = DynamicLibrary.Call(numbers.functions["sum_mapped"])
+    call.arguments["count"] = 4
+    call.arguments["mapping"] = scaled
+    var total = call.call()
     console.print(total)
 }
 
 func scaled(value: Integer): Integer {
     return value * scale
-}
-
-func sum_mapped(count: Integer, mapping: Spite.Function<Integer, Integer>): Integer {
-    return numbers.sum_mapped(count, mapping)
 }
 ```
 
@@ -250,7 +256,7 @@ message naming the function and the line that handed it over; that is what the s
 `ForeignCallback(function, where_context)` hands C a function it keeps: `.address` is the C function pointer, and
 it stays valid for as long as the program keeps the `ForeignCallback`. The function is named directly
 (`order.compare`, or `compare` inside the class), and the second argument, a literal the compiler reads like a
-library's naming rule, says how C gets the owner back to the trampoline:
+library's file name, says how C gets the owner back to the trampoline:
 
 | `where_context` | C calls | The owner is found | For |
 |---|---|---|---|
@@ -269,7 +275,22 @@ passes, the way Win32 programs use `GWLP_USERDATA`:
 ```gdscript
 singleton
 
-var user32 = DynamicLibrary("user32.dll", 'identity', "")
+var user32 = DynamicLibrary(
+    "user32.dll",
+    "",
+    {
+        "default_window_procedure": DynamicLibrary.FunctionDeclaration(
+            "DefWindowProcW",
+            [
+                DynamicLibrary.Argument("window", Long),
+                DynamicLibrary.Argument("message", UnsignedInteger),
+                DynamicLibrary.Argument("word", UnsignedLong),
+                DynamicLibrary.Argument("long_word", Long),
+            ],
+            Long,
+        ),
+    },
+)
 var windows = Dictionary<Long, Window>()
 var procedure: ForeignCallback? = null
 
@@ -284,11 +305,12 @@ func handle_message(window: Long, message: UnsignedInteger, word: UnsignedLong, 
     if found {
         return found.handle_message(message, word, long_word)
     }
-    return default_window_procedure(window, message, word, long_word)
-}
-
-func default_window_procedure(window: Long, message: UnsignedInteger, word: UnsignedLong, long_word: Long): Long {
-    return user32.DefWindowProcW(window, message, word, long_word)
+    var call = DynamicLibrary.Call(user32.functions["default_window_procedure"])
+    call.arguments["window"] = window
+    call.arguments["message"] = message
+    call.arguments["word"] = word
+    call.arguments["long_word"] = long_word
+    return call.call()
 }
 ```
 
@@ -300,7 +322,7 @@ first is alive stops the program, since both would be the same C function.
 **A table of functions is filled by C.** A COM-style interface such as XAudio2's `IXAudio2VoiceCallback` is an
 object whose first word points at a table of functions. Spite cannot write memory at an address, so the table is
 built on the C side: the library exports a function that takes the `.address` of each `ForeignCallback` in the
-interface's order (`set_voice_started(started.address)`, declared over `mixer.set_voice_started`) and keeps them in
+interface's order (a declared `set_voice_started`, called with `started.address`) and keeps them in
 its own table. The functions are
 `'no_context'` functions of one singleton, which tells the voices apart by the object C passes back as a `Long`.
 
@@ -321,7 +343,18 @@ reads the callback as the back reference it is, as it does for a [cycle](memory.
 object is freed when its last other holder goes:
 
 ```gdscript
-var vulkan = DynamicLibrary("vulkan-1.dll", 'identity', "")
+var vulkan = DynamicLibrary(
+    "vulkan-1.dll",
+    "",
+    {
+        "listen": DynamicLibrary.FunctionDeclaration(
+            "listen",
+            [DynamicLibrary.Argument("reporter", Long), DynamicLibrary.Argument("context", Long)],
+            Nothing,
+        ),
+        "stop_listening": DynamicLibrary.FunctionDeclaration("stop_listening", [], Nothing),
+    },
+)
 var _messenger: ForeignCallback? = null
 
 func Device() {
@@ -339,11 +372,15 @@ func drop() {
 }
 
 func listen(reporter: Long, context: Long) {
-    vulkan.listen(reporter, context)
+    var call = DynamicLibrary.Call(vulkan.functions["listen"])
+    call.arguments["reporter"] = reporter
+    call.arguments["context"] = context
+    call.call()
 }
 
 func stop_listening() {
-    vulkan.stop_listening()
+    var call = DynamicLibrary.Call(vulkan.functions["stop_listening"])
+    call.call()
 }
 ```
 
@@ -394,7 +431,17 @@ own naming the system's real file. The Windows side of `Program` adds what only 
 working directory:
 
 ```gdscript
-var kernel = DynamicLibrary("kernel32.dll", 'identity', "")
+var kernel = DynamicLibrary(
+    "kernel32.dll",
+    "",
+    {
+        "current_directory": DynamicLibrary.FunctionDeclaration(
+            "GetCurrentDirectoryW",
+            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Argument("room", Buffer)],
+            Integer,
+        ),
+    },
+)
 
 func working_directory(): String? {
     var size = 1024
@@ -411,11 +458,14 @@ func working_directory(): String? {
 }
 
 func _current_directory(size: Integer, room: Buffer): Integer {
-    return kernel.GetCurrentDirectoryW(size, room)
+    var call = DynamicLibrary.Call(kernel.functions["current_directory"])
+    call.arguments["size"] = size
+    call.arguments["room"] = room
+    return call.call()
 }
 ```
 
-The standard library's own declarations start with `_`, so they add nothing to what a program can call.
+The standard library's own functions that call C start with `_`, so they add nothing to what a program can call.
 
 while `common`'s `Program` keeps what every system calls the same way (`exit` through the C runtime). Today only the
 Windows folder holds code: the executable is always Windows x64, and `linux` and `mac` only load `common`.
@@ -454,15 +504,24 @@ pub extern "C" fn sum_of(values: *const i32, count: i64) -> i64 {
 is declared and called from Spite exactly as a C function is, its name already snake_case:
 
 ```gdscript
-var measure = DynamicLibrary("libmeasure.so", 'identity', "")
+var measure = DynamicLibrary(
+    "libmeasure.so",
+    "",
+    {
+        "sum_of": DynamicLibrary.FunctionDeclaration(
+            "sum_of",
+            [DynamicLibrary.Argument("values", List<Integer>), DynamicLibrary.Argument("count", Long)],
+            Long,
+        ),
+    },
+)
 
 func total(values: List<Integer>): Long {
     var values_count: Long = values.count()
-    return sum_of(values, values_count)
-}
-
-func sum_of(values: List<Integer>, count: Long): Long {
-    return measure.sum_of(values, count)
+    var call = DynamicLibrary.Call(measure.functions["sum_of"])
+    call.arguments["values"] = values
+    call.arguments["count"] = values_count
+    return call.call()
 }
 ```
 
@@ -505,7 +564,25 @@ enum Packing {
     'input_corrupt'
 }
 
-var library = DynamicLibrary("libpack.so", 'identity', "")
+var library = DynamicLibrary(
+    "libpack.so",
+    "",
+    {
+        "create": DynamicLibrary.FunctionDeclaration("pack_create", [DynamicLibrary.Argument("level", Integer)], Long),
+        "pack_block": DynamicLibrary.FunctionDeclaration(
+            "pack_block",
+            [
+                DynamicLibrary.Argument("packer", Long),
+                DynamicLibrary.Argument("input", Buffer),
+                DynamicLibrary.Argument("input_count", Integer),
+                DynamicLibrary.Argument("output", Buffer),
+                DynamicLibrary.Argument("output_count", Integer),
+            ],
+            Integer,
+        ),
+        "destroy": DynamicLibrary.FunctionDeclaration("pack_destroy", [DynamicLibrary.Argument("packer", Long)], Nothing),
+    },
+)
 var handle: Long = 0
 
 func Packer(level: Integer) {
@@ -538,15 +615,25 @@ func drop() {
 }
 
 func _create(level: Integer): Long {
-    return library.pack_create(level)
+    var call = DynamicLibrary.Call(library.functions["create"])
+    call.arguments["level"] = level
+    return call.call()
 }
 
 func _pack_block(packer: Long, input: Buffer, input_count: Integer, output: Buffer, output_count: Integer): Integer {
-    return library.pack_block(packer, input, input_count, output, output_count)
+    var call = DynamicLibrary.Call(library.functions["pack_block"])
+    call.arguments["packer"] = packer
+    call.arguments["input"] = input
+    call.arguments["input_count"] = input_count
+    call.arguments["output"] = output
+    call.arguments["output_count"] = output_count
+    return call.call()
 }
 
 func _destroy(packer: Long) {
-    library.pack_destroy(packer)
+    var call = DynamicLibrary.Call(library.functions["destroy"])
+    call.arguments["packer"] = packer
+    call.call()
 }
 ```
 
