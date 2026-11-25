@@ -73,6 +73,10 @@ error: 'c_runtime.strlen' is a foreign function called outside its declaration: 
 So following any call to where it leaves Spite takes one step: the declaration names the library, the symbol and
 every type that crosses.
 
+## Calling a declared function
+
+(rewritten below)
+
 ### Spite names for foreign functions
 
 Outside its declaration, a foreign function is known by its Spite name. Mortaro: "externally we should always use
