@@ -221,8 +221,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   with no arguments, each attribute an assignment, and the children one assignment of a list, `view.children =
   [text, badge]` (each nested tag or `{value}` one entry, typed by the `children` attribute, through `set_children`
   when declared; a whole list is `children={list}`); a lowercase tag calls `render_<tag>` with its attributes as the
-  parameters, by name (`<weapon grade={1}/>` is `render_weapon(1)`), and takes no children. A tag names a class as
-  code does: `<ClassPicker/>` inside `sidebar/`, never `<Sidebar.ClassPicker/>` (rewritten with a `fixed:` line). See the markup section of [reference.md](reference.md).
+  parameters, by name (`<weapon grade={1} />` is `render_weapon(1)`), and takes no children. A tag names a class as
+  code does: `<ClassPicker />` inside `sidebar/`, never `<Sidebar.ClassPicker />` (rewritten with a `fixed:` line). See the markup section of [reference.md](reference.md).
 - A comment is one line outside functions and nothing but a link to a markdown heading, relative or
   `https://github.com/Spite-Language/<repository>/blob/master/<page>.md#<anchor>`. Function bodies hold no
   blank lines: name the part and call it.
@@ -290,10 +290,11 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   to `Byte` that keeps a list of it).
 - One character of a text is a `Rune`, not a `String`: `text[index]` answers a `Rune?` (byte index; `null` inside a
   character), `rune.unicode` is its number, `Rune(233)` makes one, and `rune.to_string()` is its text. `letter == "/"`
-  compares as text: `==` becomes `equals`, and the rune becomes its text to meet the text.
+  compares runes: `==` becomes `equals`, and `"/"` casts through `Rune(from: String)` (one character; other text halts).
 - `a == b` and `a != b` are `a.equals(b)`: `b` casts to what `equals` takes (the class itself without an `equals`),
-  so comparing a `Price` with `"cost"` is a compile error naming `Price(from: String)` unless that cast exists or
-  `Price` has a `to_string()` (then it compares as text). Never expect a comparison across types to be `false`.
+  so comparing a `Price` with `"cost"` is a compile error naming `Price(from: String)` unless that cast exists; a text is
+  no exception. With a `to_string()` and no such cast it is refused naming the fixes: `"cost" == price` or
+  `price.to_string() == "cost"`. Never expect a comparison across types to be `false`.
 - Every class has `equals`: one without its own compares every attribute with that attribute's `==` (private ones
   too, back references such as `parent` included; cycles never loop), so two `Point(1, 2)` are equal, a deep copy
   equals its original, and `list.contains(item)` finds an equal item. A value typed by a `type` or a union
@@ -323,7 +324,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   it (`func shown(component: Framework.Component)`). It compiles
   exactly as a copy declared in your own class would, so a shared `type` serves wherever several classes meet.
 - A class of the file's own folder is written plain, never through that folder: inside `sidebar/`,
-  `Picker()`, `List<Picker>`, `Picker.Mode`, `<ClassPicker/>`. `Sidebar.Picker` there is rewritten to `Picker` with a
+  `Picker()`, `List<Picker>`, `Picker.Mode`, `<ClassPicker />`. `Sidebar.Picker` there is rewritten to `Picker` with a
   `fixed:` line, unless the class itself declares a `Picker` (then the path is what tells them apart).
 - The compiler fixes what has one fix, and prints `fixed:` for each: declarations out of order, a local or parameter
   with one right spelling, a file or folder of the program with one right spelling (renamed on the disk with every

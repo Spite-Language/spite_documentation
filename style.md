@@ -40,6 +40,8 @@ that only formats: `--check` formats and checks without building ([compiler.md](
 - A list, object or call that fits in 120 columns goes on one line with `, `; a longer one is broken one entry
   per line, with no commas for a list or object literal and with trailing commas for a call.
 - One blank line between declarations at file level; consecutive `var`s may stay grouped.
+- A self-closing tag has one space before `/>` and an opening tag none before `>`: `<Ui.Image />`, `<Ui.Text>`
+  ([markup.md](markup.md#how-it-is-written)).
 - A switch case with one short statement stays on its line; `crash false` becomes a bare `crash`, the one form
   for a branch that cannot happen ([failure.md](failure.md#crash)).
 

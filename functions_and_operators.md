@@ -409,9 +409,12 @@ attributes ([Every class has equals](#every-class-has-equals)); the `equals` it 
 (`func equals(other: Money): Boolean`), or the compiler says so. Either way the right side meets that class through the ordinary casts, like any argument: `price == "10"` calls
 `Price(from: String)` when `Price` declares it, and without one it is refused, never simply `false`: `a String cannot
 be used where a Price is needed: a value is cast to the class a place wants through that class's conversion, and
-Price declares no 'Price(from: String)'`. A value with a `to_string()` compared with a text compares as text first,
-when its class takes no conversion from text ([Rune](standard_library.md#rune)), so `tag == "cost"` compares
-`tag.to_string()` and `Price.attributes["cost"] == "cost"` the attribute's name.
+Price declares no 'Price(from: String)'`. A text is no exception: `rune == "/"` casts `"/"` through
+`Rune(from: String)` ([Rune](standard_library.md#rune)). Where the right side cannot be cast to the left but the left
+casts to the right, the refusal names the fixes, swapping the sides or comparing the text written out: `tag == "cost"`
+with a `Tag` that has a `to_string()` and no `Tag(from: String)` is `this value is a String, which cannot be cast to a
+Tag, since Tag declares no 'Tag(from: String)': swap the sides ('"cost" == tag'), or compare its text
+('tag.to_string() == "cost"')`, and `"cost" == tag` casts `tag` to text through its `to_string()`.
 Number arithmetic is done in the left side's type, so a wider right side is an error that says to write the wider
 operand first ([Wider arithmetic goes wider operand first](values_and_types.md#wider-arithmetic-goes-wider-operand-first));
 a comparison is a call on its left side like any other operator ([below](#a-comparison-is-a-call-on-its-left-side)).

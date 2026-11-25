@@ -267,7 +267,7 @@ line is a change it made: two fixes in one statement are both made. It fixes:
   names 'Framework' twice, and a folder is its own class: wrote 'Framework.Component'`);
 - a class of the file's own folder written through it, anywhere a name is written (a construction, a type, a
   generic argument, a member read, a tag): inside `sidebar/`, `Sidebar.Picker()` becomes `Picker()`,
-  `Sidebar.Picker.Mode` becomes `Picker.Mode` and `<Sidebar.ClassPicker/>` becomes `<ClassPicker/>`; the path stays
+  `Sidebar.Picker.Mode` becomes `Picker.Mode` and `<Sidebar.ClassPicker />` becomes `<ClassPicker />`; the path stays
   when the class declares that plain name itself, for a standard-library class (`Spite.Function`) and for a class of
   a folder around it (`Game.Picker` inside `game/sidebar/`);
 - a local or parameter name with one right spelling (camelCase, a doubled `_`, an abbreviation with one expansion, a
@@ -295,8 +295,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   text inside a hole keeps its own escapes and holes). One character is a `Rune`: `text[index]` is the `Rune?` starting
   at byte `index` (`null` out of range or inside a character), `rune.unicode` its Unicode number (`"é"` is 233),
   `Rune(233)` makes one (halting outside Unicode or on a surrogate), `rune.to_string()` its text, which is how it
-  prints and sits in `"{rune}"`; `==` compares runes, and a rune compared with a text becomes its text, so a
-  one-character test is `letter == "/"` (as `letter.to_string() == "/"`, also when `letter` is a `Rune?`).
+  prints and sits in `"{rune}"`; `==` compares runes, and a text compared with a rune casts through `Rune(from: String)` (one character;
+  other text halts), so a one-character test is `letter == "/"` (also when `letter` is a `Rune?`).
 - No cast syntax: the right side is cast toward the left. `"age {3}"` is `"age 3"`; `var total: Integer = "12"` reads
   it while compiling. A value meeting another class is cast through that class's conversion, `func Color(from: String): Color?`
   declared in `Color`, wherever it meets it (argument, `return`, assignment): `var paint: Color? = text` calls
@@ -583,8 +583,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   an enum fits a `type` asking only `to_string`, a union fits when each class does. To admit only some classes write
   a `union`, not a `type`. A `T?` fits a `type` that asks only for
   `to_string()` and `to_debug()` (null answers both with `null`), a `T?` of a `type` included:
-  `console.print(attribute.value)` and, on a `T?` of a `type` asking `to_string()` or a null `attribute.value`, a hole `"{attribute.value}"` show `null` when it holds none, while
-  `attribute.value.to_string()` is narrowed first; any other `type` needs it narrowed or proven present
+  `console.print(attribute.value)` and a hole on any `T?` (`"{name}"` with a `String?`, a number, an enum, a class, a `union` or a `type`) show `null` when it holds none, while
+  `name.to_string()` written out is narrowed first; any other `type` needs it narrowed or proven present
   first (`this value may be null (it is a Rock?), but a Singer is needed: ...`). A `type` with `?` takes any `T?`
   whose `T` fits, kept as it is (`var held: Component? = maybe_label()`, a `List<Component?>` item, a `render():
   Component?` answering a `Label?`). Every value answers `to_debug()`,
@@ -966,8 +966,9 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `a.is_same_instance(b)` written is `'is_same_instance' is what '===' calls: write 'a === b', or 'a !== b' for 'not a.is_same_instance(b)'`. `a == b` is `a.equals(b)`: the right side casts to what `equals` takes (the class itself when it has no
   `equals`) like any argument, so `price == "10"` needs `func Price(from: String): Price?` and without it is the error
   `a String cannot be used where a Price is needed: ... Price declares no 'Price(from: String)'`, never a silent
-  `false`; a value with `to_string()` compared with a text compares as text instead when no such conversion exists
-  (`Price.attributes["cost"] == "cost"` compares the name). `a[x]` calls `get_at(x)`, which must answer a `T?` (`func get_at(index: Integer): Integer?`, `null` when
+  `false`; a text is no exception. Where only the swapped form casts (a `Tag` with `to_string()` and no
+  `Tag(from: String)` compared with `"cost"`) the refusal names the fixes: `'"cost" == tag'`, or
+  `'tag.to_string() == "cost"'`. `a[x]` calls `get_at(x)`, which must answer a `T?` (`func get_at(index: Integer): Integer?`, `null` when
   nothing is there); a plain `T` is an error. A read through your own class is narrowed by what you write (`crash
   shelf[0]`): a loop over `shelf.count()` proves nothing about it. The operator is the only way to call its function:
   `a.sum(b)` is an error saying `write 'a + b'`, and `person.get_age()` / `person.set_age(3)` say to write
@@ -1068,7 +1069,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
 - Tags are sugar the compiler turns into ordinary statements before it resolves a name (D2300); nothing later knows
   they were tags, and a function with tags builds to the same program as the same function written by hand.
   [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md)
-- A tag stands only after `return` or `var name =`. `return <View padding={24} wrap><Text content="Face"/></View>`
+- A tag stands only after `return` or `var name =`. `return <View padding={24} wrap><Text content="Face" /></View>`
   is `var view_1 = View()`, `view_1.padding = 24` (through `set_padding` when there is one), `view_1.wrap = true`,
   `var text_1 = Text()`, `text_1.content = "Face"`, `view_1.children = [text_1]`, `return view_1`: leaves first,
   attributes in the order written, then the children set at once as one list, always a list, even for one child. A tag never takes constructor arguments, and is never an argument.
@@ -1087,21 +1088,21 @@ of the standard library or of a repository pinned to a commit is never rewritten
   [optimizations.md](https://github.com/Spite-Language/spite_documentation/blob/master/optimizations.md#a-default-replaced-right-after-its-making-is-never-made)
 - `{expression}` as a child is one entry of that list, in its place among the nested tags (D2547); a call is held
   in a local first (`badge_6` for `render_badge()`). A whole list is the attribute instead:
-  `<View children={buttons}/>`, which is also how a child shown only sometimes is written (build the list with an
+  `<View children={buttons} />`, which is also how a child shown only sometimes is written (build the list with an
   `if`). A child the file shows is a `List` or a `Boolean` is an error, and so is a tag
   setting `children=` and holding children; a list it cannot see does not fit a class or `type` element, the
   ordinary type error.
 - Text between tags is the `content` attribute, spaces collapsed: `<Label>{count} items</Label>` is
   `label.content = "{count} items"`. No `{` or `<` in text.
-- A lowercase tag `<health_bar filled={health} missing={missing}/>` calls `render_health_bar(health, missing)` of the
+- A lowercase tag `<health_bar filled={health} missing={missing} />` calls `render_health_bar(health, missing)` of the
   same file, attributes matched to parameters by name, so the parameters are the tag's props (`func render_weapon(grade:
-  Integer)` is `<weapon grade={1}/>`) and each value converts to its parameter's type as in the call written by hand
+  Integer)` is `<weapon grade={1} />`) and each value converts to its parameter's type as in the call written by hand
   (`grade="3"`, `tint="#ff8000"` for a `Color`, `rarity='rare'`). A lowercase tag takes no children: nested tags
   or `{expression}` inside it are an error, so `render_` functions build what they hold themselves; a parameter named
   `children` is an ordinary one (`children={parts}`). A missing parameter or an attribute naming none is an error at
   the tag naming the function and parameter.
 - Generated locals are `<tag in snake case>_<line>` (`view_3`), so crash reports and `locals` read like the code.
-  The formatter rewrites tags into one style; a file holding tags gets no fix found after building (told as an error).
+  The formatter rewrites tags into one style (`<Ui.Image />` with one space before `/>`, `<Ui.Text>` with none before `>`); a file holding tags gets no fix found after building (told as an error).
 - `children` (and any `set_children`) comes from the library a tag's class belongs to (the render library), never
   from Spite. Markup by ordinary calls still works.
 - A class whose `render()` takes no arguments and holds tags also gets `jsx_` members (their declarations' `.source`
