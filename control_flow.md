@@ -20,7 +20,8 @@ That is all of it: `if`, `while` and `switch` (over a union, a `T?`, an enum or 
 
 Conditions are `Boolean`s, joined with `and`, `or` and `not`, which short-circuit. An `if` on a `T?` narrows it in
 place: inside the block it is a plain value, and the `else` runs exactly when it is null
-([failure.md](failure.md#narrowing)). `else if` is written on one line. A chain of `else if`s, like a `switch`, can be as
+([failure.md](failure.md#narrowing)). `else if` is written on one line, and an `else` holding nothing but an `if` with no `else` of
+its own is rewritten into one (`} else { if other { } }` becomes `} else if other { }`). A chain of `else if`s, like a `switch`, can be as
 long as the file's statement budget allows ([style.md](style.md#the-file-content-budget)): the compiler takes one link
 at a time, so a longer chain does not need more of its stack. It builds a long sum (`a + b + c + ...`) the same way.
 

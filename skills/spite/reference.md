@@ -190,7 +190,8 @@ func is_alive(): Boolean {
 - An `if`/`else` never sits directly inside a branch of another `if`/`else`: move the inner decision into a
   function named for what it decides, or use one `switch` when both test which member of a union or which value
   of an enum a value is. A
-  flat `else if` chain (any length within the file's 1200 statements, like a `switch`), and an `if` with no `else`, are fine. The error: `this 'if'/'else' is inside a branch of
+  flat `else if` chain (any length within the file's 1200 statements, like a `switch`), and an `if` with no `else`, are fine
+  (an `else` holding only such an `if` is formatted into the chain: `} else { if other { } }` becomes `} else if other { }`). The error: `this 'if'/'else' is inside a branch of
   another 'if'/'else': move it into a function named for what it decides`.
 - An `if` whose body is only another `if`, neither with an `else`, is an error: write one condition,
   `if modified and size { ... }`.

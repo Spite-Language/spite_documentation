@@ -29,7 +29,8 @@ that only formats: `--check` formats and checks without building ([compiler.md](
   file is written back with `\n` and a `fixed:` line. Each Spite repository's `.gitattributes` holds
   `* text=auto eol=lf`, so a Windows checkout has `\n` too.
 - K&R braces: `func name() {`, `} else {`, `} else if other {`. An empty body is `{ }`, and an empty `else` is
-  dropped.
+  dropped. An `else` holding nothing but an `if` with no `else` of its own is joined into the chain:
+  `} else { if other { ... } }` becomes `} else if other { ... }`.
 - A comment is `# text`, one space after `#`. What is between a text's quotes is never touched, escapes and all.
 - One space around binary operators and after `,` and `:`; none inside `( )` and `[ ]`.
 - The fewest parentheses that keep the meaning: `1 + 2 * 3`, not `1 + (2 * 3)`.
