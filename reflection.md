@@ -970,6 +970,7 @@ declaration's, so `.name` is never empty. A `null` there stays `null`.
 |---|---|---|
 | `.name` | the attribute's name | `attribute.name` is `health` |
 | `.class` | its declared class | `attribute.class` is `Integer` |
+| `.owner_class` | on a declaration: the class that declares it, a generic class with its codegen values (`Shelf<Box>`); a bound attribute's is `.declaration.owner_class` | `Monster.attributes["health"].owner_class` is `Monster` |
 | `.index` | its place in declaration order, 0 for the first | `Monster.attributes["health"].index` is `1` |
 | `.declaration` | on a bound attribute: its `Spite.AttributeDeclaration`, so `attribute.declaration.name` and `attribute.name` agree | `troll.attributes["health"].declaration` |
 | `.owner` | inside a walk over an instance: the walked object | `attribute.owner` |
@@ -981,7 +982,7 @@ declaration's, so `.name` is never empty. A `null` there stays `null`.
 ([standard_library.md](standard_library.md#snake-camel-and-pascal-case)), and in a walk, where the name is known,
 the call is worked out while compiling.
 
-A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.index` and `.source_file`, never
+A class's `.attributes` holds `Spite.AttributeDeclaration`s: `.name`, `.class`, `.owner_class`, `.index` and `.source_file`, never
 a `.value`; whether its class is a singleton is `attribute.class.is_singleton`. An instance's are `Spite.Attribute<Value>`s bound to it, `Value` being what the attribute holds: those members, read
 through the declaration, plus `.value`. What a walk hands its function is decided by the parameter's type: over
 an instance, `troll.attributes.each(describe)` hands a `Spite.Attribute<Integer>` parameter each of troll's attributes
@@ -995,7 +996,8 @@ has no value: declare the parameter 'Spite.AttributeDeclaration', or walk an ins
 
 `function.reads` and `function.writes` answer the attributes that its code reads and writes, as
 `Spite.AttributeDeclaration`s: those of its own class first, in declaration order, then those of every other class
-of the program and its packages, class by class in the order of their names, each in declaration order. Both follow
+of the program and its packages, class by class in the order of their names, each in declaration order; each one's
+`.owner_class` says which class declares it. Both follow
 every call however deep, on any object, so `remember()` below writes `trail` for `update_each`. Calling a function
 on an attribute (`trail.append(position)`) reads it, and writes it when that function changes the object it is
 called on. What a function does with an argument is the argument's own `.is_mutated`.

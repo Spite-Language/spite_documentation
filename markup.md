@@ -3,7 +3,8 @@
 A tree of objects, the kind a user interface is built from, can be written as tags. The compiler turns the tags into
 the statements you would write by hand, before it resolves a single name, so nothing after that knows tags existed:
 no runtime object, no new type, no rule that holds only for tags. A function written with tags and the same function
-written by hand build to the same program (D2300, which replaced D18).
+written by hand build to the same program (D2300, which replaced D18). A class's `render()` with tags also gets the
+`jsx_` members a framework uses to keep what it made ([below](#a-render-keeps-what-it-made)).
 
 ```gdscript
 func render(): Theme.Window {
@@ -106,6 +107,45 @@ a bare `shiny` a `true`). Its answer is held in a local and is one child like an
 A lowercase tag takes no children: nested tags or `{expression}` children inside it are refused, so a component
 written as a function stays simple and builds what it holds itself. A parameter named `children` is an ordinary one,
 given as `children={parts}`.
+
+## A render keeps what it made
+
+A class whose `render()` takes no arguments and holds tags gets more than `render` itself: the desugar also adds the
+members a framework needs to keep the objects a render made and to change only what a write changed (the batched
+form, spite_compiler#471). Every function of them starts with `jsx_` and every attribute with `_jsx_` (private, so a
+framework copying public attributes never copies them), and a function's declaration's `.source` is `"compiler jsx"`
+(a function written in the source says `"written"`), so a framework finds them through reflection:
+`Card.functions["jsx_update"]`, or a walk keeping the functions whose `.source` is `"compiler jsx"`. `render()` still
+builds a fresh tree each time it is called.
+
+| Member | What it does |
+|---|---|
+| `jsx_replay(): Boolean` | runs the render on the kept objects: each class tag takes the object it made last time, or makes one the first time, and a tag in a branch not taken lets its object go; a tag inside a `while` keeps one object per pass. It answers `true` when anything was made or let go, or a lowercase tag (a `render_` function) built something, so a framework links the tree again |
+| `jsx_root()` | what the last replay answered, `null` before the first |
+| `jsx_update(bits: Integer): Boolean` | the update for the bits that changed: an attribute a tag sets outside every `if`, `while` and `switch` from what no local of the render holds is one binding and runs alone when a bit it reads is set; when a bit the rest of the render reads is set (a branch's condition, a loop's list), it replays instead and answers what the replay answers |
+| `jsx_attach(queue: List<Card>?)` | the framework hands its queue: the first write after an update appends the object to it once, and once per frame the framework runs `jsx_update(card.jsx_pending())` for each queued object; `null` detaches |
+| `jsx_pending(): Integer` | the bits marked since the last update |
+| `jsx_replays_each_frame(): Boolean` | `true` when the render reads something no write marks (an attribute of another object, an attribute of its class with no type the desugar can read), so a framework replays it every frame |
+| `jsx_release()` | lets every kept object go and stops watching lists |
+
+Which bits a binding reads is the binding's `.reads` (its own function, `jsx_bind_<n>`), and what the rest of the
+render reads is that of `jsx_flow`, a copy of the render without its bindings that nothing calls; both are folded
+while compiling ([reflection.md](reflection.md#what-a-function-reads-and-writes)), and the update learns them once.
+
+### What a write marks
+
+Each attribute of the class with a default whose type the desugar can read (a declared type, or a default that is a
+number, a `Boolean`, a text or a making like `List<Item>()`) has a bit, the first 30 in declaration order, and a setter the
+desugar adds: `set_title(value: String)` stores the value and marks the bit, for a number, a `Boolean` or a text
+only when the value changed (`!=`); any other value marks it on every write. A setter the class writes itself keeps
+its body and marks the bit at its end. A constructor writes the storage, so it marks nothing.
+
+### A list a render reads
+
+A `List` attribute is watched through its own `Observer<ListChange<Item>>` from the first replay until
+`jsx_release()`: `items.append(x)` marks `items`'s bit as assigning a new list does. Each replay watches the list the
+attribute holds then, so a setter never subscribes (a setter that did would reach whatever the list's observers
+reach, and the framework's own proofs saw that).
 
 ## Generated names
 

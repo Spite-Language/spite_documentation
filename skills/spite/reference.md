@@ -1029,7 +1029,9 @@ of the standard library or of a repository pinned to a commit is never rewritten
   run time (a `Spite.Function<Nothing>?` attribute through `fresh.attributes`) it answers the same declaration, name and
   owner as where it was named: `.name` is always its declaration's name. A walk
   over `Monster.attributes` hands `Spite.AttributeDeclaration`s and a walk over `troll.attributes` hands
-  `Spite.Attribute`s; a parameter of the other kind is an error. An object literal's `.class` is `Object`.
+  `Spite.Attribute`s; a parameter of the other kind is an error. A declaration answers `.owner_class`, the class that
+  declares the attribute (`Shelf<Box>` for a generic copy), beside `.class`, the class it holds; a bound attribute
+  answers it through `.declaration.owner_class`. An object literal's `.class` is `Object`.
 - A class whose file starts with a `singleton` line has one instance: `Journal()` always returns it. A
   singleton whose constructor takes arguments has one instance per literal argument list: `Channel(1)` is the same
   object everywhere, `Channel(2)` a second one, and a non-literal argument is an error. A singleton is bound as an attribute (`var journal = Journal()` beside the
@@ -1092,6 +1094,15 @@ of the standard library or of a repository pinned to a commit is never rewritten
   The formatter rewrites tags into one style; a file holding tags gets no fix found after building (told as an error).
 - `children` (and any `set_children`) comes from the library a tag's class belongs to (the render library), never
   from Spite. Markup by ordinary calls still works.
+- A class whose `render()` takes no arguments and holds tags also gets `jsx_` members (their declarations' `.source`
+  is `"compiler jsx"`, a written function's `"written"`): `jsx_replay()` reruns the render on the objects it made
+  last time (a tag in a branch not taken lets its object go, a tag in a `while` keeps one per pass) and answers
+  whether anything was made or let go; `jsx_root()`; `jsx_update(bits)` (bits from `jsx_pending()`) runs only the bindings that read those bits
+  (an attribute a tag sets outside every `if`/`while`/`switch` from no render local), replaying when a bit a
+  condition or loop reads is set; `jsx_attach(queue)` takes a framework's `List` of the class, and the first write after an update appends the object to it; its attributes are private `_jsx_` ones;
+  `jsx_replays_each_frame()` is true when the render reads another object's state; `jsx_release()`. Each typed
+  attribute gets a setter that marks its bit (numbers, Booleans and texts only when they change); a written
+  `set_x` marks at its end; a `List` attribute is watched through its observer. Never write a `jsx_` name.
 
 ## Built in classes
 
