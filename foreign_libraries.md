@@ -133,7 +133,9 @@ func working_directory(): String? {
 ```
 
 The argument C reads the room's size from is declared as a `DynamicLibrary.RoomSize(name, class)` in place of its
-`DynamicLibrary.Argument`, a whole number; the first `RoomSize` goes with the first `Room`. A room that needs a size
+`DynamicLibrary.Argument`. It is an `Integer`, as a `Buffer` is counted, and reaches a C `size_t` sign-extended
+([argument widths](#argument-widths)); an answer the room is sized from is declared `Integer` too. The first
+`RoomSize` goes with the first `Room`. A room that needs a size
 and has no `RoomSize` is refused with the words to write, and so is a `RoomSize` without a `Room`; a `'fixed_size'`
 room has none. The program fills neither the room nor its size: the compiler makes the room, passes its size and its
 address, makes it bigger and calls again when C says it was too small, and reads back what C wrote. `call()` answers the room filled, or `null` when C
