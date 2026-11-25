@@ -45,6 +45,7 @@ the way a Spite function is described and called:
 | `DynamicLibrary` | an opened library, with the `functions` it declares | `Spite.Class` and its `functions` |
 | `DynamicLibrary.FunctionDeclaration(symbol, arguments, returns)` | one export: its C symbol, its arguments and its answer | `Spite.FunctionDeclaration` |
 | `DynamicLibrary.Argument(name, class)` | one argument: a Spite name and its type | `Spite.Argument` |
+| `DynamicLibrary.Room(name, class, sizing)` | an argument C writes into, and how C sizes it ([rooms](#rooms)); the arguments list holds `DynamicLibrary.FunctionDeclaration.Passed`, either kind | `Spite.Argument` |
 | `DynamicLibrary.Call(declaration)` | a call assembled from a declaration, its `arguments` filled by name, run by `call()` | `Spite.Call` |
 
 - **The key is the Spite name** the program uses (`"length_of"`); the C symbol (`"strlen"`) is written once, in
@@ -101,7 +102,9 @@ memory is a **room**, and a room is a `type` the program declares, with one fiel
 | `DynamicLibrary.Text` | bytes of text, counted in bytes | `to_string()` |
 | `DynamicLibrary.Bytes` | bytes, counted in bytes | `to_buffer()` |
 
-The declaration names how C sizes the room, a `DynamicLibrary.Sizing`, as its fourth argument:
+The room is passed as a `DynamicLibrary.Room(name, class, sizing)` in the declaration's arguments, beside the
+`DynamicLibrary.Argument`s, and its `DynamicLibrary.Sizing` says how C sizes it; a declaration without a room is
+written as before:
 
 ```gdscript
 type PathRoom {
@@ -114,9 +117,8 @@ var kernel = DynamicLibrary(
     {
         "current_directory": DynamicLibrary.FunctionDeclaration(
             "GetCurrentDirectoryW",
-            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Argument("room", PathRoom)],
+            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Room("room", PathRoom, 'answer_is_the_size_needed')],
             Integer,
-            'answer_is_the_size_needed',
         ),
     },
 )
@@ -499,9 +501,8 @@ var kernel = DynamicLibrary(
     {
         "current_directory": DynamicLibrary.FunctionDeclaration(
             "GetCurrentDirectoryW",
-            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Argument("room", PathRoom)],
+            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Room("room", PathRoom, 'answer_is_the_size_needed')],
             Integer,
-            'answer_is_the_size_needed',
         ),
     },
 )
