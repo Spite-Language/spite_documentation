@@ -72,7 +72,8 @@ every type that crosses.
 
 `DynamicLibrary.Call(library.functions["name"])` names a declaration the compiler can read, and each
 `call.arguments["argument"] = value` fills one argument, cast to its declared type; `call.call()` runs it and
-answers what the declaration answers. Every argument is filled once before the call runs, as for a `Spite.Call`.
+answers what the declaration answers. Every argument is filled once before the call runs and is taken when it is
+filled, exactly as for a `Spite.Call`; a fill nothing changes before `call()` is handed over as it is, with no copy.
 What crosses is checked at the call: an argument that cannot [cross](#what-crosses), a struct whose size differs
 from the header's, an answer read from a function the header declares `void`. A [fault report](failure.md#what-a-native-fault-reports)
 names the line of `call.call()`.
