@@ -89,6 +89,12 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   by its C name is a compile error whose words write the entry.
 - Name the key by one rule: the symbol in snake_case, without a Windows `W`/`A` suffix, the library's prefix
   (`vk`) or a leading `get`, abbreviations written out (`GetCurrentDirectoryW` is `current_directory`).
+- Memory C writes into is a room: a `type` with one `DynamicLibrary.WideText`, `DynamicLibrary.Text` or
+  `DynamicLibrary.Bytes` field, passed as that argument, and a `DynamicLibrary.Sizing` (`'answer_is_the_size_needed'`,
+  `'doubled_until_it_fits'`, `'asked_with_no_room_first'`, `'answer_is_what_arrived'`, `'fixed_size'` for a `type`
+  of numbers) as the declaration's fourth argument. Fill neither the room nor its size (except the size for
+  `'answer_is_what_arrived'`): `call()` answers the room filled (`room.text.to_string()`, `room.bytes.to_buffer()`)
+  or `null` when C failed. Never `Buffer(size)` or `take_written`: a `Buffer` is `Buffer()`.
 - Wrap it in a class of its own, and let nothing else touch the `DynamicLibrary`. Only Spite shapes come out: full
   word snake_case names, a Spite enum for each status (map each C number with an `if` per number, then a bare
   `crash`, so a number it does not list halts at the boundary), `T?` instead of a null handle or a not-found code,
@@ -278,7 +284,7 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   Armory.Armory makes`. A list is never cast: a value whose class is known only while running reaches the function as written.
 - `list.sum()` adds the members with their own `+` (numbers, text, any class with `sum(other)`) and answers a `T?`,
   `null` when empty; `list.sum_by(measure)` adds what a function answers for each, an `Integer`.
-- Bytes are a `Buffer` (`Buffer(0)`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
+- Bytes are a `Buffer` (`Buffer()`, `append(byte)`), never a list: `List<Byte>` is an error, written or made (a literal
   of `Byte` items, a call answering one such as `map_<plural>` over a `Byte` attribute, a generic class of yours bound
   to `Byte` that keeps a list of it).
 - One character of a text is a `Rune`, not a `String`: `text[index]` answers a `Rune?` (byte index; `null` inside a

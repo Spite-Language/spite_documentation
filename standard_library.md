@@ -429,10 +429,10 @@ var _second_record_value: Long = 2222
 
 func ByteRecords() {
     var store = File(".spite/documentation_byte_records.bin")
-    var record = Buffer(8)
+    var record = Buffer()
     record.append_long_little_endian(_first_record_value)
     crash store.write_buffer(record)
-    var next = Buffer(8)
+    var next = Buffer()
     next.append_long_little_endian(_second_record_value)
     var second_at = store.append_buffer(next)
     crash second_at
@@ -1313,10 +1313,10 @@ read is one load and there is no list hiding inside it. How much room it keeps i
 buffer's reads and writes whatever it holds: `numbers.read_as_string()` is the error "List has no method
 'read_as_string': bytes are a Buffer, which has it: make them with 'Buffer()'", and so is `append_buffer`. A run of
 bytes has one class, so there is one way to hold it, and it is the class that can read the numbers in it. Write
-`Buffer(size)`.
+`Buffer()`.
 
 **`List<Byte>` is an error, written or made.** `List<Byte>()`, or the type written anywhere, is "there is no
-List<Byte>: bytes are a Buffer, the one class that holds them and reads the numbers in them: write 'Buffer(0)' and add
+List<Byte>: bytes are a Buffer, the one class that holds them and reads the numbers in them: write 'Buffer()' and add
 each byte with 'append(byte)'" at the line that writes it. A list the compiler would make of bytes is refused where it
 is made: a literal whose items are `Byte` values (`[first_byte, second_byte]`) at its line, a call that would answer
 one (`pixels.map_reds()` over a `Byte` attribute, `keys()` of a `Dictionary<Byte, String>`) at the call, and a
@@ -1328,12 +1328,11 @@ until its keys are asked for as a list. A list of `Byte?` is not a run of bytes 
 names its order after the number: `_little_endian`, the order of every machine Spite compiles for and of Spite's own
 binary format, or `_big_endian`, which puts the most significant byte first (PNG, network order). So a call says what
 it reads, one buffer may hold both orders, each read where its format says, and the order of every read is known
-while compiling. A `byte` and a `tiny` are one byte and have no order. A buffer is made with a size,
-`Buffer(size)`, for the bytes the program knows it will write (`Buffer(0)` when nothing is known): the size is a
-suggestion for room, never a limit, and the buffer grows past it as always. The one place the room matters is a
-foreign function that writes into it: pass `Buffer(4096)`, then `take_written(count)` says how many bytes it
-wrote ([foreign_libraries.md](foreign_libraries.md)); `take_written(count)` halts for a negative count or one past the
-room.
+while compiling. A `byte` and a `tiny` are one byte and have no order. A buffer is made with
+`Buffer()`, and how much room it keeps is the compiler's: it grows as bytes are appended. `Buffer(size)` and
+`take_written` are the standard library's own; memory a foreign function writes into is a room declared with that
+function, and the compiler sizes it and reads back what was written
+([foreign_libraries.md](foreign_libraries.md#rooms)).
 
 **Every read says where.** A buffer has no reading position of its own: each read names its position, and a
 program walking a message keeps its own, `var at = 0`, moved past what it read. There is one way to read a number.
@@ -1372,7 +1371,7 @@ var console = Console()
 var _first_record = 1200
 
 func ByteNumbers() {
-    var message = Buffer(10)
+    var message = Buffer()
     message.append_unsigned_short_big_endian(2)
     message.append_integer_big_endian(_first_record)
     message.append_integer_big_endian(-35)

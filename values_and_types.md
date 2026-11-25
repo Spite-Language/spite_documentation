@@ -240,7 +240,7 @@ var console = Console()
 var _past_a_byte = 262
 
 func WiderComparison() {
-    var encoded = Buffer(1)
+    var encoded = Buffer()
     encoded.append(6)
     var written = encoded[0]
     var color_type = _past_a_byte
@@ -717,7 +717,7 @@ still refused until narrowed, and the words point to that line.
 var console = Console()
 
 func ZeroedOnItsOwnLine() {
-    var bytes = Buffer(2)
+    var bytes = Buffer()
     var pair = bytes.read_short_little_endian_at(100)
     var zeroed: Integer = pair
     var total = 5

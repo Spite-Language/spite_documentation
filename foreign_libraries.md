@@ -90,6 +90,63 @@ func current_directory(size: Integer, room: Buffer): Integer {
 }
 ```
 
+## Rooms
+
+C often writes into memory it is handed: a path, a file's bytes, text converted from one encoding to another. That
+memory is a **room**, and a room is a `type` the program declares, with one field saying what C writes:
+
+| Field | C writes | The field answers |
+|---|---|---|
+| `DynamicLibrary.WideText` | UTF-16 text, counted in characters | `to_string()` |
+| `DynamicLibrary.Text` | bytes of text, counted in bytes | `to_string()` |
+| `DynamicLibrary.Bytes` | bytes, counted in bytes | `to_buffer()` |
+
+The declaration names how C sizes the room, a `DynamicLibrary.Sizing`, as its fourth argument:
+
+```gdscript
+type PathRoom {
+    text: DynamicLibrary.WideText
+}
+
+var kernel = DynamicLibrary(
+    "kernel32.dll",
+    "",
+    {
+        "current_directory": DynamicLibrary.FunctionDeclaration(
+            "GetCurrentDirectoryW",
+            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Argument("room", PathRoom)],
+            Integer,
+            'answer_is_the_size_needed',
+        ),
+    },
+)
+
+func working_directory(): String? {
+    var call = DynamicLibrary.Call(kernel.functions["current_directory"])
+    var room = call.call()
+    fallback room
+    return room.text.to_string()
+}
+```
+
+The program fills neither the room nor its size: the compiler makes the room, passes its size and its address,
+makes it bigger and calls again when C says it was too small, and reads back what C wrote. The size is the first
+whole-number argument whose name says a size (`size`, `count`, `length` or `capacity` in it) after the room, then
+before it; with none so named, the first whole-number argument after the room, or the last one before it. `call()` answers the room filled, or `null` when C
+answered that it failed (an answer of `0`, or below `0` for `'answer_is_what_arrived'`); a declaration that answers
+`Nothing` never fails.
+
+| `DynamicLibrary.Sizing` | C's answer | The compiler |
+|---|---|---|
+| `'answer_is_the_size_needed'` | what it wrote, or the size it needs when the room is short | calls again at the size needed |
+| `'doubled_until_it_fits'` | what it wrote, the whole room when the room is short | doubles the room and calls again |
+| `'asked_with_no_room_first'` | asked with an empty room, the size it needs | asks first, then calls with that room |
+| `'answer_is_what_arrived'` | how much arrived; the program fills the size | calls once |
+| `'fixed_size'` | nothing about size; the room is a `type` of numbers | calls once with the room zeroed |
+
+A `Buffer` is made with `Buffer()`, and how much room it keeps is the compiler's: `Buffer(size)` and
+`take_written` are the standard library's own, and a program writing either is told to declare a room.
+
 ### Spite names for foreign functions
 
 Mortaro: "externally we should always use things with proper naming". A declaration's key is worked out from the
@@ -432,37 +489,28 @@ own naming the system's real file. The Windows side of `Program` adds what only 
 working directory:
 
 ```gdscript
+type PathRoom {
+    text: DynamicLibrary.WideText
+}
+
 var kernel = DynamicLibrary(
     "kernel32.dll",
     "",
     {
         "current_directory": DynamicLibrary.FunctionDeclaration(
             "GetCurrentDirectoryW",
-            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Argument("room", Buffer)],
+            [DynamicLibrary.Argument("size", Integer), DynamicLibrary.Argument("room", PathRoom)],
             Integer,
+            'answer_is_the_size_needed',
         ),
     },
 )
 
 func working_directory(): String? {
-    var size = 1024
-    var room = Buffer(size * 2)
-    var length = _current_directory(size, room)
-    while length >= size {
-        size = length
-        room = Buffer(size * 2)
-        length = _current_directory(size, room)
-    }
-    fallback length > 0
-    room.take_written(length * 2)
-    return room._read_wide_string_at(0, length)
-}
-
-func _current_directory(size: Integer, room: Buffer): Integer {
     var call = DynamicLibrary.Call(kernel.functions["current_directory"])
-    call.arguments["size"] = size
-    call.arguments["room"] = room
-    return call.call()
+    var room = call.call()
+    fallback room
+    return room.text.to_string()
 }
 ```
 

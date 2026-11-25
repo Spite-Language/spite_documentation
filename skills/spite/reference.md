@@ -1152,8 +1152,8 @@ items, a call answering one such as `map_<plural>` over a `Byte` attribute or `k
 a generic class of yours bound to `Byte` that keeps a list of it), and a list has no byte functions (calling one is a compile
 error naming `Buffer`). A `Buffer` is still a run of bytes (`count()`, `is_empty()`, `buffer[index]`, `append(byte)`, `truncate(count)`,
 `clear()`, `copy()`; it has no `each` or other list templates, so walk it with a `while` and an index) and adds:
-made with a size, `Buffer(size)` (`Buffer(0)` when nothing is known; the size is room, never a limit; a foreign
-function that writes into it is passed `Buffer(4096)`, then `take_written(count)` says how much it wrote),
+made with `Buffer()` (how much room it keeps is the compiler's; memory a foreign function writes into is a room
+declared with it, never a `Buffer` sized by hand, see [foreign_libraries.md](../../foreign_libraries.md#rooms)),
 a byte order named in every number of two bytes or more (`_little_endian` or `_big_endian` after the number, like
 `read_integer_big_endian_at(position)`; `byte` and `tiny` have none),
 no reading position: every read is `read_<number>_at(position): <number>?` and a walk keeps its own `var at = 0`
