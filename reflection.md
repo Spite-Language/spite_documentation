@@ -618,7 +618,7 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 
 | Member | Answers | Example |
 |---|---|---|
-| `.name` | the class's own name, a `String`, without its outer classes however the class was reached (`.name_with_outer_classes` has them); a copy of a generic class keeps the classes it was given, each without its outer classes | `Monster.name` is `Monster`, `Part.Axle.name` and a walk's `part.name` are `Axle`, and `Custom<Part.Glow>.name` is `Custom<Glow>` |
+| `.name` | the class's own name, a `String`, without its outer classes however the class was reached (`.name_with_outer_classes` has them, as the class is written: a class of a repository's folder named like it is `Framework.Ui.TextField`, [packages.md](packages.md#a-repositorys-folder-named-like-it)); a copy of a generic class keeps the classes it was given, each without its outer classes | `Monster.name` is `Monster`, `Part.Axle.name` and a walk's `part.name` are `Axle`, and `Custom<Part.Glow>.name` is `Custom<Glow>` |
 | `.outer_class` | the `Spite.Class?` of the folder it sits in, `null` at a program's root | `Shop.Tools.Hammer.outer_class` is `Shop.Tools` |
 | `.nested_classes` | a `List<Spite.Class>`: the classes of its folder, its own file left out, then its folders' classes; empty for a file's class | `Shop.Tools.nested_classes.count()` |
 | `.attributes` | a `Dictionary<String, Spite.AttributeDeclaration>` keyed by name, in declaration order | `Monster.attributes["health"]` |

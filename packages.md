@@ -554,6 +554,17 @@ of the program's root, not a reopening of `Core.Renderer` (reopening a loaded pa
 spite_compiler#652). Both commits load as the one root `Core`, so a class is `Core.Renderer` once in messages,
 reflection and `--final-classes`.
 
+## A repository's folder named like it
+
+A repository often keeps its source in a folder named like itself, beside its docs: `framework/framework/`, loaded
+with `load "../framework"`. The loaded folder is the root class `Framework`, with no file of its own, and the folder
+inside it is reached by its own name, as any root's classes are: `framework/framework/ui/text_field.spite` is written
+`Framework.Ui.TextField`. That is also the name the class answers: its `name_with_outer_classes`, a generic copy's
+(`List<Framework.Ui.TextField>`), an enum's it declares, a test's printed name and compile errors say
+`Framework.Ui.TextField`, never `Framework.Framework.Ui.TextField`, and the folder `framework/framework/` itself is
+`Framework`. Only a loaded
+root's first folder is named this way; a folder named like its own folder deeper down keeps both names.
+
 ## Files beside a package's source
 
 A package does not know where the program that loads it lives, so a relative path it opens (`File("shaders/

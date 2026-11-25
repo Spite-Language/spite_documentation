@@ -117,7 +117,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `game/game.spite` is `Game`, `game/ui/ui.spite` is `Game.Ui` (written `Ui` inside the program, never `Game.Ui`),
   and a file named like a library class (`game/string.spite`) reopens it. Every loaded folder is a root class
   named after it (`kal/physics.spite` is `Kal.Physics`; a `package/` without `package.spite` gets an implied
-  `Package`), reached through it or by the bare name where nothing nearer has it; the library's folders make none
+  `Package`), reached through it or by the bare name where nothing nearer has it (a repository's source folder
+  named like it, `framework/framework/ui/text_field.spite`, is `Framework.Ui.TextField`, its reflected name too); the library's folders make none
   (`String` stays `String`). A program's file stays in its root (`game/world.spite` is `Game.World`, never a
   reopening of a loaded `World`); a mod reopens another root's class through a folder named like that root
   (`mods/package/monster.spite` is `Package.Monster`, `mods/game/monster.spite` is `Game.Monster`). Nesting is naming only (no outer object, no shared attributes). Inside a class,

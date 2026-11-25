@@ -70,7 +70,7 @@ without the prefix since a bare name looks from the inside out; a root-level fil
 or folder (`game/string.spite`, `game/spite/class.spite`) reopens the library's class. Every loaded folder is a root class
 named after it: `kal/kal.spite` is `Kal` and `kal/physics.spite` `Kal.Physics`, and a loaded `package/` without
 `package.spite` gets an implied plain class `Package`, so `package/engine/renderer.spite` is `Package.Engine.Renderer`,
-written `Engine.Renderer` where nothing nearer has `Engine`; the standard library's folders make no root class. Nesting is naming only: a nested class holds
+written `Engine.Renderer` where nothing nearer has `Engine`; a repository's source folder named like it (`framework/framework/ui/text_field.spite`, loaded as `framework`) is written and named `Framework.Ui.TextField`, in `name_with_outer_classes`, test names and errors too; the standard library's folders make no root class. Nesting is naming only: a nested class holds
 no object of its outer class, reads none of its attributes, and privacy is unchanged. Inside a class, every class
 around it lends its names bare: in `framework/button.spite`, `Component` is `Framework.Component` and `Shade` the enum
 `framework/framework.spite` declares. A bare name looks in the class's own `enum`/`union`/`type`, then each outer
@@ -1052,7 +1052,11 @@ of the standard library or of a repository pinned to a commit is never rewritten
   binds it as a local `var`, made the first time that line runs. Write no lock for one: work the compiler runs at once never
   shares a singleton one of them writes. Singletons whose attributes make each other, even through an ordinary object
   (`World` binds `Column<Entity>`, which makes an `Entity`, which binds `World`), are an error naming the circle
-  (`singletons initialise each other in a circle`): bind one of them in the class that uses both instead.
+  (`singletons initialise each other in a circle`): bind one of them in the class that uses both instead. Ordinary
+  objects whose defaults, or constructor lines before any `if`/`while`/`switch`/`return`/`fallback`/`crash`, make
+  each other in a circle are an error too (`'Flow' makes 'Grid', which makes 'Flow': objects that make each other in a
+  circle never finish being made, ...`): leave one `null` until it is set, make it under a condition, or hand it in
+  through a constructor.
 - Memory and threads belong to the compiler: a program never names an address, an allocator, an allocation count,
   where an object lives, or the live instances of a class. A class that needs room for bytes holds a `Buffer`; a
   container of your own is written over a `List` or a `Buffer`. Only `--debug-memory` reports leaks, from outside the
