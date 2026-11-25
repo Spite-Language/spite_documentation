@@ -908,7 +908,9 @@ var weight = 3
 The constraint is optional and names a `type`: one the class declares itself, or another class's named through that
 class (`generic $item_type: Console.Printable`), as anywhere else. What fits is what the `type` would accept anywhere: a class with
 the functions and attributes listed, `String`, a number, an enum, a `List` or `Dictionary` that has what the `type`
-needs (a `count(): Integer` is enough for either), and the `type` itself. Each member is compared by its type as well
+needs (a `count(): Integer` is enough for either), the `type` itself, and another `type` that has each of its
+members typed the same way (`Shelf<Stocked>` with a `Stocked` that lists `price` too; one without it is refused
+like a class, `it has no function 'price'`). Each member is compared by its type as well
 as its name, so a `weight` that answers a `String` does not fit a `type` that needs an `Integer`. A `T?` fits when its `T`
 does and the `type` asks only for what null answers too, `to_string()` and `to_debug()`, each giving `null`:
 `Shelf<String?>` compiles, and a null item prints as `null`, as printing a null anywhere does. A `T?` is refused

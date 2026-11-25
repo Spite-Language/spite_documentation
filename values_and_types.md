@@ -1230,10 +1230,14 @@ wanted, a class's attribute or function checked against a member's type, a gener
 ([reflection.md](reflection.md#whether-a-union-satisfies-a-type)), and `value.class.satisfies_type(Named)`
 ([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)). As long as the contract matches, it fits: a class
 fits when it has each member the `type` writes, in its form and typed as the `type` says. An attribute member needs
-an attribute; a function member needs a function with as many parameters, each of the type asked, answering the
+an attribute; a function member needs a function with as many parameters, each of exactly the type asked, answering the
 type asked, or an attribute holding such a function that cannot be `null`, or a function one of the class's member
-templates makes. The `type`'s own name in a member means the `type`, any value that fits it, never only the class
-being checked: in `type Component { render: Spite.Function<Component?> }`, a `Card` whose `render(): Component?`
+templates makes. A parameter is matched exactly because a caller through the `type` may hand it anything the member
+takes: a `greet(friend: Cat)` does not meet `greet: Spite.Function<Named, String>` though `Cat` fits `Named`, since
+a `Dog` may be handed to it, and a `scaled(factor: Integer?)` does not meet `Spite.Function<Integer, Integer>`
+either. A parameter typed by the `type`'s own name is met by that `type` or by the class itself: `Integer`'s
+`sum(other: Integer)` meets `Number`'s `sum`. Elsewhere the `type`'s own name in a member means the `type`, any value
+that fits it, never only the class being checked: in `type Component { render: Spite.Function<Component?> }`, a `Card` whose `render(): Component?`
 answers a `Leaf` fits, and so does a `render(): Card?` or a `render(): Leaf?`, since `Card` and `Leaf` fit
 `Component`. A `type` naming itself is settled: a class already being checked against it counts as fitting.
 

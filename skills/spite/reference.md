@@ -252,7 +252,7 @@ func is_alive(): Boolean {
 - A file holds at most 1200 statements, its file content budget: more is an error (`this file holds 1201 statements, over its file content budget of 1200: ...`), with no way to lift it; it is told alone (no fix is written and the file's other mistakes wait), and a file of any length (an `else if` chain of thousands of links) gets it, never a crash. Every statement counts as one at any depth, and so does a class-level `var`; a statement spread over many lines is one. Comments, blank lines, closing braces, function headers, the entries of an enum, union or type, and the cases of a `switch` (the `switch` itself is one) count nothing, so an enum or an exhaustive switch over it can be any size. Get back within it by cleaning up, not by cutting the file at the number: group state into an object, and give each concern a file of its own.
 - A comment is one line, right above a function or at the top of the file (the class's heading; one anywhere else
   between declarations is moved there), and nothing but a link to a markdown heading:
-  `# notes.md#why-this-exists` (relative to the folder of the file it is in, like `load`; the file and the heading must exist; anchors as GitHub makes them, a repeated heading's second one `#details-1`). One inside a function or inside an `enum`, `union` or `type` body is an error. Only the program's own files are checked: the comments of the standard library and of a package are dropped when they are read, so their links never stop a build.
+  `# notes.md#why-this-exists` (relative to the folder of the file it is in, like `load`; the file and the heading must exist; anchors as GitHub makes them, a repeated heading's second one `#details-1`). One inside a function or inside an `enum`, `union` or `type` body is an error. A link may be absolute, `# https://github.com/Spite-Language/spite_documentation/blob/master/style.md#comments-are-links`: the path after `/blob/master/` is checked in a folder of the repository's name found beside the file's folder or one above it, and not checked where there is none; any other absolute link is an error. The standard library's comments are checked too and are absolute only (a relative one there is an error); a package's comments are not checked, so their links never stop a build.
   Anything else, including `//` and `/* */`, is an error. If the code already says it, do not write it.
 
 ## The compiler fixes: what has one fix
@@ -637,7 +637,11 @@ of the standard library or of a repository pinned to a commit is never rewritten
   class, `equals`, `less_than`, `greater_than` answering a `Boolean`).
   Inside a `type`, its own name in a member means the `type` (any value fitting it), not the class being checked:
   `type Component { render: Spite.Function<Component?> }` is met by `render(): Component?` answering any other
-  component, and by a `render(): Card?` answering a class that fits.
+  component, and by a `render(): Card?` answering a class that fits. A function's parameters must be exactly the
+  member's: `greet(friend: Cat)` does not meet `greet: Spite.Function<Named, String>` (a caller may hand it a `Dog`),
+  nor `scaled(factor: Integer?)` a member taking an `Integer`; a parameter typed by the `type`'s own name is met by
+  the `type` or by the class itself (`sum(other: Fixed)` meets `Measure`'s `sum`). A `type` given to a constrained
+  `generic` is checked like a class: it must have each member of the constraint, typed the same way.
 
 ## Nothing, null, and failure
 
