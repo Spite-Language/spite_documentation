@@ -722,6 +722,10 @@ of the standard library or of a repository pinned to a commit is never rewritten
   copy builds (a branch every copy rules out, an uncalled function taking a `type`, a generic class nothing makes). A `switch` case is a class, never a type (`'Named' is a
   type, so it is not a case: ...`), and a value of a `type`, `?` or not (`Component?`), is not switched on: write `if` tests. Ask it of a named
   value: `first_shown().class.satisfies_type(...)` is refused, so hold the answer in a local first.
+- A generic class's bare name is never a class, so `value.class == Custom` is refused: name a copy (`Custom<Glow>`), or
+  match any copy with `value.class.shares_same_generic_template(Custom<Bloom>)` (true when both are copies of the same
+  generic class, whatever each was given; false for a class that is not a copy), or ask `satisfies_type` of a `type`
+  the copies fulfil.
 - A `T?` the compiler proves present is a `T` already: a local every assignment of which cannot be null, an
   attribute of your class whose default and every assignment cannot be null, the answer of your function every
   `return` of which cannot be null. Read it with nothing written; a `fallback`, `crash` or `if` on it is `is already

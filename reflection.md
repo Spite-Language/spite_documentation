@@ -633,6 +633,7 @@ serializer or a column built from a walk is never silently incomplete; naming `_
 | `.generics` | a `Dictionary<String, Spite.Class>`: the class each `generic` line was given, keyed by its name without the `$`, in `generic`-line order; empty for a class that is not generic | `numbers.class.generics["element_type"]` of a `List<Integer>` is `Integer` |
 | `.source_files` | a `List<File>`: every file that declares or reopens the class, in load order | `Monster.source_files.first()` |
 | `.source_directories` | a `List<Directory>`: every folder that makes the class, in load order; empty for a file's class | `Shop.source_directories.first()` |
+| `shares_same_generic_template(other)` | whether both classes are copies of one generic class, whatever classes each was given; `false` when either is not a copy of a generic class ([below](#whether-two-classes-are-copies-of-one-generic-class)) | `Custom<Glow>.shares_same_generic_template(Custom<Bloom>)` is `true` |
 | `satisfies_type(...)` | whether it can stand in for a type, decided while compiling, or for a named value's class from the classes listed while compiling ([below](#whether-a-class-satisfies-a-type)); a class is never compared with a type, so `$item_type == Named` is written `$item_type.satisfies_type(Named)` | `Integer.satisfies_type(Number)` is `true` |
 
 `.generics` holds the same names a codegen value reads while compiling, `$list_type.element_type`; a dictionary's are `"key_type"` and `"value_type"`. A literal name on a
@@ -773,6 +774,46 @@ its classes does ([values_and_types.md](values_and_types.md#what-fits-a-type)). 
 itself, which names no value, narrows nothing. For a `Found`, whose `Rock` has no `name`, the value's question
 compares the class with the members that fit while running and narrows the value inside the `if`
 ([control_flow.md](control_flow.md#a-value-narrowed-by-a-type-it-may-fit)).
+
+### Whether two classes are copies of one generic class
+
+A generic class is no class until it is given its classes, so `glowing.class == Custom` is the error that `Custom`
+takes its classes: a comparison names one copy, `Custom<Glow>`. To match any copy, ask
+`shares_same_generic_template`, which answers `true` when both classes are copies of the same generic class, whatever
+each was given, and `false` when either is not a copy of a generic class. The other class is written with its classes
+like any class, or read from another value. Asking whether the class fits a `type` the copies fulfil
+([above](#whether-a-class-satisfies-a-type)) is the other way, and the one that narrows the value.
+
+```gdscript title=shares_same_generic_template/custom.spite
+generic $uniforms_type
+
+var key = "custom"
+```
+```gdscript title=shares_same_generic_template/glow.spite
+var strength = 1
+```
+```gdscript title=shares_same_generic_template/bloom.spite
+var radius = 2
+```
+```gdscript title=shares_same_generic_template/shares_same_generic_template.spite entry
+var console = Console()
+
+func SharesSameGenericTemplate() {
+    var glowing = Custom<Glow>()
+    var blooming = Custom<Bloom>()
+    var glow = Glow()
+    var bloom = Bloom()
+    var numbers = List<Integer>()
+    var same = glowing.class.shares_same_generic_template(blooming.class)
+    var written = glowing.class.shares_same_generic_template(Custom<Bloom>)
+    var plain = glow.class.shares_same_generic_template(Glow)
+    var listed = glowing.class.shares_same_generic_template(numbers.class)
+    console.print(glowing.key, glow.strength, bloom.radius, same, written, plain, listed)
+}
+```
+```output
+custom 1 2 true true false false
+```
 
 ### `Spite.Enum`
 
