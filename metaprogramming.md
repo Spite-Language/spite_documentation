@@ -145,7 +145,9 @@ render_each
 
 `filter(walks_each)` keeps the functions whose test answers true, and a walk over what it kept is unrolled like a walk over
 `Runner.functions` itself: the test still runs when the program does, but the compiler writes one `describe` for each
-function the class has. `count_name_starts_with("re")` counts `render_each` and `reset`. A walk over nothing walks nothing: a class with no
+function the test can keep; a function the test is known to refuse while compiling (`walks_each` folds for each
+function, since its name is known) gets none, so `describe` never has to fit its arguments
+([reflection.md](reflection.md#known-while-compiling)). `count_name_starts_with("re")` counts `render_each` and `reset`. A walk over nothing walks nothing: a class with no
 attributes, or a filter that keeps none, calls the function zero times. The walker could as well be called
 `describe_argument`: a parameter named by a word of its function's name makes the function a template
 ([below](#templates-when-the-name-says-what-it-is-given)), and a template whose only parameter is that one, handed to

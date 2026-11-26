@@ -824,6 +824,9 @@ of the standard library or of a repository pinned to a commit is never rewritten
   one call per attribute, each copy typed by its attribute (a function of another object handed a constant,
   `helper.describe(attribute)`, is compiled once for it too, however deep the calls go). A member by name is `[]` and answers a `T?`
   (`Runner.functions["run_each"]`); a selection is a member template (`Runner.functions.filter_name_ends_with("_each")`).
+  `var walked = Runner.functions.filter(walks_each)` then `walked.each(run)` compiles `run` only for the functions
+  whose `walks_each` copy is not a constant `false` (`function.name` is known in each copy), so a function the
+  filter refuses may take arguments `run` could not handle.
   A name is selected, never built from text. A walk sees private `_` attributes and
   reads and writes them through the walked attribute; a serializer skips them, and attributes holding a singleton,
   with `if not attribute.name.starts_with("_") and not attribute.class.is_singleton`, which folds. So do
@@ -1241,8 +1244,8 @@ function a walk visits): `true` when the function can reach a wait. A system nev
 `Program` (itself or through its own class's functions), and in its own class's functions it calls, a statement
 `report.fetch()` or `systems[index].update()` (no arguments, answering nothing, on another object of the program)
 whose function can wait is started by the compiler as a state machine of its own and finishes in a later frame,
-at most eight unfinished per call site (one more waits where it is written, as the plain call does), all of them
-before the program ends. Write the IO plainly in the system's own class.
+with no limit on how many from one call site are unfinished at once (the room grows and is let go as they finish), all
+of them before the program ends. Write the IO plainly in the system's own class.
 `update.arguments[1].is_mutated` (with `var update = $system_type.functions["last_each"]` narrowed by `crash update`)
 is decided while compiling the same way: `true` when the function, or anything it calls, changes what its argument
 number 1 (from 0) is given or anything reached through it; an engine writes `crash not update.arguments[1].is_mutated`

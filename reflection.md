@@ -1230,7 +1230,11 @@ render_each takes 1
 ```
 
 `filter(walks_each)` keeps the functions whose test answers true, and a walk over what it kept is unrolled: the compiler
-writes one `describe` for each function of `Runner`. `filter_name_ends_with("_each")` keeps the same functions: a
+writes one `describe` for each function of `Runner` the test can keep. It first compiles `walks_each` once for each
+function, where `function.name` is that function's name, and where that copy answers a constant `false` (`reset` does
+not end with `_each`), `describe` is never compiled for that function, so it may do what only the kept functions'
+arguments can: `reset` could take an argument of a class with no `to_string`. A test whose answer is known only
+when the program runs keeps a `describe` for every function. `filter_name_ends_with("_each")` keeps the same functions: a
 member template chains through a function of the member, and nothing in it is special to reflection
 ([collections.md](collections.md)). A name is selected, never built: `[]` takes a name written in the code, and
 anything else is a filter over the names that exist. `made` answers `argument.class`, a different class for each

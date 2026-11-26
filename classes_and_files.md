@@ -1,7 +1,9 @@
 # Classes and files
 
 Every `.spite` file is exactly one class, named by PascalCasing the file name: `person.spite` is `Person`,
-`repository_list.spite` is `RepositoryList`. This cannot be changed: there is no `class` keyword and no way to
+`repository_list.spite` is `RepositoryList`. The compiler spells it with `String`'s own `pascal_case()`
+([standard_library.md](standard_library.md#snake-camel-and-pascal-case)), so a file and its class follow the one
+casing rule a program uses. This cannot be changed: there is no `class` keyword and no way to
 put two classes in one file. Every other file of the program is another class, and a folder is a class too, the one whose own
 file is named like it ([below](#a-folder-is-a-class), [packages.md](packages.md)).
 
