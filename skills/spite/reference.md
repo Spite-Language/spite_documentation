@@ -1081,7 +1081,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   `var ` is that statement, run in its place (text starting a line with one of those words is read as code: put it in
   an attribute), and a `{list}` child the file shows is a `List` is attached entry by entry. `parent` and `children`
   are the classes' own attributes, the ordinary error when missing. A tag on its own line elsewhere, and a statement
-  among the children of a tag after `return` or `var name =`, are refused.
+  among the children of a tag after `return` or `var name =`, are refused. A `switch` case holding one tag
+  (`'box': <Cube/>`, `'box': return <Cube size={2}/>`) is one statement.
   [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md#a-constructor-assembles-its-tags)
 - `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
   `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error. An
