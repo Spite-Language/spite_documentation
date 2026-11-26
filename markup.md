@@ -153,7 +153,7 @@ func Slot() {
     if count > 0 {
         shown = "{label} x{count}"
     }
-    <Panel title={shown}/>
+    <Panel title={shown} />
 }
 ```
 
