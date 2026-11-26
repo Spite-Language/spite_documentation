@@ -1083,6 +1083,12 @@ of the standard library or of a repository pinned to a commit is never rewritten
   are the classes' own attributes, the ordinary error when missing. A tag on its own line elsewhere, and a statement
   among the children of a tag after `return` or `var name =`, are refused. A `switch` case holding one tag
   (`'box': <Cube/>`, `'box': return <Cube size={2}/>`) is one statement.
+- In such a constructor, an attribute a top-level tag sets from the component's own typed attributes (or from
+  top-level locals given once, which join it) runs again when one of them is written: the compiler keeps the object
+  in `_live_<site>`, writes the assignment as `_live_<n>()` and calls it from those attributes' setters (writing the
+  setter where the class has none). So a prop set after the constructor reaches the tag. Not followed yet: another
+  object's attributes, `List` changes, tags inside `if`/`while`/`switch`; such a brace runs once.
+  [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md#a-brace-runs-again-when-what-it-reads-is-written)
   [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md#a-constructor-assembles-its-tags)
 - `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
   `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error. An
