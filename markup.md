@@ -59,8 +59,87 @@ Markup by ordinary calls still works: a library may keep constructors with argum
 ## Where a tag stands
 
 A tag stands where a value stands on its own line: `return <View/>` and `var view = <View/>` (with or without a
-declared type). Its statements are inserted before that line; `var view = <View/>` makes the object in `view` itself.
+declared type), or, in a constructor that takes no arguments, on its own line as a statement
+([below](#a-constructor-assembles-its-tags)). Its statements are inserted before that line; `var view = <View/>` makes the object in `view` itself.
 A tag anywhere else, such as a call's argument (`show(<View/>)`), is an error: no constructor is ever an argument.
+
+## A constructor assembles its tags
+
+In a constructor that takes no arguments, a tag can stand on its own line, as a statement (spite_compiler#675). It is
+built as above and attached to its closest parent: the tag it is written inside, or, at the top level, the component
+whose constructor it is, `this`. Attaching is two ordinary statements: the parent becomes the child's `parent`, and
+the child is appended to the parent's `children`, in the order written. A tag inside an `if`, `while` or `switch` of
+the constructor attaches to the component, never to the block, so a component holds as many top-level children as it
+writes and needs no fragment.
+
+```gdscript
+var title = "Inventory"
+var children = List<Component>()
+var parent: Component? = null
+
+func Inventory() {
+    <Panel title={title}>
+        <Note content="first"/>
+    </Panel>
+    <Note content="below"/>
+}
+```
+
+is built exactly as
+
+```gdscript
+func Inventory() {
+    var panel_6 = Panel()
+    panel_6.title = title
+    var note_7 = Note()
+    note_7.content = "first"
+    note_7.parent = panel_6
+    panel_6.children.append(note_7)
+    panel_6.parent = this
+    this.children.append(panel_6)
+    var note_9 = Note()
+    note_9.content = "below"
+    note_9.parent = this
+    this.children.append(note_9)
+}
+```
+
+Each child is attached once it is whole, so a tree is linked from its leaves up, as it is built. `parent` and
+`children` are what the classes declare, so a class with no `parent` is the ordinary assignment error at the tag's
+line, and so is a component with no `children`. Inside such a tag, a `{list}` child the compiler can see is a list
+(the same reading as [below](#an-expression-as-a-child)) is attached entry by entry, in order. A tag on its own line
+anywhere else, in a function or in a constructor that takes arguments, is refused.
+
+## Statements among the children
+
+Inside a tag a constructor assembles, a line among the children that starts with `if`, `while`, `switch` or `var` is
+a statement, written as anywhere else, and the tags it writes attach to the tag around it, never to the block. So a
+child shown only sometimes is an `if`, and a child per entry is a `while`:
+
+```gdscript
+func Inventory() {
+    <Panel title="Inventory">
+        var used = items.count()
+        <Note content="{used} of {capacity}"/>
+        if has_choice {
+            <Note content="chosen"/>
+        }
+        var index = 0
+        while index < items.count() {
+            var item = items[index]
+            crash item
+            <Note content={item.name}/>
+            index = index + 1
+        }
+    </Panel>
+}
+```
+
+The statement runs where it is written, between the children before and after it, so `used` is counted before the
+note that shows it is built. A text that starts its own line with one of those four words followed by a space is read
+as that statement; put such a text in an attribute, `content="if ..."`. A tag that a constructor does not assemble
+(one after `return` or `var name =`) builds its `children` as one list, so a statement there is refused: build the
+list in a local and hand it as `children={list}`.
 
 ## Children
 
@@ -180,4 +259,6 @@ those found after building, which it tells as errors instead.
 '{buttons}' is a list, and a child is one entry of the children list: hand the whole list as 'children={buttons}' on '<View>', with no nested children
 '{is_open}' is a Boolean, and a child is one entry of the children list: there is no 'condition && <Tag/>', so build the list with an 'if' and hand it as 'children={list}'
 a tag stands only after 'return' or 'var name =', which it is built before: build it into a local there and pass the local
+'<Note>' stands on its own line in 'show', and only a constructor that takes no arguments attaches a tag written there: write it in 'Inventory()', or after 'return' or 'var name ='
+'<View>' holds the statement 'if shown \{' among its children, and only a tag a constructor that takes no arguments assembles holds statements: build its children in a local list and hand it as 'children=\{list}'
 ```
