@@ -797,6 +797,21 @@ one back is a recursion like any other, reported at run time as a stack overflow
 a fresh `String` or `List` as safely as it returns a field. An intercepted access is a direct call, which the compiler
 inlines like any small function.
 
+### A setter as a function value
+
+A setter is a function like any other, the one the compiler writes included, so its name is a value where a
+`Spite.Function` is wanted: `loader.on_load = _set_body` hands over `_body`'s setter, and calling the value writes the
+attribute through it (spite_compiler#675). Named bare inside the class, it is the class's own; as a value it is never
+called on the spot, so the rule against a bare `set_age(v)` call does not touch it.
+
+```gdscript
+var _body: Body? = null
+
+func wire(loader: Loader) {
+    loader.on_load = _set_body
+}
+```
+
 ### The storage behind the accessors
 
 `attributes["age"].value` is the attribute's storage. Writing it is the one write that runs no setter, and reading it
