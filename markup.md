@@ -111,6 +111,36 @@ line, and so is a component with no `children`. Inside such a tag, a `{list}` ch
 (the same reading as [below](#an-expression-as-a-child)) is attached entry by entry, in order. A tag on its own line
 anywhere else, in a function or in a constructor that takes arguments, is refused.
 
+## A brace runs again when what it reads is written
+
+In a constructor that assembles its tags, an attribute a tag sets from what the component's own attributes hold runs
+again whenever one of them is written (spite_compiler#675, the first step of its box 2). A parent passes props after
+the constructor has run (a tag makes its object with no arguments, then assigns), so this is what makes a brace show
+the prop and not its default:
+
+```gdscript
+var label = "none"
+var count = 0
+var children = List<Panel>()
+
+func Slot() {
+    var shown = "{label} x{count}"
+    <Panel title={shown}/>
+}
+```
+
+`slot.label = "cup"` sets the panel's title to `"cup x0"`. The compiler keeps the panel in a private
+`_live_panel_7`, writes the assignment again as a function of its own, `_live_0()`, and calls it from the end of the
+setter of every attribute it reads, `set_label` and `set_count`, writing those setters where the class has none
+(`attributes["label"].value = value`, then the call). A local the brace reads joins it: `_live_0` makes `shown` again
+before it assigns, so a local is never a stale copy. Nothing else in the constructor runs again.
+
+Only what can be followed is live: an attribute of the class with a type the desugar can read (a declared type, or
+a default that is a number, a `Boolean`, a text or a making), and locals given once at the constructor's top level.
+A tag inside an `if`, `while` or `switch`, a `List` attribute (whose changes come through `subscribe`), a local given
+again, and an attribute of another object (`item.name`, D2755) are not followed yet: such a brace runs once, in the
+constructor, as before. A class with a `render()` keeps its kept render instead.
+
 ## Statements among the children
 
 Inside a tag a constructor assembles, a line among the children that starts with `if`, `while`, `switch` or `var` is
