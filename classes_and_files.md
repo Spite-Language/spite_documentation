@@ -599,6 +599,46 @@ func DroppedReport() {
 'Report("the door opens")' makes a 'Report' and drops it: a constructed object must be kept and used, so a class whose construction is the whole point should be a function instead
 ```
 
+### Objects that make each other in a circle
+
+A default runs every time its object is made, and so does every line of a constructor up to its first `if`, `while`,
+`switch`, `return`, `fallback` or `crash`. When those make objects that come back round to the first one, making any
+of them never ends, so it is an error at the line that begins the circle, naming every class on it:
+
+```gdscript title=making_circle/flow.spite
+var grid = Grid()
+
+func grid_name(): String {
+    return grid.name
+}
+```
+```gdscript title=making_circle/grid.spite
+var name = "grid"
+var flow = Flow()
+
+func flow_grid_name(): String {
+    return flow.grid_name()
+}
+```
+```gdscript title=making_circle/making_circle.spite entry error
+var console = Console()
+
+func MakingCircle() {
+    var flow = Flow()
+    var name = flow.grid_name()
+    console.print(name)
+}
+```
+```diagnostic
+'MakingCircle.Flow' makes 'MakingCircle.Grid', which makes 'MakingCircle.Flow': objects that make each other in a circle never finish being made, so one of them has to be handed in through a constructor or made only where it is needed
+```
+
+A circle is followed through a constructor's lines the same way (`chicken = Chicken()` in `Egg()`, whose default is
+`var egg = Egg()`), and one class whose default makes itself is a circle of one. It is not a circle when something
+can stop it: a default left `null` (`var grid: Grid? = null`, set later), a making under an `if` (a `Branch` that
+makes a smaller `Branch` while levels are left), or an object handed in through a constructor instead of made. A
+circle through a singleton is the singleton's error ([below](#singletons)).
+
 ## Constructors, conversions and presets
 
 A class is built in three ways, and each has a fixed shape so it can't be mistaken for another:
