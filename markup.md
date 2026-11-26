@@ -127,7 +127,6 @@ func Inventory() {
         var index = 0
         while index < items.count() {
             var item = items[index]
-            crash item
             <Note content={item.name}/>
             index = index + 1
         }
