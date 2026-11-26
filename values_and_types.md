@@ -699,6 +699,30 @@ Spite.Function<String> }`: every class that reaches the hole must have its own `
 A class without one is refused where it reaches the hole: `'Crate' does not fit type 'Printable': it has no function
 'to_string'`. Match the value against a class or a `type` that has one first.
 
+#### A hole on a nullable value shows null
+
+A hole needs no narrowing: any `T?` in a hole, a `String?`, a number, an enum, a class, a `union` or a `type`, shows
+`null` when it holds none and its value otherwise. Every one goes the same way, through `Printable`, where the null
+takes the stand-in whose `to_string()` answers `null`. Only the hole is spared: `name.to_string()` written out is
+still refused until `name` is narrowed, as any call on a `T?` is.
+
+```gdscript title=nullable_holes/nullable_holes.spite entry
+var console = Console()
+
+func NullableHoles() {
+    var name: String? = null
+    var count: Integer? = null
+    console.print("[{name}] [{count}]")
+    name = "Ada"
+    count = 3
+    console.print("[{name}] [{count}]")
+}
+```
+```output
+[null] [null]
+[Ada] [3]
+```
+
 A `type` or a `union` says what a value must have and makes no object: `Tag("favourite")` is an error, `'Tag' is a type, so it makes no object: it says what a value must have; make an object of a class that fits it`.
 
 ## `T?`: values that may be null

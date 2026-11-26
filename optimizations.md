@@ -699,7 +699,7 @@ func built(): Panel {
 ```
 
 `Panel` declares `var children = List<Note>()`, but `built` assigns `children` before anything reads `panel`,
-so the panel is made without its default list. A tag is written this way, so `<Panel><Note/></Panel>` makes one
+so the panel is made without its default list. A tag is written this way, so `<Panel><Note /></Panel>` makes one
 list, not two. It applies to each attribute assigned on a local in the statements right after the local's making,
 in the same block, before any statement that reads the local, when its constructor does not read that attribute or
 pass `this` on and the default is quiet, as above. An `if`, a loop, a `return` or a `crash` in between, a call on the

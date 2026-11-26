@@ -10,8 +10,8 @@ written by hand build to the same program (D2300, which replaced D18). A class's
 func render(): Theme.Window {
     return <Theme.Window title="Wardrobe" on_close={close_sidebar}>
         <View justify_content='center' padding={24} wrap>
-            <Text content="Face"/>
-            <health_bar filled={health} missing={missing}/>
+            <Text content="Face" />
+            <health_bar filled={health} missing={missing} />
             {render_badge()}
         </View>
     </Theme.Window>
@@ -47,7 +47,7 @@ Markup by ordinary calls still works: a library may keep constructors with argum
 - A tag naming a class, `<View>` or a dotted `<Theme.Window>`, makes an object with no arguments:
   `var view_3 = View()`. A class whose constructor takes parameters is the ordinary error of a call missing its
   arguments, at the tag's line. A tag names its class the way code does: inside `sidebar/`, a class of that folder
-  is `<ClassPicker/>`, and `<Sidebar.ClassPicker/>` is rewritten to it with a `fixed:` line
+  is `<ClassPicker />`, and `<Sidebar.ClassPicker />` is rewritten to it with a `fixed:` line
   ([packages.md](packages.md#a-class-of-its-own-folder-is-named-plainly)); a class of another folder keeps
   its path, `<Theme.Panel>`.
 - An attribute is an assignment, so it goes through `set_<name>` when the class declares one, exactly as
@@ -58,9 +58,9 @@ Markup by ordinary calls still works: a library may keep constructors with argum
 
 ## Where a tag stands
 
-A tag stands where a value stands on its own line: `return <View/>` and `var view = <View/>` (with or without a
-declared type). Its statements are inserted before that line; `var view = <View/>` makes the object in `view` itself.
-A tag anywhere else, such as a call's argument (`show(<View/>)`), is an error: no constructor is ever an argument.
+A tag stands where a value stands on its own line: `return <View />` and `var view = <View />` (with or without a
+declared type). Its statements are inserted before that line; `var view = <View />` makes the object in `view` itself.
+A tag anywhere else, such as a call's argument (`show(<View />)`), is an error: no constructor is ever an argument.
 
 ## Children
 
@@ -80,9 +80,9 @@ goes in as it is; any other expression is held in a local first, named for the f
 (`badge_6` for `render_badge()`), since a call is never an argument. A child shown only sometimes is built into a
 list with an `if` and handed as the attribute, below.
 
-A whole list is not a child: hand it as the `children` attribute, `<View children={buttons}/>`, which is the same
+A whole list is not a child: hand it as the `children` attribute, `<View children={buttons} />`, which is the same
 assignment. A tag that sets `children` and holds children too is refused, and so is a child the compiler can see is a
-`List` or a `Boolean` (there is no `condition && <Tag/>`). It reads that from what the file declares, since it builds
+`List` or a `Boolean` (there is no `condition && <Tag />`). It reads that from what the file declares, since it builds
 the statements before any name is resolved: a literal, a comparison, a parameter, a local or attribute with a
 declared type or a value it can read, and a call of a function of the same class. A list it cannot see is never
 silent when the element type is a class or a `type`, since a list does not fit it: `'List<...>' does not fit
@@ -97,10 +97,10 @@ such text in an attribute, `content="a < b"`.
 
 ## A lowercase tag calls a function
 
-`<health_bar filled={health} missing={missing}/>` calls `render_health_bar` of the same class, written in the same
+`<health_bar filled={health} missing={missing} />` calls `render_health_bar` of the same class, written in the same
 file. The attributes are matched to its parameters by name and passed in the order it declares them:
 `render_health_bar(health, missing)`. So a function's parameters are its tag's props: `func render_weapon(grade: Integer)`
-is used as `<weapon grade={1}/>`, and each value goes into its parameter with every conversion a value has there, as it
+is used as `<weapon grade={1} />`, and each value goes into its parameter with every conversion a value has there, as it
 would in the hand-written call (`grade="3"` gives an `Integer`, `tint="#ff8000"` a `Color`, `rarity='rare'` an enum value,
 a bare `shiny` a `true`). Its answer is held in a local and is one child like any other.
 
@@ -165,7 +165,8 @@ over several lines does the same: an error about one argument names that argumen
 The formatter writes tags in one style, as it writes everything else: a tag and its attributes on one line when they
 fit in 120 columns, otherwise one attribute per line with the closing `>` or `/>` on its own line; each child on its
 own line one level deeper; text with its holes on one line, and a tag holding only text on the tag's line when it
-fits (`<Label>{count} items</Label>`); a tag with no children self-closing; `name="text"` and
+fits (`<Label>{count} items</Label>`); a tag with no children self-closing, with one space before `/>` on its line
+(`<Ui.Image />`) and none before an opening tag's `>` (`<Ui.Text>`), whichever way it was written; `name="text"` and
 `name='value'` without braces. A file that holds tags is rewritten by the fixes found while reading it, and not by
 those found after building, which it tells as errors instead.
 

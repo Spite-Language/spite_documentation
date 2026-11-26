@@ -111,7 +111,7 @@ Inside a folder, its own classes are written without it: `sidebar/editor.spite` 
 `sidebar/picker.spite`, never `Sidebar.Picker()`. A path that spells the folder the class is in is rewritten to
 the plain name with a `fixed:` line, wherever it is written: a construction, a type, a generic argument
 (`List<Picker>`), a union member, a member read (`Sidebar.Picker.Mode` becomes `Picker.Mode`) and a tag
-(`<Sidebar.ClassPicker/>` becomes `<ClassPicker/>`, [markup.md](markup.md#what-a-tag-becomes)). The whole path of
+(`<Sidebar.ClassPicker />` becomes `<ClassPicker />`, [markup.md](markup.md#what-a-tag-becomes)). The whole path of
 the folder goes the same way: `Game.Sidebar.Picker` inside `game/sidebar/` is `Picker`, and
 `Sidebar.Parts.Badge` is `Parts.Badge`.
 
