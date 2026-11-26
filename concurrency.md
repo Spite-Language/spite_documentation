@@ -216,9 +216,9 @@ seen the text on its first test. Here it returns at its sleep, and the loop draw
   anywhere does. A call whose function never waits is the plain call.
 - **What it waits for.** Anything a call waits for: a sleep, a file, a socket. It moves on wherever the program
   waits, which in a frame loop is the frame's sleep.
-- **How many at once.** Each call site keeps at most eight in flight. The ninth, made while eight from the same line
-  still wait, waits in place for the oldest of them, as the plain call would have waited for itself: the frame is
-  held, never a call dropped.
+- **How many at once.** As many as the frame starts: a line reached again before its last call finished starts
+  one more, and none waits for another. A frame that starts a one-second fetch every frame, at 60 frames a second,
+  keeps about 60 in flight, and the room for them is let go as they finish.
 - **None is lost.** A started call nobody waits for still runs to its end: the next time its line is reached, the
   ones that finished are let go, and the program does not end until every one has finished.
 - **The frame's own waits stay.** Only a call on another object is started. The loop's sleep, and anything that
