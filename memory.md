@@ -656,7 +656,9 @@ place, the cheapest way that frees the cycle. Where it reads from how the progra
 of the cycle can hold no count, the cycle is freed exactly where its owner goes; every other cycle is freed by a count
 that knows the cycle ([below](#every-other-cycle-is-freed-by-a-count-that-knows-it)). A child's `parent` is the usual case: the parent makes the child with `Child(child_name, this)`, the
 constructor stores the parent in `parent`, and the parent stores the child in `children`, so the compiler reads
-`parent` as the back reference and the cycle is freed with its owner.
+`parent` as the back reference and the cycle is freed with its owner. The object a function makes is always the one
+that points back: a constructor that keeps `leaf = Leaf(this)`, where `Leaf` keeps `var tree: Tree`, holds its leaf
+with a count even though `leaf` is the attribute that can be `null`, and the pair is freed by the count below.
 
 ```gdscript title=back_reference_family/parent.spite
 var console = Console()
