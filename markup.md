@@ -70,7 +70,8 @@ built as above and attached to its closest parent: the tag it is written inside,
 whose constructor it is, `this`. Attaching is two ordinary statements: the parent becomes the child's `parent`, and
 the child is appended to the parent's `children`, in the order written. A tag inside an `if`, `while` or `switch` of
 the constructor attaches to the component, never to the block, so a component holds as many top-level children as it
-writes and needs no fragment.
+writes and needs no fragment. A `switch` case holding one tag, `'box': <Cube/>` or `'box': return <Cube size={2}/>`,
+is the one statement a case holds, however many statements the tag is built as.
 
 ```gdscript
 var title = "Inventory"
