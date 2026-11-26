@@ -946,7 +946,8 @@ of the standard library or of a repository pinned to a commit is never rewritten
   the plain write and read. `attributes["age"].value` (`other.attributes["age"].value`) is the storage: the one write
   that runs no setter, the one read that runs no getter. Inside `set_age`/`get_age` a bare `age` is refused (it would
   run itself again) and fixed to `attributes["age"].value`; there `get_age()`/`set_age(v)` is how one accessor runs
-  the other, and elsewhere a bare `set_age(v)` is refused (write `age = v`). A default is the storage's starting
+  the other, and elsewhere a bare `set_age(v)` is refused (write `age = v`), while the bare name as a value is a
+  function value like any other, the compiler's setter included: `loader.on_load = _set_body`. A default is the storage's starting
   value and runs no setter. Two setters that write each other's attribute recurse until the stack overflows. A
   private attribute's are private: `_open = true` runs `_set_open(true)`, `_open` runs `_get_open()`.
 - Operators are functions a class may define: `sum`, `subtract`, `multiply`, `divide`, `remainder`, `equals`,
@@ -1068,10 +1069,20 @@ of the standard library or of a repository pinned to a commit is never rewritten
 - Tags are sugar the compiler turns into ordinary statements before it resolves a name (D2300); nothing later knows
   they were tags, and a function with tags builds to the same program as the same function written by hand.
   [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md)
-- A tag stands only after `return` or `var name =`. `return <View padding={24} wrap><Text content="Face"/></View>`
+- A tag stands after `return` or `var name =` (or on its own line in a constructor, below). `return <View padding={24} wrap><Text content="Face"/></View>`
   is `var view_1 = View()`, `view_1.padding = 24` (through `set_padding` when there is one), `view_1.wrap = true`,
   `var text_1 = Text()`, `text_1.content = "Face"`, `view_1.children = [text_1]`, `return view_1`: leaves first,
   attributes in the order written, then the children set at once as one list, always a list, even for one child. A tag never takes constructor arguments, and is never an argument.
+- In a constructor that takes no arguments a tag may also stand on its own line (spite_compiler#675). It attaches to
+  its closest parent, the tag it is written inside or else the component, `this`: built as above, then
+  `child.parent = owner` and `owner.children.append(child)`, each child once it is whole, in the order written, so a
+  component holds several top-level children with no fragment. A tag in an `if`, `while` or `switch` attaches to the
+  tag around the block. Inside such a tag, a line among the children starting with `if `, `while `, `switch ` or
+  `var ` is that statement, run in its place (text starting a line with one of those words is read as code: put it in
+  an attribute), and a `{list}` child the file shows is a `List` is attached entry by entry. `parent` and `children`
+  are the classes' own attributes, the ordinary error when missing. A tag on its own line elsewhere, and a statement
+  among the children of a tag after `return` or `var name =`, are refused.
+  [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md#a-constructor-assembles-its-tags)
 - `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
   `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error. An
   error about one attribute (through a setter or a `render_` parameter) names the attribute's line, as an error about

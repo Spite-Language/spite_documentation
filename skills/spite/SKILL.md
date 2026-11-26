@@ -217,7 +217,10 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
 - No lambdas, no destructuring, no overloading, no `async`/`await`. Pass a named function; one name is one
   function; the compiler decides what runs at once.
 - A call or a constructor is never an argument of another call: compute it into a named `var` first.
-- A user interface tree may be written as tags (JSX), only after `return` or `var name =`: each tag is a construction
+- A user interface tree may be written as tags (JSX), after `return` or `var name =`, or on its own line in a
+  constructor that takes no arguments, where it attaches to its closest parent (the tag around it, else `this`):
+  `child.parent = owner` and `owner.children.append(child)`, in written order; there an `if`/`while`/`switch`/`var`
+  line among a tag's children is a statement whose tags attach to that tag. Each tag is a construction
   with no arguments, each attribute an assignment, and the children one assignment of a list, `view.children =
   [text, badge]` (each nested tag or `{value}` one entry, typed by the `children` attribute, through `set_children`
   when declared; a whole list is `children={list}`); a lowercase tag calls `render_<tag>` with its attributes as the
