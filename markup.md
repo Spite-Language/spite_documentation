@@ -136,10 +136,117 @@ setter of every attribute it reads, `set_label` and `set_count`, writing those s
 before it assigns, so a local is never a stale copy. Nothing else in the constructor runs again.
 
 Only what can be followed is live: an attribute of the class with a type the desugar can read (a declared type, or
-a default that is a number, a `Boolean`, a text or a making), and locals given once at the constructor's top level.
-A tag inside an `if`, `while` or `switch`, a `List` attribute (whose changes come through `subscribe`), a local given
-again, and an attribute of another object (`item.name`, D2755) are not followed yet: such a brace runs once, in the
-constructor, as before. A class with a `render()` keeps its kept render instead.
+a default that is a number, a `Boolean`, a text, a making or a `List`), the locals the brace reads, what another
+object it reaches holds, the changes of a list or dictionary it reads, and what a function of the class it calls
+reads. A tag inside an `if`, `while` or `switch` runs once, in the constructor, as before. A class with a `render()`
+keeps its kept render instead.
+
+### A local given again
+
+A local the brace reads joins it with every line that gives it a value before the tag: its `var`, a later
+assignment at the constructor's top level, and an `if`, `while` or `switch` at the top level that assigns it. The
+piece runs those lines again, in the order written, before it assigns:
+
+```gdscript
+func Slot() {
+    var shown = "none"
+    if count > 0 {
+        shown = "{label} x{count}"
+    }
+    <Panel title={shown}/>
+}
+```
+
+`_live_0()` makes `shown`, runs the `if`, then sets the title, so `slot.count = 2` shows `"cup x2"`. A line after the
+tag is not part of it, as it was not when the constructor ran. A local given a value inside a block among the
+children, or inside a top-level statement that also writes tags, cannot be run again on its own: it is a read the
+compiler cannot follow ([below](#a-read-the-compiler-cannot-follow)).
+
+### Another object's attribute
+
+A brace that reads an attribute of another object, `label={item.name}` with `var item = Item()`, runs again when
+that object's attribute is written, and when `item` itself is given another object. The compiler decides it over the
+whole program while compiling (D2755): only the classes some live piece reads get a hidden list of the pieces
+watching each object, a private `_jsx_writes` (an `Observer<String>`, made the first time a piece watches the object),
+and the setter of each attribute read tells it the attribute's name; a class no piece reads keeps its plain setters.
+The setter is the one the class writes, with the telling appended, or one the compiler writes.
+
+The piece fills and empties that list itself: after it runs, `_live_watching_0()` reads `item` again and, when it
+holds another object than last time, leaves the old one's list and joins the new one's, so a piece hears only the
+object it shows. A chain is followed link by link (`item.owner.name` watches `item` for `owner` and the owner for
+`name`), and so is a list entry (`items[0].name`). A function called on the object (`item.describe()`) counts as
+reading every attribute of its class.
+
+### A list a brace reads
+
+A `List` or `Dictionary` the brace reads (`items.count()`, `items[0]`, `prices["tea"]`) is followed through its own
+`subscribe`: every change of the list runs the piece again, and assigning another list moves the subscription to it,
+the same way as another object above.
+
+### A call reads what its function reads
+
+A brace calling a function of the class, `title={describe()}`, reads what that function's own lines read, and what
+the functions they call read, the same way as the brace's own lines.
+
+### A live piece only reads
+
+A live piece runs again whenever what it reads is written, so it must not write itself: a brace, a block or a call
+that assigns an attribute of the component (`count = count + 1`), writes through one (`item.name = "cup"`), or
+changes a list or dictionary it holds (`items.append(item)`), in its own lines or in a function of the class it
+calls, is refused (spite_compiler#675 box 5):
+
+```
+shelf.spite:9: error: 'if shown' is live, so it runs again whenever what it reads is written, and a live piece only reads: it writes in 'count = count + 1'. Write it in a function a handler calls, and let the piece read what it wrote
+```
+
+Locals are its own, so a loop's counter and the tags it builds are not writes. A write inside a function of another
+class it calls is not found yet.
+
+### A read the compiler cannot follow
+
+A read the compiler cannot follow while compiling makes the piece run again whenever any attribute of the component
+is written, and the compiler reports where, as a note that does not stop the build:
+
+```
+slot.spite:6: note: '{first.name}' reads 'first.name', which the compiler cannot follow while compiling, so it runs again whenever an attribute of 'Slot' is written
+```
+
+These are: a member of what a call answers (`pick().name`), a member of a local whose value is not a chain of
+attributes (`var first = pick()`, then `first.name`), a member of a parameter or local of a called function, a call
+through a function value kept in an attribute or local, and a local given a value where it cannot be run again
+([above](#a-local-given-again)). An object whose class the compiler cannot read (a `type`, a union, or a class of the
+standard library other than a list or dictionary) is reported the same way, and its writes are not heard.
+
+### A live block among the children
+
+An `if`, `while` or `switch` that writes tags, at the constructor's top level or among the children of a tag there,
+is a live block (spite_compiler#675 box 3): it is written again as a function of its own, `_live_<n>()`, which the
+constructor calls in its place and which runs again whenever something it reads is written, its condition and every
+line and brace inside it alike. Its tags take the place they were written in among their parent's children: each run
+removes the tags the last run attached there (their `parent` becomes `null`) and puts the new run's tags in, in
+order, between the children before and after the block, so the tags written after it stay where they are.
+
+### A tag in a live block is matched
+
+A tag in a live block is not made again on every run. Each tag written in the block keeps the objects its last run
+made, and a run takes one back before it makes a new one:
+
+- a tag with a `key` takes the kept object whose `key` equals its own: `===` when the class declares `key` as one
+  of the program's classes, `==` for a number, a text or another value;
+- a tag without one takes the kept objects in order, the first run's first object for the first tag made.
+
+A kept object taken back keeps its own state and its own live pieces, and gets every attribute the tag writes
+again; one no run takes back is dropped with the block's other leftovers. The children a tag in the block writes
+are attached again on each run, after the ones its own constructor attached, so a kept object's own children stay.
+`key` is an ordinary attribute, so a class with tags in a live block that are keyed declares it.
+
+### A brace among the children
+
+A brace among a tag's children, `{rows()}` or `{chosen}`, is live the same way when it reads something that can be
+written: it runs again as a whole, and its tags replace the ones it attached last time, in their place
+(spite_compiler#675 boxes 2 and 4). A call returning tags, `{render_rows()}`, is live for what its function reads
+directly; the tags it returns keep their own live braces, so a write one of them reads runs that tag's piece, not
+the call. A `List` it answers is attached entry by entry.
 
 ## Statements among the children
 

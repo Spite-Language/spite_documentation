@@ -1088,12 +1088,23 @@ of the standard library or of a repository pinned to a commit is never rewritten
   are the classes' own attributes, the ordinary error when missing. A tag on its own line elsewhere, and a statement
   among the children of a tag after `return` or `var name =`, are refused. A `switch` case holding one tag
   (`'box': <Cube />`, `'box': return <Cube size={2} />`) is one statement.
-- In such a constructor, an attribute a top-level tag sets from the component's own typed attributes (or from
-  top-level locals given once, which join it) runs again when one of them is written: the compiler keeps the object
-  in `_live_<site>`, writes the assignment as `_live_<n>()` and calls it from those attributes' setters (writing the
-  setter where the class has none). So a prop set after the constructor reaches the tag. Not followed yet: another
-  object's attributes, `List` changes, tags inside `if`/`while`/`switch`; such a brace runs once.
+- In such a constructor, code whose result reaches a tag is live: it runs again when something it read is written,
+  and nothing else in the constructor does. A brace a top-level tag sets runs again as `_live_<n>()`, called from the
+  setter of each attribute of the component it reads (written where the class has none); a local it reads joins it
+  with every top-level line that gave it a value before the tag. It also follows another object's attributes
+  (`{item.name}`, `{item.owner.title}`: only the program's classes some piece reads get a hidden `Observer<String>`
+  their setters tell, and the piece moves its subscription when `item` holds another object), a `List` or
+  `Dictionary` through `subscribe` (`{items.count()}`), and what a function of the class it calls reads. An `if`,
+  `while` or `switch` that writes tags (top level, or among a top-level tag's children) is a live block: it runs again
+  as a whole and its tags take their place among the parent's children again, each matched to the last run's objects
+  by `key` (an ordinary attribute the class declares; `===` for a class, `==` for a value) or else by position; a
+  matched object keeps its state, new ones are made, missing ones dropped with `parent = null`. A brace among the
+  children (`{rows()}`, a call returning a tag or a `List` of tags) is live the same way, replaced as a whole; the
+  tags it returns keep their own live braces. A read the compiler cannot follow (a member of a call's answer, of a
+  local that is not a chain of attributes, of a called function's local) makes the piece run on every write of the
+  component and prints a note with its place, which does not stop the build.
   [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md#a-brace-runs-again-when-what-it-reads-is-written)
+  [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md#a-live-block-among-the-children)
   [markup.md](https://github.com/Spite-Language/spite_documentation/blob/master/markup.md#a-constructor-assembles-its-tags)
 - `name="text"` (a text literal, with its conversions), `name='value'` (an enum value), `name={expression}`, and a bare
   `name` for `true`. An unknown attribute, or a class whose constructor takes parameters, is the ordinary error. An
