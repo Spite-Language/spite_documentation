@@ -759,8 +759,9 @@ meanwhile ([which calls wait](#read-and-write-a-file)).
 | Member | Does |
 |---|---|
 | `print(...values)` | each value's `to_string()`, separated by a space, then a line break |
-| `write(...values)` | the same without the line break |
 | `error(...values)` | like `print`, to the error stream |
+| `write(stream, end, ...values)` | the one writer under both: the values as `print` joins them, then `end`, to `'output'` or `'error'` (a `Console.Stream`); `console.write('output', "", "name? ")` writes a prompt with no line break |
+| `is_a_terminal(stream)` | whether that stream reaches a terminal rather than a file or a pipe |
 | `debug(...values)` | each value's `to_debug()`, separated by a space, then a line break |
 | `read_line()` | one line of input without its line break (a `\r` before it goes too), however long, as a `String?`: `null` at the end of the input, and for a line whose bytes are not UTF-8 (the next call reads the line after it) |
 
@@ -769,7 +770,7 @@ three things hold: a line is never split, nor mixed with a line another thread p
 printed is out before the program exits and before a crash report; and text written before the program reads
 input, a prompt, is visible before the read. `print`, `error` and `debug` end a line and hand it to the operating
 system at once, whether the output is a terminal, a file or a pipe, so a server's log redirected to a file shows
-each line when it happens rather than when the program ends. `write` leaves its text for the next line end, the
+each line when it happens rather than when the program ends. A `write` whose `end` is not a line break leaves its text for the next line end, the
 next read of input or the end of the program. There is no `flush()` to call.
 
 A printed line is the one write that answers nothing: if the system refuses it (a closed pipe, a terminal that
@@ -854,11 +855,39 @@ func DebugDoc() {
 Crew { captain: "Ana", sailors: ["Bo"], ship: Ship { crew: Crew {...}, name: "Gull" } } 3 "done"
 ```
 
+### How text looks
+
+A value can carry a look: `Console.Styled(value, look)` is `Printable`, and `Console.Look` has `color` and
+`background` (`Color?`, `null` by default), `bold` and `underline` (`false`). On a terminal, Console sends the look's
+codes (24-bit color) before the piece and a reset after it; a `Styled` holding another `Styled` keeps the outer look and
+changes only what the inner one sets, and the outer look comes back after the inner piece. Off a terminal (a file, a
+pipe, a test's expected output) nothing but the text is written, decided for each stream by `is_a_terminal`, and a
+`Styled`'s `to_string()` is always its plain text, so `"{styled}"` and a file never hold codes. On Windows the first look
+written to a terminal turns the console's escape-code processing on.
+
+```gdscript title=console_looks_doc/console_looks_doc.spite entry
+var console = Console()
+
+func ConsoleLooksDoc() {
+    var warning = Console.Look()
+    var orange: Color = "#ff8000"
+    warning.color = orange
+    warning.bold = true
+    var word = Console.Styled("careful", warning)
+    console.print("a", word, "step")
+    console.print("[{word}]")
+}
+```
+```output
+a careful step
+[careful]
+```
+
 ```gdscript title=console_input_doc/console_input_doc.spite entry
 var console = Console()
 
 func ConsoleInputDoc() {
-    console.write("name? ")
+    console.write('output', "", "name? ")
     var name = console.read_line()
     if name {
         console.print("hello", name)

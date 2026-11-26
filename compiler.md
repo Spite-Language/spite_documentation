@@ -525,6 +525,13 @@ past 25 of those the compile stops looking and the list ends `and possibly more 
 
 Fixes the compiler made on the way are printed before the errors, and the exit code is 1.
 
+### A check shows its rounds on a terminal
+
+Each function that fails to type-check costs one more pass, so a `--check` with many such errors can take a while
+before it lists them. When the error stream is a terminal (`Console.is_a_terminal('error')`), the check keeps one line
+on it that it rewrites at each pass, `spite --check: round 3, 2 failing places found so far`, and clears it before the
+list. Redirected to a file or a pipe, nothing of it is written, so the errors read the same either way.
+
 ---
 
 Next: [REPL and live reload](repl.md), running a program with a REPL and swapping changed classes into it.

@@ -48,7 +48,7 @@ There are no commands and no breakpoints: to see a value, send a line; to stop s
 Leave the loop only when you need to:
 
 - `spite --check` formats and compiles without building or running, for a program that cannot stay running,
-  or to see the errors; `spite --build` writes the executable without running it.
+  or to see the errors (on a terminal it shows a progress line while it reruns, gone before the list); `spite --build` writes the executable without running it.
   Every compile formats first; there is no `spite format`.
 - A full run from a fresh start, and the tests (`spite` in `tests`, [docs/testing.md](https://github.com/Spite-Language/spite_documentation/blob/master/testing.md)),
   before you call the work done.
@@ -252,6 +252,8 @@ can be bound: C as it is, C++ through `extern "C"`, Rust through `extern "C" fn`
   `copy()` binds the copy's value to the copy. Freeing takes no stack per level: a structure a million levels deep
   frees wherever its depth is (first child, `left`, last link), so build it the way that reads best.
 - Singletons are bound once beside the attributes (`var console = Console()`), never called inline.
+- `console.print` and `console.error` end a line; `console.write('output', "", text)` writes without one (`'error'` for the
+  error stream). Color a piece with `Console.Styled(value, look)`: on a terminal only, so output and tests stay plain.
 - An attribute the constructor fills on every path has no default (`var pet: Pet`), written below the attributes
   with one; nothing may read it before the constructor gives it (no earlier line, called function, `this` or
   default; a default only naming a function, `var act: Spite.Function<Nothing> = rest`, reads nothing until
