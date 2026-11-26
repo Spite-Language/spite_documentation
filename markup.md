@@ -70,7 +70,7 @@ built as above and attached to its closest parent: the tag it is written inside,
 whose constructor it is, `this`. Attaching is two ordinary statements: the parent becomes the child's `parent`, and
 the child is appended to the parent's `children`, in the order written. A tag inside an `if`, `while` or `switch` of
 the constructor attaches to the component, never to the block, so a component holds as many top-level children as it
-writes and needs no fragment. A `switch` case holding one tag, `'box': <Cube/>` or `'box': return <Cube size={2}/>`,
+writes and needs no fragment. A `switch` case holding one tag, `'box': <Cube />` or `'box': return <Cube size={2} />`,
 is the one statement a case holds, however many statements the tag is built as.
 
 ```gdscript
@@ -80,9 +80,9 @@ var parent: Component? = null
 
 func Inventory() {
     <Panel title={title}>
-        <Note content="first"/>
+        <Note content="first" />
     </Panel>
-    <Note content="below"/>
+    <Note content="below" />
 }
 ```
 
@@ -125,7 +125,7 @@ var children = List<Panel>()
 
 func Slot() {
     var shown = "{label} x{count}"
-    <Panel title={shown}/>
+    <Panel title={shown} />
 }
 ```
 
@@ -151,14 +151,14 @@ child shown only sometimes is an `if`, and a child per entry is a `while`:
 func Inventory() {
     <Panel title="Inventory">
         var used = items.count()
-        <Note content="{used} of {capacity}"/>
+        <Note content="{used} of {capacity}" />
         if has_choice {
-            <Note content="chosen"/>
+            <Note content="chosen" />
         }
         var index = 0
         while index < items.count() {
             var item = items[index]
-            <Note content={item.name}/>
+            <Note content={item.name} />
             index = index + 1
         }
     </Panel>

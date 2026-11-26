@@ -1087,7 +1087,7 @@ of the standard library or of a repository pinned to a commit is never rewritten
   an attribute), and a `{list}` child the file shows is a `List` is attached entry by entry. `parent` and `children`
   are the classes' own attributes, the ordinary error when missing. A tag on its own line elsewhere, and a statement
   among the children of a tag after `return` or `var name =`, are refused. A `switch` case holding one tag
-  (`'box': <Cube/>`, `'box': return <Cube size={2}/>`) is one statement.
+  (`'box': <Cube />`, `'box': return <Cube size={2} />`) is one statement.
 - In such a constructor, an attribute a top-level tag sets from the component's own typed attributes (or from
   top-level locals given once, which join it) runs again when one of them is written: the compiler keeps the object
   in `_live_<site>`, writes the assignment as `_live_<n>()` and calls it from those attributes' setters (writing the
